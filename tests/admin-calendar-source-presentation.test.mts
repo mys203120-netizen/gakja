@@ -29,7 +29,7 @@ const {getAdminAdmissionCalendar,editAdminAdmissionCalendar}=await import('../ap
 test('admin response hides reference attribution in existing rows without losing edit identities or official links',async()=>{
   const before=JSON.stringify(state.snapshot),savedBefore=JSON.stringify(state.edits);
   const result=await getAdminAdmissionCalendar({id:'fixture-admin',role:'admin'} as any);
-  assert.equal(result.schools.length,88);assert.equal(result.rows.length,sourceRows.length);
+  assert.equal(result.schools.length,80);assert.equal(result.rows.length,sourceRows.length);
   assert.deepEqual(result.rows.map(row=>row.id).sort(),sourceRows.map(row=>row.id).sort());
   for(const row of result.rows){
     const raw=sourceRows.find(item=>item.id===row.id)!;

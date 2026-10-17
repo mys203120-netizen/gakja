@@ -1,5 +1,6 @@
 import { canonicalJson, parseLearningHtml, validateGuidebook } from '@gakja/content-contracts';
 import { checkOrigin, requireStaff } from '@/lib/auth';
+import { recordingForm } from '@/lib/recording-upload';
 import { ApiError, errorResponse, query, transaction } from '@/lib/db';
 import { assertRegisteredTargets, FINAL_GUIDEBOOK_CONTRACT, learningLinkSummary } from '@/lib/content-publication';
 export const runtime = 'nodejs';
@@ -8,7 +9,8 @@ export async function POST(request: Request) {
   try {
     checkOrigin(request);
     if (Number(request.headers.get('content-length') || 0) > 5 * 1024 * 1024 + 65536) throw new ApiError(413, '최종 가이드북 HTML은 5MB까지 등록할 수 있어요.');
-    const form = await request.formData();
+    const uploader = await requireStaff();
+    const { form } = await recordingForm(request, uploader.id, 'guidebook');
     const studentId = String(form.get('studentId') ?? ''), productionJobRef = String(form.get('productionJobRef') ?? '');
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(studentId)) throw new ApiError(400, '학생 계정을 선택해 주세요.');
     const user = await requireStaff(studentId, 'import');

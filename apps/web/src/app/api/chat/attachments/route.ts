@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { recordingForm } from '@/lib/recording-upload';
 import { checkOrigin, requireUser } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { FeatureError, featureError, requireStudent } from '@/lib/ai';
@@ -28,11 +29,14 @@ export async function POST(request: Request) {
   const stored: ChatAttachmentRow[] = [];
   try {
     checkOrigin(request); const user = await requireUser(); requireStudent(user);
-    if (!request.headers.get('content-type')?.startsWith('multipart/form-data')) throw new FeatureError(415, '첨부 파일을 선택해 주세요.', 'ATTACHMENT_FORM_REQUIRED');
+    const direct = request.headers.get('x-recording-upload') === 'complete';
+    if (!direct && !request.headers.get('content-type')?.startsWith('multipart/form-data')) throw new FeatureError(415, '첨부 파일을 선택해 주세요.', 'ATTACHMENT_FORM_REQUIRED');
+    if (!direct && process.env.AUTH_MODE === 'supabase') throw new FeatureError(415, '화면을 새로고침하고 직접 업로드해 주세요.', 'DIRECT_UPLOAD_REQUIRED');
     const length = Number(request.headers.get('content-length') || 0);
     if (length > CHAT_ATTACHMENT_MAX_BYTES * CHAT_ATTACHMENT_MAX_FILES + 65536) throw new FeatureError(413, '파일은 한 개당 15MB, 한 번에 3개까지 첨부할 수 있어요.', 'ATTACHMENT_SIZE_LIMIT');
     // Count the actual incoming bytes too; a chunked request can omit Content-Length.
-    const form = await boundedForm(request);
+    const uploaded = direct ? await recordingForm(request, user.id, 'attachment') : { form: await boundedForm(request), files: [] };
+    const form = uploaded.form;
     const files = [...form.getAll('files'), ...form.getAll('file')].filter((entry): entry is File => typeof entry !== 'string');
     if (!files.length || files.length > CHAT_ATTACHMENT_MAX_FILES) throw new FeatureError(400, '파일을 1~3개 선택해 주세요.', 'ATTACHMENT_COUNT_LIMIT');
     // Check every file before creating any row/blob, so mixed invalid batches cannot leave partial drafts.
@@ -40,7 +44,7 @@ export async function POST(request: Request) {
       if (!file.size || file.size > CHAT_ATTACHMENT_MAX_BYTES) throw new FeatureError(413, '파일 한 개는 15MB까지 첨부할 수 있어요.', 'ATTACHMENT_SIZE_LIMIT');
       const bytes = Buffer.from(await file.arrayBuffer()); validateChatAttachment(file, bytes); return { file, bytes };
     }));
-    for (const item of prepared) stored.push(await storeChatAttachment(user.id, item.file, item.bytes));
+    for (const [index, item] of prepared.entries()) stored.push(await storeChatAttachment(user.id, item.file, item.bytes, uploaded.files[index]));
     return json({ attachments: stored.map(chatAttachmentView) }, 201);
   } catch (error) {
     await Promise.allSettled(stored.map(discardChatAttachment));

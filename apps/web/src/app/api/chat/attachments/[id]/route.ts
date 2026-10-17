@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { recordingRedirect } from '@/lib/recording-upload';
 import { requireUser } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { FeatureError, featureError, requireStudent } from '@/lib/ai';
@@ -12,6 +13,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const id = z.string().uuid().parse((await params).id);
     const [row] = await query<ChatAttachmentRow>('select a.* from chat_attachments a left join chat_threads t on t.id=a.thread_id and t.student_id=a.student_id where a.id=$1 and a.student_id=$2 and a.deleted_at is null and (a.thread_id is null or t.deleted_at is null and t.id is not null)', [id, user.id]);
     if (!row) throw new FeatureError(404, '첨부 파일을 찾을 수 없어요.', 'ATTACHMENT_NOT_FOUND');
+    if (row.storage.provider === 'supabase') return recordingRedirect(row.storage.bucket || 'student-chat-files', row.storage.path, row.name);
     const bytes = await readChatAttachment(row);
     return new Response(new Uint8Array(bytes), { headers: {
       'Content-Type': row.mime, 'Content-Length': String(bytes.length), 'Cache-Control': 'private, no-store',

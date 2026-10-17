@@ -1,4 +1,5 @@
 'use client';
+import { uploadRecording as sendRecording } from '@/lib/recording-upload-client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -171,7 +172,7 @@ export function QuizSession({id}:{id:string}) {
   }
   async function uploadRecording(candidate:NonNullable<typeof pendingAudio>) {
     const baseline=latestAnswer.current;setRecordingState('uploading');setTranscriptProcessing(false);setError('');
-    try{const form=new FormData();form.set('recording',candidate.blob,'answer.'+(candidate.blob.type.includes('mp4')?'mp4':candidate.blob.type.includes('ogg')?'ogg':'webm'));form.set('sessionId',id);form.set('itemIndex',String(candidate.index));form.set('consent','true');form.set('durationMs',String(candidate.durationMs));if(candidate.telemetry)form.set('speechTelemetry',JSON.stringify(candidate.telemetry));const saved=await api('/api/quiz',{method:'POST',body:form});if(mounted.current){setRecording(saved.recording);setRecordingSaved(true);setPendingAudio(null);setTranscriptProcessing(true);await finishRecordingTranscript(saved.recording,candidate.index,baseline);}}catch(e){if(mounted.current)setError((e as Error).message);}finally{if(mounted.current){setRecordingState('idle');setTranscriptProcessing(false);}}
+    try{const form=new FormData();form.set('recording',candidate.blob,'answer.'+(candidate.blob.type.includes('mp4')?'mp4':candidate.blob.type.includes('ogg')?'ogg':'webm'));form.set('sessionId',id);form.set('itemIndex',String(candidate.index));form.set('consent','true');form.set('durationMs',String(candidate.durationMs));if(candidate.telemetry)form.set('speechTelemetry',JSON.stringify(candidate.telemetry));const saved=await sendRecording('/api/quiz',form);if(mounted.current){setRecording(saved.recording);setRecordingSaved(true);setPendingAudio(null);setTranscriptProcessing(true);await finishRecordingTranscript(saved.recording,candidate.index,baseline);}}catch(e){if(mounted.current)setError((e as Error).message);}finally{if(mounted.current){setRecordingState('idle');setTranscriptProcessing(false);}}
   }
   async function record() {
     if(!consent||recordingState!=='idle'||!item||pendingAudio)return;setError('');setRecordingSaved(false);

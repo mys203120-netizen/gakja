@@ -1,3 +1,5 @@
+import { recordingForm, recordingRedirect } from '@/lib/recording-upload';
+import type { RecordingUploadFile } from '@/lib/recording-upload-contract';
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { checkOrigin, requireUser, supabaseServer } from '@/lib/auth';
@@ -46,9 +48,7 @@ export async function GET(request: Request) {
     await ownedSession(user.id, asset.session_id, asset.metadata.questionId, asset.metadata.turnId);
     let bytes = asset.data as Buffer;
     if (asset.metadata.provider === 'supabase') {
-      const { data, error } = await (await supabaseServer()).storage.from(asset.metadata.bucket).download(asset.metadata.path);
-      if (error || !data) throw new FeatureError(404, '녹화를 가져오지 못했어요.', 'MEDIA_UNAVAILABLE');
-      bytes = Buffer.from(await data.arrayBuffer());
+      return recordingRedirect(asset.metadata.bucket, asset.metadata.path);
     }
     const range = request.headers.get('range');
     const headers = { 'Content-Type': asset.mime, 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff', 'Accept-Ranges': 'bytes', 'Content-Disposition': 'inline' };
@@ -67,7 +67,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     checkOrigin(request); const user = await requireUser(); requireStudent(user);
-    if (request.headers.get('content-type')?.includes('application/json')) {
+    if (request.headers.get('content-type')?.includes('application/json') && request.headers.get('x-recording-upload') !== 'complete') {
       const input = z.object({ action: z.enum(['speech', 'transcribe']), sessionId: z.string().uuid().optional(), questionId: z.string().min(1).max(160).optional(), turnId: z.string().uuid().optional(), mediaId: z.string().uuid().optional(), generation: z.number().int().nonnegative().optional() }).parse(await request.json());
       if (input.action === 'transcribe') {
         if (!input.mediaId) throw new FeatureError(400, '전사할 녹화를 선택해 주세요.', 'MEDIA_ID_REQUIRED');
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     }
     const contentLength = Number(request.headers.get('content-length') || 0);
     if (contentLength > MAX_BYTES * 2 + 65536) throw new FeatureError(413, '녹화는 파일당 20MB까지 저장할 수 있어요.', 'MEDIA_TOO_LARGE');
-    const form = await request.formData();
+    const { form, files: uploadedFiles } = await recordingForm(request, user.id, 'interview');
     const file = form.get('recording');
     if (!(file instanceof File) || !file.size) throw new FeatureError(400, '녹화 파일을 선택해 주세요.', 'MEDIA_REQUIRED');
     if (file.size > MAX_BYTES) throw new FeatureError(413, '녹화는 파일당 20MB까지 저장할 수 있어요.', 'MEDIA_TOO_LARGE');
@@ -126,8 +126,13 @@ export async function POST(request: Request) {
     const analysisMediaId = !mime.startsWith('audio/') && audioBytes ? randomUUID() : null;
     const speechAnalysis = analyzeSpeech({telemetry:speechTelemetry});
     const metadata: Record<string, unknown> = { kind: 'answer_recording', digest, questionId, turnId: turn.id, size: bytes.length, consentAt: new Date().toISOString(), measurementStatus: speechAnalysis.status, speechTelemetry, speechAnalysis, transcriptionStatus: audioBytes ? 'pending' : 'audio_required', provider: 'postgresql', analysisMediaId, durationSeconds, generation };
-    await persistAsset(user.id, sessionId, id, bytes, mime, metadata);
-    if (analysisMediaId && audioBytes) await persistAsset(user.id, sessionId, analysisMediaId, audioBytes, audioMime, { ...metadata, kind: 'analysis_audio', size: audioBytes.length, analysisMediaId: null, analysisFor: id });
+    await transaction(async db => {
+      const [current] = (await db.query('select s.state,s.data as session_data,t.data as turn_data from interview_sessions s join interview_turns t on t.session_id=s.id where s.id=$1 and s.student_id=$2 and t.id=$3 and t.student_id=$2 for update of s,t', [sessionId,user.id,turn.id])).rows;
+      if (!current || current.state !== 'active' || current.turn_data.answer || current.turn_data.invalidated || Number(current.session_data.generation || 0) !== generation) throw new FeatureError(409, '현재 답변의 녹화를 저장해 주세요.', 'STALE_TURN');
+      const insert = async (sql: string, params: unknown[]) => { await db.query(sql, params); };
+      await persistAsset(user.id, sessionId, id, bytes, mime, metadata, uploadedFiles.find(file => file.field === 'recording'), insert);
+      if (analysisMediaId && audioBytes) await persistAsset(user.id, sessionId, analysisMediaId, audioBytes, audioMime, { ...metadata, kind: 'analysis_audio', size: audioBytes.length, analysisMediaId: null, analysisFor: id }, uploadedFiles.find(file => file.field === 'analysisAudio'), insert);
+    });
     return {id,mime,metadata};
     });
     let result:Record<string,any>=transcriptionResponse(stored.metadata);
@@ -143,21 +148,13 @@ export async function POST(request: Request) {
   } catch (error) { const result = featureError(error); return json({ error: result.error, code: result.code }, result.status); }
 }
 
-async function persistAsset(studentId: string, sessionId: string, id: string, bytes: Buffer, mime: string, metadata: Record<string, unknown>) {
+async function persistAsset(studentId: string, sessionId: string, id: string, bytes: Buffer, mime: string, metadata: Record<string, unknown>, uploaded?: RecordingUploadFile, insert: (sql: string, params: unknown[]) => Promise<unknown> = query) {
   let dbBytes = bytes;
-  if (process.env.AUTH_MODE === 'supabase') {
-    const bucket = process.env.SUPABASE_MEDIA_BUCKET || 'student-media';
-    const path = `${studentId}/${sessionId}/${id}.${mime.split('/')[1].replace('x-', '')}`;
-    const { error } = await (await supabaseServer()).storage.from(bucket).upload(path, bytes, { contentType: mime, upsert: false });
-    if (error) throw new FeatureError(502, '비공개 녹화 저장에 실패했어요. Storage 설정을 확인해 주세요.', 'STORAGE_UPLOAD_FAILED');
-    metadata.provider = 'supabase'; metadata.bucket = bucket; metadata.path = path; dbBytes = Buffer.alloc(0);
+  if (uploaded) {
+    metadata.provider = 'supabase'; metadata.bucket = uploaded.bucket; metadata.path = uploaded.path; dbBytes = Buffer.alloc(0);
   }
-  try {
-    await query('insert into media_assets(id,student_id,session_id,data,mime,metadata) values($1,$2,$3,$4,$5,$6)', [id, studentId, sessionId, dbBytes, mime, JSON.stringify(metadata)]);
-  } catch (error) {
-    if (metadata.provider === 'supabase') await (await supabaseServer()).storage.from(String(metadata.bucket)).remove([String(metadata.path)]);
-    throw error;
-  }
+  // Keep immutable bytes on failure for completion retry and later orphan cleanup.
+  await insert('insert into media_assets(id,student_id,session_id,data,mime,metadata) values($1,$2,$3,$4,$5,$6)', [id, studentId, sessionId, dbBytes, mime, JSON.stringify(metadata)]);
 }
 
 async function questionSpeech(studentId: string, session: Record<string, any>, turn: Record<string, any>) {

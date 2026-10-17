@@ -43,7 +43,7 @@ node scripts/start-server.mjs --check-config
 
 ## Supabase
 
-실제 프로젝트의 `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`를 `.env.local` 또는 배포 환경에 설정한다. `AUTH_MODE=supabase`, `ALLOW_LOCAL_AUTH=false`, `DATABASE_SSL=true`로 전환한다. `SUPABASE_MEDIA_BUCKET` 기본 이름은 `student-media`이며 기존 migration이 같은 이름의 비공개 버킷과 소유자 접근 정책을 구성한다. 다른 이름을 사용하면 해당 비공개 버킷과 정책을 별도로 준비해야 한다. 환경 변수의 이름을 바꾸는 것만으로 Storage 버킷이나 정책이 생성되지는 않는다.
+실제 프로젝트의 `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`를 `.env.local` 또는 배포 환경에 설정한다. `AUTH_MODE=supabase`, `ALLOW_LOCAL_AUTH=false`, `DATABASE_SSL=true`로 전환한다. `SUPABASE_MEDIA_BUCKET` 기본 이름은 `student-media`이며 기존 migration이 같은 이름의 비공개 버킷과 소유자 접근 정책을 구성한다. 직접 업로드는 student-media 버킷 이름을 검증하며 다른 이름을 자동 허용하지 않는다. 채팅 첨부는 student-chat-files, 가이드북 임시 원문은 content-imports 비공개 버킷을 사용한다. 환경 변수의 이름을 바꾸는 것만으로 Storage 버킷이나 정책이 생성되지는 않는다.
 
 `db:migrate`는 지정된 DB에 스키마를 적용하고, `seed:supabase`는 원격 테스터를 만든다. 이번 환경 정리에서는 테스터를 다시 생성하거나 기존 학습 데이터를 초기화하지 않았다.
 
@@ -84,3 +84,5 @@ STT API의 파일 한도와 앱의 업로드 한도는 다르다. `gpt-4o-mini-t
 OpenAI 전사·정리 모델의 접근 권한은 실제 API 계정에서 확인한다. 현행 낭독 설정은 `SPEECH_PROVIDER=openai`와 `OPENAI_TTS_MODEL=gpt-4o-mini-tts`이며 전사 설정과 구분한다. 공급자 오류를 다른 공급자로 자동 우회하지 않는다.
 
 별도 Cloud Run WebSocket 중계, GCS 배치 정렬과 장기 비동기 작업은 현재 Next 요청 중심 구조와 분리해서 준비해야 한다. 필요한 서비스가 없는 상태에서 환경 변수만 설정해 완료된 기능으로 취급하지 않는다.
+
+배포 시 [출시 안정화 절차](release-stabilization.md)를 따른다. 활성 계정 RLS와 서버 발급 업로드 경로를 적용하는 20261017143841 migration을 앱보다 먼저 적용한다. 브라우저가 파일을 Storage로 직접 보내므로 Vercel의 4.5MB 요청 한도를 넘지 않는다. 운영 마이그레이션 적용과 실계정 HTTP 검증은 별도 수행 항목이다.

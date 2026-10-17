@@ -1,6 +1,7 @@
+import { recordingForm, recordingRedirect } from '@/lib/recording-upload';
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { checkOrigin, requireUser, supabaseServer } from '@/lib/auth';
+import { checkOrigin, requireUser } from '@/lib/auth';
 import { getLearning } from '@/lib/data';
 import { ApiError, errorResponse, query, transaction } from '@/lib/db';
 import { eligibleQuizItems, firstSentenceHint, quizOutcome, quizPracticeIdentity, remainingChoiceMs, type SessionItem } from '@/lib/quiz-rules';
@@ -79,8 +80,7 @@ export async function GET(request:Request) {
       if(!asset)throw new ApiError(404,'녹음을 찾을 수 없어요.');
       let bytes=asset.data as Buffer;
       if(asset.metadata.provider==='supabase') {
-        const {data,error}=await (await supabaseServer()).storage.from(asset.metadata.bucket).download(asset.metadata.path);
-        if(error||!data)throw new ApiError(404,'녹음을 가져오지 못했어요.'); bytes=Buffer.from(await data.arrayBuffer());
+        return recordingRedirect(asset.metadata.bucket,asset.metadata.path);
       }
       const headers={'Content-Type':asset.mime,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Accept-Ranges':'bytes'};
       const range=request.headers.get('range');
@@ -140,9 +140,9 @@ function recordingMime(file:File,bytes:Buffer) {
 export async function POST(request:Request) {
   try {
     checkOrigin(request); const user=await student();
-    if(request.headers.get('content-type')?.includes('multipart/form-data')) {
+    if(request.headers.get('content-type')?.includes('multipart/form-data') || request.headers.get('x-recording-upload')==='complete') {
       if(Number(request.headers.get('content-length')||0)>10*1024*1024+65536)throw new ApiError(413,'녹음은 10MB까지 저장할 수 있어요.');
-      const form=await request.formData(),file=form.get('recording');
+      const {form,files:uploadedFiles}=await recordingForm(request,user.id,'quiz'),file=form.get('recording');
       if(!(file instanceof File)||!file.size)throw new ApiError(400,'녹음 파일을 선택해 주세요.');
       if(file.size>10*1024*1024)throw new ApiError(413,'녹음은 10MB까지 저장할 수 있어요.');
       if(form.get('consent')!=='true')throw new ApiError(400,'비공개 녹음 저장에 동의해 주세요.');
@@ -163,13 +163,11 @@ export async function POST(request:Request) {
         const [old]=(await db.query("select id from quiz_recordings where session_id=$1 and item_index=$2 and metadata->>'digest'=$3",[sessionId,itemIndex,digest])).rows;
         if(old)return old;
         const id=randomUUID(),metadata:any={provider:'postgresql',digest,consentAt:new Date().toISOString(),size:bytes.length,speechTelemetry,speechAnalysis:analyzeSpeech({telemetry:speechTelemetry,transcript:null,durationMs})}; let dbBytes=bytes;
-        if(process.env.AUTH_MODE==='supabase') {
-          metadata.provider='supabase';metadata.bucket=process.env.SUPABASE_MEDIA_BUCKET||'student-media';metadata.path=`${user.id}/quiz/${sessionId}/${id}.${mime.split('/')[1]}`;
-          const {error}=await (await supabaseServer()).storage.from(metadata.bucket).upload(metadata.path,bytes,{contentType:mime,upsert:false});
-          if(error)throw new ApiError(502,'비공개 녹음 저장에 실패했어요.'); dbBytes=Buffer.alloc(0);
+        const uploaded=uploadedFiles.find(file=>file.field==='recording');
+        if(uploaded) {
+          metadata.provider='supabase';metadata.bucket=uploaded.bucket;metadata.path=uploaded.path;dbBytes=Buffer.alloc(0);
         }
-        try {return (await db.query('insert into quiz_recordings(id,session_id,student_id,item_index,data,mime,duration_ms,metadata) values($1,$2,$3,$4,$5,$6,$7,$8) returning id,item_index,mime,duration_ms',[id,sessionId,user.id,itemIndex,dbBytes,mime,durationMs,JSON.stringify(metadata)])).rows[0];}
-        catch(error){if(metadata.provider==='supabase')await (await supabaseServer()).storage.from(metadata.bucket).remove([metadata.path]);throw error;}
+        return (await db.query('insert into quiz_recordings(id,session_id,student_id,item_index,data,mime,duration_ms,metadata) values($1,$2,$3,$4,$5,$6,$7,$8) returning id,item_index,mime,duration_ms',[id,sessionId,user.id,itemIndex,dbBytes,mime,durationMs,JSON.stringify(metadata)])).rows[0];
       });
       return json({recording:{...saved,url:`/api/quiz?recordingId=${saved.id}`}});
     }

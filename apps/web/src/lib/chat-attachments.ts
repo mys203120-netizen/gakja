@@ -7,6 +7,7 @@ import { inflateRawSync } from 'node:zlib';
 import { supabaseServer } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { FeatureError } from '@/lib/ai';
+import type { RecordingUploadFile } from './recording-upload-contract';
 
 export const CHAT_ATTACHMENT_MAX_BYTES = 15 * 1024 * 1024;
 export const CHAT_ATTACHMENT_MAX_FILES = 3;
@@ -110,22 +111,22 @@ function privatePath(storagePath: string) {
   return path;
 }
 
-export async function storeChatAttachment(studentId: string, file: File, bytes: Buffer) {
+export async function storeChatAttachment(studentId: string, file: File, bytes: Buffer, uploaded?: RecordingUploadFile) {
+  if (process.env.AUTH_MODE === 'supabase' && !uploaded) throw new FeatureError(415, '직접 업로드로 파일을 저장해 주세요.', 'DIRECT_UPLOAD_REQUIRED');
   const valid = validateChatAttachment(file, bytes), id = randomUUID(), path = `${studentId}/${id}${extname(valid.name).toLowerCase()}`;
-  const storage = { provider: process.env.AUTH_MODE === 'supabase' ? 'supabase' : 'local', path, bucket: 'student-chat-files' };
-  if (storage.provider === 'supabase') {
-    const { error } = await (await supabaseServer()).storage.from(storage.bucket).upload(path, bytes, { contentType: valid.mime, upsert: false });
-    if (error) throw new FeatureError(502, '첨부 파일을 저장하지 못했어요. 비공개 Storage 설정을 확인해 주세요.', 'ATTACHMENT_STORAGE_FAILED');
-  } else {
+  const storage = uploaded ? { provider: 'supabase', path: uploaded.path, bucket: uploaded.bucket } : { provider: 'local', path, bucket: 'student-chat-files' };
+  if (storage.provider === 'local') {
     const absolute = privatePath(path); await mkdir(dirname(absolute), { recursive: true, mode: 0o700 }); await writeFile(absolute, bytes, { flag: 'wx', mode: 0o600 });
   }
   try {
     const [row] = await query<ChatAttachmentRow>('insert into chat_attachments(id,student_id,name,mime,kind,size,extracted_text,storage) values($1,$2,$3,$4,$5,$6,$7,$8) returning *', [id, studentId, valid.name, valid.mime, valid.kind, bytes.length, valid.text, JSON.stringify(storage)]);
     return row;
-  } catch (error) { await removeStoredBytes(storage); throw error; }
+  } catch (error) { if (!uploaded) await removeStoredBytes(storage); throw error; }
 }
 async function removeStoredBytes(storage: ChatAttachmentRow['storage']) {
-  if (storage.provider === 'supabase') await (await supabaseServer()).storage.from(storage.bucket || 'student-chat-files').remove([storage.path]);
+  // Direct-upload objects are immutable to browsers. Unreferenced objects are
+  // removed by the server-only expired-upload cleanup, not a permissive policy.
+  if (storage.provider === 'supabase' && !storage.path.includes('/uploads/')) await (await supabaseServer()).storage.from(storage.bucket || 'student-chat-files').remove([storage.path]);
   else if (storage.provider === 'local') { try { await unlink(privatePath(storage.path)); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; } }
 }
 export async function discardChatAttachment(row: ChatAttachmentRow) {

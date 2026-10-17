@@ -1,4 +1,5 @@
 'use client';
+import { uploadPrivateFiles } from '@/lib/recording-upload-client';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -153,7 +154,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
   if(!files?.length||uploading||busy)return;
   if(attachments.length+files.length>3){setError('파일은 한 번에 3개까지 첨부할 수 있어요.');return;}
   setUploading(true);setError('');
-  try{const form=new FormData();for(const file of Array.from(files))form.append('files',file);const result=await api('/api/chat/attachments',{method:'POST',body:form});setAttachments(items=>[...items,...result.attachments]);}
+  try{const form=new FormData();for(const file of Array.from(files))form.append('files',file);const result=await uploadPrivateFiles('/api/chat/attachments',form);setAttachments(items=>[...items,...result.attachments]);}
   catch(err){setError((err as Error).message);}finally{setUploading(false);if(attachmentInput.current)attachmentInput.current.value='';}
  }
  async function removeAttachment(id:string){

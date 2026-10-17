@@ -9,6 +9,7 @@ import { tsImport } from 'tsx/esm/api';
 // components with overview-only records. This test never writes to a database,
 // starts a server, reads credentials, or makes a provider request.
 const scope = await tsImport('../apps/web/src/lib/learning-target-scope.ts', import.meta.url);
+const automatic = await tsImport('../apps/web/src/lib/automatic-practice.ts', import.meta.url);
 const journey = await tsImport('../apps/web/src/lib/learning-journey.ts', import.meta.url);
 const flow = await tsImport('../apps/web/src/lib/learning-flow-view.ts', import.meta.url);
 const studyLinks = await tsImport('../apps/web/src/lib/study-record-links.ts', import.meta.url);
@@ -70,6 +71,7 @@ function loadComponent(name) {
     if (id === 'lucide-react') return new Proxy({}, { get: (_, key) => String(key) });
     if (id.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
     if (id === '@/lib/learning-target-scope') return scope;
+    if (id === '@/lib/automatic-practice') return automatic;
     if (id === '@/lib/learning-journey') return journey;
     if (id === '@/lib/learning-flow-view') return flow;
     if (id === '@/lib/planner-model') return { koreaToday: () => '2026-10-15' };
@@ -118,7 +120,7 @@ check(tree.type === 'InterviewSession' && tree.props.kind === 'video', 'opening 
 const dashboard = loadComponent('dashboard.tsx');
 const scopeKey = JSON.stringify([data.user.id, target.id, scope.learningScopeIdentity(target), data.package?.id, data.package?.active_version]);
 const loading = { scope: scopeKey, learning: false, planner: false, study: false, knowledge: false, quiz: false, schools: false };
-tree = render(() => dashboard.Dashboard(), [{ assignments: [], answerRevisions: [], confirmations: [] }, {}, [], [], {}, { commonQuestions: [] }, '', true, true, true, 'briefing', [], undefined, loading]);
+tree = render(() => dashboard.Dashboard(), [{ assignments: [], answerRevisions: [], confirmations: [] }, {}, [], [], {}, { commonQuestions: [] }, '', true, true, true, 'briefing', [], undefined, [], loading]);
 check(text(tree).includes(question.prompt), 'actual dashboard uses the compact frozen currentQuestion rather than a replacement question');
 check(text(tree).includes(activity.title), 'actual dashboard retains the current activity label from compact resources');
 check(nodes(tree).some(node => node.type === 'Link' && node.props.href === '/interview/session-own?kind=video'), 'dashboard resume remains attached to the same interview detail');

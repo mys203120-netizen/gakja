@@ -34,7 +34,7 @@ after(() => { for (const path of mockPaths) unlinkSync(path); rmdirSync(mockFold
 process.env.OPENAI_API_KEY = 'unit-only-no-network';
 process.env.OPENAI_MODEL = 'gpt-5.6-terra';
 process.env.OPENAI_MODEL_INTERVIEW = 'gpt-5.6-terra';
-const { coach,coachStream } = await import('../apps/web/src/lib/ai.ts');
+const { coach,coachStream,PROMPT_VERSION } = await import('../apps/web/src/lib/ai.ts');
 const {interviewAnswerEvidence}=await import('../apps/web/src/lib/interview-answer-evidence.ts');
 const context = { packageId: 'unit-package', contentVersion: '3', targetId: null, activityId: null, questionId: null, target: null, studentContext: {}, activities: [], questions: [], answerScripts: [], sources: [] };
 const reactionInput = { question: '대조군의 역할은 무엇인가요?', answer: '조건을 바꾸지 않은 대조군과 비교하여 다른 변수의 영향을 확인했습니다.' };
@@ -112,7 +112,7 @@ test('actual feedback request distinguishes the record from a student claim and 
   assert.match(request.instructions,/완성형 1인칭 모범답안·다듬은 답변 틀은 작성하지 않는다/);
   assert.match(request.instructions,/학생 진술임을 밝힌다/);
   assert.match(request.instructions,/질문에서 명시적으로 요구한 내용의 확인을 공통 답변 틀보다 우선/);
-  assert.match(result.promptVersion,/grounded-feedback/);
+  assert.equal(result.promptVersion,PROMPT_VERSION);
   assert.equal(result.sources[0].quote,source);
   assert.equal(JSON.stringify(recordedContext),preserved);
 });

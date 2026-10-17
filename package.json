@@ -1,6 +1,31 @@
 {
-  "name": "gakja-answer", "version": "0.1.0", "private": true, "packageManager": "npm@11.13.0",
-  "workspaces": ["apps/*", "packages/*"],
-  "scripts": {"dev":"npm run dev --workspace=@gakja/web", "build":"turbo build", "typecheck":"turbo typecheck", "db:start":"node scripts/local-db.mjs", "db:migrate":"node scripts/migrate.mjs", "db:seed":"node scripts/seed.mjs", "db:setup":"npm run db:migrate && npm run db:seed", "seed:supabase":"node scripts/seed-supabase.mjs"},
-  "devDependencies":{"turbo":"^2.5.0", "embedded-postgres":"18.4.0-beta.17", "dotenv":"^16.6.0", "pg":"^8.16.0", "bcryptjs":"^3.0.2", "tsx":"^4.20.0", "@playwright/test":"^1.55.0"}
+  "name": "gakja-answer",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.13.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@gakja/web",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "db:start": "node scripts/local-db.mjs",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed": "node scripts/seed.mjs",
+    "db:setup": "npm run db:migrate && npm run db:seed",
+    "seed:supabase": "node scripts/seed-supabase.mjs",
+    "test": "node scripts/test.mjs",
+    "test:security": "node tests/security-rls.mjs"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "embedded-postgres": "18.4.0-beta.17",
+    "dotenv": "^16.6.0",
+    "pg": "^8.16.0",
+    "bcryptjs": "^3.0.2",
+    "tsx": "^4.20.0",
+    "@playwright/test": "^1.55.0"
+  }
 }

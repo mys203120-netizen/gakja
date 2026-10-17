@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,existsSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {parseAconDateCell,parseAconInterviewCalendar,matchAconUniversity,splitAdmissionDepartments,ACON_CALENDAR_MAX_BYTES} from '../apps/web/src/lib/acon-calendar-source.ts';
 import {calendarForTargets,matchCalendarSchoolTarget,type AdmissionCalendarCatalogue} from '../apps/web/src/lib/admission-calendar-model.ts';
 
@@ -92,8 +92,12 @@ test('empty, login, oversized, and changed source markup fail closed',()=>{
   for(const html of ['', '<html><title>로그인</title></html>', '<html><title>2027 수시 고사 일정</title><p>2026년</p></html>'])assert.throws(()=>parseAconInterviewCalendar(html));
   assert.throws(()=>parseAconInterviewCalendar('x'.repeat(ACON_CALENDAR_MAX_BYTES+1)));
 });
-test('captured public source re-parses with identical normalized schedules',()=>{
-  const path=new URL('../.local/acon-calendar/source.html',import.meta.url);if(!existsSync(path))return;
-  const fresh=parseAconInterviewCalendar(readFileSync(path,'utf8'),{checkedAt:catalogue.source.checkedAt});
-  assert.deepEqual(fresh.schools,catalogue.schools);assert.deepEqual(fresh.audit,catalogue.audit);assert.equal(fresh.source.sha256,catalogue.source.sha256);
+test('synthetic captured markup parses exact dates without local source files',()=>{
+  const blocks=Array.from({length:100},(_,index)=>`<details data-exam-univ="${catalogue.schools[index]?.university||'합성대학'+index}"><table><tr data-exam-entry="true" data-kind="면접"><td>면접</td><td>합성전형</td><td>11월 29일(일)</td><td>합성학과</td></tr><tr data-exam-entry="true" data-kind="면접"><td>면접</td><td>두번째합성전형</td><td>11월 29일(일)</td><td>합성학과</td></tr></table></details>`).join('');
+  const html=`<html><title>2027 수시 고사 일정</title><p>2026년</p><section id="universities">${blocks}</section></html>`;
+  const fresh=parseAconInterviewCalendar(html,{checkedAt:'2026-10-17T00:00:00Z'});
+  const school=fresh.schools.find(row=>row.university==='서울시립대학교')!;
+  assert.equal(school.entries.length,2);assert.deepEqual(school.entries[0].dates,['2026-11-29']);
+  assert.ok(school.entries.some(row=>row.trackLabel==='합성전형'));
+  assert.deepEqual(parseAconInterviewCalendar(html,{checkedAt:fresh.source.checkedAt}),fresh);
 });
