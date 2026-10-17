@@ -10,9 +10,10 @@ const growth = await tsImport('../apps/web/src/lib/learning-growth.ts', import.m
 const analysis = await tsImport('../apps/web/src/lib/speech-analysis.ts', import.meta.url);
 const navigation = await tsImport('../apps/web/src/lib/learning-navigation.ts', import.meta.url);
 const silence = await tsImport('../apps/web/src/lib/speech-silence.ts', import.meta.url);
+const targetScope = await tsImport('../apps/web/src/lib/learning-target-scope.ts', import.meta.url);
 const {buildSpeechTelemetry} = await tsImport('../apps/web/src/lib/speech-telemetry.ts', import.meta.url);
 const user = { id: 'owned-student', role: 'student' };
-const target = { university: '서울시립대학교', department: '환경공학부', admission_year: 2027 };
+const target = { university: '서울시립대학교', department: '환경공학부', admission_year: 2027, campus:'본교',admission_type:'학생부종합' };
 const base = {
   question_id: 'owned-question', question: '본인 역할과 측정 근거를 말해 주세요.',
   target_id: 'owned-target', target_snapshot: target, content_version: 6,
@@ -28,6 +29,7 @@ const forbidden = () => { throw new Error('No writes, providers, storage or devi
 async function query(sql, params) {
   assert.match(sql, /^select /i, 'report assembler performs read-only queries');
   reads.push({ sql, params });
+  if(sql.startsWith('select id,data from support_targets'))return [{id:'owned-target',data:target}];
   if (sql.startsWith('select session_id,created_at,data from interview_reports')) {
     assert.deepEqual(Array.from(params), ['owned-report', user.id]);
     return [{ session_id: 'after-session', created_at: '2026-10-15T11:00:00Z', data: { sections: [{ questionId: base.question_id }] } }];
@@ -58,6 +60,7 @@ vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.Mo
     if (name === './db') return { query, ApiError, transaction: forbidden };
     if (name === './learning-workflows') return { getLearningWorkflows: async owned => { assert.equal(owned, user); return { versions }; } };
     if (name === './learning-navigation') return navigation;
+    if (name === './learning-target-scope') return targetScope;
     if (name === './speech-analysis') return analysis;
     if (name === './speech-silence') return silence;
     if (name === './learning-growth') return growth;
@@ -134,4 +137,12 @@ mediaRecordings[0].metadata.transcript=null;quizRecordings=[];mediaRecordings=me
 report=await readReport();
 check(report.speech.defaultRecordingId===null&&report.speech.trend===null&&report.speech.status==='not_measured','only diagnosed silence produces no default growth measurement or trend');
 check(report.speech.recordings.length===1,'silence-only archive still preserves the owned original playback file');
+versions=[previous,edited,{...edited,id:'removed-answer',target_id:'removed-school',target_snapshot:{...target,university:'국민대학교'},question:'국민대학교 인재상 질문',created_at:'2026-10-16T10:00:00Z'}];
+report=await readReport({targetId:'owned-target'});
+check(!JSON.stringify(report).includes('국민대학교'),'deleted school never enters current comparison or next recommendation');
+check(report.next.href.includes('targetId=owned-target'),'next recommendation remains bound to active selected school');
+await assert.rejects(()=>readReport({targetId:'removed-school'}),error=>error.status===404);checks++;
+versions=[{...previous,target_id:'removed-school'},{...edited,target_id:'removed-school'}];
+report=await readReport({reportId:'owned-report'});
+check(report.content.comparisons.length===1,'frozen historical report remains readable after the target is removed');
 console.log(`Speech growth provenance: ${checks} checks passed; database writes and provider/device requests: 0.`);

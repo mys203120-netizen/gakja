@@ -17,11 +17,12 @@ function uuid(value: unknown) { return typeof value === 'string' && /^[a-f0-9]{8
 
 /** Select from the authenticated student's registered targets, never a client-supplied major. */
 export function newsConnectionForTarget(target:Record<string,any>) {
-  const major=String(target.major||target.department||'').trim(),school=schoolDirectoryForTarget(target);
+  const unitName=String(target.major||target.department||'').trim(),school=schoolDirectoryForTarget(target);
   // IDs resolve only inside the owned target's selected school. Legacy targets
   // without catalog IDs can use an unambiguous exact canonical name.
-  const byName=school?.departments.filter(row=>row.name===major);
-  const department=target.department_catalog_id?school?.departments.find(row=>row.id===target.department_catalog_id):(byName?.length===1?byName[0]:null);
+  const byName=school?.departments.filter(row=>row.name===unitName);
+  const department=target.department_catalog_id?school?.departments.find(row=>row.id===target.department_catalog_id&&row.name===unitName&&(!target.campus||row.campus===target.campus||school.campusLabel===target.campus)):(byName?.length===1?byName[0]:null);
+  const major=department?.programs?.includes(target.interest_department)?String(target.interest_department):unitName;
   return {major,...majorNewsConnection(major,department?{category:department.category,field:department.field}:{})};
 }
 export async function departmentNewsSelection(studentId: string, requestedTarget?: string | null) {

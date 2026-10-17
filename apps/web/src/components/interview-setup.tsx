@@ -8,6 +8,7 @@ import { LearningHelp } from './learning-help';
 import { api, ActionButton, PageTitle, Breadcrumb, Alert, targetName, type Item } from './shared';
 import { hasInterviewSelection, interviewPreviewHref, interviewSetupHref, interviewSetupState, sourceVersionInput, type InterviewSetupState } from '@/lib/interview-flow';
 import { learningScopeIdentity } from '@/lib/learning-target-scope';
+import {interviewSupportForTarget} from '@/lib/school-interview-scope';
 
 const modes = [{ id: 'basic', name: '기본', copy: '한 질문씩 차근차근' }, { id: 'document', name: '서류 집중', copy: '내 역할과 활동 과정' }, { id: 'major', name: '전공 심화', copy: '개념과 탐구의 깊이' }, { id: 'university', name: '대학 맞춤', copy: '지원처에 연결한 경험' }] as const;
 function Switch({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
@@ -20,6 +21,7 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
   const state = interviewSetupState(params);
   const targetId = params.get('targetId') || appTargetId;
   const target = data.targets.find(t => t.id === targetId);
+  const interviewSupport=target?interviewSupportForTarget(target):null;
   const selected = hasInterviewSelection(params);
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const schoolScope=JSON.stringify([data.user.id,targetId,learningScopeIdentity(target||{})]);
@@ -48,7 +50,7 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
   const effectiveMode = unavailableMode ? 'basic' : state.mode;
   const question = preview?.question || (!params.get('sourceVersion') || String(params.get('sourceVersion')) === String(data.package?.active_version) ? (data.learning?.questions || []).find((q: Item) => q.id === params.get('questionId')) : null);
   const activity = (preview?.activities || data.learning?.activities || []).find((a: Item) => a.id === params.get('activityId') || question?.activity_ids?.includes(a.id));
-  const ready = !previewLoading && !previewError && Boolean(preview?.questions?.length || preview?.question || catalog?.commonAvailable && !selected);
+  const ready = interviewSupport?.supported!==false&&!previewLoading && !previewError && Boolean(preview?.questions?.length || preview?.question || catalog?.commonAvailable && !selected);
   function update(next: Partial<InterviewSetupState> & { targetId?: string }) { router.replace(interviewSetupHref(kind, params, next), { scroll: false }); }
   function selectQuestion(id: string) {
     const next = new URLSearchParams(params.toString()); next.set('questionId', id); next.set('sourceType', 'common'); next.delete('activityId'); next.delete('briefingId'); next.delete('briefingQuestionIndex'); next.delete('sourceVersion'); next.delete('assisted');
@@ -69,6 +71,7 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
     <Breadcrumb items={[{ label: '모의면접', href: '/interview' }, { label: '새 면접' }]} />
     <PageTitle title={params.get('questionId') || params.get('briefingId') ? '이 질문 말하기' : params.get('activityId') ? '이 활동 말하기' : '모의면접 준비'} />
     {error && <Alert>{error}</Alert>}
+    {interviewSupport&&!interviewSupport.supported&&<Alert>{interviewSupport.reason} <Link href="/schools">지원 정보 확인</Link></Alert>}
     <div className="interview-setup-layout">
       <section className="interview-setup-main">
         <div className="interview-format-tabs" aria-label="답변 방식">
@@ -78,7 +81,7 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
         {selected && <section className={'interview-selected-question'+(question?.talent_profile?' interview-talent-question':'')} aria-labelledby="selected-question-title">
           <span className="interview-context-label">{params.get('briefingId') ? '브리핑에서 이어서' : question?.talent_profile ? '학교 가치 질문 · 공식 원문 기반 연습' : question?.source_type === 'general_practice' ? '공통 연습 질문' : question ? activity?.title || '선택한 질문' : '연결된 활동'}</span>
           <h2 id="selected-question-title" data-question-key={!previewLoading?question?.id:undefined}>{previewLoading ? '질문을 확인하고 있어요.' : question?.prompt || activity?.title || '연결된 질문을 확인해 주세요.'}</h2>
-          {previewError && <Alert>{previewError}</Alert>}
+          {previewError && <Alert>{previewError}{params.get('experienceCardId')&&<Link className="text-link" href={'/armory?card='+encodeURIComponent(params.get('experienceCardId')!)}>경험 카드 확인하고 다시 연결하기 →</Link>}</Alert>}
           {question?.talent_profile && question?.source_snapshot?.url && <a className="text-link" href={question.source_snapshot.url} target="_blank" rel="noreferrer">{question.source_snapshot.title}<ArrowRight size={14}/></a>}
           {!previewLoading && !previewError && (params.get('briefingId') ? <button className="text-link" type="button" onClick={() => openResource({ kind: 'briefing', id: params.get('briefingId') || undefined })}><BookOpen size={15} />브리핑과 근거</button> : (question || activity) && <LearningHelp questionId={question?.id} activityId={activity?.id} targetId={targetId} sourceVersion={commonOnly ? undefined : sourceVersionInput(params)} onAssisted={markPreparedHelp} snapshot={{ learning: { answer_scripts: [], memory_items: [], questions: preview?.questions || data.learning?.questions || [], activities: preview?.activities || data.learning?.activities || [], source_refs: preview?.sources || data.learning?.source_refs || [] }, documents: [] }} />)}
         </section>}

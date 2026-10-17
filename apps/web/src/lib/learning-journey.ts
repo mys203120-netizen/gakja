@@ -1,3 +1,4 @@
+import {recordMatchesCurrentTarget,interviewMatchesLearningTarget} from './learning-target-scope';
 export type JourneyItem = Record<string, any>;
 export type TodayAction = { title: string; label: string; reason: string; href: string; questionId?: string; count?: number };
 
@@ -31,9 +32,9 @@ export function chooseTodayAction(input: { targets: JourneyItem[]; quiz?: Journe
   const assignment = input.assignments?.find(a => !['submitted','reviewed','completed','cancelled'].includes(a.state));
   if (assignment) return { title: assignment.title || '오늘의 과제', label: '오늘 학습 시작', reason: `${assignment.items?.length || 0}문항 · 배정된 과제`, href: `/quiz/assignments/${encodeURIComponent(assignment.id)}` };
   const next = input.study?.nextQuestion;
-  if (next?.questionId && (!next.targetId||next.targetId===input.targets[0].id)) return { title: '이번엔 내 말로 답해봐요.', label: '오늘 학습 이어서', reason: next.prompt || '저장한 답을 면접에서 연습해요.', href: learningHref('/my/today', { questionId: next.questionId, memoryItemId:next.memoryItemId, targetId: input.targets[0].id }), questionId: next.questionId };
+  if (next?.questionId && recordMatchesCurrentTarget(next,[input.targets[0]])) return { title: '이번엔 내 말로 답해봐요.', label: '오늘 학습 이어서', reason: next.prompt || '저장한 답을 면접에서 연습해요.', href: learningHref('/my/today', { questionId: next.questionId, memoryItemId:next.memoryItemId, targetId: input.targets[0].id }), questionId: next.questionId };
   if (recommendation?.count > 0) return { title: '오늘의 답을 꺼내봐요.', label: '오늘 학습 시작', reason: recommendation.reason || `${recommendation.count}문항부터 가볍게 시작해요.`, href: '/my/today', count: recommendation.count };
-  const interview = input.interviews?.find(s => s.state === 'active');
+  const interview = input.interviews?.find(s => s.state === 'active' && interviewMatchesLearningTarget(s,input.targets[0]));
   if (interview) return { title: '면접을 이어가요.', label: '오늘 학습 이어서', reason: '저장한 질문과 답변에서 계속해요.', href: `/interview/${encodeURIComponent(interview.id)}?kind=${interview.kind === 'video' ? 'video' : 'chat'}` };
   if (input.commonQuestions?.length) return { title: '첫 면접을 시작해요.', label: '오늘 학습 시작', reason: '공통 질문 한 개 · 생기부 없이 시작할 수 있어요.', href: learningHref('/interview/chat', { questionId: input.commonQuestions[0].id, targetId: input.targets[0].id }) + '&questionCount=1', questionId: input.commonQuestions[0].id, count: 1 };
   return { title: '면접 안내를 확인해요.', label: '학교 면접 안내', reason: '등록한 지원처에서 다음 준비를 찾아봐요.', href: `/schools/${encodeURIComponent(input.targets[0].id)}` };

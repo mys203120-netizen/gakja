@@ -12,6 +12,7 @@ import { scheduleDateLabel } from '@/lib/schedule';
 import { SchoolRegistration } from './school-registration';
 import { SchoolLogo } from './school-logo';
 import {visibleCalendarSourceUrl} from '@/lib/calendar-source-presentation';
+import {interviewSupportForTarget} from '@/lib/school-interview-scope';
 
 export function SchoolPages({slug=[]}:{slug?:string[]}) {
   const {data,refresh,setTargetId}=useApp();const params=useSearchParams();const router=useRouter();
@@ -46,14 +47,15 @@ export function SchoolPages({slug=[]}:{slug?:string[]}) {
     {deleting&&<Modal title="지원 학교를 삭제할까요?" onClose={()=>{if(!deleteBusy)setDeleting(null);}}><div className={management.deleteIdentity}><SchoolLogo school={deleting} size={42}/><div><p>{targetName(deleting)}</p><span>{[targetMajor(deleting),deleting.admission_type||deleting.track].filter(Boolean).join(' · ')}</span></div></div><p className={management.deleteNote}>캘린더와 앞으로의 학습 추천에서 제외돼요.<br/>지금까지 남긴 답변과 리포트는 유지돼요.</p>{deleteError&&<Alert>{deleteError}</Alert>}<div className={management.deleteActions}><button type="button" className="button" data-autofocus disabled={deleteBusy} onClick={()=>setDeleting(null)}>취소</button><ActionButton type="button" className={`button ${management.deleteButton}`} pending={deleteBusy} pendingLabel="삭제 중" onClick={()=>void confirmDelete()}><Trash2 size={15}/>지원 학교 삭제</ActionButton></div></Modal>}
   </div>;
 }
-function schoolScheduleLabel(target:Item){const state=target.admission_calendar_registration?.status;return ({registered:'일정 연결됨',no_interview:'면접 미실시',date_pending:'날짜 미정',unpublished:'일정 미공개'} as Record<string,string>)[state]||'일정 확인 필요';}
+function schoolScheduleLabel(target:Item){if(!interviewSupportForTarget(target).supported)return '학생부형 준비 범위 밖';const state=target.admission_calendar_registration?.status;return ({registered:'일정 연결됨',no_interview:'면접 미실시',date_pending:'날짜 미정',unpublished:'일정 미공개'} as Record<string,string>)[state]||'일정 확인 필요';}
 function targetDetails(target:Item){return [target.admission_year||target.year?`${target.admission_year||target.year}학년도`:null,target.campus?`${target.campus}${target.campus==='미정'?' 캠퍼스':''}`:null,target.admission_type||target.track||'전형 미정',targetMajor(target)||'모집단위 미정'].filter(Boolean).join(' · ');}
 function SchoolOverview({target}:{target:Item}){
+  const support=interviewSupportForTarget(target);
   const profile=target.profile;const official=profile?.status==='official_confirmed';const blocks:Item[]=profile?.overview||[];const source=profile?.source||{};
   const weights=profile?.evaluation_weights;const weightRows=Array.isArray(weights)?weights:weights?.items||weights?.criteria||[];
   return <><div className={`school-overview-identity ${styles.schoolIdentity}`}><SchoolLogo school={target} size={56}/><div><p className="school-target-details">{targetDetails(target)}</p>{target.departmentVerification&&<p className="school-input-note">{target.departmentVerification.status==='public_2026'?<><a href={target.departmentVerification.sourceUrl} target="_blank" rel="noreferrer">교육부 2026 공시 확인</a> · {target.admission_year||target.year||'지원'}학년도 모집단위 {official?'공식 확인':'확인 전'}</>:target.departmentVerification.note}</p>}</div></div>
     <SchoolInterviewSummary target={target}/>
-    <section className="school-first-practice"><div><strong>첫 질문부터 말해 볼까요?</strong><span>{official?'지원 전형에 맞춰 준비해요.':'생기부 없이 시작할 수 있어요.'}</span></div><Link className="button primary" href={`/interview/chat?questionId=common_motivation&targetId=${encodeURIComponent(target.id)}&questionCount=1&sourceType=common`}>공통 질문 연습<ArrowRight size={17}/></Link></section>
+    {support.supported?<section className="school-first-practice"><div><strong>첫 질문부터 말해 볼까요?</strong><span>{official?'지원 전형에 맞춰 준비해요.':'생기부 없이 시작할 수 있어요.'}</span></div><Link className="button primary" href={`/interview/chat?questionId=common_motivation&targetId=${encodeURIComponent(target.id)}&questionCount=1&sourceType=common`}>공통 질문 연습<ArrowRight size={17}/></Link></section>:<Alert>{support.reason} 기존 답변과 리포트는 보존돼요.</Alert>}
     <details className="school-overview school-overview-fold"><summary>면접 세부 안내와 평가 기준</summary><div className="section-heading"><span className="school-reference-state">{official?<><Check size={14}/>공식 확인</>:'제공 자료 기준 · 공식 확인 전'}</span></div>
       {profile?<><p className="school-reference-context">{profile.stale?'과거 지원처 안내 · 현재 지원 정보와 다름':profile.reviewed?'선택한 지원처의 안내':'대학 전체 참고자료 · 전형별 적용 확인 필요'}</p>
         {profile.stale&&<p className="school-practice-scope">{[profile.admission_year?`${profile.admission_year}학년도`:null,profile.campus,profile.admission_type,profile.department].filter(Boolean).join(' · ')} 기준 자료예요. 현재 지원 정보에 맞는 재확인이 필요해요.</p>}

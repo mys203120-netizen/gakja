@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { inLearningTargetScope, interviewMatchesLearningTarget, splitInterviewsByLearningTarget } from '../apps/web/src/lib/learning-target-scope';
+import { recordMatchesCurrentTarget, inLearningTargetScope, interviewMatchesLearningTarget, splitInterviewsByLearningTarget } from '../apps/web/src/lib/learning-target-scope';
 
 const target = { id: 'uos', university: '서울시립대학교', admission_year: 2027, campus: '본교', department: '환경공학부', admission_type: '학생부종합Ⅰ', interview_stage: '2단계' };
 const session = { id: 'old-1', target_id: target.id, data: { context: { targetId: target.id, target: structuredClone(target) } } };
@@ -32,4 +32,11 @@ test('selected calendar scope changes with target while retaining general plans 
   assert.equal(inLearningTargetScope('another', 'another'), true);
   assert.equal(inLearningTargetScope(undefined, 'uos'), true);
   assert.equal(inLearningTargetScope('another', 'uos', true), true);
+});
+
+for(const account of ['synthetic-a','synthetic-b','synthetic-c'])test(`recommendation scope is independent of account identity: ${account}`,()=>{
+  const current={...target,id:account+'-registration'},record={targetId:current.id,targetSnapshot:current};
+  assert.equal(recordMatchesCurrentTarget(record,[current]),true);
+  for(const targets of [[],[{...current,id:'new-registration'}],[{...current,archived_at:'2026-10-17'}],[{...current,department:'다른학과'}]])assert.equal(recordMatchesCurrentTarget(record,targets),false);
+  assert.equal(recordMatchesCurrentTarget({targetId:current.id},[current]),false);
 });

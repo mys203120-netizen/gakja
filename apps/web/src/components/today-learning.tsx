@@ -12,7 +12,7 @@ import {learningHref,resolveJourneyQuestion} from '@/lib/learning-journey';
 import {practiceHelpLabel,questionPracticeState,todayQuestionContext} from '@/lib/learning-flow-view';
 import {todayLearningStage} from '@/lib/today-learning-stage';
 import {matchesTodayReviewPlan,todayReviewPlan} from '@/lib/today-review-plan';
-import {learningScopeIdentity} from '@/lib/learning-target-scope';
+import {learningScopeIdentity,recordMatchesCurrentTarget} from '@/lib/learning-target-scope';
 import styles from './learning-flow-ui.module.css';
 
 export function TodayLearning(){return <Suspense fallback={<Spinner/>}><Journey/></Suspense>;}
@@ -60,7 +60,8 @@ function Journey(){
   const candidates:Item[]=(savedLearning?.questions||[...(data.learning.questions||[]),...(content.schools?.commonQuestions||[])]).filter((q:Item)=>!q.support_target_ids?.length||q.support_target_ids.includes(selectedTarget));
   const library=content.quiz?.library||{},practiceItems:Item[]=[...(library.choice||[]),...(library.answer||[])];
   const memory:Item[]=versionFixed?practiceItems:(data.learning.memory_items||[]);
-  const nextId=requested||content.study?.totals?.weakPoints?.find((w:Item)=>(!w.targetId||w.targetId===selectedTarget)&&(candidates.some(q=>q.id===w.questionId)||memory.some(m=>m.id===w.memoryItemId)))?.questionId||content.quiz?.recommendation?.items?.[0]?.question_id||((!content.study?.nextQuestion?.targetId||content.study.nextQuestion.targetId===selectedTarget)?content.study?.nextQuestion?.questionId:null)||candidates[0]?.id;
+  const currentTargets=data.targets.filter(t=>t.id===selectedTarget);
+  const nextId=requested||content.study?.totals?.weakPoints?.find((w:Item)=>recordMatchesCurrentTarget(w,currentTargets)&&(candidates.some(q=>q.id===w.questionId)||memory.some(m=>m.id===w.memoryItemId)))?.questionId||content.quiz?.recommendation?.items?.[0]?.question_id||((content.study?.nextQuestion&&recordMatchesCurrentTarget(content.study.nextQuestion,currentTargets))?content.study?.nextQuestion?.questionId:null)||candidates[0]?.id;
   const identity=resolveJourneyQuestion(nextId||'',candidates,memory,practiceItems,requestedMemory),question:Item|undefined=identity?.question;
   if(!question&&(loading('schools')||loading('evidence')))return <><PageTitle title="오늘 학습"/>{error&&<Alert>{error}</Alert>}<Spinner/></>;
   if(!question)return <><Breadcrumb items={[{label:'오늘',href:'/my'},{label:'오늘 학습'}]}/><PageTitle title="오늘 학습"/>{error&&<Alert>{error}</Alert>}<Empty title={requested?'지금 연습할 수 없는 질문이에요.':'면접 질문을 골라볼까요?'} href={requested?learningHref('/records/comparisons',{questionId:requested,targetId:selectedTarget,sourceType,sourceVersion}):'/interview/chat'} label={requested?'저장한 답변 보기':'공통 질문 연습'}/></>;
@@ -83,7 +84,9 @@ function Journey(){
   const state=questionPracticeState(content.learning?.answerRevisions||[],question,target,personalVersion);
   const latest=state.latest;
   const recallHref=learningHref('/quiz?focus=today',{...context,memoryItemId:identity?.memoryItem?.id,mode:answer?'answer':'choice'});
-  const interviewHref=application?learningHref('/interview/chat',applicationContext)+'&questionCount=1':null;
+  const cardParams=new URLSearchParams();
+  if(params.get('experienceCardId')&&params.get('experienceRevision')){cardParams.set('experienceCardId',params.get('experienceCardId')!);cardParams.set('experienceRevision',params.get('experienceRevision')!);}
+  const interviewHref=application?learningHref('/interview/chat',applicationContext)+'&questionCount=1'+(cardParams.size?'&'+cardParams.toString():''):null;
   const compareHref=learningHref('/records/comparisons',context);
   const questionKey=[question.id,linkedTarget,context.sourceType,context.sourceVersion].join(':');
   const checkingRecord=!state.attempts.length&&(activity||quotes.length)&&reviewedQuestion!==questionKey;

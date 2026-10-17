@@ -24,6 +24,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   const [referenceId,setReferenceId]=useState(initialReference),[other,setOther]=useState(editing&&!initialReference),[university,setUniversity]=useState(initial?.university||'');
   const [campus,setCampus]=useState(initial?.campus==='미정'?'':initial?.campus||''),[track,setTrack]=useState(initial?.admission_type||initial?.track||''),[manualTrack,setManualTrack]=useState(editing);
   const [major,setMajor]=useState(initial?.department||initial?.major||''),[departmentId,setDepartmentId]=useState(initialDepartment),[manualMajor,setManualMajor]=useState(editing&&!initialDepartment);
+  const [interestDepartment,setInterestDepartment]=useState(initial?.interest_department||'');
   const [school,setSchool]=useState<Item|null>(null),[departmentLoading,setDepartmentLoading]=useState(false),[busy,setBusy]=useState(false),[saveError,setSaveError]=useState('');
   const [calendar,setCalendar]=useState<SchoolCalendarPreview|null>(null),[calendarKey,setCalendarKey]=useState(''),[calendarLoading,setCalendarLoading]=useState(false),[departmentRetry,setDepartmentRetry]=useState(0);
   const [trackChoices,setTrackChoices]=useState<string[]>([]),[calendarError,setCalendarError]=useState(''),[retry,setRetry]=useState(0);
@@ -32,11 +33,11 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   const heading=useRef<HTMLHeadingElement>(null),completionHeading=useRef<HTMLHeadingElement>(null),previousStep=useRef(step);
   const selected=catalog.find(item=>item.id===referenceId),currentSchool=school?.id===referenceId?school:null;
   const departments:Item[]=currentSchool?.departments||[],department=departments.find(item=>item.id===departmentId);
-  const universityName=other?university.trim():selected?.university||'';
+  const universityName=other?university.trim():selected?.university||(referenceId===initialReference?initial?.university:'')||'';
   const majorName=other||manualMajor?major.trim():department?.name||'';
   const completeSelection=Boolean(universityName&&majorName&&(other||manualMajor||departmentId));
   const payload={referenceId:other?null:referenceId,departmentId:other||manualMajor?null:departmentId,university:other?university.trim():undefined,
-    admissionYear,campus:campus.trim()||'미정',track:track.trim()||'미정',major:majorName||undefined};
+    admissionYear,campus:campus.trim()||'미정',track:track.trim()||'미정',major:majorName||undefined,...(interestDepartment?{interestDepartment}:{})};
   const selectionKey=JSON.stringify(payload);
   // Bind the preview to its exact inputs, including the render before the request effect runs.
   const currentCalendar=calendarKey===selectionKey?calendar:null;
@@ -79,7 +80,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   function goTo(next:number){setStep(next);setAcknowledged(false);setSaveError('');}
   function clearDetails(){
     initialDepartmentPending.current=false;
-    setSchool(null);setDepartmentId('');setMajor('');setCampus('');setTrack('');setManualMajor(false);setManualTrack(false);
+    setSchool(null);setDepartmentId('');setMajor('');setInterestDepartment('');setCampus('');setTrack('');setManualMajor(false);setManualTrack(false);
     setTrackChoices([]);setCalendar(null);setCalendarKey('');setCalendarError('');setAcknowledged(false);setSaveError('');
   }
   function chooseSchool(id:string){
@@ -87,13 +88,13 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
     goTo(1);
   }
   function chooseDepartment(id:string){
-    if(id!==departmentId){setDepartmentId(id);setTrack('');setTrackChoices([]);setManualTrack(false);setAcknowledged(false);}
+    if(id!==departmentId){setDepartmentId(id);setInterestDepartment('');setTrack('');setTrackChoices([]);setManualTrack(false);setAcknowledged(false);}
   }
   function toggleManualSchool(){
     clearDetails();setReferenceId('');setOther(value=>!value);goTo(0);
   }
   function toggleManualMajor(){
-    setManualMajor(value=>!value);setDepartmentId('');setMajor('');setTrack('');setTrackChoices([]);setManualTrack(false);setAcknowledged(false);
+    setManualMajor(value=>!value);setDepartmentId('');setMajor('');setInterestDepartment('');setTrack('');setTrackChoices([]);setManualTrack(false);setAcknowledged(false);
   }
   function retryCalendar(){setCalendar(null);setCalendarKey('');setAcknowledged(false);setRetry(value=>value+1);}
   function addAnotherSchool(){
@@ -146,10 +147,11 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
           {step===1&&<>
             <div className={styles.selectedSchool}><SchoolLogo school={selected||{university:universityName}} size={40}/><span>{universityName}</span><button type="button" className={styles.linkButton} onClick={()=>goTo(0)}>변경</button></div>
             <div className={styles.fields}>
-              <div className={styles.field}>{other||manualMajor?<label>지원 학과·학부·모집단위<input required value={major} onChange={event=>setMajor(event.target.value)} maxLength={120} placeholder="모집요강의 모집단위명"/></label>:<SchoolPicker label="지원 학과·학부" choices={departments.map(item=>({id:item.id,label:item.name,detail:[item.college==='단과대구분없음'?null:item.college,item.campus].filter(Boolean).join(' · ')}))} value={departmentId} onChange={chooseDepartment} placeholder={departmentLoading?'학과 불러오는 중':'학과·학부를 선택해 주세요'} disabled={busy||departmentLoading}/>}
+              <div className={styles.field}>{other||manualMajor?<label>지원 학과·학부·모집단위<input required value={major} onChange={event=>setMajor(event.target.value)} maxLength={120} placeholder="모집요강의 모집단위명"/></label>:<SchoolPicker label="지원 학과·학부" choices={departments.map(item=>({id:item.id,label:item.name,detail:[item.college==='단과대구분없음'?null:item.college,item.campus,item.programs?.length?`${item.programs.length}개 세부 전공`:null].filter(Boolean).join(' · '),keywords:item.programs}))} value={departmentId} onChange={chooseDepartment} placeholder={departmentLoading?'학과 불러오는 중':'학과·학부를 선택해 주세요'} disabled={busy||departmentLoading}/>}
                 {!other&&<button type="button" className={styles.fieldAlternative} onClick={toggleManualMajor}>{manualMajor?'학과 목록에서 선택':'신설·변경된 모집단위 직접 입력'}</button>}
                 {!other&&saveError&&!currentSchool&&!departmentLoading&&<button type="button" className={styles.linkButton} onClick={()=>{setSaveError('');setDepartmentRetry(value=>value+1);}}>학과 다시 불러오기</button>}
               </div>
+              {!manualMajor&&department&&department.programs?.length>0&&<label>관심 세부 전공<select value={interestDepartment} onChange={event=>setInterestDepartment(event.target.value)}><option value="">광역 모집단위 전체로 준비할게요</option>{department.programs.map((name:string)=><option key={name} value={name}>{name}</option>)}</select><small>실제 지원 모집단위는 {department.name}로 유지해요. 관심 전공은 지식한입과 면접 질문에 반영하며, 입학 후 전공 배정을 보장하지 않아요. {department.programSourceUrl&&<a href={department.programSourceUrl} target="_blank" rel="noreferrer">{department.programSourceYear}학년도 공식 전공 안내</a>}</small></label>}
               <div className={styles.yearRow}><label>지원 학년도<input type="number" min={2024} max={2040} required value={admissionYear} onChange={event=>setAdmissionYear(Number(event.target.value))}/></label></div>
               <div className={styles.field} aria-busy={calendarLoading}>{!manualTrack&&tracks.length?<><SchoolPicker label="지원 전형" choices={tracks.map(item=>({id:item,label:item}))} value={hasKnownTrack?track:''} onChange={setTrack} placeholder="공개 일정의 전형을 선택해 주세요" disabled={!completeSelection||busy}/><button type="button" className={styles.fieldAlternative} onClick={()=>setManualTrack(true)}>목록에 없는 전형 직접 입력</button></>:<><label>지원 전형<input required value={track} onChange={event=>{setTrack(event.target.value);setManualTrack(true);}} maxLength={120} placeholder={!completeSelection?'학과를 먼저 선택해 주세요':'모집요강에 있는 전형명'} disabled={!completeSelection}/></label>{tracks.length>0&&<button type="button" className={styles.fieldAlternative} onClick={()=>{setManualTrack(false);setTrack('');}}>전형 목록에서 선택</button>}</>}</div>
               {(other||manualMajor)&&<label>캠퍼스<input value={campus} onChange={event=>setCampus(event.target.value)} maxLength={100} placeholder="캠퍼스명 (선택)"/></label>}

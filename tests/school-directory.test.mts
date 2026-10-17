@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {schoolDirectory,schoolDirectoryEntry,schoolDirectorySummary,normalizeSchoolSelection,enrichSchoolTarget} from '../apps/web/src/lib/school-directory.ts';
 import {officialProfileForTarget,uosEnvironment2027Profile} from '../apps/web/src/lib/official-school-profiles.ts';
+import {schoolHasDocumentInterview,schoolDepartmentAvailable} from '../apps/web/src/lib/school-interview-scope';
 const hash=(file:string)=>createHash('sha256').update(readFileSync(file)).digest('hex');
 const uos=schoolDirectory.find(school=>school.canonicalName==='서울시립대학교')!;
 const department=uos.departments.find(row=>row.name==='환경공학부')!;
@@ -13,16 +14,17 @@ test('raw disclosure provenance is preserved while statistical aggregate labels 
   const rawDepartments=rawDirectory.schools.flatMap((school:any)=>school.departments);
   const excluded=rawDepartments.filter((row:any)=>row.name==='기타모집단위');
   assert.equal(rawDepartments.length,3934);assert.equal(excluded.length,50);
-  assert.equal(schoolDirectory.reduce((count,school)=>count+school.departments.length,0),3884);
+  const eligible=rawDirectory.schools.filter((school:any)=>schoolHasDocumentInterview(school.canonicalName)).flatMap((school:any)=>school.departments.filter((department:any)=>department.name!=='기타모집단위'&&schoolDepartmentAvailable(school.canonicalName,department.name)));
+  assert.equal(schoolDirectory.reduce((count,school)=>count+school.departments.length,0),eligible.length);
   for(const school of schoolDirectory)assert.ok(school.departments.every(row=>row.name!=='기타모집단위'));
   for(const raw of rawDirectory.schools)for(const row of raw.departments.filter((department:any)=>department.name==='기타모집단위')){
-    assert.throws(()=>normalizeSchoolSelection({referenceId:raw.id,departmentId:row.id}),/선택한 대학/);
+    assert.throws(()=>normalizeSchoolSelection({referenceId:raw.id,departmentId:row.id}),{name:'SchoolSelectionError'});
   }
 });
-test('all 88 source universities have actual coded departments, sourced admission links and local logos',()=>{
+test('the 88 source universities retain provenance and the supported release has actual coded departments',()=>{
   const bible=JSON.parse(readFileSync('apps/web/src/data/school-bible.json','utf8'));
-  assert.equal(schoolDirectory.length,88);assert.deepEqual(schoolDirectory.map(s=>s.id).sort(),bible.schools.map((s:any)=>s.id).sort());
-  assert.equal(new Set(schoolDirectory.map(s=>s.id)).size,88);
+  assert.equal(bible.schools.length,88);assert.equal(schoolDirectory.length,80);assert.deepEqual(schoolDirectory.map(s=>s.id).sort(),bible.schools.filter((s:any)=>schoolHasDocumentInterview(s.university)).map((s:any)=>s.id).sort());
+  assert.equal(new Set(schoolDirectory.map(s=>s.id)).size,80);
   for(const school of schoolDirectory){assert.ok(school.departments.length);assert.match(school.publicSchoolCode,/^\d{7}$/);assert.ok(['http:','https:'].includes(new URL(school.admissionUrl!).protocol));assert.ok(school.logoUrl?.startsWith('/school-logos/'));const raw=JSON.parse(readFileSync('apps/web/src/data/school-directory.json','utf8')).schools.find((s:any)=>s.id===school.id);assert.equal(hash('apps/web/public'+school.logoUrl),raw.logoSha256);for(const row of school.departments){assert.equal(row.year,2026);assert.match(row.schoolCode,/^\d{7}$/);assert.match(row.departmentCode,/^\d{7}$/);assert.match(row.sourceUrl,/data\.go\.kr\/data\/15163924/);}}
 });
 test('school list summaries do not ship thousands of unnecessary department records',()=>{const summary=schoolDirectorySummary(uos);assert.equal((summary as any).departments,undefined);assert.equal(summary.departmentCount,uos.departments.length);assert.equal(summary.departmentYear,2026);});
@@ -39,6 +41,7 @@ test('department verification requires an owned catalogue ID and exact current n
   assert.equal(enrichSchoolTarget({...target,department_catalog_id:null}).departmentVerification.status,'manual_unverified');
   assert.equal(enrichSchoolTarget({...target,school_reference_id:null}).departmentVerification.status,'manual_unverified');
   assert.equal(enrichSchoolTarget({...target,department:'위조 학과'}).departmentVerification.status,'manual_unverified');
+  assert.equal(enrichSchoolTarget({...target,campus:'소속이 다른 캠퍼스'}).departmentVerification.status,'manual_unverified');
   assert.equal(enrichSchoolTarget({...target,department:'',major:department.name}).departmentVerification.status,'public_2026');
   assert.equal(enrichSchoolTarget({...target,department:'미정'}).departmentVerification.status,'not_selected');
   assert.equal(enrichSchoolTarget({school_reference_id:uos.id}).departmentVerification.status,'not_selected');

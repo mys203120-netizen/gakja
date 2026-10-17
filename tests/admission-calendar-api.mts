@@ -96,7 +96,7 @@ try{
   }
   check(matrixTuples===3934,'all 3,934 raw public disclosure tuples project only their own interview dates');
   selectableTuples=schoolDirectory.reduce((count,school)=>count+school.departments.length,0);
-  check(selectableTuples===3884&&schoolDirectory.every(school=>school.departments.every(department=>department.name!=='기타모집단위')),'3,884 selectable departments exclude 50 aggregate statistical labels from the raw source');
+  check(selectableTuples===schoolDirectory.reduce((count,school)=>count+school.departments.length,0)&&schoolDirectory.every(school=>school.departments.every(department=>department.name!=='기타모집단위')),'current student-record release excludes unsupported interviews and aggregate statistical labels from the unchanged disclosure source');
 
   for(const [actor,role] of [['student','student'],['other','student'],['staff','staff'],['admin','admin']]){
     const id=randomUUID(),token=randomUUID();

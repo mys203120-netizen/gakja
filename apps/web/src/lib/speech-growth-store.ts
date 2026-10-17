@@ -1,4 +1,5 @@
 import 'server-only';
+import {recordMatchesCurrentTarget} from './learning-target-scope';
 import { createHash } from 'node:crypto';
 import { supabaseServer,type Profile } from './auth';
 import { ApiError, query, transaction } from './db';
@@ -11,11 +12,11 @@ import { cachedFormattedTranscription,storedRawTranscription,transcriptionDescri
 import { FeatureError } from './ai';
 import { NO_SPEECH_MESSAGE } from './speech-silence';
 
-type GrowthScope={sessionId?:string;reportId?:string;studySessionId?:string};
+type GrowthScope={targetId?:string;sessionId?:string;reportId?:string;studySessionId?:string};
 function studentOnly(user:Profile) {if(user.role!=='student')throw new ApiError(403,'내 학습 기록은 학생 계정에서 확인해 주세요.');}
 function serializeVersion(version:Record<string,any>):GrowthVersion {
   // Readable copy edits must not replace the utterance used as growth evidence.
-  return {id:version.id,question_id:version.question_id,question:version.question,script:version.script||'',raw_script:version.raw_script,transcript_formatting:version.transcript_formatting,created_at:version.created_at,
+  return {experience_card:version.experience_card||null,id:version.id,question_id:version.question_id,question:version.question,script:version.script||'',raw_script:version.raw_script,transcript_formatting:version.transcript_formatting,created_at:version.created_at,
     revision_kind:version.revision_kind,assisted:version.assisted,ai_assisted:version.ai_assisted,hint_used:version.hint_used,assistance_recorded:version.assistance_recorded,session_id:version.session_id,target_id:version.target_id,target_snapshot:version.target_snapshot||null,
     content_version:version.content_version,source_type:version.source_type,common_revision:version.common_revision,practice_kind:version.practice_kind,answer_attempt_kind:version.answer_attempt_kind,practice_due_at:version.practice_due_at,response_mode:version.response_mode,
     required_meanings:(version.required_meanings||version.comparison?.required_meanings||[]).map((meaning:string|{text:string})=>typeof meaning==='string'?meaning:meaning.text).filter(Boolean)};
@@ -35,6 +36,12 @@ function recordingGrowthEligible(row:Record<string,any>):boolean {
 }
 export async function getGrowthPayload(user:Profile,scope:GrowthScope={}) {
   studentOnly(user);
+  const pinned=Boolean(scope.reportId||scope.sessionId||scope.studySessionId);
+  const activeTargets=pinned?[]:(await query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null",[user.id])).map(row=>({...row.data,id:row.id}));
+  if(!pinned&&scope.targetId&&!activeTargets.some(target=>target.id===scope.targetId))throw new ApiError(404,'현재 등록된 지원 학교를 선택해 주세요.');
+  const currentTargets=scope.targetId?activeTargets.filter(target=>target.id===scope.targetId):activeTargets;
+  const inScope=(row:Record<string,any>)=>pinned||recordMatchesCurrentTarget(row,currentTargets)||
+    (!scope.targetId&&!activeTargets.length&&!row.target_id&&!row.targetId&&!row.target_snapshot&&!row.targetSnapshot);
   let cutoff:string|null=null,sessionId=scope.sessionId||null,scopeQuestions:string[]|null=null;
   if(scope.reportId) {
     const [report]=await query('select session_id,created_at,data from interview_reports where id=$1 and student_id=$2',[scope.reportId,user.id]);
@@ -57,17 +64,17 @@ export async function getGrowthPayload(user:Profile,scope:GrowthScope={}) {
     query("select m.id,m.session_id,m.mime,m.text,m.metadata,m.created_at,t.question_id,t.data->>'question' as prompt,s.target_id,s.content_version,s.data->'context'->'target' as target_snapshot,t.data->'commonRevision' as common_revision from media_assets m join interview_sessions s on s.id=m.session_id and s.student_id=m.student_id left join interview_turns t on t.id::text=m.metadata->>'turnId' and t.student_id=m.student_id where m.student_id=$1 and m.metadata->>'kind'='answer_recording' and s.state not in ('cancelled','deleted') and ($2::uuid is null or m.session_id=$2) and ($3::timestamptz is null or m.created_at<=$3) order by m.created_at desc limit 120",[user.id,sessionId,cutoff]),
     sessionId?Promise.resolve([]):query("select r.id,r.session_id,r.mime,r.duration_ms,r.metadata,r.created_at,s.content_version,s.items->r.item_index->>'question_id' as question_id,s.items->r.item_index->>'prompt' as prompt,coalesce(s.items->r.item_index->>'target_id',s.metadata->>'targetId') as target_id,coalesce(s.items->r.item_index->'target_snapshot',s.metadata->'targetSnapshot') as target_snapshot,s.items->r.item_index->'common_revision' as common_revision from quiz_recordings r join quiz_sessions s on s.id=r.session_id and s.student_id=r.student_id where r.student_id=$1 and ($2::timestamptz is null or r.created_at<=$2) order by r.created_at desc limit 120",[user.id,cutoff]),
     query('select r.id,r.content,r.created_at,t.article_id,a.title from department_news_thought_revisions r join department_news_thoughts t on t.id=r.thought_id and t.student_id=r.student_id join department_news_articles a on a.id=t.article_id where r.student_id=$1 and ($2::timestamptz is null or r.created_at<=$2) order by r.created_at',[user.id,cutoff]),
-    query("select t.id,t.session_id,t.question_id,t.data,s.target_id,coalesce(t.data->>'answeredAt',t.created_at::text) as answered_at,coalesce(s.data->'context'->'briefing'->>'article_id',b.data->>'article_id') as article_id,b.id as briefing_id,b.title,s.data->'context'->'briefing'->'thought_snapshot' as thought_snapshot from interview_turns t join interview_sessions s on s.id=t.session_id and s.student_id=t.student_id join briefings b on b.id::text=coalesce(s.data->>'briefingId',s.data->'context'->>'briefingId') and b.data->>'owner_student_id'=t.student_id::text where t.student_id=$1 and b.data->>'source_kind'='rss_news' and s.state not in ('cancelled','deleted') and coalesce(t.data->>'invalidated','false')<>'true' and length(trim(coalesce(t.data->>'originalAnswer',t.data->>'answer','')))>0 and t.question_id='briefing_'||b.id::text||'_0' and ($2::uuid is null or t.session_id=$2) and ($3::timestamptz is null or coalesce(nullif(t.data->>'answeredAt','')::timestamptz,t.created_at)<=$3) order by coalesce(nullif(t.data->>'answeredAt','')::timestamptz,t.created_at)",[user.id,sessionId,cutoff]),
+    query("select t.id,t.session_id,t.question_id,t.data,s.target_id,s.data->'context'->'target' as target_snapshot,coalesce(t.data->>'answeredAt',t.created_at::text) as answered_at,coalesce(s.data->'context'->'briefing'->>'article_id',b.data->>'article_id') as article_id,b.id as briefing_id,b.title,s.data->'context'->'briefing'->'thought_snapshot' as thought_snapshot from interview_turns t join interview_sessions s on s.id=t.session_id and s.student_id=t.student_id join briefings b on b.id::text=coalesce(s.data->>'briefingId',s.data->'context'->>'briefingId') and b.data->>'owner_student_id'=t.student_id::text where t.student_id=$1 and b.data->>'source_kind'='rss_news' and s.state not in ('cancelled','deleted') and coalesce(t.data->>'invalidated','false')<>'true' and length(trim(coalesce(t.data->>'originalAnswer',t.data->>'answer','')))>0 and t.question_id='briefing_'||b.id::text||'_0' and ($2::uuid is null or t.session_id=$2) and ($3::timestamptz is null or coalesce(nullif(t.data->>'answeredAt','')::timestamptz,t.created_at)<=$3) order by coalesce(nullif(t.data->>'answeredAt','')::timestamptz,t.created_at)",[user.id,sessionId,cutoff]),
   ]);
   const recordings=[...media.map(row=>({id:row.id,kind:'interview',questionId:row.question_id||row.metadata.questionId,prompt:row.prompt||'녹음 답변',createdAt:row.created_at,sessionId:row.session_id,targetId:row.target_id,targetSnapshot:row.target_snapshot,contentVersion:row.content_version,commonRevision:row.common_revision,contextKey:growthContextKey({id:row.id,question_id:row.question_id||'',script:'',created_at:row.created_at,target_id:row.target_id,target_snapshot:row.target_snapshot,common_revision:row.common_revision}),
     playbackUrl:'/api/media?id='+row.id,analysisAudioUrl:row.metadata.analysisMediaId?'/api/media?id='+row.metadata.analysisMediaId:row.mime.startsWith('audio/')?'/api/media?id='+row.id:null,growthEligible:recordingGrowthEligible(row),analysis:storedAnalysis(row),...transcriptionResponse(row.metadata,row.text||row.metadata?.transcript||null)})),
     ...quiz.map(row=>({id:row.id,kind:'quiz',questionId:row.question_id,prompt:row.prompt||'녹음 퀴즈',createdAt:row.created_at,sessionId:row.session_id,targetId:row.target_id,targetSnapshot:row.target_snapshot,contentVersion:row.content_version,commonRevision:row.common_revision,contextKey:growthContextKey({id:row.id,question_id:row.question_id||'',script:'',created_at:row.created_at,target_id:row.target_id,target_snapshot:row.target_snapshot,common_revision:row.common_revision}),
     playbackUrl:'/api/quiz?recordingId='+row.id,analysisAudioUrl:'/api/quiz?recordingId='+row.id,growthEligible:recordingGrowthEligible(row),analysis:storedAnalysis(row),...transcriptionResponse(row.metadata,row.text||row.metadata?.transcript||null)}))]
-    .filter(row=>scopeQuestions===null||scopeQuestions.includes(row.questionId)).sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
-  const versions=workflow.versions.map(serializeVersion).filter(version=>(!cutoff||new Date(version.created_at).getTime()<=new Date(cutoff).getTime())&&(!scopeQuestions||scopeQuestions.includes(version.question_id)));
+    .filter(inScope).filter(row=>scopeQuestions===null||scopeQuestions.includes(row.questionId)).sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
+  const versions=workflow.versions.map(serializeVersion).filter(inScope).filter(version=>(!cutoff||new Date(version.created_at).getTime()<=new Date(cutoff).getTime())&&(!scopeQuestions||scopeQuestions.includes(version.question_id)));
   const content=buildContentGrowth(versions);
   if(sessionId)content.comparisons=content.comparisons.filter(comparison=>comparison.after.session_id===sessionId);
-  const newsComparisons=newsTurns.filter(turn=>scopeQuestions===null||scopeQuestions.includes(turn.question_id)).map(turn=>{
+  const newsComparisons=newsTurns.filter(inScope).filter(turn=>scopeQuestions===null||scopeQuestions.includes(turn.question_id)).map(turn=>{
     const thoughts=newsThoughts.filter(thought=>thought.article_id===turn.article_id&&new Date(thought.created_at).getTime()<=new Date(turn.answered_at).getTime());
     const thought=thoughts[0];
     const snapshot=turn.thought_snapshot;
@@ -78,7 +85,7 @@ export async function getGrowthPayload(user:Profile,scope:GrowthScope={}) {
     const before:GrowthVersion={id:thought?.id||'thought-snapshot:'+turn.id,question_id:identity,question:turn.title,script:beforeText,created_at:thought?.created_at||snapshot?.updated_at||turn.answered_at,revision_kind:'news_thought'};
     const after:GrowthVersion={id:turn.id,question_id:identity,question:turn.title,script:turn.data.originalAnswer||turn.data.answer,created_at:turn.answered_at,revision_kind:'interview_answer',raw_script:turn.data.speechSource?.rawText||null,transcript_formatting:turn.data.speechSource||null,assisted:turn.data.assisted,assistance_recorded:turn.data.assistance_recorded===true||turn.data.assistanceRecorded===true,response_mode:savedVersion?.response_mode||'unknown',session_id:turn.session_id};
     return {...compareAnswerGrowth(before,after),articleId:turn.article_id,sourceQuestionId:turn.question_id,sourceHref:'/materials/briefings/news/'+turn.article_id,
-      retryHref:'/interview/new?briefingId='+turn.briefing_id+'&briefingQuestionIndex=0'+(turn.target_id?'&targetId='+encodeURIComponent(turn.target_id):''),
+      retryHref:learningRetryHref(turn.question_id,{...savedVersion,target_id:turn.target_id}),
       note:'기사에서 남긴 생각과 같은 기사로 연습한 면접 답변이에요. 분량이나 표현만으로 실력을 판정하지 않아요.'};
   }).filter((comparison):comparison is NonNullable<typeof comparison>=>!!comparison).reverse().filter((comparison,index,all)=>all.findIndex(other=>other.articleId===comparison.articleId)===index);
   const recordingVersion=(row:typeof recordings[number]):GrowthVersion=>({id:row.id,question_id:row.questionId,script:'',created_at:row.createdAt,target_id:row.targetId,target_snapshot:row.targetSnapshot,content_version:row.contentVersion,common_revision:row.commonRevision});
@@ -93,7 +100,7 @@ export async function getGrowthPayload(user:Profile,scope:GrowthScope={}) {
   const nextVersion=contentNext?.after||content.unpaired[0]?.version;
   const newsNext=newsComparisons.find(comparison=>comparison.sourceQuestionId===nextVersion?.question_id)||(!nextVersion?newsComparisons[0]:null);
   const next=newsNext?{questionId:newsNext.sourceQuestionId,prompt:newsNext.prompt,reason:'같은 기사에 대한 생각을 면접 답변으로 다시 말해 보세요.',href:newsNext.retryHref}:nextVersion?{questionId:nextVersion.question_id,prompt:nextVersion.question||'이 질문 다시 말하기',reason:growthNextReason(nextVersion,contentNext),href:learningRetryHref(nextVersion.question_id,nextVersion as any)}:
-    {questionId:null,prompt:'녹음으로 첫 발화 남기기',reason:'녹음이 쌓이면 쉼과 반복의 변화를 비교할 수 있어요.',href:'/quiz?mode=oral'};
+    {questionId:null,prompt:'녹음으로 첫 발화 남기기',reason:'녹음이 쌓이면 쉼과 반복의 변화를 비교할 수 있어요.',href:'/quiz?mode=oral'+(scope.targetId?'&targetId='+encodeURIComponent(scope.targetId):'')};
   return {speech:{status:measured.length?'measured':eligibleRecordings.some(row=>row.analysis.timing)?'partial':'not_measured',defaultRecordingId:eligibleRecordings[0]?.id||null,recordings,trend},content:{...content,newsComparisons},next,
     scope:{cutoff,reportId:scope.reportId||null,studySessionId:scope.studySessionId||null},method:{timing:'microphone-rms',content:'quoted-sentence-cues',frozenReportsUnchanged:true}};
 }

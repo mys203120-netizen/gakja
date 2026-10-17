@@ -89,8 +89,30 @@ try{
   await db.query("update study_sessions set closing_at=now()-interval '1 second' where id=$1",[third.body.sessionId]);
   await request(0);check((await db.query('select finish_reason from study_sessions where id=$1',[third.body.sessionId])).rows[0].finish_reason==='app_exit','delivered last-tab exit reconciles after grace');
   check((await request(0,'/api/study-sessions?id='+id)).body.session.report.events.find((event:any)=>event.source_id===quizSource)?.data.response==='합성 오답','snapshot preserves saved answer and source');
+  // The same transitions must hold for independent accounts, with no seeded user IDs.
+  for(let actor=0;actor<2;actor++){
+    const targetId='scope-'+randomUUID(),snapshot={university:actor?'부산대학교':'서울시립대학교',campus:'본교',department:'경영학과',admission_year:2027,admission_type:'학생부종합',interview_stage:'1단계'};
+    await db.query('insert into support_targets(id,student_id,data) values($1,$2,$3)',[targetId,students[actor],JSON.stringify(snapshot)]);
+    const visit=await heartbeat(actor,randomUUID()),questionId='scope-question-'+randomUUID();
+    const eventData={questionId,response:'합성 답변',outcome:false,sourceType:'common',commonRevision:1,targetId,targetSnapshot:snapshot};
+    await db.query("insert into study_session_events(session_id,student_id,kind,source_id,data) values($1,$2,'quiz_response',$3,$4)",[visit.body.sessionId,students[actor],randomUUID(),JSON.stringify(eventData)]);
+    check((await request(actor)).body.nextQuestion?.questionId===questionId,'each account can recommend its own unchanged registration');
+    for(const changed of [{university:'다른대학교'},{department:'다른학과'},{campus:'다른캠퍼스'},{admission_year:2028},{admission_type:'다른전형'},{interview_stage:'2단계'}]){
+      await db.query('update support_targets set data=$2 where id=$1',[targetId,JSON.stringify({...snapshot,...changed})]);
+      check((await request(actor)).body.nextQuestion?.questionId!==questionId,'same registration ID cannot reuse a changed admission identity');
+    }
+    await db.query('update support_targets set data=$2 where id=$1',[targetId,JSON.stringify({...snapshot,archived_at:new Date().toISOString()})]);
+    const archived=await request(actor);
+    check(archived.body.nextQuestion?.questionId!==questionId,'deleted school excluded from recommendations for every account');
+    check(archived.body.history.some((event:any)=>event.data.questionId===questionId),'school deletion preserves historical answers');
+    await db.query('insert into support_targets(id,student_id,data) values($1,$2,$3)',['replacement-'+randomUUID(),students[actor],JSON.stringify(snapshot)]);
+    check((await request(actor)).body.nextQuestion?.questionId!==questionId,'re-registration does not silently adopt old registration history');
+    await db.query('update support_targets set student_id=$2,data=$3 where id=$1',[targetId,students[1-actor],JSON.stringify(snapshot)]);
+    check((await request(actor)).body.nextQuestion?.questionId!==questionId,'an active registration owned by another account never authorizes a recommendation');
+  }
   console.log(`PASS ${count} study-session checks (auth, ownership, multi-tab, retries, factual reports, timeout, ungraded oral, idle/exit recovery; paid API calls 0).`);
 }finally{
+  await db.query('delete from support_targets where student_id=any($1::uuid[])',[all]);
   await db.query('delete from study_sessions where student_id=any($1::uuid[])',[all]);
   await db.query('delete from memory_attempts where student_id=any($1::uuid[])',[all]);
   await db.query('delete from interview_sessions where student_id=any($1::uuid[])',[all]);

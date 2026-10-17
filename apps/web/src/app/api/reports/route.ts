@@ -12,6 +12,7 @@ export async function GET(request:Request) {
   try {
     const params=new URL(request.url).searchParams,scope:Record<string,string>={};
     for(const key of ['sessionId','reportId','studySessionId'])if(params.get(key)){const result=uuid.safeParse(params.get(key));if(!result.success)throw new ApiError(400,'기록 주소를 확인해 주세요.');scope[key]=result.data;}
+    if(params.has('targetId')){const value=params.get('targetId')||'';if(!value||value.length>200)throw new ApiError(400,'지원 학교를 확인해 주세요.');scope.targetId=value;}
     return Response.json(await getGrowthPayload(await requireUser(),scope),{headers});
   }catch(error){return errorResponse(error);}
 }

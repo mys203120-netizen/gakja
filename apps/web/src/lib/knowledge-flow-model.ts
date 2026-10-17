@@ -35,5 +35,6 @@ export function connectKnowledgeQuestions(videos: KnowledgeMatch[], questions: K
 }
 
 export function knowledgeCheckPrompt(topic: string, question?: KnowledgeQuestion | null) {
+  if(question?.sourceSnapshot?.kind==='department_learning')return '개념의 뜻과 근거를 설명하고, 지원 학과와 연결한 예시·한계를 말해 보세요. 실제 경험과 앞으로 탐구할 계획을 구분해 주세요.';
   return question ? question.sourceKind === 'common' ? '배운 개념을 위 질문에 어떻게 활용할 수 있나요? 학교의 가치와 실제 경험을 연결하거나, 앞으로 실천할 방법을 말해 보세요.' : '배운 개념을 위 질문에 어떻게 활용할 수 있나요? 내 활동의 근거와 연결해 보세요.' : `${topic}에서 기억할 개념 하나와 아직 확인할 점을 내 말로 설명해 보세요.`;
 }

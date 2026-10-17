@@ -5,6 +5,7 @@ import type { Profile } from './auth';
 import { ApiError, transaction } from './db';
 import { answerAssistance, memoryReviewOutcome, quizAnswerContext } from './learning-record-rules';
 import type { LearningData } from '@gakja/content-contracts';
+import { recordMatchesCurrentTarget } from './learning-target-scope';
 import { nextUnappliedQuestion } from './next-learning-question';
 import { growthContextResolver, type GrowthVersion } from './learning-growth';
 
@@ -172,7 +173,9 @@ export async function getStudySessions(user: Profile, id?: string | null) {
     const sessions = (await db.query("select id,student_id,state,started_at,last_seen_at,last_activity_at,closing_at,ended_at,finish_reason,report-'events' as report from study_sessions where student_id=$1 and state='finalized' and coalesce((report->>'eventCount')::int,0)>0 order by started_at desc,id desc",[user.id])).rows;
     const allEvents = await normaliseSourceFacts(db,user.id,(await db.query('select id,kind,source_id,data,created_at,false as historical from study_session_events where student_id=$1 union all select id,kind,source_id,data,occurred_at as created_at,true as historical from study_imported_events where student_id=$1 order by created_at,id',[user.id])).rows);
     const totals = studySummary(allEvents);
-    const recent = nextUnappliedQuestion(allEvents);
+    const activeTargets=(await db.query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null",[user.id])).rows.map(row=>({...row.data,id:row.id}));
+    // Historical totals remain intact; only owned, currently registered identities can recommend practice.
+    const recent = nextUnappliedQuestion(allEvents.filter(event=>recordMatchesCurrentTarget(event.data,activeTargets)));
     const nextQuestion = recent?{questionId:recent.data.questionId,memoryItemId:recent.data.memoryItemId,practiceKind:recent.data.practiceKind,prompt:recent.data.practicePrompt||recent.data.prompt||recent.data.question,activityIds:recent.data.activityIds||[],targetId:recent.data.targetId||recent.data.target_id||null,targetSnapshot:recent.data.targetSnapshot||recent.data.target_snapshot||null,sourceType:recent.data.sourceType||recent.data.source_type||null,commonRevision:recent.data.commonRevision||recent.data.common_revision||null,assisted:recent.data.assisted===true||recent.data.hintUsed===true}:null;
     return {current:await view(db,current),latest:sessions[0]||null,sessions,totals,history:allEvents,nextQuestion};
   });

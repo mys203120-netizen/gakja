@@ -54,6 +54,7 @@ export function planPracticeEventMatches(plan: Record<string, any>, event: Recor
   if (!target) return false;
   const eventTime = new Date(event.created_at), createdAt = new Date(plan.created_at);
   if (!Number.isFinite(eventTime.getTime()) || !Number.isFinite(createdAt.getTime()) || eventTime < createdAt || koreaToday(eventTime) < plan.date) return false;
+  if((target as Record<string,any>).automaticPractice&&koreaToday(eventTime)!==plan.date)return false;
   const data = event.data || {};
   if (target.kind === 'video') return event.kind === 'knowledge_progress' && data.videoId === target.id && (data.completed === true || data.explanationSaved === true || data.action === 'reflection' && Boolean(data.reflection?.trim()));
   if (target.kind === 'assignment') return data.assignmentId === target.id && event.kind === 'assignment_submission';

@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useState,type CSSProperties} from 'react';
 import {ChevronLeft,ChevronRight,Plus,Check,CalendarDays} from 'lucide-react';
+import {AutomaticPracticePlan} from './automatic-practice-plan';
 import {useApp} from './app-shell';
 import {api,post,Modal,Alert,type Item,targetName} from './shared';
 import {koreaToday,monthDays,planWeek,shiftPlanDay,validPlanDay,type PlanTargetOption} from '@/lib/planner-model';
@@ -23,7 +24,7 @@ function DecisionSource({decision,checkedAt}:{decision:OfficialScheduleDecision;
 }
 type CalendarEvent={id:string;date?:string;start?:string;end?:string;title:string;kind:'plan'|'interview'|'assignment';plan?:Item;href?:string;personalAt?:string;schoolSchedule?:InterviewScheduleItem;targetId?:string};
 function localDay(value?:string){if(!value)return '';const date=new Date(value);return Number.isFinite(date.getTime())?koreaToday(date):'';}
-export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],interviewScheduleCoverage,loaded=true}:{plans:Item[];onPlans:(plans:Item[])=>void;tasks:Item[];interviewSchedules?:InterviewScheduleItem[];interviewScheduleCoverage?:InterviewScheduleCoverage;loaded?:boolean}) {
+export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],interviewScheduleCoverage,loaded=true,automaticPractice=[],onAutomaticPractice}:{plans:Item[];onPlans:(plans:Item[])=>void;tasks:Item[];interviewSchedules?:InterviewScheduleItem[];interviewScheduleCoverage?:InterviewScheduleCoverage;loaded?:boolean;automaticPractice?:Item[];onAutomaticPractice?:(items:Item[])=>void}) {
   const {data}=useApp(),today=koreaToday(),[month,setMonth]=useState(today.slice(0,7)),[selected,setSelected]=useState(today),[adding,setAdding]=useState(false),[editing,setEditing]=useState<Item|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   const registeredSchools=new Set(data.targets.map(target=>target.school_reference_id||targetName(target))).size;
   const schoolSchedules=interviewSchedules.filter(item=>validPlanDay(item.startDate)&&validPlanDay(item.endDate)&&item.startDate<=item.endDate);
@@ -83,13 +84,14 @@ export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],inte
           {sourceNote&&<small>{sourceNote}</small>}
           {(sourceUrl||sourceLabel||source.checkedAt)&&<div className="calendar-source-evidence">{sourceUrl?<a className="calendar-source-link" href={sourceUrl} target="_blank" rel="noreferrer" aria-label={`${source.university} ${source.trackLabel} ${sourceLabel} 일정 원문`}>{sourceLabel?`${sourceLabel} `:''}{sourceLabel==='관리자'?'참고 출처':'일정 원문'}<ChevronRight size={12}/></a>:sourceLabel&&<span>{sourceLabel} 설정</span>}{source.checkedAt&&<time dateTime={source.checkedAt}>{scheduleDateLabel(source.checkedAt)} 확인</time>}</div>}
         </>:event.kind==='interview'?<><small>{[target?.campus,target?.department||target?.major].filter(Boolean).join(' · ')}</small>{event.personalAt?appointmentLabel&&<small>{appointmentLabel}</small>:event.start&&<small>응시일·시간 발표 대기</small>}</>:null}
-        {event.plan&&<div className="plan-evidence"><small>{event.plan.completed?'직접 체크함':'직접 체크 전'}</small>{event.plan.performedAt&&<small className="plan-recorded">연습 기록 있음</small>}{event.plan.target&&!event.plan.targetAvailable&&<small>연결 자료가 변경됐어요</small>}</div>}
+        {event.plan&&<div className="plan-evidence">{event.plan.target?.automaticPractice&&<small>자동 계획 · 약 {event.plan.target.automaticPractice.minutes}분</small>}<small>{event.plan.completed?'직접 체크함':'직접 체크 전'}</small>{event.plan.performedAt&&<small className="plan-recorded">연습 기록 있음</small>}{event.plan.target&&!event.plan.targetAvailable&&<small>연결 자료가 변경됐어요</small>}</div>}
       </div>
       {event.plan&&<button className="text-link plan-edit" onClick={()=>setEditing(event.plan!)}>수정</button>}
     </div>;
   }
   return <section className="dashboard-planner dashboard-calendar-panel" id="dashboard-planner" tabIndex={-1} aria-labelledby="dashboard-calendar-title">
     <div className="section-heading"><h2 id="dashboard-calendar-title">계획과 면접 일정</h2><button className="text-link" onClick={()=>setAdding(true)}><Plus size={15}/>계획 추가</button></div>
+    <AutomaticPracticePlan plans={plans} onPlans={onPlans} configuration={automaticPractice} onConfiguration={onAutomaticPractice}/>
     {data.targets.length>0&&<div className={styles.calendarScope}><p>지원 학교 전체<span>{registeredSchools}개 학교{data.targets.length>registeredSchools?` · ${data.targets.length}개 지원처`:''}</span></p></div>}
     {interviewScheduleCoverage?.source&&<p className="calendar-source-summary"><span>{interviewScheduleCoverage.source.admissionYear}학년도 수시</span>{hasOfficialSource&&interviewScheduleCoverage.officialCheckedAt?<span>입학처 · <time dateTime={interviewScheduleCoverage.officialCheckedAt}>{scheduleDateLabel(interviewScheduleCoverage.officialCheckedAt)}</time> 확인</span>:interviewScheduleCoverage.source.checkedAt&&<span><time dateTime={interviewScheduleCoverage.source.checkedAt}>{scheduleDateLabel(interviewScheduleCoverage.source.checkedAt)}</time> 확인</span>}{hasManagedSource&&<span>관리자 설정</span>}</p>}
     {interviewScheduleCoverage?.stale&&<p className="calendar-status" role="status">{interviewScheduleCoverage.lastRefreshFailed?'최신 일정 연결이 지연되어 마지막 확인 자료를 보여드려요.':'마지막 확인 자료를 표시하고 있어요.'}{visibleCalendarSourceUrl(interviewScheduleCoverage.source.url)&&<> <a href={visibleCalendarSourceUrl(interviewScheduleCoverage.source.url)} target="_blank" rel="noreferrer">일정 원문 확인</a></>}</p>}

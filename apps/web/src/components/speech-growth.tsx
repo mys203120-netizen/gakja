@@ -18,7 +18,7 @@ export function resolveGrowthNext(next:Item|undefined,context?:CurrentPracticeCo
   if(!question||question.source_type&&question.source_type!=='personal')return next;
   const eligible=Array.isArray(question.support_target_ids)?question.support_target_ids:[];
   if(eligible.length&&!eligible.includes(context.targetId))return next;
-  const params=new URLSearchParams({questionId:next.questionId,targetId:context.targetId,sourceType:'personal',sourceVersion:String(context.contentVersion)});
+  const params=new URLSearchParams(String(next.href).split('?')[1]);params.set('questionId',next.questionId);params.set('targetId',context.targetId);params.set('sourceType','personal');params.set('sourceVersion',String(context.contentVersion));
   return {...next,prompt:question.prompt||next.prompt,href:'/interview/new?'+params.toString()};
 }
 export function contentCueLabel(element:Item):string {
@@ -35,14 +35,15 @@ export function SpeechGrowth({reportId,studySessionId,currentContext}:{reportId?
   const [info,setInfo]=useState<Item|null>(null),[loadedScope,setLoadedScope]=useState(''),[error,setError]=useState(''),[selected,setSelected]=useState(''),[busy,setBusy]=useState(false);
   const [transcribing,setTranscribing]=useState(false);
   const audio=useRef<HTMLAudioElement>(null);
-  const scope=JSON.stringify([reportId||'',studySessionId||'']),activeScope=useRef(scope),requestEpoch=useRef(0),mounted=useRef(true),controller=useRef<AbortController|null>(null);
+  const targetScope=reportId||studySessionId?'':currentContext?.targetId||'';
+  const scope=JSON.stringify([reportId||'',studySessionId||'',targetScope]),activeScope=useRef(scope),requestEpoch=useRef(0),mounted=useRef(true),controller=useRef<AbortController|null>(null);
   activeScope.current=scope;
   const reload=useCallback(async()=>{
-    const key=JSON.stringify([reportId||'',studySessionId||'']),epoch=++requestEpoch.current;
+    const key=JSON.stringify([reportId||'',studySessionId||'',targetScope]),epoch=++requestEpoch.current;
     controller.current?.abort();const abort=new AbortController();controller.current=abort;
-    try{const params=new URLSearchParams();if(reportId)params.set('reportId',reportId);if(studySessionId)params.set('studySessionId',studySessionId);const next=await api('/api/reports'+(params.size?'?'+params:''),{cache:'no-store',signal:abort.signal});if(mounted.current&&activeScope.current===key&&requestEpoch.current===epoch){setInfo(next);setLoadedScope(key);setError('');}}
+    try{const params=new URLSearchParams();if(targetScope)params.set('targetId',targetScope);if(reportId)params.set('reportId',reportId);if(studySessionId)params.set('studySessionId',studySessionId);const next=await api('/api/reports'+(params.size?'?'+params:''),{cache:'no-store',signal:abort.signal});if(mounted.current&&activeScope.current===key&&requestEpoch.current===epoch){setInfo(next);setLoadedScope(key);setError('');}}
     catch(err){if(!abort.signal.aborted&&mounted.current&&activeScope.current===key&&requestEpoch.current===epoch)setError((err as Error).message);}
-  },[reportId,studySessionId]);
+  },[reportId,studySessionId,targetScope]);
   useEffect(()=>{mounted.current=true;setInfo(null);setSelected('');setError('');void reload();const update=()=>{if(document.visibilityState==='visible')void reload();};window.addEventListener('focus',update);window.addEventListener('gakja:report-growth',update);return()=>{mounted.current=false;requestEpoch.current++;controller.current?.abort();window.removeEventListener('focus',update);window.removeEventListener('gakja:report-growth',update);};},[reload]);
   const visibleInfo=loadedScope===scope?info:null;
   const recordings:Item[]=visibleInfo?.speech?.recordings||[],current=recordings.find(recording=>recording.id===selected)||recordings.find(recording=>recording.id===visibleInfo?.speech?.defaultRecordingId&&recording.growthEligible!==false)||recordings.find(recording=>recording.growthEligible!==false)||recordings[0],analysis=current?.analysis,timing=analysis?.timing,transcript=analysis?.transcript;
@@ -64,7 +65,8 @@ export function SpeechGrowth({reportId,studySessionId,currentContext}:{reportId?
   const next=resolveGrowthNext(visibleInfo?.next,currentContext,Boolean(reportId||studySessionId));
   return <div className="speech-growth-view">
     {error&&<Alert>{error}</Alert>}
-    {next&&<div className="speech-next"><div><span>다음 연습</span><h3>{next.prompt}</h3><p>{next.reason}</p></div><Link className="button primary" href={next.href}>{next.questionId?'다시 말하기':recordings.length?'녹음 시작':'첫 녹음 시작'}<ArrowUpRight size={17}/></Link></div>}
+    {next&&<div className="speech-next"><div><span>다음 연습</span><h3>{next.prompt}</h3><p>{next.reason}</p></div><Link className="button primary" href={next.href}>{next.questionId?'다시 말하기':recordings.length?'녹음 시작':'첫 녹음 시작'}<ArrowUpRight size={17}/></Link></div>}
+
     {(comparisons.length>0||!visibleInfo?.content?.newsComparisons?.length)&&<section className="speech-growth-section content-growth"><div className="section-heading"><h2>답변 내용의 변화</h2><Link href="/records/comparisons" className="text-link">전체 답변 비교<ArrowUpRight size={16}/></Link></div>
       {comparisons.length?comparisons.slice(0,1).map(comparison=><article className="content-growth-question" key={comparison.questionId+'|'+comparison.after.id}><h3>{comparison.prompt}</h3><div className="content-growth-dates"><span>{dateLabel(comparison.before.created_at)}</span><ArrowUpRight size={14}/><span>{dateLabel(comparison.after.created_at)}</span>{comparisonAttemptLabels(comparison).map(label=><span key={label}>{label}</span>)}</div>
         {comparison.attempt?.note&&<p className="speech-caption">{comparison.attempt.note}</p>}

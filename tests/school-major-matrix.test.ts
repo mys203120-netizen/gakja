@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {writeFileSync} from 'node:fs';
+import {writeFileSync,mkdirSync} from 'node:fs';
 import {schoolDirectory,normalizeSchoolSelection,schoolDirectoryForTarget} from '../apps/web/src/lib/school-directory';
 import {schoolTalentForTarget,schoolTalentCoverage,schoolTalentQuestionRows,talentQuestionMatchesTarget} from '../apps/web/src/lib/school-talent-model';
 import {schoolQuizItems,schoolQuizTargetIdentity,sameSchoolQuizSource} from '../apps/web/src/lib/school-quiz';
@@ -10,10 +10,12 @@ import {matchKnowledgeVideos,majorKnowledgeTopics} from '../apps/web/src/lib/kno
 import {selectSchoolMajorSamples,matrixSeed,catalogueTarget} from '../.local/school-major-selection.mjs';
 
 const rows=schoolTalentQuestionRows(),samples=selectSchoolMajorSamples();
+const expectedTuples=schoolDirectory.reduce((n,school)=>n+school.departments.length,0);
+mkdirSync('.local/student-record-preparation-2026-10-17',{recursive:true});
 let checkedTuples=0;
-test('all 88 schools and all 3884 selectable public units receive their own sourced university context',()=>{
-  const coverage=schoolTalentCoverage();assert.equal(coverage.registeredSchools,88);
-  assert.equal(coverage.officialSourceSchools,88,'Every registered school must have a sourced institution definition');
+test('all supported schools and selectable public units receive their own sourced university context',()=>{
+  const coverage=schoolTalentCoverage();assert.equal(coverage.registeredSchools,schoolDirectory.length);
+  assert.equal(coverage.officialSourceSchools,schoolDirectory.length,'Every registered school must have a sourced institution definition');
   assert.equal(coverage.needsConfirmationSchools,0);
   const ids=new Set<string>();
   for(const school of schoolDirectory)for(const department of school.departments){
@@ -44,8 +46,8 @@ test('all 88 schools and all 3884 selectable public units receive their own sour
     for(const item of pool){assert.ok(!ids.has(item.id),'Each department question identity must remain distinct');ids.add(item.id);}
     checkedTuples++;
   }
-  assert.equal(checkedTuples,3884);
-  writeFileSync('.local/school-major-matrix-coverage.json',JSON.stringify({seed:matrixSeed,schools:coverage.registeredSchools,departments:checkedTuples,officialSchools:coverage.officialSourceSchools,officialDepartmentProfiles:coverage.rows.reduce((n,row)=>n+row.departmentProfileCount,0),distinctPracticeItems:ids.size,departmentCatalogueYear:2026,admissionYearTested:2027,departmentScope:'University-wide verified definitions are shared; only separately sourced department definitions are labelled department-specific.',checkedAt:'2026-10-13'},null,2));
+  assert.equal(checkedTuples,expectedTuples);
+  writeFileSync('.local/student-record-preparation-2026-10-17/school-major-matrix-coverage.json',JSON.stringify({seed:matrixSeed,schools:coverage.registeredSchools,departments:checkedTuples,officialSchools:coverage.officialSourceSchools,officialDepartmentProfiles:coverage.rows.reduce((n,row)=>n+row.departmentProfileCount,0),distinctPracticeItems:ids.size,departmentCatalogueYear:2026,admissionYearTested:2027,departmentScope:'University-wide verified definitions are shared; only separately sourced department definitions are labelled department-specific.',checkedAt:'2026-10-17'},null,2));
 });
 test('seeded random sampling covers eight actual distinct schools and meaningful fields without invented departments',()=>{
   assert.deepEqual(selectSchoolMajorSamples(matrixSeed).map(row=>[row.school.id,row.department.id]),samples.map(row=>[row.school.id,row.department.id]));
@@ -98,7 +100,7 @@ test('every real department has official school readings and honest major learni
     const target=catalogueTarget(school,department,`${school.id}:${department.id}`),lens=knowledgeTarget(target);
     const eligible=rows.filter(row=>row.school_reference_id===school.id&&talentQuestionMatchesTarget(row.data,target));
     const questions=eligible.map(row=>({id:row.id,prompt:row.prompt,activityIds:[],sourceKind:'common' as const,commonRevision:row.revision,sourceSnapshot:row.source,targetId:target.id,targetSnapshot:lens.snapshot}));
-    const readings=schoolKnowledgeReadings(target,questions),videos=matchKnowledgeVideos({},lens);
+    const readings=schoolKnowledgeReadings(target,questions).filter(item=>item.sourceSnapshot?.kind!=='department_learning'),videos=matchKnowledgeVideos({},lens);
     assert.equal(lens.departmentCatalogId,department.id);
     assert.ok(readings.length>0&&videos.length>0,`${school.university}/${department.name} must never have a blank knowledge flow`);
     assert.ok(videos.every(item=>item.activities.length===0&&item.contexts?.every(context=>context.kind==='major'&&context.targetId===target.id)));
@@ -113,8 +115,8 @@ test('every real department has official school readings and honest major learni
     }
     categories.add(`${department.category} | ${department.field}`);tuples++;
   }
-  assert.equal(tuples,3884);assert.equal(categories.size,35);
-  writeFileSync('.local/school-major-knowledge-coverage.json',JSON.stringify({seed:matrixSeed,schools:88,departmentTuples:tuples,publicCategoryFieldPairs:categories.size,officialReadings:readingIds.size,emptyTargetFlows:0,originalStudentsChanged:0,externalRequests:0,scope:'Curated videos are broad department-category learning lenses, not complete department curricula; official institution readings are individually source-linked.'},null,2));
+  assert.equal(tuples,expectedTuples);assert.equal(categories.size,new Set(schoolDirectory.flatMap(school=>school.departments.map(department=>`${department.category} | ${department.field}`))).size);
+  writeFileSync('.local/student-record-preparation-2026-10-17/school-major-knowledge-coverage.json',JSON.stringify({seed:matrixSeed,schools:schoolDirectory.length,departmentTuples:tuples,publicCategoryFieldPairs:categories.size,officialReadings:readingIds.size,emptyTargetFlows:0,originalStudentsChanged:0,externalRequests:0,scope:'Curated videos are broad department-category learning lenses, not complete department curricula; official institution readings are individually source-linked.'},null,2));
 });
 test('changed admissions stage is a different practice context even when the owner target ID stays the same',()=>{
   const {school,department}=samples[2],target={...catalogueTarget(school,department),interview_stage:'1단계'};

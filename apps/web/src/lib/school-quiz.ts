@@ -17,7 +17,7 @@ export function schoolQuizTargetIdentity(target:Record<string,any>|null) {
   return {id:target.id,university:school?.canonicalName || target.university || '',school_reference_id:school?.id || null,
     campus,department:major,major,department_catalog_id:department?.id || null,
     admission_year:target.admission_year || target.year || null,admission_type:target.admission_type || target.track || '',
-    interview_stage:target.interview_stage || target.stage || null,department_field:department?.field || null};
+    interview_stage:target.interview_stage || target.stage || null,department_field:department?.field || null,...(target.interest_department?{interest_department:target.interest_department}:{})};
 }
 /** These are interpretation/experience questions, never objective admission grades. */
 export function schoolQuizItems(questions:Record<string,any>[],target:Record<string,any>|null,selection:{activity?:Record<string,any>|null;sourceRefs?:Record<string,any>[]}={}):SchoolQuizItem[] {
@@ -39,6 +39,7 @@ export function schoolQuizItems(questions:Record<string,any>[],target:Record<str
       common_revision:Number(question.common_revision),source_snapshot:source,target_id:target?.id || null,target_snapshot:snapshot,
       ...(question.talent_profile?{talent_profile:structuredClone(question.talent_profile)}:{}),
       ...(question.talent_context?{talent_context:structuredClone(question.talent_context)}:{}),
+      ...(question.department_context?{department_context:structuredClone(question.department_context)}:{}),
     };
   });
 }
@@ -53,7 +54,7 @@ export function quizSchoolMetadata(item:SessionItem):Record<string,any> {
 export function sameSchoolQuizSource(saved:SessionItem,current:SessionItem) {
   const a=saved as Partial<SchoolQuizItem>,b=current as Partial<SchoolQuizItem>;
   if(a.source_kind!=='common' && b.source_kind!=='common')return true;
-  const fields=['id','school_reference_id','university','campus','department','major','department_catalog_id','admission_year','admission_type','interview_stage'];
+  const fields=['id','school_reference_id','university','campus','department','major','department_catalog_id','admission_year','admission_type','interview_stage','interest_department'];
   return a.source_kind===b.source_kind && a.target_id===b.target_id && Number(a.common_revision)===Number(b.common_revision)
     && fields.every(field=>String(a.target_snapshot?.[field] ?? '')===String(b.target_snapshot?.[field] ?? ''));
 }

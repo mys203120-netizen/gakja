@@ -115,6 +115,27 @@ function recordAnchors(learning: LearningRecord) {
 /** Public major metadata supplies a learning lens, never a claim about the student's past. */
 export function majorKnowledgeTopics(target: KnowledgeTarget): string[] {
   if (!target.departmentCatalogId) return ['근거 검토', '자료 해석'];
+  // Fine-grained names take precedence over a broad disclosure category.
+  const fullName=target.department.normalize('NFKC');
+  const specialization=fullName.match(/\(([^()]+전공)\)$/u)?.[1]||fullName.match(/\s+([^\s]+전공)$/u)?.[1];
+  const name=(specialization||fullName).replace(/\s/g,'');
+  if(/환경|수처리|수자원/.test(name))return ['수질과 정수','탄소 순환','자료 해석','공동 자원'];
+  if(/컴퓨터|소프트웨어|인공지능|데이터사이언스|정보보호/.test(name))return ['알고리즘','자료 해석','윤리와 선택'];
+  if(/전기|전자|반도체/.test(name))return ['관찰과 발견','자료 해석','알고리즘'];
+  if(/간호/.test(name))return ['항생제 내성','경청과 협업','윤리와 선택'];
+  if(/경영|경제|금융|회계/.test(name))return ['시장과 기대','자료 해석','윤리와 선택'];
+  if(/기계|로봇|모빌리티/.test(name))return ['관찰과 발견','알고리즘','자료 해석'];
+  if(/생명|바이오/.test(name))return ['유전자 발현','효소','생물다양성'];
+  if(/화학|화공|신소재|에너지/.test(name))return ['관찰과 발견','플라스틱','탄소 순환'];
+  if(/식품|영양/.test(name))return ['효소','자료 해석','공동 자원'];
+  if(/법학|철학|심리|사회복지|아동/.test(name))return ['윤리와 선택','근거 검토','경청과 협업'];
+  if(/수학|물리|천문|지구과학|통계/.test(name))return ['자료 해석','관찰과 발견','근거 검토'];
+  if(/교육/.test(name))return ['연습과 학습','경청과 협업','근거 검토'];
+  if(/음악|작곡|성악|기악/.test(name))return ['음악 읽기','연습과 학습','경청과 협업'];
+  if(/디자인|미술|회화|공예/.test(name))return ['관찰과 발견','정보와 미디어','근거 검토'];
+  if(/체육|스포츠|무용/.test(name))return ['연습과 학습','경청과 협업','자료 해석'];
+  if(/연극|영화|뮤지컬|공연/.test(name))return ['정보와 미디어','경청과 협업','윤리와 선택'];
+  if(/국문|영문|문학|어문|어전공|사학|역사|문헌정보/.test(name))return ['정보와 미디어','근거 검토','경청과 협업'];
   const category = target.departmentCategory || '';
   const topics: Record<string, string[]> = {
     '인문학': ['근거 검토', '윤리와 선택', '정보와 미디어'], '언어・문학': ['정보와 미디어', '근거 검토', '경청과 협업'],

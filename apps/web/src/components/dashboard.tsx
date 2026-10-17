@@ -6,10 +6,11 @@ import {useApp} from './app-shell';
 import {ActionButton,dateLabel,LinkedRow,api,Alert,targetName,type Item} from './shared';
 import {DashboardPlanner,type InterviewScheduleItem,type InterviewScheduleCoverage} from './dashboard-planner';
 import {koreaToday} from '@/lib/planner-model';
+import {todayPlanAgenda} from '@/lib/automatic-practice';
 import {chooseTodayAction,learningHref} from '@/lib/learning-journey';
 import {practiceHelpLabel,questionPracticeState,todayQuestionContext} from '@/lib/learning-flow-view';
 import {DepartmentNews} from './department-news';
-import {inLearningTargetScope,splitInterviewsByLearningTarget} from '@/lib/learning-target-scope';
+import {splitInterviewsByLearningTarget} from '@/lib/learning-target-scope';
 import {learningTargetIdentityMatches} from '@gakja/content-contracts/workflows';
 import {learningScopeIdentity} from '@/lib/learning-target-scope';
 import styles from './learning-flow-ui.module.css';
@@ -22,10 +23,11 @@ export function Dashboard() {
   const [workflows,setWorkflows]=useState<Item|null>(null),[study,setStudy]=useState<Item|null>(null),[plans,setPlans]=useState<Item[]>([]),[videos,setVideos]=useState<Item[]>([]),[quiz,setQuiz]=useState<Item|null>(null),[schools,setSchools]=useState<Item|null>(null),[error,setError]=useState(''),[ready,setReady]=useState(false);
   const [plannerLoaded,setPlannerLoaded]=useState(false),[knowledgeLoaded,setKnowledgeLoaded]=useState(false),[readingView,setReadingView]=useState<ReadingView>('briefing');
   const [interviewSchedules,setInterviewSchedules]=useState<InterviewScheduleItem[]>([]),[interviewScheduleCoverage,setInterviewScheduleCoverage]=useState<InterviewScheduleCoverage>();
+  const [automaticPractice,setAutomaticPractice]=useState<Item[]>([]);
   const [loading,setLoading]=useState({scope:loadScope,learning:true,planner:true,study:true,knowledge:true,quiz:true,schools:true});
   useEffect(()=>{
     let disposed=false;const controller=new AbortController(),pendingCore=new Set(['learning','study','quiz']);let coreFailed=false;
-    setReady(false);setError('');setWorkflows(null);setStudy(null);setQuiz(null);setSchools(null);setPlans([]);setVideos([]);setInterviewSchedules([]);setInterviewScheduleCoverage(undefined);setPlannerLoaded(false);setKnowledgeLoaded(false);
+    setReady(false);setError('');setWorkflows(null);setStudy(null);setQuiz(null);setSchools(null);setPlans([]);setAutomaticPractice([]);setVideos([]);setInterviewSchedules([]);setInterviewScheduleCoverage(undefined);setPlannerLoaded(false);setKnowledgeLoaded(false);
     setLoading({scope:loadScope,learning:true,planner:true,study:true,knowledge:true,quiz:true,schools:true});
     const scope=target?.id?'?targetId='+encodeURIComponent(target.id):'';
     function load(key:'learning'|'planner'|'study'|'knowledge'|'quiz'|'schools',url:string,apply:(value:Item)=>void){
@@ -40,7 +42,7 @@ export function Dashboard() {
       });
     }
     load('learning','/api/learning',setWorkflows);
-    load('planner','/api/planner',value=>{setPlans(value.plans||[]);setInterviewSchedules(value.interviewSchedules||[]);setInterviewScheduleCoverage(value.interviewScheduleCoverage);setPlannerLoaded(true);});
+    load('planner','/api/planner',value=>{setPlans(value.plans||[]);setAutomaticPractice(value.automaticPractice||[]);setInterviewSchedules(value.interviewSchedules||[]);setInterviewScheduleCoverage(value.interviewScheduleCoverage);setPlannerLoaded(true);});
     load('study','/api/study-sessions',setStudy);
     load('knowledge','/api/knowledge-bites'+scope,value=>{setVideos((value.videos||[]).filter((v:Item)=>v.current));setKnowledgeLoaded(true);});
     load('quiz','/api/quiz'+scope,setQuiz);
@@ -54,8 +56,8 @@ export function Dashboard() {
   const calendarTasks:Item[]=(workflows?.assignments||[]).filter((t:Item)=>!['reviewed','completed','cancelled'].includes(t.state));
   const tasks:Item[]=calendarTasks.filter((t:Item)=>!t.target_id||t.target_id===target?.id);
   const readiness=workflows?.readiness?.find((r:Item)=>r.target_id===target?.id);
-  const planOrder=(plan:Item)=>plan.completed?2:plan.performedAt?1:0;
-  const todayPlans=plans.filter(p=>p.date===today&&inLearningTargetScope(p.target?.targetId||p.target_id,target?.id||'')).sort((a,b)=>planOrder(a)-planOrder(b)),remaining=todayPlans.filter(p=>!p.completed&&!p.performedAt).length;
+  const todayPlans=todayPlanAgenda(plans,today,target?.id),remaining=todayPlans.filter(p=>!p.completed&&!p.performedAt).length;
+  const preparation=automaticPractice.find(item=>item.targetId===target?.id);
   const interviews=splitInterviewsByLearningTarget(data.interviews||[],target).current;
   const active=interviews.find(s=>s.state==='active');
   const scopedQuiz=quiz?{...quiz,sessions:(quiz.sessions||[]).filter((session:Item)=>{
@@ -84,9 +86,10 @@ export function Dashboard() {
     </section>
     <div className={styles.workspace}>
       <section className={styles.agenda} aria-labelledby="dashboard-agenda-title"><div className={styles.sectionHeading}><h2 id="dashboard-agenda-title"><CalendarDays size={18}/>오늘 할 일</h2><Link className="text-link" href="/quiz/assignments">과제 전체<ArrowUpRight size={14}/></Link></div><div className={styles.indented}>
+        {preparation&&<p className={styles.smallNote}><strong>{preparation.daysLeft>0?`D-${preparation.daysLeft}`:preparation.daysLeft===0?'D-day':'면접일 지남'}</strong> · {preparation.status==='paused'?'자동 계획 중지':preparation.daysLeft<0?'다음 면접일을 확인해 주세요':preparation.phaseLabel}<br/>{preparation.dateLabel} · {preparation.date}</p>}
         {(remaining>0||tasks.length>0)&&<p className={styles.smallNote}>{[remaining>0?`남은 계획 ${remaining}개`:null,tasks.length>0?`과제 ${tasks.length}개`:null].filter(Boolean).join(' · ')}</p>}
         <div className={styles.agendaItems}>{tasks.slice(0,2).map(t=><LinkedRow key={t.id} href={`/quiz/assignments/${t.id}`} title={t.title||'퀴즈 과제'} subtitle={`${t.items?.length||0}문항${t.due_at?` · ${dateLabel(t.due_at)}까지`:''}`} end={<span className={styles.itemState}>{t.state==='submitted'?'검토 중':'풀기'}{t.state!=='submitted'&&<ArrowUpRight size={14}/>}</span>}/>)}
-          {todayPlans.slice(0,3).map(p=><div key={p.id} className={`${styles.todayPlan} ${p.completed?styles.completed:''}`}>{p.completed?<Check size={15}/>:<Clock3 size={15}/>}<span>{p.title}{p.performedAt?' · 실제 연습 기록 있음':''}</span>{p.href&&(!p.completed||p.performedAt)&&<Link className="text-link" href={p.href}>{p.performedAt?'다시 연습':'시작'}<ArrowUpRight size={13}/></Link>}</div>)}
+          {todayPlans.slice(0,3).map(p=><div key={p.id} className={`${styles.todayPlan} ${p.completed?styles.completed:''}`}>{p.completed?<Check size={15}/>:<Clock3 size={15}/>}<span>{p.overdue?'밀린 직접 계획 · ':''}{p.title}{p.performedAt?' · 실제 연습 기록 있음':''}</span>{p.href&&(!p.completed||p.performedAt)&&<Link className="text-link" href={p.href}>{p.performedAt?'다시 연습':'시작'}<ArrowUpRight size={13}/></Link>}</div>)}
           {!tasks.length&&!todayPlans.length&&<p className={styles.emptyNote}>{loading.learning||loading.planner?'할 일을 불러오고 있어요.':!workflows||!plannerLoaded?'할 일을 모두 확인하지 못했어요.':'예정된 할 일이 없어요. 오늘의 질문부터 가볍게 시작해요.'}</p>}
         </div><nav className={styles.quietLinks} aria-label="직접 연습하기">{data.package&&<Link href="/quiz?focus=free">퀴즈 연습<ArrowUpRight size={14}/></Link>}<Link href={active?`/interview/${active.id}?kind=${active.kind}`:'/interview'}>{active?'면접 이어가기':'모의면접'}<ArrowUpRight size={14}/></Link></nav>
       </div></section>
@@ -96,7 +99,7 @@ export function Dashboard() {
       </div></section>
     </div>
     <div className={styles.lowerWorkspace}>
-    <div className={styles.calendar}>{!loading.planner&&!plannerLoaded?<p className={styles.emptyNote}>일정을 확인하지 못했어요. <Link className="text-link" href={target?`/schools/${target.id}`:'/schools/new'}>학교 일정 안내<ArrowUpRight size={14}/></Link></p>:<DashboardPlanner plans={plans} onPlans={setPlans} tasks={calendarTasks} interviewSchedules={interviewSchedules} interviewScheduleCoverage={interviewScheduleCoverage} loaded={plannerLoaded}/>}</div>
+    <div className={styles.calendar}>{!loading.planner&&!plannerLoaded?<p className={styles.emptyNote}>일정을 확인하지 못했어요. <Link className="text-link" href={target?`/schools/${target.id}`:'/schools/new'}>학교 일정 안내<ArrowUpRight size={14}/></Link></p>:<DashboardPlanner plans={plans} onPlans={setPlans} tasks={calendarTasks} interviewSchedules={interviewSchedules} interviewScheduleCoverage={interviewScheduleCoverage} automaticPractice={automaticPractice} onAutomaticPractice={setAutomaticPractice} loaded={plannerLoaded}/>}</div>
     <section className={styles.reading} data-view={readingView} aria-labelledby="dashboard-reading-title"><div className={styles.sectionHeading}><h2 id="dashboard-reading-title">답에 더할 한 가지</h2><Link className="text-link" href={currentReading.href}>전체 보기<ArrowUpRight size={14}/></Link></div><div className={styles.indented}>
       <div className={styles.readingSwitch} role="group" aria-label="이어 볼 자료 선택">{readingViews.map(view=>{const Icon=view.icon;return <button key={view.id} type="button" aria-pressed={readingView===view.id} onClick={()=>setReadingView(view.id)}><Icon size={15}/>{view.label}</button>;})}</div>
       <div className={styles.readingContent} aria-live="polite">{readingView==='briefing'&&<DepartmentNews variant="compact" showHeading={false}/>}{readingView==='knowledge'&&(videos.length?<Link className={styles.readingVideo} href={`/knowledge/${videos[0].id}`}><img src={videos[0].thumbnail} alt="" loading="lazy"/><div><span>{videos[0].label}</span>{videos[0].activities?.[0]?.title&&<small>{videos[0].activities[0].title}</small>}</div><ArrowUpRight size={16}/></Link>:loading.knowledge?<p className={styles.emptyNote}>자료를 불러오고 있어요.</p>:activities.length?<LinkedRow href={`/knowledge?activity=${activities[0].id}`} title={activities[0].title} subtitle="이 경험에서 넓혀 볼 주제"/>:<p className={styles.emptyNote}>{knowledgeLoaded?'연결된 자료가 아직 없어요.':'자료를 불러오지 못했어요.'}</p>)}</div>

@@ -1,0 +1,579 @@
+{
+  "checkedAt": "2026-10-17",
+  "sourceSchools": 88,
+  "sourceDepartments": 3934,
+  "selectableSchools": 80,
+  "selectableDepartmentTuples": 3551,
+  "broadProgramConnections": 223,
+  "baseDepartmentQuestionTemplates": 10750,
+  "programQuestionTemplates": 677,
+  "departmentLearningQuestionTemplates": 11427,
+  "distinctQuestionIds": 11427,
+  "all2027AdmissionUnitsVerified": false,
+  "excludedSchools": [
+    {
+      "id": "bible_02f5a3e9a0f7b346",
+      "university": "연세대학교",
+      "supported": false,
+      "format": "passage",
+      "reason": "활동우수형·국제형·국제인재·기회균형은 제시문 면접이에요. 체육인재 확인 면접도 학생부형 준비 범위에서 제외해요.",
+      "sourceUrl": "https://admission.yonsei.ac.kr/seoul/admission/html/counsel/dataView.asp?BBS_NO=3500",
+      "academicYear": 2027,
+      "checkedAt": "2026-10-17"
+    },
+    {
+      "id": "bible_960063db6fe40b63",
+      "university": "홍익대학교",
+      "supported": false,
+      "format": "mixed",
+      "reason": "문제지를 읽고 준비한 뒤 답하는 미술 면접과 서류 확인을 함께 실시하므로 제외해요.",
+      "sourceUrl": "https://admission.hongik.ac.kr/",
+      "academicYear": 2027,
+      "checkedAt": "2026-10-17"
+    },
+    {
+      "id": "bible_6619e7b7db4d4246",
+      "university": "영남대학교",
+      "supported": false,
+      "format": "mixed",
+      "reason": "의예과의 제시문·구술 면접과 군사학과의 군 면접은 학생부형 면접 준비 범위에서 제외해요.",
+      "sourceUrl": "https://enter.yu.ac.kr/",
+      "academicYear": 2027,
+      "checkedAt": "2026-10-17"
+    },
+    {
+      "id": "bible_81a83ae70e0a0740",
+      "university": "부산교육대학교",
+      "supported": false,
+      "format": "passage",
+      "reason": "수시 제시문 기반 집단 면접은 이 앱의 준비 범위에 포함되지 않아요.",
+      "sourceUrl": "https://enter.bnue.ac.kr/content/susi01",
+      "academicYear": 2027,
+      "checkedAt": "2026-10-17"
+    },
+    {
+      "id": "bible_7056e20a94c3d756",
+      "university": "경인교육대학교",
+      "supported": false,
+      "format": "other",
+      "reason": "공개 공통 문항의 답변 동영상을 제출하는 방식으로, 개인 학생부 확인 면접과 달라요.",
+      "sourceUrl": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47508&mCode=MN028&mgr_seq=142&mode=view",
+      "academicYear": 2027,
+      "checkedAt": "2026-10-17"
+    },
+    {
+      "id": "bible_a602c0592894687a",
+      "university": "공주교육대학교",
+      "supported": false,
+      "format": "no_interview",
+      "reason": "2027학년도 수시 학생부종합 전형은 면접을 실시하지 않아요.",
+      "sourceUrl": "https://www.gjue.ac.kr/ipsi/72/pdfViewer/CAT183",
+      "academicYear": 2027,
+      "checkedAt": "2026-10-17"
+    },
+    {
+      "id": "bible_c043bd12c44ecf96",
+      "university": "한국과학기술원 KAIST",
+      "supported": false,
+      "format": "mixed",
+      "reason": "특기자전형도 적합성·영어 제시문 면접을 포함해요. 2027학년도 면접 전형은 학생부형 준비 범위에서 제외해요.",
+      "sourceUrl": "https://admission.kaist.ac.kr/undergraduate",
+      "academicYear": 2027,
+      "checkedAt": "2026-10-17"
+    },
+    {
+      "id": "bible_2b8bc0e1dea4b1e7",
+      "university": "한국에너지공과대학교 KENTECH",
+      "supported": false,
+      "format": "passage",
+      "reason": "제시된 과제에 답하는 창의성 면접은 이 앱의 준비 범위에 포함되지 않아요.",
+      "sourceUrl": "https://admission.kentech.ac.kr/ipsi",
+      "academicYear": 2027,
+      "checkedAt": "2026-10-17"
+    }
+  ],
+  "selectedSchools": [
+    {
+      "id": "bible_8704c828dbe7e8a7",
+      "university": "감리교신학대학교",
+      "departments": 1,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_a3364993ac915cc1",
+      "university": "강서대학교",
+      "departments": 10,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_98afbb0916406f78",
+      "university": "건국대학교",
+      "departments": 62,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_925d9b5de199c382",
+      "university": "경희대학교",
+      "departments": 94,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_b552e9fc54ce381f",
+      "university": "고려대학교",
+      "departments": 3,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_a176017d0be64d99",
+      "university": "광운대학교",
+      "departments": 34,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_76a0e39e6271c1f1",
+      "university": "국민대학교",
+      "departments": 67,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_5ec50ef5a0c04166",
+      "university": "덕성여자대학교",
+      "departments": 9,
+      "programConnections": 26
+    },
+    {
+      "id": "bible_68611fc6e72c5e38",
+      "university": "동국대학교",
+      "departments": 62,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_f29d1e8048711290",
+      "university": "동덕여자대학교",
+      "departments": 46,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_2b00e71be3a5ebcd",
+      "university": "삼육대학교",
+      "departments": 26,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_e41c384366a60705",
+      "university": "상명대학교",
+      "departments": 66,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_1a139ef99cb3babb",
+      "university": "서강대학교",
+      "departments": 35,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_4fac62464e34ac2b",
+      "university": "서경대학교",
+      "departments": 33,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_60007b4df6bb867a",
+      "university": "서울과학기술대학교",
+      "departments": 57,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_170ece487f34804d",
+      "university": "서울교육대학교",
+      "departments": 1,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_dd4300e7468ec465",
+      "university": "서울기독대학교",
+      "departments": 10,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_84e40c965cf842a3",
+      "university": "서울대학교",
+      "departments": 88,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_854beb619660d235",
+      "university": "서울시립대학교",
+      "departments": 43,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_b6abc82e31329cea",
+      "university": "서울여자대학교",
+      "departments": 41,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_1ed81fdf5a27697f",
+      "university": "서울한영대학교",
+      "departments": 6,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_66624e0a828c2bfa",
+      "university": "성공회대학교",
+      "departments": 8,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_d7e7c88a52a9eb2c",
+      "university": "성균관대학교",
+      "departments": 37,
+      "programConnections": 77
+    },
+    {
+      "id": "bible_c595f7cc8171e151",
+      "university": "성신여자대학교",
+      "departments": 52,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_a936dda31bbbeb71",
+      "university": "세종대학교",
+      "departments": 55,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_c7c76d1a4c9d719d",
+      "university": "숙명여자대학교",
+      "departments": 54,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_d99c2148b6f16ccd",
+      "university": "숭실대학교",
+      "departments": 52,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_1ed9296bd2a05ea3",
+      "university": "이화여자대학교",
+      "departments": 60,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_c08e4b9a9a57b73b",
+      "university": "장로회신학대학교",
+      "departments": 4,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_794d7b89a10f736c",
+      "university": "중앙대학교",
+      "departments": 88,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_caf7e914c3a6697c",
+      "university": "총신대학교",
+      "departments": 10,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_eaa3cffd29f5415a",
+      "university": "추계예술대학교",
+      "departments": 9,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_e103e9d447079522",
+      "university": "한국성서대학교",
+      "departments": 5,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_48c21babe9214203",
+      "university": "한국외국어대학교",
+      "departments": 94,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_f1315d9c83ebb02a",
+      "university": "한국체육대학교",
+      "departments": 10,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_773d4913d4213b86",
+      "university": "한양대학교",
+      "departments": 7,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_c736609f2879bf29",
+      "university": "강원대학교",
+      "departments": 175,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_2c2a9c7869ea2c24",
+      "university": "한림대학교",
+      "departments": 30,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_620cadfe9779f492",
+      "university": "가천대학교",
+      "departments": 88,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_626386850dfa841a",
+      "university": "가톨릭대학교 — 성심교정",
+      "departments": 48,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_c5addc0cc14c7dd3",
+      "university": "경기대학교 — 수원캠퍼스",
+      "departments": 39,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_55691d423c9fc3b8",
+      "university": "단국대학교",
+      "departments": 118,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_c5df05e96da614e9",
+      "university": "명지대학교 — 자연캠퍼스",
+      "departments": 7,
+      "programConnections": 31
+    },
+    {
+      "id": "bible_9e37a5e849bf275e",
+      "university": "아주대학교",
+      "departments": 38,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_5ddd3a74a6619f42",
+      "university": "한경국립대학교",
+      "departments": 60,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_85b07f768405765d",
+      "university": "한국공학대학교",
+      "departments": 36,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_46b6ffc9cc5526d6",
+      "university": "한국항공대학교",
+      "departments": 10,
+      "programConnections": 16
+    },
+    {
+      "id": "bible_e5c2a821abbe2dea",
+      "university": "경상국립대학교",
+      "departments": 108,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_2ed8234fdbbbf2d9",
+      "university": "국립창원대학교",
+      "departments": 57,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_ae8c4f590328eb84",
+      "university": "진주교육대학교",
+      "departments": 1,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_fe422a25a8428020",
+      "university": "한동대학교",
+      "departments": 1,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_46c1c78ed7ea900c",
+      "university": "광주교육대학교",
+      "departments": 1,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_8c7b4084da218f0a",
+      "university": "전남대학교",
+      "departments": 106,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_f2469a4f062b4841",
+      "university": "조선대학교",
+      "departments": 85,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_92b8b488a8485202",
+      "university": "경북대학교",
+      "departments": 119,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_2012cb23efad2397",
+      "university": "계명대학교",
+      "departments": 89,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_8aa35857f2ad2c40",
+      "university": "대구교육대학교",
+      "departments": 1,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_5f8efbed7e6da113",
+      "university": "국립한밭대학교",
+      "departments": 41,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_3164ccc738b1776e",
+      "university": "을지대학교",
+      "departments": 16,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_18ed556e19147f72",
+      "university": "충남대학교",
+      "departments": 91,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_932cc4d23c32588a",
+      "university": "국립부경대학교",
+      "departments": 69,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_6ad8e2bf4ed32543",
+      "university": "국립한국해양대학교",
+      "departments": 37,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_aad965d2e5df3235",
+      "university": "동아대학교",
+      "departments": 66,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_abfb932b1d89ca5b",
+      "university": "부산대학교",
+      "departments": 103,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_387049c1c9750c5f",
+      "university": "울산대학교",
+      "departments": 19,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_45d41d6942c3e6ac",
+      "university": "인천대학교",
+      "departments": 63,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_cb9a087b06648704",
+      "university": "인하대학교",
+      "departments": 76,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_48567d0846e19d8e",
+      "university": "전북대학교",
+      "departments": 55,
+      "programConnections": 73
+    },
+    {
+      "id": "bible_287ef2fa3defa01f",
+      "university": "전주교육대학교",
+      "departments": 1,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_3c219ed4246dcbe5",
+      "university": "제주대학교",
+      "departments": 81,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_c605ba6ea254c4b6",
+      "university": "국립공주대학교",
+      "departments": 110,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_33afd7125737c781",
+      "university": "순천향대학교",
+      "departments": 64,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_b3e19565a6e48e12",
+      "university": "한국기술교육대학교",
+      "departments": 17,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_1452eb910cdbd18d",
+      "university": "국립한국교통대학교",
+      "departments": 52,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_060e9c0b6f0415fd",
+      "university": "청주교육대학교",
+      "departments": 1,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_655f71ef96b70f0e",
+      "university": "한국교원대학교",
+      "departments": 25,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_bf8b2f07903ddb3a",
+      "university": "광주과학기술원 GIST",
+      "departments": 2,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_de1e42bb7f179b37",
+      "university": "대구경북과학기술원 DGIST",
+      "departments": 2,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_6cc29bbe9eca95d3",
+      "university": "울산과학기술원 UNIST",
+      "departments": 3,
+      "programConnections": 0
+    },
+    {
+      "id": "bible_bb75e830036e5b4d",
+      "university": "포항공과대학교 POSTECH",
+      "departments": 1,
+      "programConnections": 0
+    }
+  ],
+  "questionScope": "공시 분류·확인된 학과명과 검증 영상의 개념을 연결한 앱 연습 질문. 학과 공식 교육과정·기출 출제율 아님.",
+  "history": "원본 88교 스냅샷·기존 질문 revision·학생 기록을 삭제하지 않고 현재 선택 목록과 신규 연습 범위만 제한."
+}

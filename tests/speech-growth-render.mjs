@@ -28,7 +28,7 @@ vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,AbortCo
 function render(props={},state){if(state){hooks.states=state;hooks.refs=[];}hooks.stateIndex=0;hooks.refIndex=0;hooks.effects=[];return module.exports.SpeechGrowth(props);}
 function nodes(value){if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=='object')return [];return [value,...nodes(value.props?.children)];}
 function text(value){if(Array.isArray(value))return value.map(text).join(' ');if(value&&typeof value==='object')return text(value.props?.children);return value==null?'':String(value);}
-const scope=JSON.stringify(['','']);
+const scope=JSON.stringify(['','','']);
 const base={speech:{recordings:[],trend:null},content:{comparisons:[],newsComparisons:[]},next:{prompt:'녹음으로 첫 발화 남기기',reason:'같은 질문을 다시 녹음해요.',href:'/quiz?mode=oral'}};
 let checks=0;const check=(value,message)=>{assert.ok(value,message);checks++;};
 let tree=render({},[base,scope,'','',false]);
@@ -49,7 +49,7 @@ const transcribe=nodes(tree).find(node=>node.type==='button'&&text(node)==='전�
 const transcribing=transcribe.props.onClick();await new Promise(resolve=>setImmediate(resolve));
 check(posts[0].url==='/api/reports'&&posts[0].body.action==='transcribe'&&posts[0].body.recordingId==='own-audio','quiz STT action uses its recording ID, not a typed answer');
 pending.at(-1).resolve(recorded);await transcribing;
-tree=render({reportId:'new-report'},[recorded,JSON.stringify(['old-report','']),'','',false]);
+tree=render({reportId:'new-report'},[recorded,JSON.stringify(['old-report','','']),'','',false]);
 check(nodes(tree).some(node=>node.type==='Spinner'),'a new route hides previous report data before its effect runs');
 check(!text(tree).includes('내 역할을 말해 주세요.'),'old report question never flashes in a new report scope');
 
@@ -61,10 +61,19 @@ requestB.resolve({...base,marker:'new-scope'});await new Promise(resolve=>setImm
 requestA.resolve({...base,marker:'stale-scope'});await new Promise(resolve=>setImmediate(resolve));
 check(requestA.options.signal.aborted===true,'route cleanup aborts the old request');
 check(hooks.states[0].marker==='new-scope','late old response is discarded');
-check(hooks.states[1]===JSON.stringify(['report-b','']),'loaded data is bound to the new report scope');
+check(hooks.states[1]===JSON.stringify(['report-b','','']),'loaded data is bound to the new report scope');
 cleanupB();
 const savedNext={questionId:'question-a',prompt:'이전 질문',reason:'이 질문 다시 말하기',href:'/interview/new?questionId=question-a&targetId=fictional-target&sourceType=personal&sourceVersion=1'};
 const currentContext={targetId:'real-school-target',contentVersion:6,targets:[{id:'real-school-target'}],questions:[{id:'question-a',prompt:'현재 발행 질문',support_target_ids:['real-school-target']}]};
+render({currentContext:{...currentContext,targetId:'removed-school'}},[null,'','','',false]);
+const closeOldSchool=hooks.effects[0](),oldSchoolRequest=pending.at(-1);
+closeOldSchool();render({currentContext});const closeNewSchool=hooks.effects[0](),newSchoolRequest=pending.at(-1);
+check(newSchoolRequest.url.includes('targetId=real-school-target'),'overall report requests selected school explicitly');
+newSchoolRequest.resolve({...base,marker:'current-school'});await new Promise(resolve=>setImmediate(resolve));
+oldSchoolRequest.resolve({...base,marker:'deleted-school'});await new Promise(resolve=>setImmediate(resolve));
+check(hooks.states[0].marker==='current-school','late response from deleted school cannot replace current school recommendation');
+check(hooks.states[1]===JSON.stringify(['','',currentContext.targetId]),'loaded report data is scoped to selected school');
+closeNewSchool();
 const currentNext=module.exports.resolveGrowthNext(savedNext,currentContext);
 check(currentNext.href.includes('targetId=real-school-target')&&currentNext.href.includes('sourceVersion=6'),'overall next practice uses the eligible selected school and current published version');
 check(currentNext.prompt==='현재 발행 질문'&&savedNext.prompt==='이전 질문'&&savedNext.href.includes('fictional-target'),'current next label updates without rewriting the original record');
@@ -92,7 +101,7 @@ check(!text(tree).includes('결과·한계'),'a role-only question does not rece
 for(const saved of [{target_id:'school-a',common_revision:3,turn_id:'turn-school-a'},{target_id:'school-b',common_revision:4,turn_id:'turn-school-b'}]){
   const comparison=reviewed.content.comparisons[0];
   const scoped={...reviewed,content:{...reviewed.content,comparisons:[{...comparison,questionId:'common_motivation',after:{...comparison.after,...saved,source_type:'general_practice',content_version:8}}]}};
-  tree=render({currentContext},[scoped,scope,'','',false]);
+  tree=render({currentContext},[scoped,JSON.stringify(['','',currentContext.targetId]),'','',false]);
   const link=nodes(tree).find(node=>node.type==='Link'&&text(node).includes('이 질문의 답변 비교'));
   const href=new URL(link.props.href,'http://localhost');
   check(href.pathname==='/records/comparisons/common_motivation'&&href.searchParams.get('targetId')===saved.target_id,'actual content-change link preserves the compared school instead of current context');

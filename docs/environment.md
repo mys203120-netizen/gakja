@@ -6,7 +6,7 @@
 
 추가 학습 AI를 사용하더라도 기존 서버 전용 `OPENAI_API_KEY` 하나를 공유한다. 학생별 키나 브라우저 키를 새로 만들지 않는다. 기존 `OPENAI_MODEL_CHAT`·`OPENAI_MODEL_INTERVIEW`의 실제 모델 선택을 존중하고 호출 기능·루브릭/프롬프트 버전·사용량·실패를 분리해 기록한다.
 
-2026-10-14 사용자가 STT를 `gpt-4o-mini-transcribe`, 화면용 후가공을 `gpt-6-luna`로 명시 변경했다. 두 단계는 기존 서버 `OPENAI_API_KEY` 하나를 공유한다. `STT_PROVIDER`는 전사 공급자, `SPEECH_PROVIDER`는 기존 낭독/TTS 공급자 설정으로 구분한다. TTS는 사용자 변경 요청이 없으므로 Google 설정을 유지한다. 스트리밍 중계·Face/VAD·배치 정렬을 환경 변수만으로 활성화했다고 표시하지 않는다.
+2026-10-14 사용자가 STT를 `gpt-4o-mini-transcribe`, 화면용 후가공을 `gpt-6-luna`로 명시 변경했다. 두 단계는 기존 서버 `OPENAI_API_KEY` 하나를 공유한다. `STT_PROVIDER`는 전사 공급자, `SPEECH_PROVIDER`는 기존 낭독/TTS 공급자 설정으로 구분한다. TTS는 2026-10-17 사용자 요청에 따라 기존 OpenAI 키를 쓰도록 전환했다. 스트리밍 중계·Face/VAD·배치 정렬을 환경 변수만으로 활성화했다고 표시하지 않는다.
 
 이번 문서 통일에서 .env/.env.local의 비밀 값·DB 주소·OAuth/Google 자격 증명을 수정하지 않았다. 실제 공급자 왕복·모델 가용성·한국어 음질과 측정 품질은 제공된 계정·기기로 별도 검증해야 한다.
 
@@ -60,11 +60,11 @@ node scripts/start-server.mjs --check-config
 | `TRANSCRIPT_CLEANUP_ENABLED` | 현행 `true`. 화면용 정리 단계를 사용. 비활성 상태를 후가공 완료로 표시하지 않음. |
 | `OPENAI_TRANSCRIPT_CLEANUP_MODEL` | `gpt-6-luna`. Responses API의 구조화 출력, `reasoning.effort=none`. |
 | `OPENAI_TRANSCRIPT_CLEANUP_TIMEOUT_MS` | 기본 `25000`, 허용 5,000–30,000ms. 실패 시 모델 자동 우회 없음. |
-| `SPEECH_PROVIDER` | 기존 `google` 유지. 낭독/TTS 공급자. |
+| `SPEECH_PROVIDER` | `openai`. 기존 서버 키로 Live 질문 낭독. |
 
 STT API의 파일 한도와 앱의 업로드 한도는 다르다. `gpt-4o-mini-transcribe`의 공식 파일 전사 한도는 25MB이며 현재 앱의 인증 미디어 업로드는 더 작은 20MB 한도를 따른다. 이 모델에서 Whisper 방식 단어 타임스탬프를 제공한다고 가정하지 않는다. 쉼은 실제 음량 관찰, 습관어·반복은 원전사를 사용한다. [OpenAI 전사 모델](https://developers.openai.com/api/docs/models/gpt-4o-mini-transcribe), [Speech to text](https://developers.openai.com/api/docs/guides/speech-to-text), [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna).
 
-낭독은 `SPEECH_PROVIDER=google`을 유지한다. 인증 값이 없으면 설정 필요 상태로 처리하며 다른 공급자로 자동 전송하지 않는다. Google 프로젝트 ID, 서비스 계정 경로, 액세스 토큰은 추정하지 않고 빈 값으로 남긴다. 아래 Google STT 값은 이전 공급자 경로의 호환 설정이며 현행 OpenAI STT의 필수 값이 아니다.
+낭독은 `SPEECH_PROVIDER=openai`, `OPENAI_TTS_MODEL=gpt-4o-mini-tts`를 사용한다. 2026-10-17 실제 Live 질문 MP3 생성·저장 공급자 검증을 통과했다. 마이크 녹음·전사·청취 품질 전체 검증을 뜻하지 않는다. 아래 Google 값은 Google 공급자를 명시적으로 선택할 때만 필요하다. 인증 값이 없으면 설정 필요 상태로 처리하며 다른 공급자로 자동 전송하지 않는다. Google 프로젝트 ID, 서비스 계정 경로, 액세스 토큰은 추정하지 않고 빈 값으로 남긴다. 아래 Google STT 값은 이전 공급자 경로의 호환 설정이며 현행 OpenAI STT의 필수 값이 아니다.
 
 | Google 설정 | 값·역할 |
 |---|---|
@@ -81,6 +81,6 @@ STT API의 파일 한도와 앱의 업로드 한도는 다르다. `gpt-4o-mini-t
 
 서비스 계정 파일을 사용하는 경로와 임시 토큰 경로를 구분한다. 로컬 사용자 ADC 로그인이나 다른 ADC 방식은 현재 서버 어댑터가 지원하는지 확인해야 한다. Google Speech/Text-to-Speech API 활성화, 결제, 권한과 모델·지역 사용 가능 여부는 실제 프로젝트에서 검증해야 한다. 이번 정리에서 유료 호출이나 음성 정확도·청취 검증은 하지 않았다.
 
-OpenAI 전사·정리 모델의 접근 권한은 실제 API 계정에서 확인한다. OpenAI 낭독으로 바꿀 때만 `SPEECH_PROVIDER=openai`와 `OPENAI_TTS_MODEL`을 별도 선택하며, 이번 STT 변경은 이를 변경하지 않는다. 공급자 오류를 다른 공급자로 자동 우회하지 않는다.
+OpenAI 전사·정리 모델의 접근 권한은 실제 API 계정에서 확인한다. 현행 낭독 설정은 `SPEECH_PROVIDER=openai`와 `OPENAI_TTS_MODEL=gpt-4o-mini-tts`이며 전사 설정과 구분한다. 공급자 오류를 다른 공급자로 자동 우회하지 않는다.
 
 별도 Cloud Run WebSocket 중계, GCS 배치 정렬과 장기 비동기 작업은 현재 Next 요청 중심 구조와 분리해서 준비해야 한다. 필요한 서비스가 없는 상태에서 환경 변수만 설정해 완료된 기능으로 취급하지 않는다.

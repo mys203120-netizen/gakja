@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { hash } from 'bcryptjs';
 import pg from 'pg';
 import { loadProjectEnv, projectRoot, redactEnvironmentSecrets } from '../scripts/load-env.mjs';
+import {koreaToday,shiftPlanDay} from '../apps/web/src/lib/planner-model';
 
 loadProjectEnv();
 let lastServerUrl: string | undefined;
@@ -135,6 +136,37 @@ try {
   check(futureRecorded.performedAt===null&&futureRecorded.completed===false,'today practice never satisfies a future spaced review');
   const common=currentTargets.find((target:any)=>target.common);
   if(common){const commonPlan=await create('student',{kind:'interview',target:{kind:'question',id:common.id}});check(commonPlan.status===200&&commonPlan.body.plan.href.startsWith('/interview/new?questionId='),'common question target works without personal quiz items');}
+  const autoTarget=`auto-${fixture}`;
+  const schoolData={university:'고려대학교',campus:'본교',department:'경영학과',admission_type:'학생부종합',admission_year:2027};
+  await db.query('insert into support_targets(id,student_id,data) values($1,$2,$3)',[autoTarget,actors.student,JSON.stringify(schoolData)]);
+  const auto=(actor:string,body:Record<string,unknown>={})=>request(actor,'/api/planner/automatic',{action:'preview',targetId:autoTarget,interviewDate:shiftPlanDay(koreaToday(),3),minutes:20,...body});
+  check((await auto('anonymous')).status===401,'automatic plan requires login');
+  check((await auto('other')).status===404,'automatic plan rejects another student school');
+  check((await auto('staff')).status===403,'automatic plan student-only');
+  check((await auto('student',{interviewDate:koreaToday()})).status===400,'past or same-day plan rejected');
+  const preview=await auto('student');
+  check(preview.status===200&&preview.body.plans.length>0,'automatic plan preview uses owned current questions');
+  check(preview.body.plans.every((plan:any)=>plan.target.targetId===autoTarget),'every generated question retains current school');
+  check((await auto('student',{action:'save',previewToken:'forged'})).status===409,'save rejects stale or forged preview');
+  const saveBody={action:'save',previewToken:preview.body.previewToken};
+  const doubleSave=await Promise.all([auto('student',saveBody),auto('student',saveBody)]);
+  check(doubleSave.every(result=>result.status===200),'parallel saves accepted idempotently');
+  let generated=(await get('student')).body.plans.filter((plan:any)=>plan.target?.automaticPractice);
+  check(generated.length===preview.body.plans.length,'parallel save never duplicates planned tasks');
+  check(generated.every((plan:any)=>plan.href?.includes(encodeURIComponent(autoTarget))&&plan.targetAvailable),'generated calendar entries open validated school scope');
+  const completed=generated[0],edited=generated[1];
+  await update('student',completed.id,completed.revision,{completed:true});
+  await update('student',edited.id,edited.revision,{title:'직접 수정한 계획'});
+  const nextPreview=await auto('student',{minutes:10});
+  check((await auto('student',{action:'save',minutes:10,previewToken:nextPreview.body.previewToken})).status===200,'regenerate with a changed daily budget');
+  const afterAuto=(await get('student')).body.plans;
+  check(afterAuto.some((plan:any)=>plan.id===completed.id&&plan.completed),'completed auto plan survives regeneration');
+  check(afterAuto.some((plan:any)=>plan.id===edited.id&&plan.title==='직접 수정한 계획'&&!plan.target.automaticPractice),'manually edited auto plan survives regeneration');
+  check(afterAuto.some((plan:any)=>plan.id===id),'ordinary manual plan survives regeneration');
+  check((await request('other',`/api/reports?targetId=${autoTarget}`)).status===404,'growth refuses another student target');
+  await db.query("update support_targets set data=data||'{\"archived_at\":\"2026-10-17\"}'::jsonb where id=$1",[autoTarget]);
+  check((await auto('student')).status===404,'deleted school cannot generate new practice');
+  check((await request('student',`/api/reports?targetId=${autoTarget}`)).status===404,'deleted school cannot be current report scope');
   console.log(`Planner API checks passed: ${checks}. Only isolated UUID fixtures used; no seeded data or external services touched.`);
 } catch (error) {
   console.error(redactEnvironmentSecrets(error instanceof Error ? error.message : String(error)));
@@ -151,6 +183,7 @@ try {
     await db.query('delete from content_versions where package_id=any($1::text[])',[[`planner-${fixture}-student`,`planner-${fixture}-other`]]);
     await db.query('delete from content_packages where student_id=any($1::uuid[])',[fixtureIds]);
     await db.query('delete from production_links where student_id=any($1::uuid[])',[fixtureIds]);
+    await db.query('delete from support_targets where student_id=any($1::uuid[])',[fixtureIds]);
     await db.query('delete from profiles where id=any($1::uuid[])', [fixtureIds]);
     await db.query('commit');
     const remaining = Number((await db.query('select count(*)::int as n from profiles where id=any($1::uuid[])', [fixtureIds])).rows[0].n);

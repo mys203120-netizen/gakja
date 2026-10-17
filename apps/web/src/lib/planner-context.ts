@@ -16,7 +16,7 @@ export async function getPlanContext(studentId: string, savedTargets: PlanTarget
   const [content, assignments, progress, events, common, schoolTargets, archives, preferences] = await Promise.all([
     getLearning(studentId), query('select id,title from quiz_assignments where student_id=$1 order by created_at desc', [studentId]),
     query('select video_id from knowledge_bite_progress where student_id=$1', [studentId]),
-    query('select kind,data,created_at from study_session_events where student_id=$1 order by created_at desc', [studentId]),
+    query('select id,source_id,kind,data,created_at from study_session_events where student_id=$1 order by created_at desc', [studentId]),
     commonInterviewQuestions(studentId), query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null", [studentId]),
     query("select v.version,v.data from content_versions v join content_packages p on p.id=v.package_id where p.student_id=$1 and v.status='published'", [studentId]),
     query('select data from student_preferences where student_id=$1', [studentId]),
@@ -91,5 +91,5 @@ export function presentPlan(plan: Record<string, any>, context: Context) {
   const available = Boolean(target && !(target.common && !target.sourceVersion) && (['question','activity'].includes(target.kind) ? source && scopeAvailable && scopeKnown : context.targets.some(item => item.kind === target.kind && item.id === target.id)));
   const questionIds = new Set<string>(target?.kind === 'question' ? [target.id] : target?.kind === 'activity' ? (source?.learning?.questions || []).filter((question:Value) => question.activity_ids?.includes(target.id)).map((question:Value) => question.id) : []);
   const performed = target && context.events.find(event => planPracticeEventMatches(plan,event,questionIds,sameTarget,context.events));
-  return {...plan,href:available ? planTargetHref(target!,plan.kind) : null,targetAvailable:!target || available,performedAt:performed?.created_at || null,completionSource:plan.completed ? 'manual' : null};
+  return {...plan,href:available ? planTargetHref(target!,plan.kind)+(plan.kind==='interview'&&plan.target?.focusPractice?'&followups=1':'') : null,targetAvailable:!target || available,performedAt:performed?.created_at || null,completionSource:plan.completed ? 'manual' : null};
 }

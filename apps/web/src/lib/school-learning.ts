@@ -10,6 +10,8 @@ import { schoolTalentForTarget,schoolTalentSummary,talentQuestionMatchesTarget }
 import {schoolQuizTargetIdentity} from '@/lib/school-quiz';
 import {previewSchoolAdmissionCalendar} from '@/lib/school-onboarding-calendar';
 import {schoolCalendarRegistration,sameSchoolRegistrationTarget} from '@/lib/school-onboarding-calendar-model';
+import {schoolHasDocumentInterview,interviewSupportForTarget,isStudentRecordQuestion} from './school-interview-scope';
+import {departmentPracticeQuestions,departmentQuestionMatchesTarget} from './department-learning';
 export const schoolLearningIdentityMatches=learningTargetIdentityMatches;
 
 /** Public department metadata is a learning lens, not a confirmed admissions rule. */
@@ -29,6 +31,7 @@ export const schoolRegistrationSchema = z.object({
   departmentId:z.string().trim().max(160).nullish(),
   admissionYear: z.number().int().min(2024).max(2040), campus: z.string().trim().max(100).default('미정'),
   track: z.string().trim().max(120).default('미정'), major: z.string().trim().max(120).default('미정'),
+  interestDepartment:z.string().trim().max(160).optional(),
   onboarding:z.boolean().optional(),calendarReview:z.object({fingerprint:z.string().regex(/^[a-f0-9]{64}$/),acknowledged:z.literal(true)}).optional(),
 });
 export async function schoolCatalog(referenceIds?:readonly string[]) {
@@ -37,7 +40,7 @@ export async function schoolCatalog(referenceIds?:readonly string[]) {
   const rows = await query('select distinct on(id) * from school_reference_catalog'+(selected?' where id=any($1::text[])':'')+' order by id,revision desc',selected?[[...selected]]:[]);
   const references=rows.map(row => ({ ...row.data,...(schoolDirectoryEntry(row.id)?schoolDirectorySummary(schoolDirectoryEntry(row.id)!):{}), id: row.id, university: row.university, version: row.revision, status: row.status, source: row.source }));
   for(const school of schoolDirectory)if((!selected||selected.has(school.id))&&!references.some(row=>row.id===school.id))references.push({...schoolDirectorySummary(school),status:'needs_confirmation',version:1,overview:[],source:{}});
-  return references.map(reference=>({...reference,talent:schoolDirectoryEntry(reference.id)?schoolTalentSummary(schoolDirectoryEntry(reference.id)!):null})).sort((a,b) => a.university.localeCompare(b.university,'ko'));
+  return references.filter(reference=>schoolHasDocumentInterview(reference.university)).map(reference=>({...reference,talent:schoolDirectoryEntry(reference.id)?schoolTalentSummary(schoolDirectoryEntry(reference.id)!):null})).sort((a,b) => a.university.localeCompare(b.university,'ko'));
 }
 /** Full catalog is needed only in school management, not while answering. */
 export async function studentSchoolContext(studentId:string,{compact=false}:{compact?:boolean}={}) {
@@ -47,7 +50,7 @@ export async function studentSchoolContext(studentId:string,{compact=false}:{com
   const enriched=targets.map(row => {
     const review=reviewed.find(profile=>profile.target_id===row.id);
     const official=officialProfileForTarget(row.data);
-    return enrichSchoolTarget({ ...row.data, id: row.id,majorContext:schoolMajorContext(row.data),talentProfile:schoolTalentForTarget(row.data), profile:review ? reviewedSchoolView(review,row.data) : official?{...official.data,id:official.id,status:official.status,source:official.provenance,reviewed:true}:catalog.find(profile => profile.id === row.data.school_reference_id) || null });
+    return enrichSchoolTarget({ ...row.data, id: row.id,interviewSupport:interviewSupportForTarget(row.data),majorContext:schoolMajorContext(row.data),talentProfile:schoolTalentForTarget(row.data), profile:review ? reviewedSchoolView(review,row.data) : official?{...official.data,id:official.id,status:official.status,source:official.provenance,reviewed:true}:catalog.find(profile => profile.id === row.data.school_reference_id) || null });
   });
   return {catalog,targets:enriched};
 }
@@ -76,10 +79,13 @@ async function prepareSchoolRegistration(input:z.infer<typeof schoolRegistration
   try{selection=normalizeSchoolSelection(input);}catch(error){if(error instanceof SchoolSelectionError)throw new ApiError(400,error.message);throw error;}
   const university = reference?.university || selection.university;
   if (!university) throw new ApiError(400,'지원 학교를 선택해 주세요.');
+  if(input.interestDepartment&&!selection.department?.programs?.includes(input.interestDepartment))throw new ApiError(400,'선택한 모집단위에 속한 관심 전공을 다시 선택해 주세요.');
   const data = enrichSchoolTarget({ university, admission_year:input.admissionYear, campus:selection.campus, admission_type:input.track || '미정', major:selection.major, department:selection.major,
     school_reference_id:reference?.id || null, school_reference_revision:reference?.revision || null, registration_source:'student', information_status:'needs_confirmation',
     school_public_code:selection.department?.schoolCode||selection.school?.publicSchoolCode||null,department_catalog_id:selection.department?.id||null,department_public_code:selection.department?.departmentCode||null,
-    department_source:selection.department?{year:selection.department.year,url:selection.department.sourceUrl,status:'public_catalog'}:{status:'student_entered'},onboarding_completed:true });
+    department_source:selection.department?{year:selection.department.year,url:selection.department.sourceUrl,status:'public_catalog'}:{status:'student_entered'},interest_department:input.interestDepartment||null,onboarding_completed:true });
+  const support=interviewSupportForTarget(data);
+  if(!support.supported)throw new ApiError(400,support.reason);
   if((input.onboarding||requireReview)&&!input.calendarReview)throw new ApiError(400,'면접 일정 안내를 확인한 뒤 등록해 주세요.');
   const calendar=input.calendarReview?await previewSchoolAdmissionCalendar(data):null;
   if(calendar&&(!calendar.canReview||calendar.fingerprint!==input.calendarReview!.fingerprint))throw new ApiError(409,'지원 정보나 면접 일정이 달라졌어요. 일정을 다시 확인해 주세요.');
@@ -108,7 +114,7 @@ export async function registerStudentSchool(studentId: string, raw: unknown) {
     let result = existing.rows[0] || (await client.query('insert into support_targets(id,student_id,data) values($1,$2,$3) returning id,data',[`target_${randomUUID()}`,studentId,JSON.stringify(data)])).rows[0];
     const restoring=Boolean(existing.rows[0]?.data?.archived_at);
     if(existing.rows.length&&(calendarRegistration||restoring)){
-      const next={...result.data,...(calendarRegistration?{admission_calendar_registration:calendarRegistration}:{}),onboarding_completed:true};
+      const next={...result.data,interest_department:data.interest_department,...(calendarRegistration?{admission_calendar_registration:calendarRegistration}:{}),onboarding_completed:true};
       delete next.archived_at;
       result=(await client.query('update support_targets set data=$1::jsonb where id=$2 and student_id=$3 returning id,data',[JSON.stringify(next),result.id,studentId])).rows[0];
     }
@@ -178,14 +184,19 @@ export async function commonInterviewQuestions(studentId: string, targetId: stri
     referenceId = target.data.school_reference_id || null;
     selectedTarget=target.data;
   }
+  if(selectedTarget&&revision===undefined&&!interviewSupportForTarget(selectedTarget).supported)return [];
+  if(selectedTarget&&(revision===undefined||revision===1)){
+    const departmentQuestions=departmentPracticeQuestions(selectedTarget);
+    if(departmentQuestions.length)await query("insert into common_interview_questions(id,revision,prompt,source_type,status,school_reference_id,data,source) select item->>'id',1,item->>'prompt','general_practice','published',item->>'school_reference_id',item,item->'source_snapshot' from jsonb_array_elements($1::jsonb) item on conflict(id,revision) do nothing",[JSON.stringify(departmentQuestions)]);
+  }
   const rows = await publishedCommonQuestionRows(referenceId,revision);
-  return rows.filter(row=>!row.data?.talent_profile || selectedTarget && talentQuestionMatchesTarget(row.data,selectedTarget)).map(row => ({ ...row.data,id:row.id,prompt:row.prompt,source_type:row.source_type,common_revision:row.revision,verification_status:'published',
+  return rows.filter(row=>(revision!==undefined||isStudentRecordQuestion({...row.data,prompt:row.prompt}))&&(!row.data?.department_context||selectedTarget&&departmentQuestionMatchesTarget(row.data,selectedTarget))&&(!row.data?.talent_profile || selectedTarget && talentQuestionMatchesTarget(row.data,selectedTarget))).map(row => ({ ...row.data,id:row.id,prompt:row.prompt,source_type:row.source_type,common_revision:row.revision,verification_status:'published',
     support_target_ids:row.school_reference_id && targetId ? [targetId] : [], source_snapshot:row.source, school_reference_id:row.school_reference_id,
     ...(row.data?.talent_profile && selectedTarget?{talent_context:{...schoolMajorContext(selectedTarget),
       talentProfileId:row.data.talent_profile.id,talentProfileRevision:row.data.talent_profile.revision,
       talentPointId:row.data.talent_profile.point.id,talentScope:row.data.talent_profile.scope,
       personalEvidence:'approved_activity_only',withoutExperience:'future_plan',questionBasis:'training'}}:{}),
-    practice_label:row.data?.talent_profile ? (row.data.talent_profile.definitionKind==='education_goal'?'공식 교육목표 기반 연습':row.data.talent_profile.definitionKind==='core_competencies'?'공식 핵심역량 기반 연습':'공식 인재상 기반 연습') : row.source_type === 'book_reference' ? '자료 기반 일반 연습' : row.source_type === 'verified_past' ? '검수한 공통 기출' : '일반 연습' }));
+    practice_label:row.data?.department_context?'학과 개념 연결 연습':row.data?.talent_profile ? (row.data.talent_profile.definitionKind==='education_goal'?'공식 교육목표 기반 연습':row.data.talent_profile.definitionKind==='core_competencies'?'공식 핵심역량 기반 연습':'공식 인재상 기반 연습') : row.source_type === 'book_reference' ? '자료 기반 일반 연습' : row.source_type === 'verified_past' ? '검수한 공통 기출' : '일반 연습' }));
 }
 export async function assertCommonAccess(studentId: string, context: { ownerStudentId?: string; targetId?: string|null; questions: { id:string; common_revision?:unknown }[] }) {
   if (context.ownerStudentId !== studentId) throw new ApiError(404,'자료를 찾을 수 없어요.');
