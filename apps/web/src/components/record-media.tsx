@@ -1,0 +1,29 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { LoaderCircle, Save, RefreshCw } from 'lucide-react';
+import { api, post, Alert, type Item } from './shared';
+import { useApp } from './app-shell';
+import { decodeRecordingTelemetry } from '@/lib/client/speech-recorder';
+export function RecordMedia({ sessionId }: { sessionId: string }) {
+  const { refresh, toast } = useApp(); const [info, setInfo] = useState<Item | null>(null); const [error, setError] = useState(''); const [editing, setEditing] = useState<string | null>(null); const [text, setText] = useState(''); const [busy, setBusy] = useState(false);
+  async function load() { try { setInfo(await api(`/api/interviews?id=${sessionId}`)); } catch (e) { setError((e as Error).message); } }
+  useEffect(() => { load(); }, [sessionId]);
+  async function correct(turnId: string) { setBusy(true); setError(''); try { await post('/api/interviews', { action: 'transcript', sessionId, turnId, transcript: text }); await post('/api/interviews', { action: 'finish', sessionId }); await refresh(); await load(); setEditing(null); toast('전사 정정과 새 리포트를 저장했어요.'); } catch (e) { setError((e as Error).message); } finally { setBusy(false); } }
+  async function retry(mediaId: string) { setBusy(true); setError(''); try { const r = await post('/api/media', { action: 'transcribe', mediaId }); await load(); if(r.cleanupStatus==='completed')toast('정리된 전사를 저장했어요.');else setError(r.cleanupError||r.transcriptionError||'녹음은 저장되어 있어요. 문장 정리를 다시 시도해 주세요.'); } catch (e) { setError((e as Error).message); } finally { setBusy(false); } }
+  async function analyze(media:Item) {
+    setBusy(true);setError('');
+    try {
+      let telemetry=media.metadata?.speechTelemetry;
+      if(!telemetry){
+        const url=media.metadata?.analysisMediaId?'/api/media?id='+media.metadata.analysisMediaId:media.mime?.startsWith('audio/')?media.url:null;
+        if(!url)throw new Error('이 녹화에는 별도로 녹음한 분석 음성이 없어요.');
+        const response=await fetch(url,{credentials:'same-origin'});if(!response.ok)throw new Error('녹음 음성을 가져오지 못했어요.');
+        telemetry=await decodeRecordingTelemetry(await response.blob());if(!telemetry)throw new Error('이 브라우저에서 녹음 음성을 읽지 못했어요.');
+      }
+      await post('/api/reports',{action:'analyze',recordingId:media.id,kind:'interview',speechTelemetry:telemetry});
+      await load();window.dispatchEvent(new Event('gakja:report-growth'));toast('녹음의 쉼과 발화 관찰을 저장했어요.');
+    }catch(err){setError((err as Error).message);}finally{setBusy(false);}
+  }
+  const media: Item[] = info?.media?.filter((m: Item) => m.metadata?.kind === 'answer_recording') || []; if (!media.length && !error) return null;
+  return <section className="detail-section record-media-v2"><div className="section-heading"><h2>녹화·전사</h2><span className="muted">비공개</span></div>{error && <Alert>{error}</Alert>}<div className="saved-media-grid">{media.map((m, i) => { const turn = info?.turns?.find((t: Item) => t.id === m.metadata?.turnId); const latestMedia = turn?.mediaId === m.id; const raw = m.text || ''; const display = m.metadata?.transcriptCleanup?.status==='completed'?m.metadata.displayTranscript:''; const corrected = latestMedia && turn?.transcriptRevisions?.length ? turn.transcript : '';  return <div key={m.id} className="media-version"><h3>{turn?.question || '나의 답변'}</h3><div className="fine-print">녹화 {i + 1}{turn?.assisted ? ' · 도움 사용 후 답변' : ''}</div>{m.mime?.startsWith('video') ? <video controls playsInline src={m.url} /> : <audio controls src={m.url} />}{editing === turn?.id ? <><label>인식 오류 정정<textarea value={text} maxLength={12000} onChange={e => setText(e.target.value)} /></label><div className="inline-actions"><button className="button primary" disabled={busy || !text.trim()} onClick={() => correct(turn.id)}>{busy ? <LoaderCircle className="spin" size={15} /> : <Save size={15} />}정정 저장</button><button className="button ghost" onClick={() => setEditing(null)} disabled={busy}>닫기</button></div></> : <><div className="transcript-compare"><div><h4>{corrected?'내가 정정한 전사':'정리된 전사'}</h4><p>{corrected||display||'문장 정리 전이에요. 저장한 녹음을 듣거나 다시 시도해 주세요.'}</p></div></div>{raw&&<details className="transcript-raw"><summary>원전사 보기</summary><p>{raw}</p></details>}<div className="inline-actions"><button className="button ghost small" disabled={busy || (!m.metadata?.speechTelemetry && !m.metadata?.analysisMediaId && !m.mime?.startsWith('audio/'))} onClick={() => analyze(m)}><RefreshCw size={13} />발화 다시 분석</button>{turn && (latestMedia || !turn.mediaId) && <button className="button ghost small" onClick={() => { setEditing(turn.id); setText(corrected || display || turn.answer || raw || ''); }}>인식 오류 정정</button>}{!display && <button className="button ghost small" disabled={busy} onClick={() => retry(m.id)}><RefreshCw size={13} />{raw?'문장 정리 다시 시도':'전사 다시 시도'}</button>}</div>{latestMedia && turn?.transcriptRevisions?.length > 0 && <details><summary>정정 이력 {turn.transcriptRevisions.length}개</summary><ol>{turn.transcriptRevisions.map((revision: Item, index: number) => <li key={index}>{revision.transcript}</li>)}</ol></details>}{turn?.answer && latestMedia && <details><summary>제출한 답변</summary><p className="body-copy">{turn.answer}</p></details>}</>}</div>; })}</div></section>;
+}

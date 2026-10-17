@@ -1,0 +1,133 @@
+// Local only: node --import tsx tests/knowledge-bites-api.mts
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import pg from 'pg';
+import { loadProjectEnv, projectRoot } from '../scripts/load-env.mjs';
+loadProjectEnv();
+let stateUrl = ''; try { stateUrl = JSON.parse(readFileSync(join(projectRoot, '.local/server.json'), 'utf8')).url; } catch { /* Explicit local URL is supported. */ }
+const base = process.env.TEST_BASE_URL || process.env.SMOKE_BASE_URL || stateUrl || 'http://localhost:3100';
+if (process.env.AUTH_MODE !== 'local' || !['localhost', '127.0.0.1'].includes(new URL(process.env.DATABASE_URL!).hostname) || !['localhost', '127.0.0.1'].includes(new URL(base).hostname)) throw new Error('지식한입 검사는 로컬 DB와 웹 서버에서만 실행해 주세요.');
+const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
+const fixture = randomUUID();
+const ownerId = randomUUID(), otherId = randomUUID();
+const emails = { owner: `knowledge-owner-${fixture}@gakja.test`, other: `knowledge-other-${fixture}@gakja.test` };
+const cookies: Record<string, string> = {};
+const video = 'lQRsqMiBTsI', wrong = 'qgVFkRn8f10';
+let checks = 0;
+function check(value: unknown, label: string) { assert.ok(value, label); checks++; }
+async function request(actor: string, path: string, body?: unknown, origin = base) {
+  const response = await fetch(base + path, { method: body === undefined ? 'GET' : 'POST', headers: { Origin: origin, ...(cookies[actor] ? { Cookie: cookies[actor] } : {}), ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
+  const jar = response.headers.getSetCookie(); if (jar.length) cookies[actor] = jar.map(item => item.split(';')[0]).join('; ');
+  return { status: response.status, data: await response.json(), headers: response.headers };
+}
+const get = (actor: string, id?: string) => request(actor, `/api/knowledge-bites${id ? `?videoId=${id}` : ''}`);
+const save = (actor: string, action: string, value: unknown, expectedRevision: unknown, id = video, extra: Record<string, unknown> = {}) => request(actor, '/api/knowledge-bites', { action, value, expectedRevision, videoId: id, ...extra });
+await db.connect();
+try {
+  check(Boolean((await db.query("select to_regclass('knowledge_bite_progress') as table_name")).rows[0].table_name), 'knowledge migration applied');
+  const hash = (await db.query('select password_hash from profiles where email=$1', ['harin@gakja.test'])).rows[0]?.password_hash;
+  check(Boolean(hash), 'local fixture password hash source exists');
+  const activityId = `knowledge-${fixture}-activity`, questionId = `knowledge-${fixture}-question`;
+  const learning = { activities: [{ id: activityId, title: '합성 미세플라스틱 분리 활동', grade: 2, area: '합성 API 검사', keywords: ['밀도'], activity_summary: '실제 학생부가 아닌 테스트 전용 활동입니다.' }], questions: [{id:questionId,prompt:'분리 조건의 한계는 무엇인가요?',activity_ids:[activityId]}], memory_items: [], source_refs: [], answer_scripts: [], support_targets: [] };
+  for (const [actor, id] of [['owner', ownerId], ['other', otherId]] as const) {
+    await db.query('insert into profiles(id,email,name,role,password_hash) values($1,$2,$3,\'student\',$4)', [id, emails[actor], `지식한입 ${actor} 합성 검사`, hash]);
+    const packageId = `knowledge-${fixture}-${actor}`;
+    const jobId = `knowledge-api-${fixture}-${actor}`;
+    await db.query('insert into production_links(id,student_id,data) values($1,$2,$3)', [jobId, id, JSON.stringify({ synthetic: true, fixture: 'knowledge-bites-api' })]);
+    await db.query('insert into content_packages(id,student_id,active_version) values($1,$2,1)', [packageId, id]);
+    await db.query('insert into content_versions(package_id,version,data,learning_hash,status,production_job_ref) values($1,1,$2,$3,\'published\',$4)', [packageId, JSON.stringify(learning), 'synthetic-knowledge-api', jobId]);
+    check((await request(actor, '/api/auth', { action: 'login', email: emails[actor], password: process.env.TEST_ACCOUNT_PASSWORD || 'Gakja!2026' })).status === 200, `${actor} independent login`);
+  }
+  check((await request('staff', '/api/auth', { action: 'login', email: 'staff@gakja.test', password: process.env.TEST_ACCOUNT_PASSWORD || 'Gakja!2026' })).status === 200, 'staff independent login');
+  check((await get('anonymous')).status === 401, 'anonymous read denied');
+  check((await save('anonymous', 'save', true, 0)).status === 401, 'anonymous write denied');
+  check((await get('staff')).status === 403, 'staff read denied');
+  check((await save('staff', 'save', true, 0)).status === 403, 'staff write denied');
+  const initial = await get('owner');
+  check(initial.status === 200 && initial.data.videos.length === 2 && initial.data.videos.every((item: any) => item.activities[0].id === learning.activities[0].id), 'videos are linked to own published activity');
+  check(initial.headers.get('cache-control')?.includes('private') && initial.headers.get('cache-control')?.includes('no-store'), 'private response disables shared caching');
+  check((await save('owner', 'save', true, 0, wrong)).status === 404, 'catalog video unrelated to own learning rejected');
+  check((await save('owner', 'save', true, 0, 'abcdefghijk')).status === 404, 'invented video rejected');
+  const bookmarked = await save('owner', 'save', true, 0, video, { studentId: otherId });
+  check(bookmarked.status === 200 && bookmarked.data.progress.student_id === ownerId && bookmarked.data.progress.saved && bookmarked.data.progress.revision === 1, 'forged owner ignored and bookmark saved only for authenticated student');
+  check((await get('other')).data.videos.every((item: any) => item.progress === null), 'other student cannot read owner bookmark');
+  check((await save('owner', 'save', true, 0)).data.progress.revision === 1, 'duplicate bookmark retry is idempotent');
+  const completed = await save('owner', 'complete', true, 1);
+  check(completed.status === 200 && completed.data.progress.completed_at && completed.data.progress.revision === 2, 'self reported completion persisted separately');
+  const reflected = await save('owner', 'reflection', '  밀도 차이와 회수 조건을 다시 확인해 보겠다.  ', 2);
+  check(reflected.status === 200 && reflected.data.progress.reflection === '밀도 차이와 회수 조건을 다시 확인해 보겠다.' && reflected.data.progress.saved && reflected.data.progress.completed_at, 'reflection trimmed and other progress fields preserved');
+  const history = await get('owner', video);
+  check(history.data.history.length === 3 && history.data.history[0].reflection === reflected.data.progress.reflection && history.data.history[2].saved, 'immutable progress history preserved');
+  check((await get('other', video)).data.history.length === 0, 'other student cannot read owner revisions');
+  check((await save('owner', 'reflection', 'stale edit', 2)).status === 409, 'stale revision denied');
+  const race = await Promise.all([save('owner', 'reflection', '동시 저장 A', 3), save('owner', 'reflection', '동시 저장 B', 3)]);
+  check(race.map(result => result.status).sort().join(',') === '200,409', 'concurrent writes keep exactly one winner');
+  check((await get('owner', video)).data.history.length === 4, 'conflicted write creates no extra history');
+  check((await save('owner', 'reflection', '가'.repeat(4001), 4)).status === 400, 'too long reflection denied');
+  check((await save('owner', 'complete', 'true', 4)).status === 400, 'boolean strings rejected');
+  check((await save('owner', 'save', false, -1)).status === 400, 'invalid revision denied');
+  check((await request('owner', '/api/knowledge-bites', { action: 'save', videoId: video, value: false, expectedRevision: 4 }, 'https://example.test')).status === 403, 'cross origin write denied');
+  check((await get('owner', 'bad')).status === 400, 'malformed history ID denied');
+  await db.query('update content_versions set data=$2 where package_id=$1', [`knowledge-${fixture}-owner`, JSON.stringify({ ...learning, activities: [{ id: `new-${fixture}`, title: '합성 책 독후감', book_title: '합성 지역사 토론', keywords: ['구술사'] }] })]);
+  const later = await get('owner');
+  check(later.data.videos.length === 1 && later.data.videos[0].current === false && later.data.videos[0].activities[0].title === learning.activities[0].title, 'previous saved video retains original activity provenance after approved learning changes');
+  check(later.data.searches.length === 1 && !('thumbnail' in later.data.searches[0]), 'unmatched book topic returns a transparent search rather than invented video');
+  check((await save('owner', 'save', false, 4)).status === 200, 'previous private progress remains editable');
+  await db.query('update content_versions set data=$2 where package_id=$1', [`knowledge-${fixture}-owner`, JSON.stringify(learning)]);
+  const withContext = await request('owner', `/api/knowledge-bites?questionId=${questionId}`);
+  check(withContext.status===200 && withContext.data.contextQuestion.id===questionId && withContext.data.videos[0].relatedQuestions[0].id===questionId,'owned question context recommended by actual activity');
+  check((await request('owner','/api/knowledge-bites?questionId=other-student-question')).status===404,'unowned question context rejected');
+  const currentRevision = (await get('owner',video)).data.videos.find((item:any)=>item.id===video).progress.revision;
+  const explanation = await save('owner','explanation','영상에서 본 개념을 합성 활동의 분리 조건과 연결했다.',currentRevision,video,{questionId});
+  check(explanation.status===200 && explanation.data.progress.snapshot.learning.questionId===questionId && explanation.data.progress.snapshot.learning.explanation,'own explanation preserves actual source question');
+  check(!explanation.data.progress.snapshot.learning.selfCheck,'saving an explanation cannot invent a self-check choice');
+  const explanationRevision = explanation.data.progress.revision;
+  check((await save('owner','explanation','권한 없는 연결',explanationRevision,video,{questionId:'other-student-question'})).status===404,'unowned context rejected during mutation');
+  check((await save('owner','self_check','correct',explanationRevision,video,{questionId})).status===400,'selfcheck cannot send fabricated correctness score');
+  const selfcheck=await save('owner','self_check','needs_review',explanationRevision,video,{questionId});
+  check(selfcheck.status===200 && selfcheck.data.progress.snapshot.learning.selfCheck==='needs_review','self-reported uncertainty preserved independently of correctness');
+  const event=(await db.query("select data from study_session_events where student_id=$1 and kind='knowledge_progress' and source_id=$2",[ownerId,`${explanation.data.progress.id}:${explanationRevision}`])).rows[0];
+  check(event?.data.questionId===questionId && event.data.explanationSaved===true && event.data.selfReported===true,'actual explanation event uses unique progress revision and selfreport provenance');
+  const explanationHistory=(await get('owner',video)).data.history.find((row:any)=>row.revision===explanationRevision);
+  check(explanationHistory.metadata.learning.explanation===explanation.data.progress.snapshot.learning.explanation,'immutable revision retains actual explanation');
+  const changedSource=`changed-plan-${fixture}`;
+  await db.query('update content_versions set data=$2 where package_id=$1',[`knowledge-${fixture}-owner`,JSON.stringify({...learning,activities:[],questions:[],source_refs:[{id:changedSource,type:'student_confirmation',quote:'합성 미세플라스틱 향후 학업 계획'}],student_context:{confirmed_plans:[{text:'미세플라스틱을 앞으로 공부할 합성 계획',source_ref_ids:[changedSource],verification_status:'confirmed_by_student'}]}})]);
+  const changedExplanation=await save('owner','explanation','새 계획에서는 인체 유입 경로를 확인할 것이다.',selfcheck.data.progress.revision,video);
+  check(changedExplanation.status===200&&!changedExplanation.data.progress.snapshot.learning.questionId&&!changedExplanation.data.progress.snapshot.learning.selfCheck&&changedExplanation.data.progress.snapshot.activities.length===0,'new plan-only explanation clears a removed activity question and its old self-check');
+  check((await get('owner',video)).data.history.some((item:any)=>item.revision===explanationRevision&&item.metadata.learning.questionId===questionId),'previous question explanation remains immutable in original history');
+  await db.query('update content_versions set data=$2 where package_id=$1',[`knowledge-${fixture}-owner`,JSON.stringify(learning)]);
+  const goalSource=`goal-${fixture}`, recordSource=`music-${fixture}`, planVideo='6hfOvs8pY1k';
+  const broader={...learning,source_refs:[{id:goalSource,type:'student_confirmation',quote:'합성 알고리즘 학업 계획 확인'},{id:recordSource,type:'student_record',area:'합성 음악 세특',quote:'합주에서 악보의 리듬을 비교한 합성 기록'}],student_context:{confirmed_plans:[{text:'알고리즘을 공부할 합성 학업 계획',source_ref_ids:[goalSource],verification_status:'confirmed_by_student'}]}};
+  await db.query('update content_versions set data=$2 where package_id=$1',[`knowledge-${fixture}-other`,JSON.stringify(broader)]);
+  const broaderResult=await get('other');
+  const planMatch=broaderResult.data.videos.find((item:any)=>item.id===planVideo);
+  check(planMatch?.activities.length===0&&planMatch.contexts[0].kind==='plan'&&planMatch.contexts[0].sourceRefIds[0]===goalSource,'verified plan retains its source without inventing an activity');
+  check(broaderResult.data.videos.some((item:any)=>item.id==='ZN41d7Txcq0'&&item.contexts[0].sourceRefIds[0]===recordSource),'unattached own student-record passage gets a real sourced video');
+  const planSave=await save('other','explanation','문제를 단계로 나누는 방법을 앞으로 공부할 계획과 연결했다.',0,planVideo);
+  check(planSave.status===200&&planSave.data.progress.snapshot.contexts[0].sourceRefIds[0]===goalSource&&!planSave.data.progress.snapshot.learning.questionId,'plan-only explanation saves grounded provenance without a fabricated interview question');
+  const wrongPlanQuestion=await save('other','self_check','explained',1,planVideo,{questionId});
+  check(wrongPlanQuestion.status===404,'plan-only video cannot acquire an unrelated own activity question');
+  check((await save('owner','save',true,0,planVideo)).status===404,'another student cannot save a plan-only recommendation they do not own');
+  const planEvent=(await db.query("select data from study_session_events where student_id=$1 and kind='knowledge_progress' and source_id=$2",[otherId,`${planSave.data.progress.id}:1`])).rows[0];
+  check(planEvent?.data.activityIds.length===0&&planEvent.data.questionId===null&&planEvent.data.explanationSaved===true&&planEvent.data.sourceRefIds[0]===goalSource&&planEvent.data.recordContexts[0].kind==='plan','source-only explanation keeps source provenance and empty activity/question identities in study event');
+  await db.query('update content_versions set status=\'staged\' where package_id=$1', [`knowledge-${fixture}-other`]);
+  check((await get('other')).status === 404, 'unpublished active learning cannot leak videos');
+  console.log(`Knowledge bites API checks passed: ${checks}. External requests: 0; original student data changed: 0.`);
+} finally {
+  await db.query('begin');
+  try {
+    await db.query('delete from knowledge_bite_progress where student_id=any($1::uuid[])', [[ownerId, otherId]]);
+    await db.query('delete from study_sessions where student_id=any($1::uuid[])', [[ownerId, otherId]]);
+    await db.query('delete from study_imported_events where student_id=any($1::uuid[])', [[ownerId, otherId]]);
+    await db.query('delete from sessions where user_id=any($1::uuid[])', [[ownerId, otherId]]);
+    await db.query('delete from content_versions where package_id=any($1::text[])', [[`knowledge-${fixture}-owner`, `knowledge-${fixture}-other`]]);
+    await db.query('delete from content_packages where student_id=any($1::uuid[])', [[ownerId, otherId]]);
+    await db.query('delete from production_links where student_id=any($1::uuid[])', [[ownerId, otherId]]);
+    await db.query('delete from profiles where id=any($1::uuid[])', [[ownerId, otherId]]);
+    await db.query('commit');
+  } catch (error) { await db.query('rollback'); throw error; }
+  if (cookies.staff) await request('staff', '/api/auth', { action: 'logout' });
+  await db.end();
+}

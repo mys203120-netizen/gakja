@@ -1,0 +1,75 @@
+/* Mobile audit: shared controls and secondary student surfaces. */
+.app-shell:not(.admin-shell) :is(.learning-tabs,.training-filters) { gap:6px; flex-wrap:wrap; border:0; }
+.app-shell:not(.admin-shell) :is(.learning-tabs,.training-filters) > button { min-height:44px; border:0; border-radius:22px; padding:10px 14px; font-size:14px; }
+.app-shell:not(.admin-shell) :is(.learning-tabs,.training-filters) > button.active { background:#e7f0ff; color:var(--clarity-action); box-shadow:none; }
+.app-shell .settings-list { max-width:760px; }
+.app-shell .settings-list > h2 { font-size:17px; color:var(--clarity-ink); }
+.app-shell .settings-row { padding:14px 16px; margin:8px 0; border:0; border-radius:14px; background:#f5f8fc; }
+.app-shell .settings-row select { background:#fff; min-height:44px; }
+.app-shell .preparation-note { margin-block:24px 32px; }
+.app-shell .preparation-note textarea { padding:14px 16px; border-radius:14px; line-height:1.8; }
+.app-shell .learning-preferences-row { gap:16px; padding-block:18px; }
+.app-shell .account-profile { background:#edf4ff; border-radius:18px; padding:22px; }
+.app-shell .account-profile p { overflow-wrap:anywhere; }
+.app-shell .assignment-library .learning-rows { display:grid; gap:12px; }
+.app-shell .assignment-library .learning-row { padding:18px; border:0; border-radius:16px; background:#f5f8fc; gap:12px; }
+.app-shell .assignment-library .learning-row h2 { font-size:18px; line-height:1.6; overflow-wrap:anywhere; }
+.app-shell:not(.admin-shell) :is(.page-title h1,.row-text strong,.row-text > span,.notification-item p) { word-break:keep-all; overflow-wrap:anywhere; }
+.app-shell:not(.admin-shell) :is(.text-link,select,input,textarea):focus-visible,
+.native-modal :is(button,a,select,input,textarea):focus-visible { outline:2px solid var(--clarity-action); outline-offset:3px; }
+.native-modal .modal { background:#fff; border-radius:20px; border-color:var(--clarity-line); }
+.native-modal .modal .section-heading { gap:16px; align-items:center; margin-bottom:20px; }
+.native-modal .modal .section-heading h2 { font-size:22px; line-height:1.5; overflow-wrap:anywhere; }
+.native-modal .modal .icon-button { min-width:44px; min-height:44px; border-radius:50%; flex-shrink:0; }
+.native-modal .modal .search-field { border-radius:14px; background:#f1f5fa; }
+.native-modal .modal .search-field:focus-within { outline-color:var(--clarity-action); }
+.native-modal .modal :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { border-radius:12px; font-size:16px; }
+.native-modal .modal select { min-height:48px; padding:10px 40px 10px 14px; }
+.native-modal .plan-form label { margin:0; gap:8px; }
+.native-modal .plan-form { display:grid; gap:18px; }
+.native-modal .plan-form > div:not(.form-actions):not(.alert) { gap:16px; }
+.native-modal .plan-form .form-actions { margin-top:6px; padding-top:6px; }
+/* Portalled forms use the same ellipsis affordance as the workspace selects. */
+.native-modal select:not([multiple]):not([size]) { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235d6978'%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='19' cy='12' r='2'/%3E%3C/svg%3E"); background-position:right 12px center; background-size:18px; background-repeat:no-repeat; }
+@media(max-width:700px) {
+ .app-shell .interview-setup-layout { display:grid; grid-template-columns:minmax(0,1fr); }
+ .app-shell .interview-setup-layout > * { width:100%; min-width:0; }
+ .app-shell .interview-v2 .toggle { position:relative; width:48px; height:44px; min-width:48px; min-height:44px; padding:0; border:0; background:transparent; flex-shrink:0; }
+ .app-shell .interview-v2 .toggle::before { content:''; position:absolute; width:38px; height:22px; top:11px; left:5px; border-radius:20px; background:#c3cbd6; }
+ .app-shell .interview-v2 .toggle.on::before { background:var(--clarity-action); }
+ .app-shell .interview-v2 .toggle i { position:absolute; top:14px; left:8px; width:16px; height:16px; margin:0; background:#fff; transform:none; }
+ .app-shell .interview-v2 .toggle.on i { transform:translateX(16px); }
+ .app-shell:not(.admin-shell) .topbar { padding-inline:12px; gap:8px; }
+ .app-shell:not(.admin-shell) .topbar-context { flex:1; min-width:0; gap:8px; }
+ .app-shell:not(.admin-shell) .topbar-context > :is(.school-logo,.school-logo-fallback) { display:none!important; }
+ .app-shell:not(.admin-shell) .topbar-actions { flex-shrink:0; gap:0; }
+ .app-shell:not(.admin-shell) .topbar .icon-button,
+ .app-shell:not(.admin-shell) .topbar .account-trigger.compact { width:44px; height:44px; min-width:44px; min-height:44px; padding:0; justify-content:center; }
+ .app-shell:not(.admin-shell) .topbar .target-select { min-width:0; flex:1; }
+ .app-shell:not(.admin-shell) .topbar .target-select select { width:100%; min-width:0; min-height:44px; padding-inline:8px; font-size:12px; }
+ .app-shell:not(.admin-shell) .topbar .mobile-brand { flex-shrink:0; }
+ .app-shell:not(.admin-shell) .button.small,.native-modal .button.small { min-height:44px; }
+ .app-shell:not(.admin-shell) .text-link,.app-shell .account-grid .section-heading a,.native-modal .text-link { display:inline-flex; align-items:center; min-height:44px; line-height:1.6; }
+ .app-shell:not(.admin-shell) .breadcrumb { margin-bottom:6px; }
+ .app-shell:not(.admin-shell) .breadcrumb a { display:inline-flex; align-items:center; min-height:44px; }
+ .app-shell:not(.admin-shell) .learning-inline-links { flex-wrap:wrap; gap:8px 18px; }
+ .app-shell:not(.admin-shell) .learning-inline-links a { display:inline-flex; align-items:center; min-height:44px; }
+ .app-shell:not(.admin-shell) :is(.school-source-link,.school-input-note a) { display:inline-flex; align-items:center; min-height:44px; line-height:1.65; overflow-wrap:anywhere; }
+ .app-shell:not(.admin-shell) .page-title { align-items:flex-start; flex-wrap:wrap; }
+ .app-shell:not(.admin-shell) .page-title > div { min-width:0; }
+ .app-shell:not(.admin-shell) .main-content :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select) { font-size:16px; }
+ .app-shell:not(.admin-shell) :is(.calendar-heading,.week-plan-heading) .icon-button { width:44px; height:44px; min-width:44px; min-height:44px; }
+ .app-shell:not(.admin-shell) .calendar-today { min-height:44px; padding-inline:12px; border-radius:22px; }
+ .app-shell:not(.admin-shell) .calendar-event-date { min-height:44px; }
+ .app-shell:not(.admin-shell) :is(.dashboard-quick-practice a,.dashboard-reading-tabs button) { min-height:44px; }
+ .app-shell:not(.admin-shell) .settings-list .learning-preferences-row { flex-wrap:wrap; }
+ .app-shell:not(.admin-shell) .settings-list .learning-preferences-row > div { flex:1; min-width:180px; }
+ .app-shell:not(.admin-shell) .settings-list input[type=checkbox] { accent-color:var(--clarity-action); }
+ .app-shell:not(.admin-shell) .settings-list .learning-preferences-row strong { font-size:15px; }
+ .app-shell:not(.admin-shell) .settings-list .learning-preferences-row p { font-size:14px; line-height:1.7; }
+ .native-modal.modal-backdrop { padding:12px; }
+ .native-modal .modal { padding:20px; max-height:calc(100dvh - 24px); scroll-padding-block:16px; }
+ .native-modal .modal .form-actions { gap:10px; flex-wrap:wrap; }
+ .native-modal .modal .form-actions .button { flex:1; }
+ .account-popover :is(a,button) { min-height:44px; }
+}

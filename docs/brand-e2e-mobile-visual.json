@@ -1,0 +1,70 @@
+{
+  "reviewedAt": "2026-10-12",
+  "reviewer": "qa_mobile_visual",
+  "method": "view_image로 모바일 contact sheet 01~09 전체를 실제 관찰하고 관리자 원본 PNG 두 장을 추가 확인했다. 브라우저 조작과 소스 수정은 수행하지 않았다.",
+  "viewport": { "width": 390, "height": 844 },
+  "scope": { "totalObservations": 70, "public": 5, "student": 49, "admin": 16 },
+  "evidenceDirectory": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12",
+  "reviewedContactSheets": [
+    "contact-mobile-01.jpg", "contact-mobile-02.jpg", "contact-mobile-03.jpg",
+    "contact-mobile-04.jpg", "contact-mobile-05.jpg", "contact-mobile-06.jpg",
+    "contact-mobile-07.jpg", "contact-mobile-08.jpg", "contact-mobile-09.jpg"
+  ],
+  "reviewedIndividualScreenshots": [
+    "140-mobile-admin-overview.png",
+    "142-mobile-admin-student-detail.png"
+  ],
+  "summary": "공개·학생 모바일 화면은 밝은 배경, 원본 녹색 로고, Pretendard, 낮은 밀도의 구획을 일관되게 유지한다. 긴 질문과 활동 제목은 의미 단위로 읽을 수 있게 줄바꿈되며, 결과 화면의 수치·다음 행동·답변 복기 순서도 확인했다. 명백한 화면 전체 가로 넘침이나 본문 글자 잘림은 관찰되지 않았다. 관리자 공통 하단 메뉴의 상시 수평 스크롤바는 실제 확인된 브랜드 시각 문제다. 로딩 상태로 찍힌 AI 비서 문맥 화면은 재캡처가 필요하다.",
+  "findings": [
+    {
+      "id": "mobile-admin-nav-scrollbar",
+      "priority": "P2",
+      "type": "visual",
+      "status": "confirmed-before-fix",
+      "affected": "관리자 모바일 16화면의 공통 하단 주 메뉴",
+      "evidence": ["140-mobile-admin-overview.png", "142-mobile-admin-student-detail.png", "contact-mobile-08.jpg", "contact-mobile-09.jpg"],
+      "observation": "하단 고정 메뉴에 두꺼운 회색 가로 스크롤바와 좌우 화살표가 계속 나타난다. 세로 페이지 스크롤바와 겹쳐 화면 끝이 조밀하고, 운영 설정 등 오른쪽 메뉴는 첫 화면에서 드러나지 않는다.",
+      "domCrossCheck": "results.json에서 해당 화면의 document overflow는 false다. 따라서 화면 전체 넘침과 구별하여 하단 nav 내부 스크롤 문제로 기록한다.",
+      "sourceCandidates": [
+        {"file": "apps/web/src/app/globals.css", "line": 3845, "rule": ".admin-mobile-nav { overflow: auto; justify-content: flex-start; }"},
+        {"file": "apps/web/src/app/workspace-v2.css", "line": 58, "rule": ".admin-mobile-nav { display: flex; overflow-x: auto; justify-content: flex-start; }"},
+        {"file": "apps/web/src/app/workspace-v2.css", "line": 59, "rule": ".admin-mobile-nav>a { flex: 0 0 64px; }"}
+      ],
+      "recommendation": "가로 스와이프와 키보드 접근을 유지하면서 native scrollbar를 숨기고, 필요하면 오른쪽 메뉴가 이어짐을 약한 끝단 표시로 안내한다. 단순 overflow:hidden은 피한다.",
+      "verificationNeeded": "수정 후 관리자 모바일 원본을 재캡처하고 좌우 스와이프·키보드 포커스로 마지막 메뉴까지 도달하는지 확인한다."
+    }
+  ],
+  "captureIssues": [
+    {
+      "id": "mobile-assistant-context-loading-capture",
+      "screen": "assistant-context",
+      "evidence": "110-mobile-assistant-context.png",
+      "status": "retake-needed",
+      "observation": "contact-mobile-07에서 AI 비서 본문은 스피너이며 입력창은 '질문을 불러오는 중이에요.'를 표시한다. results.json의 loading:false는 .main-content .loading만 검사하여 이 별도 문맥 로딩 상태를 놓친 것으로 보인다.",
+      "recommendation": "추천 질문이나 현재 질문의 실제 내용이 렌더된 후 재캡처한다. 초기 로딩 사진만으로 앱 버그로 판단하지 않는다."
+    },
+    {
+      "id": "mobile-admin-header-transient-clipping",
+      "screen": "admin-student-detail",
+      "evidence": "142-mobile-admin-student-detail.png",
+      "status": "retake-needed-not-product-bug",
+      "observation": "원본에서 상단 녹색 로고의 오른쪽 부분과 우측 계정 버튼이 완전히 드러나지 않는다. 140 원본의 같은 공통 헤더는 정상이며, source Logo/brand의 flex-shrink:0 및 정상 25px 크기를 확인했다. 캡처 시점이나 paint 상태 가능성을 먼저 배제해야 한다.",
+      "recommendation": "같은 화면을 안정화된 후 다시 촬영하고 공통 헤더 좌표·이미지 완료 상태를 읽어 확인한다. 재현되지 않으면 캡처 이슈로 닫는다."
+    }
+  ],
+  "passedObservations": [
+    "공개 5화면의 로고 비율·밝은 배경·폼 너비 및 주요 버튼이 일관된다.",
+    "대시보드·오늘 학습·퀴즈·면접·리포트의 모바일 하단 학습 메뉴가 같은 위치와 높이를 유지한다.",
+    "퀴즈 완료 화면은 수치 요약, 다음 면접 연결, 답변 복기가 읽는 순서대로 배치되어 있다.",
+    "긴 질문·활동 제목·환경 브리핑 제목은 화면 내에서 줄바꿈된다.",
+    "AI 답변의 인용문·인라인 코드·표/코드 내부 수평 스크롤은 Markdown 구조를 유지한다. 내부 스크롤을 페이지 전체 넘침으로 판단하지 않았다.",
+    "면접 캐릭터 두 명은 390px에서 나란히 유지되고 채팅/Live 유형과 상태가 읽힌다.",
+    "가이드북·핸드북 목차와 계정 설정 select는 모바일 본문 폭 안에 들어온다.",
+    "학생·공개 화면에서 결과 JSON의 전체 페이지 가로 넘침은 모두 false다."
+  ],
+  "limits": [
+    "주로 첫 viewport 캡처를 시각 검수했다. 모든 긴 페이지의 최하단이나 열리지 않은 overlay의 가림 여부를 이 사진만으로 보증하지 않는다.",
+    "모션 타이밍·실제 모바일 하드웨어·가상 키보드·OAuth·녹음 권한은 정지 이미지 검수의 범위 밖이다.",
+    "추가 원본 재캡처와 실제 상호작용 검수는 root가 수행한다."
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "generatedAtUtc": "2026-10-12 05:01:40 UTC",
+  "workspace": "C:/Users/MaYunsong/Documents/각자의답",
+  "typecheck": {
+    "command": "npm run typecheck",
+    "status": "passed",
+    "exitCode": 0,
+    "packages": ["@gakja/content-contracts", "@gakja/web"],
+    "successfulTasks": 2,
+    "totalTasks": 2
+  },
+  "productionBuild": {
+    "command": "npm run build",
+    "status": "deferred",
+    "executed": false,
+    "reason": "The current next.config.ts has no distDir or environment-based output-directory override. A foreground next dev process is active on port 3100 using the same .next directory. Per the assigned instruction, production build was not run while that development server remained active.",
+    "nextConfig": "apps/web/next.config.ts"
+  },
+  "sourceModified": false,
+  "environmentFilesRead": false
+}

@@ -1,0 +1,167 @@
+.training-view, .records-view { color: #1d1d1f; min-width: 0; }
+.training-view .page-title, .records-view .page-title { margin-bottom: 36px; }
+.training-count { color: #6e6e73; font-size: 15px; font-weight: 500; white-space: nowrap; }
+.training-paths { border-top: 1px solid #e0e0e0; }
+.training-path { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 24px; min-height: 140px; padding: 28px 0; border-bottom: 1px solid #e0e0e0; }
+.training-path > svg { color: #6e6e73; }
+.training-path h2 { margin: 0 0 9px; font-size: clamp(24px, 2.3vw, 30px); line-height: 1.3; letter-spacing: -.04em; font-weight: 650; }
+.training-path p { margin: 0; color: #6e6e73; font-size: 16px; line-height: 1.6; }
+.training-path-action { display: flex; align-items: center; gap: 12px; color: #0066cc; font-size: 15px; font-weight: 550; white-space: nowrap; }
+.training-path:hover h2, .training-keyword-list a:hover strong, .training-memory-row:hover h3, .records-report-row:hover h2 { color: #0066cc; }
+.training-path-action svg, .training-keyword-list a > svg, .training-memory-row > svg, .records-report-row > svg { transition: transform 160ms ease; }
+.training-path:hover .training-path-action svg, .training-keyword-list a:hover > svg, .training-memory-row:hover > svg, .records-report-row:hover > svg { transform: translate(2px, -2px); }
+
+.training-keywords { margin-top: 48px; }
+.training-keywords .section-heading { margin-bottom: 12px; }
+.training-keyword-list a { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 21px 0; border-bottom: 1px solid #e0e0e0; }
+.training-keyword-list strong { font-size: 18px; font-weight: 550; line-height: 1.65; letter-spacing: -.025em; word-break: keep-all; overflow-wrap: anywhere; }
+.training-keyword-list a > svg { flex-shrink: 0; color: #6e6e73; }
+.training-recall-intro { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 0 0 30px; }
+.training-recall-intro h2 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.035em; }
+.training-recall-intro p { margin: 9px 0 0; color: #6e6e73; font-size: 15px; }
+.training-filters { display: flex; align-items: center; gap: 28px; margin: 0; border-bottom: 1px solid #e0e0e0; overflow-x: auto; scrollbar-width: none; }
+.training-filters::-webkit-scrollbar { display: none; }
+.training-filters button { flex-shrink: 0; padding: 15px 0; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: #6e6e73; background: none; font-size: 15px; font-weight: 500; white-space: nowrap; }
+.training-filters button.active { color: #1d1d1f; border-bottom-color: #1d1d1f; font-weight: 650; }
+.training-memory-row { display: grid; grid-template-columns: 104px minmax(0, 1fr) 58px 22px; gap: 24px; align-items: center; padding: 27px 0; border-bottom: 1px solid #e0e0e0; }
+.training-memory-kind { color: #6e6e73; font-size: 14px; line-height: 1.55; }
+.training-memory-row h3 { margin: 0; font-size: 19px; font-weight: 550; line-height: 1.65; letter-spacing: -.025em; word-break: keep-all; overflow-wrap: anywhere; }
+.training-memory-time { display: flex; align-items: center; gap: 6px; color: #6e6e73; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.training-memory-row > svg { color: #6e6e73; }
+.training-empty-filter { color: #6e6e73; padding: 36px 0; font-size: 16px; }
+
+.recall-view .page-title { margin-bottom: 20px; }
+.recall-view .recall-card { padding: 0; min-height: 0; text-align: left; }
+.recall-view .recall-card-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 0; margin: 0 0 32px; border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; }
+.recall-state { display: flex; align-items: center; gap: 8px; color: #6e6e73; font-size: 14px; }
+.recall-state i { width: 6px; height: 6px; background: #6e6e73; border-radius: 50%; }
+.recall-view .recall-timer { display: flex; align-items: baseline; gap: 8px; color: #1d1d1f; }
+.recall-view .recall-timer svg { align-self: center; color: #6e6e73; margin-right: 4px; }
+.recall-view .recall-timer strong { font-size: 42px; line-height: 1; font-weight: 500; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+.recall-view .recall-timer small { color: #6e6e73; font-size: 14px; font-weight: 400; }
+.recall-view .recall-card > h2 { margin: 0; font-size: clamp(26px, 2.8vw, 36px); line-height: 1.45; font-weight: 650; letter-spacing: -.045em; text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
+.recall-view .recall-question { margin: 18px 0 0; padding: 0; font-size: 17px; line-height: 1.8; color: #6e6e73; }
+.recall-view .recall-start { display: flex; flex-direction: row; align-items: flex-end; gap: 24px; padding: 38px 0 0; margin: 0; }
+.recall-view .timer-select { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; color: #6e6e73; font-size: 14px; }
+.recall-view .timer-select select { min-width: 168px; height: 48px; padding: 0 36px 0 14px; border: 1px solid #d2d2d7; border-radius: 10px; color: #1d1d1f; background: #fff; font-size: 16px; }
+.recall-view .recall-answer-area { margin: 30px 0 22px; }
+.recall-view .recall-answer-area textarea { display: block; width: 100%; min-height: 205px; padding: 22px 24px; border: 1px solid #e0e0e0; border-radius: 10px; background: #f5f5f7; color: #1d1d1f; font-size: 18px; line-height: 1.85; resize: vertical; }
+.recall-view .recall-answer-area textarea::placeholder { color: #6e6e73; }
+.recall-view .choice-grid button { display: flex; align-items: center; gap: 18px; padding: 21px 0; line-height: 1.6; }
+.recall-view .choice-grid button > span { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border: 1px solid #d2d2d7; border-radius: 50%; background: #fff; color: #6e6e73; font-size: 13px; }
+.recall-view .choice-grid button.selected > span { background: #1d1d1f; border-color: #1d1d1f; color: #fff; }
+.recall-view .order-items button { gap: 14px; padding: 20px 0; line-height: 1.65; }
+.recall-view .order-items button > svg, .recall-view .order-items button small { color: #6e6e73; }
+.recall-view .flip-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; width: 100%; min-height: 220px; padding: 30px 24px; border-radius: 10px; background: #f5f5f7; font-size: 20px; }
+.recall-view .flip-card > small { color: #6e6e73; font-size: 14px; }
+.recall-view .recall-feedback { margin-top: 30px; padding: 28px 0 0; border: 0; border-top: 1px solid #e0e0e0; background: none; }
+.recall-view .recall-feedback > h3 { margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -.035em; }
+.recall-view .recall-keywords { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px 24px; margin: 18px 0; }
+.recall-view .recall-keywords > span { padding: 0; font-size: 20px; line-height: 1.7; font-weight: 550; }
+.recall-view .recall-feedback .muted { font-size: 15px; line-height: 1.8; }
+.recall-view .rating-buttons { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 10px; margin-top: 26px; }
+.recall-view .recall-completed { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; padding: 40px 0 0; }
+.recall-view .completion-check { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #f5f5f7; color: #1d1d1f; }
+.recall-view .recall-completed h3 { margin: 0; font-size: 24px; line-height: 1.5; letter-spacing: -.035em; font-weight: 550; }
+.recall-completed-actions { display: flex; align-items: center; gap: 24px; }
+
+.records-view .subnav { margin-bottom: 34px; }
+.records-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; padding: 0 0 30px; margin: 0 0 38px; border-bottom: 1px solid #e0e0e0; }
+.records-overview > div { display: flex; flex-direction: column; gap: 16px; }
+.records-overview span { color: #6e6e73; font-size: 14px; }
+.records-overview strong { font-size: 46px; line-height: 1; font-weight: 500; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+.records-overview small { margin-left: 7px; font-size: 14px; font-weight: 400; letter-spacing: 0; color: #6e6e73; }
+.records-history-section { margin-bottom: 36px; }
+.records-history-section > h2 { margin: 0 0 12px; font-size: 21px; font-weight: 600; letter-spacing: -.035em; }
+.records-history-section .linked-row { padding: 22px 0; gap: 22px; }
+.records-history-section .row-text strong { font-size: 18px; font-weight: 550; line-height: 1.6; }
+.records-history-section .row-text > span { margin-top: 7px; font-size: 13px; color: #6e6e73; }
+.records-row-icon { display: flex; align-items: center; justify-content: flex-start; flex-shrink: 0; width: 30px; color: #6e6e73; }
+.records-report-list { border-top: 1px solid #e0e0e0; }
+.records-report-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto 24px; align-items: center; gap: 24px; padding: 30px 0; border-bottom: 1px solid #e0e0e0; }
+.records-report-row h2 { margin: 0; font-size: 24px; line-height: 1.4; font-weight: 600; letter-spacing: -.04em; }
+.records-report-row p { margin: 9px 0 0; color: #6e6e73; font-size: 14px; }
+.records-answer-count { color: #6e6e73; font-size: 15px; white-space: nowrap; }
+.records-report-row > svg { color: #6e6e73; }
+
+.report-view .page-title { margin-bottom: 18px; }
+.report-view .report-summary { gap: 24px; padding-bottom: 26px; margin-bottom: 34px; border-bottom: 1px solid #e0e0e0; color: #6e6e73; font-size: 15px; }
+.report-feedback-section { margin: 32px 0; }
+.report-feedback-section > h2 { margin: 0 0 18px; font-size: 21px; letter-spacing: -.035em; font-weight: 600; }
+.report-view .report-section { margin: 36px 0 0; padding: 0 0 36px; border-bottom: 1px solid #e0e0e0; }
+.report-view .question-index { display: block; padding: 0; margin-bottom: 12px; color: #6e6e73; font-size: 14px; font-weight: 500; background: none; border: 0; }
+.report-view .report-section > h2 { margin: 0 0 28px; font-size: 26px; font-weight: 600; line-height: 1.5; letter-spacing: -.04em; word-break: keep-all; overflow-wrap: anywhere; }
+.report-answer { margin-bottom: 26px; }
+.report-answer > h3, .report-view .report-elements > h3, .report-view .report-checks > h3 { margin: 0 0 10px; color: #6e6e73; font-size: 14px; line-height: 1.5; font-weight: 500; }
+.report-answer > p { margin: 0; color: #1d1d1f; font-size: 18px; line-height: 1.9; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
+.report-view .report-elements { margin: 0 0 26px; padding: 0; border: 0; background: none; }
+.report-view .tag-list { gap: 10px 24px; }
+.report-view .tag-list > span { padding: 0; border: 0; border-radius: 0; background: none; color: #1d1d1f; font-size: 16px; line-height: 1.7; }
+.report-view .report-checks { margin: 0 0 22px; padding: 0; border: 0; background: none; }
+.report-view .report-checks label { gap: 10px; color: #1d1d1f; font-size: 16px; line-height: 1.8; }
+.report-view .report-retry { color: #0066cc; font-size: 15px; }
+.report-new-session { margin-top: 32px; }
+.training-view a:focus-visible, .training-view button:focus-visible, .training-view select:focus-visible, .training-view textarea:focus-visible, .records-view a:focus-visible { outline: 3px solid #b3d7ff; outline-offset: 4px; }
+
+@media (max-width: 700px) {
+  .training-view .page-title, .records-view .page-title { margin-bottom: 28px; }
+  .training-count { font-size: 13px; }
+  .training-path { grid-template-columns: 26px minmax(0, 1fr) 22px; gap: 15px; min-height: 124px; padding: 24px 0; }
+  .training-path > svg { width: 24px; height: 24px; }
+  .training-path h2 { font-size: 23px; }
+  .training-path p { font-size: 14px; line-height: 1.65; word-break: keep-all; }
+  .training-path-action { font-size: 0; gap: 0; }
+  .training-keywords { margin-top: 34px; }
+  .training-keyword-list a { padding: 19px 0; gap: 18px; }
+  .training-keyword-list strong { font-size: 17px; }
+  .training-recall-intro { padding-bottom: 20px; gap: 16px; }
+  .training-recall-intro h2 { font-size: 21px; }
+  .training-recall-intro p { font-size: 13px; }
+  .training-recall-intro .button { padding: 11px 15px; font-size: 14px; white-space: nowrap; }
+  .training-filters { gap: 23px; }
+  .training-filters button { font-size: 14px; }
+  .training-memory-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 20px; padding: 22px 0; }
+  .training-memory-kind { font-size: 13px; }
+  .training-memory-row h3 { grid-column: 1 / -1; grid-row: 2; font-size: 18px; }
+  .training-memory-time { grid-column: 2; grid-row: 1; font-size: 12px; }
+  .training-memory-row > svg { display: none; }
+  .recall-view .recall-card-header { padding: 17px 0; margin-bottom: 27px; }
+  .recall-view .recall-timer strong { font-size: 36px; }
+  .recall-view .recall-card > h2 { font-size: 27px; line-height: 1.55; text-wrap: pretty; }
+  .recall-view .recall-question { font-size: 16px; }
+  .recall-view .recall-start { padding-top: 28px; gap: 16px; }
+  .recall-view .timer-select select { min-width: 156px; font-size: 15px; }
+  .recall-view .recall-start > .button { min-height: 48px; padding: 13px 21px; font-size: 15px; }
+  .recall-view .recall-answer-area textarea { min-height: 185px; padding: 18px; font-size: 17px; }
+  .recall-view .recall-keywords > span { font-size: 18px; }
+  .recall-view .rating-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .recall-view .rating-buttons .button { min-width: 0; padding: 12px 8px; font-size: 14px; }
+  .recall-view .recall-completed h3 { font-size: 22px; word-break: keep-all; }
+  .recall-completed-actions { gap: 20px; }
+  .records-view .subnav { margin-bottom: 28px; }
+  .records-overview { gap: 18px; padding-bottom: 25px; margin-bottom: 30px; }
+  .records-overview > div { gap: 14px; }
+  .records-overview span { font-size: 13px; }
+  .records-overview strong { font-size: 35px; }
+  .records-overview small { font-size: 12px; margin-left: 5px; }
+  .records-history-section .linked-row { gap: 14px; padding: 20px 0; }
+  .records-history-section .records-row-icon { display: none; }
+  .records-history-section .row-text strong { font-size: 17px; }
+  .records-history-section .badge { font-size: 12px; flex-shrink: 0; }
+  .records-report-row { grid-template-columns: minmax(0, 1fr) auto; gap: 14px; padding: 25px 0; }
+  .records-report-row > .records-row-icon { display: none; }
+  .records-report-row h2 { font-size: 22px; }
+  .records-report-row p { font-size: 13px; }
+  .records-answer-count { font-size: 13px; align-self: start; padding-top: 5px; }
+  .records-report-row > svg { display: none; }
+  .report-view .report-summary { margin-bottom: 26px; padding-bottom: 22px; gap: 20px; font-size: 14px; }
+  .report-view .report-section { margin-top: 28px; padding-bottom: 28px; }
+  .report-view .report-section > h2 { font-size: 24px; margin-bottom: 24px; }
+  .report-answer > p { font-size: 17px; line-height: 1.9; }
+  .report-view .report-checks label { font-size: 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .training-path-action svg, .training-keyword-list a > svg, .training-memory-row > svg, .records-report-row > svg { transition: none; }
+  .training-path:hover .training-path-action svg, .training-keyword-list a:hover > svg, .training-memory-row:hover > svg, .records-report-row:hover > svg { transform: none; }
+}

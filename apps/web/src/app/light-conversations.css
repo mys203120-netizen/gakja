@@ -1,0 +1,83 @@
+/* Conversation and reports share the compact blue actions used by the workspace. */
+.app-shell [data-chat-composer] textarea:focus-visible { outline:0; box-shadow:none; }
+.app-shell .interview-v2 .interview-format-tabs,
+.app-shell nav[aria-label="리포트 보기"] { gap:6px; border:0; margin-bottom:24px; flex-wrap:wrap; }
+.app-shell .interview-v2 .interview-format-tabs a,
+.app-shell nav[aria-label="리포트 보기"] > a { min-height:38px; padding:8px 14px; border:0; border-radius:20px; font-size:14px; color:var(--clarity-muted); }
+.app-shell .interview-v2 .interview-format-tabs a.active,
+.app-shell nav[aria-label="리포트 보기"] > a.active { background:#e8f0fe; color:#185abc; border:0; font-weight:500; }
+.app-shell .interview-v2 .interview-format-tabs a:hover,
+.app-shell nav[aria-label="리포트 보기"] > a:hover { background:#eef3fc; }
+.app-shell .interview-entry-choices { gap:18px; }
+.app-shell .interview-entry-choices > a { padding:24px; background:#edf4ff; border-radius:16px; border:0; }
+.app-shell .interview-entry-choices > a:nth-child(2) { background:#edf7f0; }
+.app-shell .interview-entry-choices > a:hover { box-shadow:inset 0 0 0 1px #bfd0e8; }
+.app-shell .interview-entry-choices h3 { font-size:22px; line-height:1.4; font-weight:500; }
+.app-shell .interview-entry-choices p { font-size:14px; line-height:1.6; }
+.app-shell .interview-setup-layout { gap:32px; grid-template-columns:minmax(0,1fr) 280px; align-items:start; }
+.app-shell .interview-setup-settings { border:0; padding:20px; background:#f5f7fc; border-radius:16px; }
+.app-shell .interview-setup-main .interview-quick-start { padding:24px; background:#edf4ff; border-radius:16px; margin-bottom:20px; }
+.app-shell .interview-setup-main .interview-quick-start h2 { font-size:24px; line-height:1.4; margin-bottom:10px; }
+.app-shell .interview-quick-start > .button { min-height:42px; font-size:14px; padding:10px 18px; }
+.app-shell .interview-v2 .interview-preset-list > label { border-radius:10px; padding:12px 34px 12px 12px; }
+.app-shell .interview-v2 .interview-preset-list > label.selected { background:#e8f0fe; }
+.app-shell .interview-v2 .interview-preset-list > label.selected strong { color:#185abc; }
+.app-shell .interview-preset-list input[type=radio] { right:10px; accent-color:#1967d2; }
+.app-shell .interview-common-questions button { min-height:44px; padding:14px 12px; border-radius:12px; margin-top:6px; background:#f7f9fc; }
+.app-shell .interview-common-questions button:hover { background:#edf3ff; }
+.app-shell .interview-device-note { padding:12px 16px; background:#edf7f0; border-radius:12px; margin-top:16px; }
+.app-shell .interview-school-note { padding-block:16px; margin-top:20px; }
+.app-shell .on-reference-tools { flex-wrap:wrap; }
+.app-shell .on-attachment-button { min-height:36px; padding:8px 12px; border-radius:18px; background:#edf3fc; color:#345b8f; }
+.app-shell .on-welcome > a { display:inline-flex; align-items:center; min-height:40px; padding:8px 14px; border-radius:20px; background:#fff; color:#185abc; font-size:14px; }
+
+.app-shell .records-view .page-title { align-items:center; flex-wrap:wrap; }
+.app-shell .records-view .records-overview { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:0; margin:20px 0 28px; }
+.app-shell .records-view .records-overview > div { min-width:0; padding:18px; border-radius:14px; background:#edf4ff; }
+.app-shell .records-view .records-overview > div:nth-child(2) { background:#edf7f0; }
+.app-shell .records-view .records-overview > div:nth-child(3) { background:#f4effc; }
+.app-shell .records-view .records-overview strong { font-size:28px; font-weight:500; }
+.app-shell .records-view .speech-metrics { gap:12px; padding:16px 0; }
+.app-shell .records-view .speech-metrics > div { min-width:0; padding:16px; border-radius:12px; background:#f0f5fc; }
+.app-shell .records-view .speech-metrics > div:nth-child(even) { background:#f4f0fc; }
+.app-shell .records-view .speech-metrics strong { font-size:28px; }
+.app-shell .records-view .speech-timeline { background:#edf4ff; border-radius:14px; }
+.app-shell .records-view .speech-growth-section { min-width:0; }
+.app-shell .records-view .speech-growth-section > .section-heading { gap:12px; flex-wrap:wrap; }
+.app-shell .records-view .speech-next { background:#edf4ff; padding:20px; border-radius:16px; }
+.app-shell .records-view .speech-empty { background:#f5f7fc; border-radius:12px; padding:16px; }
+.app-shell .records-view .records-history-section { margin-block:24px; }
+.app-shell .records-view .records-report-list { gap:8px; }
+.app-shell .records-view .records-report-row { padding:18px; background:#f8f6fc; border-radius:12px; }
+.app-shell .records-view .records-report-row h2 { font-size:17px; line-height:1.5; }
+.app-shell .records-view .study-answer { padding:20px; border-radius:14px; background:#f7f9fc; margin-block:12px; }
+.app-shell .records-view .study-answer h3 { font-size:17px; }
+.app-shell .records-view .study-answer > p { font-size:15px; line-height:1.75; }
+.app-shell .records-view .study-answer .section-heading { gap:8px; flex-wrap:wrap; }
+.app-shell .records-view .content-growth-evidence > summary { min-height:44px; padding:10px 12px; border-radius:10px; background:#f0edf8; }
+@media(max-width:700px) {
+  .app-shell .interview-v2 .button.small { min-height:44px; padding:9px 12px; }
+  .app-shell .interview-setup-layout { grid-template-columns:1fr; gap:20px; }
+  .app-shell .interview-setup-settings { padding:16px; }
+  .app-shell .interview-setup-main .interview-quick-start { padding:20px; }
+  .app-shell .interview-setup-main .interview-quick-start h2 { font-size:22px; }
+  .app-shell .interview-entry-choices > a { padding:20px; }
+  .app-shell .interview-v2 .interview-format-tabs a,
+  .app-shell nav[aria-label="리포트 보기"] > a { min-height:44px; padding:10px 12px; font-size:13px; }
+  .app-shell .interview-quick-start > .button { min-height:44px; width:100%; justify-content:center; white-space:normal; }
+  .app-shell .on-attachment-button,.app-shell .on-welcome > a { min-height:44px; }
+  .app-shell .records-view .page-title { gap:12px; }
+  .app-shell .records-view .page-title > .button { min-height:44px; padding:8px 12px; font-size:13px; }
+  .app-shell .records-view .records-overview { gap:8px; }
+  .app-shell .records-view .records-overview > div { padding:14px 10px; }
+  .app-shell .records-view .records-overview strong { font-size:24px; }
+  .app-shell .records-view .records-overview > div > span { font-size:12px; }
+  .app-shell .records-view .speech-metrics { gap:10px; }
+  .app-shell .records-view .speech-metrics > div { padding:14px; }
+  .app-shell .records-view .speech-metrics > div > span { font-size:13px; }
+  .app-shell .records-view .speech-metrics strong { font-size:25px; }
+  .app-shell .records-view .study-answer { padding:16px; }
+  .app-shell .records-view .speech-empty p { min-width:0; }
+  .app-shell .records-view .inline-actions { gap:10px; flex-wrap:wrap; }
+  .app-shell .records-view .inline-actions > :is(a,button) { min-height:44px; white-space:normal; }
+}

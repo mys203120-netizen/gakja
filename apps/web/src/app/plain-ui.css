@@ -1,0 +1,72 @@
+/* One content inset expresses section membership without another surface. */
+.app-shell { --section-indent: 20px; }
+.app-shell .section-body { min-width: 0; margin-inline-start: var(--section-indent); }
+.app-shell .section-body.source-body > blockquote { margin-inline: 0; padding-inline-start: 0; border-inline-start: 0; }
+.app-shell :is(.main-nav,.sidebar-tools) a > svg { color: #77837b; }
+
+.app-shell .dashboard-compact .dashboard-next {
+  padding: 6px 0 26px; background: none; border-radius: 0; gap: 32px; margin-bottom: 30px;
+}
+.app-shell .dashboard-compact .dashboard-group-label { color: #657169; }
+.app-shell .dashboard-compact .dashboard-workspace { gap: 48px; }
+.app-shell .dashboard-compact .dashboard-section-body { min-width: 0; margin-inline-start: 26px; }
+.app-shell .dashboard-compact .dashboard-group-heading { margin-bottom: 16px; }
+.app-shell .dashboard-compact .dashboard-group-heading h2 > svg { color: #77837b; }
+.app-shell .dashboard-compact .dashboard-preparation { padding: 0; background: none; border-radius: 0; }
+.app-shell .dashboard-compact .dashboard-agenda-summary { margin: 0 0 12px; }
+.app-shell .dashboard-compact .dashboard-empty-copy { margin: 2px 0 16px; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure { background: none; border-radius: 0; margin-top: 16px; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure > summary { padding: 8px 0; min-height: 36px; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure .dashboard-planner { padding: 12px 0 0 14px; }
+.app-shell .dashboard-compact .dashboard-stage-track { height: 4px; background: #edf0ed; }
+.app-shell .dashboard-compact .dashboard-stage-track i { background: #5b9777; }
+.app-shell .dashboard-compact .dashboard-stage.blue .dashboard-stage-track i { background: #788e9d; }
+.app-shell .dashboard-compact .dashboard-stage.purple .dashboard-stage-track i { background: #96899f; }
+.app-shell .dashboard-compact :is(.dashboard-review-link,.dashboard-review-link > span > span,.dashboard-check-disclosure > summary,.dashboard-check-disclosure a) { color: #657169; }
+.app-shell .dashboard-compact .dashboard-check-disclosure > div { margin-inline-start: 14px; }
+.app-shell .dashboard-compact .dashboard-reading { margin-top: 38px; }
+.app-shell .dashboard-compact .dashboard-reading-switch { gap: 22px; margin-bottom: 16px; }
+.app-shell .dashboard-compact .dashboard-reading-switch > button { position: relative; padding: 8px 0; background: none; border-radius: 0; box-shadow: none; color: #69756d; }
+.app-shell .dashboard-compact .dashboard-reading .dashboard-reading-switch > button[aria-pressed=true],
+.app-shell .dashboard-compact .dashboard-reading[data-view] .dashboard-reading-switch > button[aria-pressed=true] { background: none; color: #265b40; }
+.app-shell .dashboard-compact .dashboard-reading-switch > button[aria-pressed=true]::after { content: ''; display: block; position: absolute; bottom: 0; left: 50%; width: 16px; height: 2px; background: currentColor; transform: translateX(-50%); }
+
+/* Reports keep the measurement controls; guidance becomes ordinary content. */
+.app-shell .speech-growth-section > .speech-empty { margin-inline-start: var(--section-indent); padding: 5px 0 12px; background: none; border-radius: 0; }
+.app-shell .speech-empty-icon { width: 36px; height: 36px; background: #edf4ef; }
+.app-shell .speech-empty h3 { font-size: 16px; }
+.app-shell .speech-empty p { margin-bottom: 14px; }
+.app-shell .speech-growth-section > :is(.speech-recording-select,.speech-question,.speech-metrics,.speech-timeline,.speech-pause-links,.speech-measurement-empty,.speech-analysis-actions,.speech-transcript,.speech-language-observations,.speech-measurement-notes,.speech-trend,.speech-caption) { margin-inline-start: var(--section-indent); }
+.app-shell .speech-growth-section > .speech-caption { margin-inline-start: var(--section-indent) !important; }
+.app-shell .speech-growth-section > .speech-playback { margin-inline-start: var(--section-indent); width: calc(100% - var(--section-indent)); }
+.app-shell .content-growth > :is(.content-growth-question,.content-growth-empty) { margin-inline-start: var(--section-indent); }
+.app-shell .speech-growth-view :is(.speech-trend,.speech-measurement-empty,.content-growth-added,.content-growth-evidence-row,.speech-next) { background: none; border-radius: 0; }
+.app-shell .speech-growth-view .speech-trend { padding: 16px 0; }
+.app-shell .speech-growth-view .content-growth-evidence-row { padding: 0; }
+.app-shell .content-growth-evidence > :is(.content-growth-evidence-row,.content-growth-originals,.speech-caption) { margin-inline-start: 14px; }
+.app-shell .content-growth-evidence > .speech-caption { margin-inline-start: 14px !important; }
+.app-shell .speech-growth-view .content-growth-added { padding: 12px 0; }
+.app-shell .speech-growth-view .speech-next { padding: 18px 0; margin-inline-start: var(--section-indent); }
+.app-shell .report-summary { border: 0; }
+.app-shell .report-feedback-section > :not(h2),
+.app-shell .report-section > :is(.report-answer,.report-elements,.report-checks,.report-retry-actions),
+.app-shell .records-history-section > .records-report-list { margin-inline-start: var(--section-indent); }
+.app-shell .briefing-reading-section { border-top: 0; padding-top: 14px; }
+.app-shell .briefing-source-row { border-bottom: 0; }
+.app-shell .interview-v2 .interview-selected-question.interview-talent-question h2 { font-size:clamp(21px,2.15vw,27px); line-height:1.65; font-weight:450; letter-spacing:-.025em; }
+
+@media(max-width:800px) {
+  .app-shell .dashboard-compact .dashboard-workspace { gap: 32px; }
+  .app-shell .dashboard-compact .dashboard-next { gap: 18px; padding-bottom: 16px; }
+  .app-shell .dashboard-compact .dashboard-next-action { flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px 22px; }
+  .app-shell .dashboard-compact .dashboard-next-action .button { width: auto; justify-content: center; }
+  .app-shell .dashboard-compact .dashboard-reading { margin-top: 30px; }
+}
+@media(max-width:500px) {
+  .app-shell { --section-indent: 14px; }
+  .app-shell .dashboard-compact .dashboard-section-body { margin-inline-start: 24px; }
+  .app-shell .dashboard-compact .dashboard-reading-switch { gap: 16px; }
+  .app-shell .dashboard-compact .dashboard-reading-switch > button { gap: 4px; padding: 7px 0; }
+  .app-shell .dashboard-compact .dashboard-group-heading h2 { gap: 6px; }
+  .app-shell .speech-growth-view .speech-next { gap: 16px; }
+}

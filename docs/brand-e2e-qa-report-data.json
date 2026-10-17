@@ -1,0 +1,2965 @@
+{
+  "date": "2026-10-12",
+  "snapshotAt": "2026-10-12T04:51:20.864Z",
+  "isFinal": false,
+  "notice": "검수 진행 중 스냅샷. 캡처 수와 누락 목록은 이후 변경됨. 캡처의 존재는 사용자 흐름 통과 또는 이미지 검수 완료와 같지 않음.",
+  "sources": {
+    "inventory": ".local/brand-e2e-screen-inventory.json",
+    "regression": ".local/brand-e2e-regression.json",
+    "sourceFindings": ".local/brand-e2e-source-findings.json",
+    "browserResults": ".local/previews/brand-e2e-2026-10-12/results.json"
+  },
+  "coverageDefinition": "소스 inventory의 59개 canonical 화면 템플릿을 기준으로 실제 캡처 route를 매핑. 별칭·세션 상태·재캡처는 화면 수를 늘리지 않음. 채팅 context는 query를 통해 별도 템플릿으로 분리.",
+  "inventory": {
+    "canonicalTemplates": 59,
+    "roleCounts": {
+      "public": 5,
+      "student": 38,
+      "admin": 16
+    },
+    "aliasPatternCount": 15,
+    "fallbackScreens": [
+      {
+        "id": "not-found",
+        "route": "/brand-qa-unknown-route",
+        "source": "apps/web/src/app/not-found.tsx",
+        "heading": "페이지를 찾을 수 없어요.",
+        "entry": "unknown top-level URL",
+        "states": [
+          "MY대시보드로 link"
+        ],
+        "qaViewports": [
+          "desktop 1440x900",
+          "mobile 390x844"
+        ]
+      },
+      {
+        "id": "error-boundary",
+        "route": "any app render exception",
+        "source": "apps/web/src/app/error.tsx",
+        "heading": "화면을 불러오지 못했어요.",
+        "entry": "render error boundary only",
+        "states": [
+          "다시 시도 button"
+        ],
+        "qaViewports": [
+          "desktop 1440x900",
+          "mobile 390x844"
+        ],
+        "notes": "No deterministic non-mutating URL triggers this screen. Do not crash production or report browser-tested unless controlled fixture/test catches boundary."
+      }
+    ],
+    "overlays": [
+      {
+        "role": "student/admin",
+        "entry": "account name/avatar",
+        "states": [
+          "account menu",
+          "logout confirmation dialog cancel/confirm/busy/error"
+        ]
+      },
+      {
+        "role": "student/admin",
+        "entry": "topbar 자료 검색 / 알림",
+        "states": [
+          "search modal with zero/many results",
+          "notification modal empty/populated/off"
+        ]
+      },
+      {
+        "role": "student",
+        "entry": "question/activity/source/briefing resource buttons; AI assistant dock",
+        "states": [
+          "ResourcePanel source",
+          "ResourcePanel activity",
+          "ResourcePanel question",
+          "ResourcePanel briefing",
+          "ResourcePanel guidebook",
+          "ResourcePanel handbook",
+          "assistant side dock expand/close",
+          "mobile full-width panel"
+        ]
+      },
+      {
+        "role": "student",
+        "entry": "Dashboard calendar/weekly planner",
+        "states": [
+          "planner disclosure",
+          "new/edit plan dialog",
+          "day/week view / dates/source review"
+        ]
+      }
+    ],
+    "guards": [
+      {
+        "request": "all /(student) routes unauthenticated",
+        "expected": "redirect /login"
+      },
+      {
+        "request": "all /(student) routes as admin/staff",
+        "expected": "redirect /admin"
+      },
+      {
+        "request": "/admin/* unauthenticated",
+        "expected": "redirect /login"
+      },
+      {
+        "request": "/admin/* as student",
+        "expected": "redirect /my"
+      },
+      {
+        "request": "unknown admin slug",
+        "expected": "이 화면을 찾을 수 없습니다"
+      },
+      {
+        "request": "invalid data ids (owned or other owner)",
+        "expected": "safe empty/error state without data leak"
+      },
+      {
+        "request": "unknown catchall quiz/practice/materials/account/records slug",
+        "expected": "varies: QuizHome/MaterialsOverview/account root/records root fallback; not a distinct screen"
+      },
+      {
+        "request": "unknown schools/knowledge/interview slug",
+        "expected": "treated as data id and yields not-found/error"
+      }
+    ]
+  },
+  "browserSnapshot": {
+    "rawObservationCount": 194,
+    "roleViewportCoverage": {
+      "public": {
+        "templates": 5,
+        "desktopObserved": 5,
+        "mobileObserved": 5,
+        "bothObserved": 5
+      },
+      "student": {
+        "templates": 38,
+        "desktopObserved": 38,
+        "mobileObserved": 38,
+        "bothObserved": 38
+      },
+      "admin": {
+        "templates": 16,
+        "desktopObserved": 16,
+        "mobileObserved": 16,
+        "bothObserved": 16
+      }
+    },
+    "canonicalObservedAtLeastOnce": 59,
+    "canonicalObservedBoth": 59,
+    "missingDesktop": [],
+    "missingMobile": [],
+    "unmappedObservations": [],
+    "pendingOrIssueObservations": [],
+    "explicitLoadingWarnings": [
+      {
+        "id": "interview-live",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/015-desktop-interview-live.png",
+        "reason": "AX에 로딩 문구가 남아 있음. 완료 화면으로 집계하기 전 대체 캡처 확인 필요."
+      },
+      {
+        "id": "today-learning",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/016-desktop-today-learning.png",
+        "reason": "AX에 로딩 문구가 남아 있음. 완료 화면으로 집계하기 전 대체 캡처 확인 필요."
+      },
+      {
+        "id": "quiz-home",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/017-desktop-quiz-home.png",
+        "reason": "AX에 로딩 문구가 남아 있음. 완료 화면으로 집계하기 전 대체 캡처 확인 필요."
+      },
+      {
+        "id": "quiz-free",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/018-desktop-quiz-free.png",
+        "reason": "AX에 로딩 문구가 남아 있음. 완료 화면으로 집계하기 전 대체 캡처 확인 필요."
+      },
+      {
+        "id": "assignment-list",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/020-desktop-assignment-list.png",
+        "reason": "AX에 로딩 문구가 남아 있음. 완료 화면으로 집계하기 전 대체 캡처 확인 필요."
+      }
+    ],
+    "flows": [
+      {
+        "id": "login-invalid",
+        "status": "fail",
+        "viewport": "mobile"
+      },
+      {
+        "id": "login-student",
+        "status": "pass"
+      }
+    ],
+    "findings": [],
+    "extraVariantsStillMissingAtSnapshot": [
+      {
+        "id": "empty-profile-states",
+        "note": "신규 사용자·자료 없음 상태의 실제 브라우저 검수 기록 없음."
+      },
+      {
+        "id": "not-found",
+        "note": "404 fallback 캡처 없음."
+      }
+    ]
+  },
+  "canonicalMapping": [
+    {
+      "id": "landing",
+      "role": "public",
+      "route": "/",
+      "group": "brand",
+      "declaredStates": [
+        "top hero",
+        "scroll story 발견/설계/연습",
+        "footer CTA"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "landing"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "landing",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/001-desktop-landing.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "landing",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/006-mobile-landing.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "login",
+      "role": "public",
+      "route": "/login",
+      "group": "auth",
+      "declaredStates": [
+        "idle rotating logo",
+        "email focus",
+        "private password focus",
+        "show password",
+        "motion pause",
+        "invalid credentials",
+        "provider unavailable notice"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "login"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "login",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/002-desktop-login.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "login",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/007-mobile-login.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "signup",
+      "role": "public",
+      "route": "/signup",
+      "group": "auth",
+      "declaredStates": [
+        "Google / Kakao buttons only; no local signup fields",
+        "provider unavailable/error notice",
+        "back to login"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "signup"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "signup",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/003-desktop-signup.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "signup",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/008-mobile-signup.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "invite",
+      "role": "public",
+      "route": "/invite",
+      "group": "auth",
+      "declaredStates": [
+        "no token",
+        "invalid/expired token",
+        "password registration valid token"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "invite"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "invite",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/004-desktop-invite.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "invite",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/009-mobile-invite.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "reset-password",
+      "role": "public",
+      "route": "/reset-password",
+      "group": "auth",
+      "declaredStates": [
+        "request reset",
+        "missing/expired recovery",
+        "success notice"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "reset-password"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "reset-password",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/005-desktop-reset-password.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "reset-password",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/010-mobile-reset-password.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "dashboard",
+      "role": "student",
+      "route": "/my",
+      "group": "home",
+      "declaredStates": [
+        "next action",
+        "오늘 할 일",
+        "내 준비 chart",
+        "읽고 정리하기 tabs: 시사 브리핑/지식한입/내 기록",
+        "주차 계획·달력 disclosure",
+        "no package / no target",
+        "planner edit/create modal"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "dashboard"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "dashboard",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/011-desktop-dashboard.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "dashboard",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/062-mobile-dashboard.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "today-learning",
+      "role": "student",
+      "route": "/my/today",
+      "group": "home",
+      "declaredStates": [
+        "읽기→떠올리기→면접→비교→복습 stage states",
+        "completion/review-plan state",
+        "no target",
+        "invalid question",
+        "questionId/activityId/flow/sourceVersion continuity"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "today-learning"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "today-learning",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/059-desktop-today-learning.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "today-learning",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/063-mobile-today-learning.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "quiz-home",
+      "role": "student",
+      "route": "/quiz",
+      "group": "quiz",
+      "declaredStates": [
+        "focus=today",
+        "focus=free",
+        "choice/answer/oral mode rows",
+        "untimed checkbox",
+        "resume expanded",
+        "no reviewed choice",
+        "questionId/memoryItemId retry context"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "quiz-home",
+        "quiz-free"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "quiz-free",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/018-desktop-quiz-free.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "quiz-free",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/065-mobile-quiz-free.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "quiz-session",
+      "role": "student",
+      "route": "/quiz/session/:quizSessionId",
+      "group": "quiz",
+      "declaredStates": [
+        "ready",
+        "3-2-1 countdown",
+        "active",
+        "paused",
+        "correct",
+        "incorrect",
+        "timeout",
+        "hint first sentence/rest blur",
+        "recording consent/unconnected",
+        "save/error",
+        "completed / ended results with summary-next-review",
+        "saved-answer disclosure"
+      ],
+      "declaredVariants": [
+        "choice timed",
+        "choice untimed",
+        "answer short-answer",
+        "answer ungraded Q&A",
+        "oral"
+      ],
+      "observationIds": [
+        "quiz-ready",
+        "quiz-paused",
+        "quiz-qa",
+        "quiz-oral",
+        "quiz-choice-result",
+        "quiz-qa-result"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 6,
+          "latestObservationId": "quiz-qa-result",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/028-desktop-quiz-qa-result.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 6,
+          "latestObservationId": "quiz-qa-result",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/075-mobile-quiz-qa-result.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "quiz-memory-list",
+      "role": "student",
+      "route": "/quiz/memory",
+      "group": "quiz",
+      "declaredStates": [
+        "all/again/kind filters",
+        "due / no attempts / empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "memory-list"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "memory-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/019-desktop-memory-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "memory-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/066-mobile-memory-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "quiz-memory-detail",
+      "role": "student",
+      "route": "/quiz/memory/:memoryItemId",
+      "group": "quiz",
+      "declaredStates": [
+        "start / timer options",
+        "answer / reveal",
+        "rating saved",
+        "not found"
+      ],
+      "declaredVariants": [
+        "keyword_recall",
+        "choice/concept_choice",
+        "order/answer_order",
+        "flip_card",
+        "self_check",
+        "short_answer",
+        "short_speech"
+      ],
+      "observationIds": [
+        "memory-detail"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "memory-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/053-desktop-memory-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "memory-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/103-mobile-memory-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "assignment-list",
+      "role": "student",
+      "route": "/quiz/assignments",
+      "group": "quiz",
+      "declaredStates": [
+        "active/completed/all filters",
+        "복습 과제 만들기 modal",
+        "empty/error/reload"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "assignment-list"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "assignment-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/020-desktop-assignment-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "assignment-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/067-mobile-assignment-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "assignment-detail",
+      "role": "student",
+      "route": "/quiz/assignments/:assignmentId",
+      "group": "quiz",
+      "declaredStates": [
+        "assigned/in_progress/submitted/reviewed/retry_due/completed",
+        "choice/ordering/short/self-check items",
+        "answer save",
+        "submit/retry",
+        "missing record"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "assignment-detail",
+        "assignment-submitted"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "assignment-submitted",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/022-desktop-assignment-submitted.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "assignment-submitted",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/069-mobile-assignment-submitted.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "interview-home",
+      "role": "student",
+      "route": "/interview",
+      "group": "interview",
+      "declaredStates": [
+        "resume latest",
+        "other sessions disclosure",
+        "Chat/Live entry",
+        "no package common question"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "interview-home"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "interview-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/038-desktop-interview-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "interview-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/086-mobile-interview-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "interview-setup",
+      "role": "student",
+      "route": "/interview/chat",
+      "group": "interview",
+      "declaredStates": [
+        "kind=chat",
+        "kind=video",
+        "question/source preview",
+        "school topic allocation",
+        "question count/options",
+        "no target/error",
+        "explicit common question context"
+      ],
+      "declaredVariants": [
+        "/interview/chat",
+        "/interview/live",
+        "/interview/new?kind=chat|video"
+      ],
+      "observationIds": [
+        "interview-chat-setup",
+        "interview-live-setup"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "interview-live-setup",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/040-desktop-interview-live-setup.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "interview-live-setup",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/088-mobile-interview-live-setup.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "interview-session",
+      "role": "student",
+      "route": "/interview/:interviewSessionId",
+      "group": "interview",
+      "declaredStates": [
+        "Chat typed draft / Enter send",
+        "Live device disconnected / consent",
+        "listening / real reaction levels",
+        "paused / assisted help / resume",
+        "feedback",
+        "finished/completed",
+        "finish/cancel confirmation modal",
+        "not found"
+      ],
+      "declaredVariants": [
+        "Chat",
+        "Live"
+      ],
+      "observationIds": [
+        "interview-live",
+        "interview-chat-setup",
+        "interview-live-setup",
+        "interview-chat",
+        "interview-completed"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 6,
+          "latestObservationId": "interview-completed",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/060-desktop-interview-completed.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 5,
+          "latestObservationId": "interview-completed",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/091-mobile-interview-completed.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "assistant-new",
+      "role": "student",
+      "route": "/on",
+      "group": "assistant",
+      "declaredStates": [
+        "activity selector/search",
+        "no package common question selector",
+        "new empty chat",
+        "composer Enter/Shift+Enter",
+        "history mobile disclosure"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "assistant-home"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "assistant-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/043-desktop-assistant-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "assistant-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/092-mobile-assistant-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "assistant-context",
+      "role": "student",
+      "route": "/on?questionId=:questionId",
+      "group": "assistant",
+      "declaredStates": [
+        "suggestion immediate send",
+        "busy disabled suggestions",
+        "Markdown answer",
+        "user right / assistant left",
+        "sources panel",
+        "save candidate / interview continuation",
+        "paused interview sessionId"
+      ],
+      "declaredVariants": [
+        "?questionId=...",
+        "?activityId=...",
+        "?briefingId=...",
+        "?sessionId=..."
+      ],
+      "observationIds": [
+        "assistant-context"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "assistant-context",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/061-desktop-assistant-context.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "assistant-context",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/110-mobile-assistant-context.png",
+          "status": "captured",
+          "renderedLoadCheck": "complete",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "assistant-thread",
+      "role": "student",
+      "route": "/on/:threadId",
+      "group": "assistant",
+      "declaredStates": [
+        "history selected",
+        "pending/failed/completed messages",
+        "old version notice",
+        "saved answer/source/safety Markdown",
+        "long conversation scroll",
+        "empty/missing thread"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "assistant-markdown"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "assistant-markdown",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/014-desktop-assistant-markdown.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "assistant-markdown",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/093-mobile-assistant-markdown.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "records-summary",
+      "role": "student",
+      "route": "/records",
+      "group": "reports",
+      "declaredStates": [
+        "empty",
+        "growth summary",
+        "total chart/numbers",
+        "current active session",
+        "frozen study reports",
+        "interview feedback",
+        "export button"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "reports-home"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "reports-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/044-desktop-reports-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "reports-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/094-mobile-reports-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "records-history",
+      "role": "student",
+      "route": "/records/history",
+      "group": "reports",
+      "declaredStates": [
+        "study-answer history",
+        "legacy fallback interview/memory",
+        "source disclosure",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "history"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "history",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/045-desktop-history.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "history",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/095-mobile-history.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "answer-comparisons",
+      "role": "student",
+      "route": "/records/comparisons",
+      "group": "reports",
+      "declaredStates": [
+        "question selector",
+        "left/right version selectors",
+        "나란히 보기",
+        "겹쳐 보기 range keyboard/touch",
+        "full text disclosure",
+        "empty/one version/help metadata"
+      ],
+      "declaredVariants": [
+        "/records/comparisons/:questionId",
+        "/records/comparisons?questionId=:questionId"
+      ],
+      "observationIds": [
+        "comparison",
+        "comparison-list"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "comparison-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/058-desktop-comparison-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "comparison-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/109-mobile-comparison-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "complete",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "study-report",
+      "role": "student",
+      "route": "/reports/sessions/:studySessionId",
+      "group": "reports",
+      "declaredStates": [
+        "active/frozen",
+        "answer/event disclosure",
+        "weak point retry links",
+        "empty/not found"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "study-report"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "study-report",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/046-desktop-study-report.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "study-report",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/096-mobile-study-report.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "interview-report",
+      "role": "student",
+      "route": "/reports/reports/:reportId",
+      "group": "reports",
+      "declaredStates": [
+        "section feedback",
+        "recording/transcript/media",
+        "retry assignment action",
+        "missing report"
+      ],
+      "declaredVariants": [
+        "Chat",
+        "Live"
+      ],
+      "observationIds": [
+        "interview-report"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "interview-report",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/047-desktop-interview-report.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "interview-report",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/097-mobile-interview-report.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "materials-overview",
+      "role": "student",
+      "route": "/materials",
+      "group": "materials",
+      "declaredStates": [
+        "materials grouped navigation",
+        "representative activities",
+        "no package"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "materials-home"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "materials-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/029-desktop-materials-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "materials-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/076-mobile-materials-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "activities-list",
+      "role": "student",
+      "route": "/materials/activities",
+      "group": "materials",
+      "declaredStates": [
+        "search",
+        "grade/area filters",
+        "no results"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "activity-list"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "activity-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/030-desktop-activity-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "activity-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/077-mobile-activity-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "activity-detail",
+      "role": "student",
+      "route": "/materials/activities/:activityId",
+      "group": "materials",
+      "declaredStates": [
+        "source refs",
+        "linked questions",
+        "AI assistant/interview CTA",
+        "fact check modal",
+        "not found"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "activity-detail"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "activity-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/031-desktop-activity-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "activity-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/078-mobile-activity-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "questions-list",
+      "role": "student",
+      "route": "/materials/questions",
+      "group": "materials",
+      "declaredStates": [
+        "search/type filters",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "question-list"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "question-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/032-desktop-question-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "question-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/079-mobile-question-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "question-detail",
+      "role": "student",
+      "route": "/materials/questions/:questionId",
+      "group": "materials",
+      "declaredStates": [
+        "intent/design/model answer",
+        "source panel",
+        "same-question interview CTA",
+        "missing"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "question-detail"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "question-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/033-desktop-question-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "question-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/080-mobile-question-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "answers-list",
+      "role": "student",
+      "route": "/materials/answers",
+      "group": "materials",
+      "declaredStates": [
+        "search/type filters",
+        "answer presence states",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "answer-list"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "answer-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/054-desktop-answer-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "answer-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/104-mobile-answer-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "answer-editor",
+      "role": "student",
+      "route": "/materials/answers/:questionId",
+      "group": "materials",
+      "declaredStates": [
+        "structure/script editing/autosave",
+        "AI help metadata",
+        "history modal",
+        "comments",
+        "comparison link",
+        "source panel",
+        "missing"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "answer-edit"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "answer-edit",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/012-desktop-answer-edit.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "answer-edit",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/081-mobile-answer-edit.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "guidebook",
+      "role": "student",
+      "route": "/materials/guidebook",
+      "group": "materials",
+      "declaredStates": [
+        "nested TOC / child section",
+        "bookmarks / progress",
+        "block refs",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "guidebook"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "guidebook",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/034-desktop-guidebook.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "guidebook",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/082-mobile-guidebook.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "handbook",
+      "role": "student",
+      "route": "/materials/handbook",
+      "group": "materials",
+      "declaredStates": [
+        "nested TOC / child section",
+        "bookmarks / progress",
+        "memory refs",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "handbook"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "handbook",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/035-desktop-handbook.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "handbook",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/083-mobile-handbook.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "briefings-list",
+      "role": "student",
+      "route": "/materials/briefings",
+      "group": "materials",
+      "declaredStates": [
+        "rows",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "briefing-list"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "briefing-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/055-desktop-briefing-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "briefing-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/105-mobile-briefing-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "briefing-detail",
+      "role": "student",
+      "route": "/materials/briefings/:briefingId",
+      "group": "materials",
+      "declaredStates": [
+        "facts/views/concepts/source",
+        "my thought autosave/history modal",
+        "assistant/interview link",
+        "resource panel"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "briefing-detail"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "briefing-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/056-desktop-briefing-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "briefing-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/106-mobile-briefing-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "knowledge-list",
+      "role": "student",
+      "route": "/knowledge",
+      "group": "knowledge",
+      "declaredStates": [
+        "all/saved/completed filters",
+        "activity/question context",
+        "search topics external link",
+        "no videos"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "knowledge-home"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "knowledge-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/049-desktop-knowledge-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "knowledge-home",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/099-mobile-knowledge-home.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "knowledge-detail",
+      "role": "student",
+      "route": "/knowledge/:videoId",
+      "group": "knowledge",
+      "declaredStates": [
+        "bookmark/completed",
+        "external video/source",
+        "question select",
+        "30sec timer",
+        "explanation save",
+        "self-check",
+        "reflection notes + video history modal",
+        "same-question quiz/interview links",
+        "missing"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "knowledge-detail"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "knowledge-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/050-desktop-knowledge-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "knowledge-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/100-mobile-knowledge-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "schools-list",
+      "role": "student",
+      "route": "/schools",
+      "group": "account",
+      "declaredStates": [
+        "registered rows",
+        "no targets"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "school-list"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "school-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/036-desktop-school-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "school-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/084-mobile-school-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "schools-new",
+      "role": "student",
+      "route": "/schools/new",
+      "group": "account",
+      "declaredStates": [
+        "school search/select",
+        "school not in list toggle",
+        "major/admission/campus/year input fields",
+        "missing catalog/error",
+        "save welcome"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "school-register"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "school-register",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/013-desktop-school-register.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "school-register",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/107-mobile-school-register.png",
+          "status": "captured",
+          "renderedLoadCheck": "complete",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "school-overview",
+      "role": "student",
+      "route": "/schools/:targetId",
+      "group": "account",
+      "declaredStates": [
+        "published overview",
+        "source dates",
+        "practice CTA",
+        "unverified facts hidden/flagged",
+        "welcome=1",
+        "missing"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "school-register",
+        "school-detail"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "school-detail",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/037-desktop-school-detail.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 2,
+          "latestObservationId": "school-register",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/107-mobile-school-register.png",
+          "status": "captured",
+          "renderedLoadCheck": "complete",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "account",
+      "role": "student",
+      "route": "/account",
+      "group": "account",
+      "declaredStates": [
+        "profile/support information",
+        "fact check link",
+        "welcome=1"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "account"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "account",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/051-desktop-account.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "account",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/101-mobile-account.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "account-settings",
+      "role": "student",
+      "route": "/account/settings",
+      "group": "account",
+      "declaredStates": [
+        "answer length/style selectors",
+        "preparation note",
+        "learning notifications/goals settings",
+        "save/error toast"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "student-settings"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "student-settings",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/057-desktop-student-settings.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "student-settings",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/108-mobile-student-settings.png",
+          "status": "captured",
+          "renderedLoadCheck": "complete",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "confirmations",
+      "role": "student",
+      "route": "/account/confirmations",
+      "group": "account",
+      "declaredStates": [
+        "open/confirmed/all tabs",
+        "new confirmation modal",
+        "response modal",
+        "sources/entity refs",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [
+        "confirmation-list"
+      ],
+      "viewports": {
+        "desktop": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "confirmation-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/052-desktop-confirmation-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": true,
+          "observationCount": 1,
+          "latestObservationId": "confirmation-list",
+          "latestScreenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/102-mobile-confirmation-list.png",
+          "status": "captured",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-home",
+      "role": "admin",
+      "route": "/admin",
+      "group": "admin",
+      "declaredStates": [
+        "stats",
+        "pending publications",
+        "review requests",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-students",
+      "role": "admin",
+      "route": "/admin/students",
+      "group": "admin",
+      "declaredStates": [
+        "name/email search",
+        "account state filters",
+        "student creation modal (admin)",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-student-detail",
+      "role": "admin",
+      "route": "/admin/students/:studentId",
+      "group": "admin",
+      "declaredStates": [
+        "targets",
+        "production jobs",
+        "published versions",
+        "usage",
+        "staff assignment",
+        "target add/edit modal",
+        "production connect modal",
+        "activate/deactivate confirm",
+        "missing"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-assignments",
+      "role": "admin",
+      "route": "/admin/assignments",
+      "group": "admin",
+      "declaredStates": [
+        "student/state/search filters",
+        "assignment creation modal",
+        "assignment review modal",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-schools",
+      "role": "admin",
+      "route": "/admin/schools",
+      "group": "admin",
+      "declaredStates": [
+        "student/search filters",
+        "overview/source profile edit modal",
+        "weights/percent distribution",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-schedules",
+      "role": "admin",
+      "route": "/admin/schedules",
+      "group": "admin",
+      "declaredStates": [
+        "student/search filters",
+        "target date/source edit modal",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-imports",
+      "role": "admin",
+      "route": "/admin/imports",
+      "group": "admin",
+      "declaredStates": [
+        "all/staged/published/rejected filters",
+        "new upload link",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-import-new",
+      "role": "admin",
+      "route": "/admin/imports/new",
+      "group": "admin",
+      "declaredStates": [
+        "student/production selectors",
+        "guidebook/handbook HTML upload",
+        "validation/error"
+      ],
+      "declaredVariants": [
+        "/admin/imports/new/:studentId preselect"
+      ],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-import-detail",
+      "role": "admin",
+      "route": "/admin/imports/:versionId",
+      "group": "admin",
+      "declaredStates": [
+        "validation messages",
+        "preview tabs",
+        "preview detail modal",
+        "publish/reject/rollback confirm",
+        "staged/published/rejected versions",
+        "missing"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-content-history",
+      "role": "admin",
+      "route": "/admin/content",
+      "group": "admin",
+      "declaredStates": [
+        "student search",
+        "versions",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-content-detail",
+      "role": "admin",
+      "route": "/admin/content/:versionId",
+      "group": "admin",
+      "declaredStates": [
+        "historic/current version badge",
+        "preview tabs",
+        "rollback confirm",
+        "missing"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-reviews",
+      "role": "admin",
+      "route": "/admin/reviews",
+      "group": "admin",
+      "declaredStates": [
+        "student/content search",
+        "open/done/all filters",
+        "confirmation/answer lists",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-review-detail",
+      "role": "admin",
+      "route": "/admin/reviews/:reviewId",
+      "group": "admin",
+      "declaredStates": [
+        "response/source",
+        "status selector/note form",
+        "missing"
+      ],
+      "declaredVariants": [
+        "fact confirmation",
+        "answer comment"
+      ],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-shared",
+      "role": "admin",
+      "route": "/admin/knowledge",
+      "group": "admin",
+      "declaredStates": [
+        "시사 브리핑/대학·학과 맥락 tabs",
+        "create briefing/university material modal",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-shared-detail",
+      "role": "admin",
+      "route": "/admin/knowledge/:sharedMaterialId",
+      "group": "admin",
+      "declaredStates": [
+        "facts/views/concepts/source preview",
+        "edit modal",
+        "status badges"
+      ],
+      "declaredVariants": [
+        "briefing",
+        "university release"
+      ],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    },
+    {
+      "id": "admin-settings",
+      "role": "admin",
+      "route": "/admin/settings",
+      "group": "admin",
+      "declaredStates": [
+        "계정·배정 tab",
+        "AI 사용량 tab",
+        "알림 tab",
+        "작업 이력 tab",
+        "staff create modal (admin)",
+        "student-staff assignment form",
+        "notification create form",
+        "empty"
+      ],
+      "declaredVariants": [],
+      "observationIds": [],
+      "viewports": {
+        "desktop": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        },
+        "mobile": {
+          "observed": false,
+          "observationCount": 0,
+          "latestObservationId": null,
+          "latestScreenshot": null,
+          "status": "missing",
+          "renderedLoadCheck": "not recorded",
+          "visualAcceptance": "root의 실제 이미지 검수 결과와 합쳐야 함"
+        }
+      }
+    }
+  ],
+  "regression": {
+    "nodeTestCases": 92,
+    "nodeTestFailed": 0,
+    "componentAssertions": 95,
+    "existingLocalApiAssertions": 130,
+    "dedicatedHttpAssertions": 114,
+    "dedicatedHttpRequests": 61,
+    "isolatedRecordAssertions": 50,
+    "remainingFailures": 0,
+    "paidAiCalls": 0,
+    "countingNote": "92는 Node test case 수. 95·130·114·50은 서로 다른 레이어의 assertion 수이므로 하나의 E2E 테스트 개수로 합치지 않음.",
+    "layers": [
+      {
+        "name": "순수 로직·계약·mock SDK",
+        "cases": 92
+      },
+      {
+        "name": "실제 컴포넌트 출력/입력 assertion",
+        "assertions": 95
+      },
+      {
+        "name": "기존 로컬 API assertion",
+        "assertions": 130
+      },
+      {
+        "name": "독립 localhost HTTP E2E",
+        "requests": 61,
+        "assertions": 114
+      },
+      {
+        "name": "격리 PostgreSQL 학습 기록 assertion",
+        "assertions": 50
+      }
+    ],
+    "commands": [
+      {
+        "command": "node --import tsx --test tests/schedule.test.ts tests/quiz-selection.test.ts tests/quiz-rules.test.ts tests/planner.test.ts tests/next-learning-question.test.ts tests/learning-journey.test.ts tests/knowledge-bites.test.ts tests/interviewer-reaction.test.ts tests/interview-flow.test.ts packages/content-contracts/test/contracts.test.ts",
+        "result": "PASS",
+        "tests": 74,
+        "assertions": [
+          "Reviewed quiz grading and first-sentence limits",
+          "Adaptive due/wrong/new selection",
+          "Grounded activity/video matching",
+          "Ownership and opaque question identity continuity",
+          "Interview configuration persistence",
+          "Five-percent reaction quantization and uncertainty guard",
+          "Calendar dates, Korean timezone, schedule provenance",
+          "Content pair integrity and import sanitization"
+        ],
+        "note": "next-learning-question file additionally contains 18 explicit subchecks; Node counts this file as one test."
+      },
+      {
+        "command": "node --import tsx --test tests/school-learning.test.mts tests/interviewer-coach.test.mts",
+        "result": "PASS",
+        "tests": 18,
+        "assertions": [
+          "88 exact school reference records",
+          "Reference/official identity downgrade",
+          "Common practice without personal package",
+          "Owned historical version boundaries",
+          "Requested root distribution quota",
+          "Actual coaching adapter uses mocked SDK transport; no external request"
+        ]
+      },
+      {
+        "command": "node tests/chat-composer.mjs",
+        "result": "PASS",
+        "assertionCount": 26,
+        "assertions": [
+          "Enter sends",
+          "Shift+Enter newline",
+          "Korean IME composition does not send",
+          "Busy/empty/disabled guards",
+          "Concurrent submission is suppressed"
+        ]
+      },
+      {
+        "command": "node tests/chat-context.mjs",
+        "result": "PASS",
+        "assertionCount": 38,
+        "assertions": [
+          "Question/school/source version stays pinned",
+          "Recommendation clicks use the guarded immediate send",
+          "Double click cannot duplicate provider request",
+          "Pending/failure/assistant provenance behavior",
+          "Draft isolation across user, target, version, session"
+        ]
+      },
+      {
+        "command": "node tests/markdown-message.mjs",
+        "result": "PASS",
+        "assertionCount": 12,
+        "assertions": [
+          "Actual component with real Markdown parser renders headings, emphasis, ordered/unordered lists, links, inline/fenced code, GFM tables, quotes",
+          "Script/executable URLs/remote image embeds remain inactive",
+          "Tables keep an accessible overflow region"
+        ]
+      },
+      {
+        "command": "node tests/quiz-render-loading.mjs",
+        "result": "PASS",
+        "assertionCount": 19,
+        "assertions": [
+          "Loading and request failures render",
+          "Ready/paused controls",
+          "Empty ended/completed results",
+          "Results keep original source question/version",
+          "Review answer precedes last saved answer",
+          "Ungraded answers are not scores"
+        ]
+      },
+      {
+        "command": "node --import tsx tests/planner-api.mts",
+        "result": "PASS",
+        "assertionCount": 59,
+        "assertions": [
+          "Independent UUID student/staff/admin fixtures",
+          "Auth and roles",
+          "Own target linking",
+          "Revision conflicts",
+          "Manual completion remains distinct from source event",
+          "Spaced future plan not fulfilled by current practice",
+          "Fixture cleanup verified"
+        ]
+      },
+      {
+        "command": "node --conditions=react-server --import tsx tests/study-session-api.mts",
+        "result": "PASS",
+        "assertionCount": 36,
+        "assertions": [
+          "Multi-tab leases",
+          "Heartbeat/finish retry idempotency",
+          "Source events counted once",
+          "Ungraded oral and timeouts",
+          "Frozen report snapshot",
+          "Missed exit and idle recovery",
+          "Ownership boundaries"
+        ],
+        "cleanup": "All run-created UUID profiles, sessions and events deleted."
+      },
+      {
+        "command": "node --import tsx tests/school-learning-api.mts",
+        "result": "PASS",
+        "assertionCount": 35,
+        "assertions": [
+          "School register → overview → common interview",
+          "Historical/private source retry",
+          "Owned context hidden internal fields",
+          "Stale current school identity",
+          "Pause/resume assistance",
+          "AI usage remains zero"
+        ],
+        "cleanup": "All exact run-created UUID student fixtures and associated target/content/session data deleted."
+      },
+      {
+        "command": "node --conditions=react-server --import tsx tests/learning-records.mts",
+        "result": "PASS",
+        "assertionCount": 50,
+        "assertions": [
+          "Dedicated PostgreSQL schema",
+          "Historical import idempotency",
+          "Frozen snapshots preserved",
+          "Current/resolved weakness",
+          "Objective versus Q&A/audio/AI help",
+          "Question/target identity",
+          "Assignment event provenance"
+        ],
+        "cleanup": "Dedicated random PostgreSQL schema dropped; shared public data not changed."
+      },
+      {
+        "command": "node --conditions=react-server --import tsx .local/brand-api-e2e.mts",
+        "result": "PASS",
+        "httpRequests": 61,
+        "assertionCount": 114,
+        "detailedResult": "C:/Users/MaYunsong/Documents/각자의답/.local/brand-api-e2e-result.json",
+        "assertions": [
+          "Real local login/logout and cross-Origin rejection",
+          "Bootstrap and safe learning preview",
+          "School catalog and idempotent registration",
+          "Quiz create/start/pause/resume/correct/wrong/timeout/retry/result",
+          "Server-owned hint/assistance flags",
+          "Planner create/complete/stale conflict/foreign target/date validation",
+          "Knowledge bookmark/reflection/revision conflict",
+          "Interview preview/start/draft/pause/resume/answer/retry/speaker alternation/cancel",
+          "Study aggregate/manual finalization/frozen retry",
+          "Cross-student read/write rejection",
+          "Zero fixture AI usage logs"
+        ],
+        "cleanup": "Exact IDs with brand-api-{UUID}@gakja.test owner guard; all generated records deleted and zero remaining profiles confirmed.",
+        "harnessNote": "Initial new harness expected foreign private help to return 404; a student without published content correctly returns 409. New harness expectation was corrected to the existing explicit API contract; production and pre-existing assertions were untouched."
+      }
+    ],
+    "limits": [
+      "No browser automation or screenshot capture in this agent; root performs actual UI checks through CUA.",
+      "AI generation, real Google/Kakao OAuth redirects/callback exchange, cloud password flows and hardware camera/microphone were not invoked.",
+      "Interview answer route used feedbackTiming=end, followups=false, interviewerReactions=false; cancel was used after persistence so configured providers could not generate end-of-interview coaching.",
+      "Dedicated study-report finalization was fully tested through HTTP. Provider-generated interview report feedback was excluded.",
+      "Existing quiz-api uploads synthetic media; excluded per scoped no-media instruction. Safe quiz behavior is covered by dedicated HTTP E2E and pure/component tests.",
+      "Existing security-ai/interview-v2 test scripts write seeded tester sessions and expect absent provider keys; excluded in favor of exact disposable fixtures.",
+      "Build and final browser QA are handled by root after visual fixes."
+    ]
+  },
+  "implementedFixes": [
+    {
+      "id": "source-a11y-input-names",
+      "title": "답변 작성·전역 검색 입력 이름 연결",
+      "change": "답변 작성의 두 textarea를 보이는 제목과 aria-labelledby로 연결하고, 전역 검색에 aria-label을 추가.",
+      "files": [
+        "apps/web/src/components/materials.tsx",
+        "apps/web/src/components/app-shell.tsx"
+      ]
+    },
+    {
+      "id": "source-a11y-chat-announcement",
+      "title": "AI 답변 도착 알림",
+      "change": "새 완료 응답에만 polite 상태 알림을 추가. 최초 저장 이력·실패·대기 상태를 새 답변으로 알리지 않음.",
+      "files": [
+        "apps/web/src/components/chat.tsx"
+      ]
+    },
+    {
+      "id": "source-a11y-recording-live-timer",
+      "title": "녹음 상태·경과 시간 분리",
+      "change": "녹음 상태는 polite 알림으로, 경과 시간은 role=timer / aria-live=off로 분리.",
+      "files": [
+        "apps/web/src/components/interview.tsx"
+      ]
+    },
+    {
+      "id": "source-brand-text-contrast",
+      "title": "작은 글씨 가독성 개선",
+      "change": "대시보드 라벨·검토 상태·학교 출처/입력 안내·로그인 placeholder 색을 기존 색조 안에서 진하게 조정.",
+      "files": [
+        "apps/web/src/app/brand-qa-refinement.css"
+      ]
+    },
+    {
+      "id": "source-a11y-focus-contrast",
+      "title": "키보드 포커스 표시 개선",
+      "change": "계정 메뉴·셀렉트·채팅 입력창에 2px 진한 녹색 포커스 표시 적용.",
+      "files": [
+        "apps/web/src/app/brand-qa-refinement.css",
+        "apps/web/src/components/chat-composer.module.css"
+      ]
+    }
+  ],
+  "fixValidation": {
+    "typecheck": "npm run typecheck --workspace=@gakja/web: pass",
+    "chatContext": "node tests/chat-context.mjs: 38 checks passed; no DB or paid AI",
+    "composer": "node tests/chat-composer.mjs: 26 checks passed; API calls 0",
+    "authoredColorContrast": {
+      "dashboardLabel": 5.91,
+      "reviewState": 5.24,
+      "schoolNote": 5.04,
+      "authPlaceholder": 5.07,
+      "focusRing": 5.54
+    },
+    "runtimeVerification": "root의 최종 브라우저 computed style / 접근성 트리 확인 필요",
+    "cssImport": "root가 layout.tsx의 마지막 스타일 import로 연결 완료"
+  },
+  "sourceChecksPassed": [
+    "Self-hosted PretendardVariable.woff2 exists and declares font-weight 100 900 with swap.",
+    "Public logo uses #00EE77, white facial paths, intrinsic 1776:1770 ratio; current authored logo rules preserve height auto and object-fit contain.",
+    "Root layout declares lang=ko and light color scheme is retained.",
+    "Native select retains keyboard/validation fallback and progressive base-select enhancement.",
+    "Logout confirmation uses native showModal with cancel focus and does not log out directly on menu click.",
+    "General Modal uses native dialog and keyboard boundary handling, Escape cancel, and focus restoration.",
+    "Markdown rendering uses react-markdown plus remark-gfm; raw HTML is skipped, images do not embed active remote content, and wide tables/code scroll in local containers.",
+    "Interview/chat composer handles IME composition and Enter versus Shift+Enter and has a duplicate-send lock.",
+    "Answer comparison has labelled native range and accessible full-text alternatives.",
+    "Audio analyser reads existing recorder stream, never connects to speakers, and tears down its owned RAF/context without stopping recorder tracks.",
+    "Interviewer gestures and question/receipt animations respect reduced-motion and their GSAP/timer lifecycles are cleaned up.",
+    "AppShell supplies skip-to-content link, Korean-labelled main/tools nav, aria-current, and visible account controls."
+  ],
+  "limits": [
+    "이 파일의 캡처 상태 집계는 시각 합격 판정이 아니다. root의 이미지 확인 및 완료 상태 재검증 필요.",
+    "Google/Kakao 실제 OAuth, 이메일/복구 토큰, 유료 AI 응답 품질, STT/TTS, 마이크·카메라는 호출하지 않았음.",
+    "면접 캐릭터의 5% quantization은 로직 테스트 통과. 실제 유료 모델 입력에 따른 표정 품질은 검증 범위 밖.",
+    "오류 경계 화면을 의도적으로 장애 유발하여 검수하지 않았음.",
+    "실제 스크린리더 음성·다른 브라우저 엔진 호환성은 검수하지 않았음.",
+    "login-invalid의 현재 fail은 root가 재검증 중인 테스트 관찰 기록. 확정 제품 결함으로 표현하지 말 것.",
+    "최종 production build, fixture cleanup, 브라우저 복원은 root 소관."
+  ],
+  "mappingRuleNotes": [
+    "answer-comparisons는 목록 URL과 /:questionId detail URL이 하나의 canonical 템플릿이다.",
+    "interview-setup은 Chat·Live·new URL variant를 하나의 템플릿으로 합산한다.",
+    "/chat→/on, /reports→/records, /practice→/quiz 별칭은 canonical 화면 수를 늘리지 않는다."
+  ],
+  "finalCounts": {
+    "scope": {
+      "canonicalTemplates": 59,
+      "roleCounts": {
+        "public": 5,
+        "student": 38,
+        "admin": 16
+      },
+      "coverageByRole": {
+        "public": {
+          "templates": 5,
+          "desktopObserved": 5,
+          "mobileObserved": 5,
+          "bothObserved": 5
+        },
+        "student": {
+          "templates": 38,
+          "desktopObserved": 38,
+          "mobileObserved": 38,
+          "bothObserved": 38
+        },
+        "admin": {
+          "templates": 16,
+          "desktopObserved": 16,
+          "mobileObserved": 16,
+          "bothObserved": 16
+        }
+      },
+      "canonicalBothViewports": 59,
+      "missing": {
+        "desktop": [],
+        "mobile": []
+      }
+    },
+    "captures": {
+      "rawObservations": 194,
+      "latestUniqueIdRoleViewport": 164,
+      "latestByRole": {
+        "public": 13,
+        "student": 98,
+        "admin": 37,
+        "empty": 16
+      },
+      "latestAutomaticDomIssues": [],
+      "mixedBeforeAfterFixes": true
+    },
+    "browserFlows": {
+      "latestCount": 28,
+      "passed": 28,
+      "failed": 0,
+      "method": "Actual CUA browser interactions through Playwright API; not a separate Playwright CLI suite.",
+      "latestResults": [
+        {
+          "id": "login-student",
+          "status": "pass"
+        },
+        {
+          "id": "global-search",
+          "status": "pass",
+          "detail": "라벨 있는 검색창 입력 → 활동·질문 결과",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-global-search.png"
+        },
+        {
+          "id": "search-escape",
+          "status": "pass",
+          "detail": "Escape로 검색 대화상자 닫힘",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-search-escape.png"
+        },
+        {
+          "id": "logout-confirm",
+          "status": "pass",
+          "detail": "계정 이름 → 로그아웃 확인, 즉시 종료하지 않음",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-logout-confirm.png"
+        },
+        {
+          "id": "logout-cancel",
+          "status": "pass",
+          "detail": "취소 뒤 로그인과 현재 화면 유지",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-logout-cancel.png"
+        },
+        {
+          "id": "answer-save-reload",
+          "status": "pass",
+          "detail": "답변 입력 → 저장 → 새로고침 유지; 필드 이름 연결",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-answer-save-reload.png"
+        },
+        {
+          "id": "answer-history",
+          "status": "pass",
+          "detail": "새 수정본과 이전 답변 이력이 함께 보임",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-answer-history.png"
+        },
+        {
+          "id": "interview-finish-confirm",
+          "status": "pass",
+          "detail": "미전송 초안이 있으면 종료 전 확인",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-interview-finish-confirm.png"
+        },
+        {
+          "id": "interview-draft-reload",
+          "status": "pass",
+          "detail": "종료 취소·새로고침 후 초안 유지",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-interview-draft-reload.png"
+        },
+        {
+          "id": "live-permission-gate",
+          "status": "pass",
+          "detail": "권한 요청 전 녹음 비활성; 하드웨어 연결은 미실행",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-live-permission-gate.png"
+        },
+        {
+          "id": "quiz-hint",
+          "status": "pass",
+          "detail": "힌트 클릭 즉시 첫 문장이 표시됨",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-hint.png"
+        },
+        {
+          "id": "quiz-answer-save",
+          "status": "pass",
+          "detail": "첫 답변 저장 → 다음 문항 대기",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-answer-save.png"
+        },
+        {
+          "id": "quiz-result-next-context",
+          "status": "pass",
+          "detail": "중간 저장 결과 → 같은 질문을 면접·영상으로 연결",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-result-next-context.png"
+        },
+        {
+          "id": "comparison-range",
+          "status": "pass",
+          "detail": "겹쳐 보기 슬라이더 키보드 Home/End = 0/100",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-comparison-range.png"
+        },
+        {
+          "id": "quiz-result-expand",
+          "status": "pass",
+          "detail": "모범답안 펼침 뒤 전체 답변 표시",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-result-expand.png"
+        },
+        {
+          "id": "quiz-timer-keyboard",
+          "status": "pass",
+          "detail": "10초 경과 2문항 자동 저장·마지막 문항 키보드1 정답·완료 결과",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-timer-keyboard.png"
+        },
+        {
+          "id": "knowledge-note-reload",
+          "status": "pass",
+          "detail": "영상 메모 저장 → 새로고침 유지",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-knowledge-note-reload.png"
+        },
+        {
+          "id": "assistant-markdown-layout",
+          "status": "pass",
+          "detail": "메시지 본문 사용자 우측·AI 좌측; Markdown 제목·강조·목록·표 정상; 기존 대화 자동 알림 없음",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-assistant-markdown-layout.png"
+        },
+        {
+          "id": "student-admin-guard",
+          "status": "pass",
+          "detail": "학생 /admin 접근 → 대시보드로 이동",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-student-admin-guard.png"
+        },
+        {
+          "id": "logout-execute",
+          "status": "pass",
+          "detail": "확인 버튼을 누른 뒤 로그인 화면으로 이동",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-logout-execute.png"
+        },
+        {
+          "id": "login-invalid",
+          "status": "pass",
+          "detail": "잘못된 비밀번호에 오류 표시·로그인 화면 유지",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-login-invalid.png"
+        },
+        {
+          "id": "admin-login",
+          "status": "pass",
+          "detail": "관리자 로그인 → 운영 화면",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-admin-login.png"
+        },
+        {
+          "id": "admin-mobile-nav",
+          "status": "pass",
+          "detail": "관리자 가로 메뉴 스크롤 유지·상시 스크롤바 숨김",
+          "viewport": "mobile",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-admin-mobile-nav.png"
+        },
+        {
+          "id": "empty-onboarding",
+          "status": "pass",
+          "detail": "학습 데이터가 없으면 학교 등록으로 첫 학습 안내",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-empty-onboarding.png"
+        },
+        {
+          "id": "login-logo-pause",
+          "status": "pass",
+          "detail": "일시정지 버튼으로 회전 정지",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-login-logo-pause.png"
+        },
+        {
+          "id": "login-logo-sweep",
+          "status": "pass",
+          "detail": "90도 정지점 사이의 중간 회전 행렬 관측·재생 정상",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-login-logo-sweep.png"
+        },
+        {
+          "id": "not-found-brand-layout",
+          "status": "pass",
+          "detail": "404 로고·제목·복귀 버튼 중앙 정렬 및 좌우 여백",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-not-found-brand-layout.png"
+        },
+        {
+          "id": "unauthenticated-guard",
+          "status": "pass",
+          "detail": "로그아웃 상태의 학습 화면 접근 → 로그인",
+          "viewport": "desktop",
+          "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-unauthenticated-guard.png"
+        }
+      ]
+    },
+    "regression": {
+      "nodeTestCases": 92,
+      "componentAssertions": 95,
+      "existingLocalApiAssertions": 130,
+      "independentHttpAssertions": 114,
+      "independentHttpRequests": 61,
+      "isolatedPostgreSQLAssertions": 50,
+      "allPassed": true
+    },
+    "fixGroups": 7,
+    "cleanup": {
+      "status": "pass",
+      "originalUserDataPreserved": true
+    },
+    "productionBuild": {
+      "status": "passed",
+      "executed": true,
+      "evidence": "Next 16.4 compiled successfully (3.5s); TypeScript completed (25.9s); static pages 16/16 (1746ms); Turbo 1 successful / 1 total (45.661s).",
+      "exitCode": 0
+    },
+    "infrastructure": {
+      "status": "recovered",
+      "observation": "Turbopack persistent-cache TaskId missing / parent_count underflow on dev server restart after production build.",
+      "action": "Dev cache preserved by moving within workspace; server restarted successfully with a new cache.",
+      "scope": "Infrastructure observation, separated from product UI/function QA.",
+      "evidence": [
+        "Server startup exitCode 0",
+        "GET /login 200",
+        "Actual CUA login screen rendered; default viewport restored."
+      ],
+      "screenshot": ".local/previews/brand-e2e-2026-10-12/server-restored-login.png",
+      "countingNote": "Recovery screenshot is evidence only; browser observation/flow counts remain 194/28."
+    }
+  }
+}

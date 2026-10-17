@@ -1,0 +1,18 @@
+/* The original logo stays intact; a separate cue responds to private input. */
+.auth-logo-attention { position:relative; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.auth-logo-attention .login-art-logo { display:block; }
+.auth-mobile-mark { position:relative; display:inline-flex; align-items:center; }
+.auth-privacy-cue { position:absolute; display:grid; place-items:center; width:52px; height:52px; right:-8px; bottom:24%; border-radius:50%; color:#3d6350; background:#fff; box-shadow:0 3px 14px #0a372412; opacity:0; transform:translateY(6px); transition:opacity .16s ease,transform .2s ease; pointer-events:none; }
+.auth-keeps-secret .auth-privacy-cue { opacity:1; transform:translateY(0); }
+.auth-mobile-mark .auth-privacy-cue { width:27px; height:27px; left:22px; right:auto; bottom:-4px; background:#f0f7f2; box-shadow:0 1px 5px #0a37240d; }
+
+/* One measured selection surface connects every sidebar destination. */
+.app-shell .sidebar-navigation { position:relative; isolation:isolate; }
+.sidebar-selection { position:absolute; top:0; left:0; z-index:0; border-radius:9px; background:#e7ece8; opacity:0; pointer-events:none; }
+.app-shell .sidebar-navigation :is(.main-nav,.sidebar-tools) { position:relative; z-index:1; }
+.app-shell .sidebar-navigation[data-motion-ready=true] :is(.main-nav>a.active,.sidebar-settings.active),
+.app-shell .sidebar-navigation[data-motion-ready=true] :is(.main-nav>a.active,.sidebar-settings.active):hover { background:transparent; }
+
+@media (prefers-reduced-motion:reduce) {
+  .auth-privacy-cue { transition:none; transform:none; }
+}

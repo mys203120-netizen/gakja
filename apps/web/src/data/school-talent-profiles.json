@@ -1,0 +1,3902 @@
+{
+  "checkedAt": "2026-10-13",
+  "profiles": [
+    {
+      "id": "official_talent_0000063",
+      "schoolReferenceId": "bible_620cadfe9779f492",
+      "revision": 1,
+      "university": "가천대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "미래를 지향하는 지성인·나눔에 동참하는 실천인·최고를 추구하는 전문인",
+      "points": [
+        {
+          "id": "intellect",
+          "label": "미래를 지향하는 지성인",
+          "description": "다양한 사고와 문화를 존중하며 사회의 조화로운 발전을 생각하는 사람.",
+          "question": "관심 전공의 문제를 다른 문화와 관점에서 바라본다면 무엇을 새롭게 고려할 수 있을까요?"
+        },
+        {
+          "id": "practice",
+          "label": "나눔에 동참하는 실천인",
+          "description": "생명과 환경을 존중하며 지역사회와 인류를 위해 행동하는 사람.",
+          "question": "배운 지식을 생명·환경·공동체에 도움이 되도록 실천한다면 무엇부터 하겠어요?"
+        },
+        {
+          "id": "expert",
+          "label": "최고를 추구하는 전문인",
+          "description": "논리적이고 과학적으로 탐구하며 지식을 창의적으로 응용하는 사람.",
+          "question": "지원 전공에서 탐구하고 싶은 질문과, 결론을 확인하기 위한 논리나 자료를 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.gachon.ac.kr/kor/810/subview.do",
+        "title": "가천대학교 · 교육이념·교육목적·교육목표",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "대학 공통 공식 교육목적·교육목표를 연결한 프로필. 원문이 이 세 항목을 별도 이름의 인재상으로 명시하지 않으므로 교육목표로 구분하며, 특정 단과대학이나 채용 공고의 인재상을 사용하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000046",
+      "schoolReferenceId": "bible_626386850dfa841a",
+      "revision": 1,
+      "university": "가톨릭대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "인성과 창의성을 갖춘 윤리적 리더",
+      "points": [
+        {
+          "id": "self",
+          "label": "자기관리",
+          "description": "자신의 강점과 방향을 이해하고 진로를 개발하는 역량.",
+          "question": "배움을 돌아보며 알게 된 본인의 강점과 앞으로 개선할 점을 지원 전공과 연결해 주세요."
+        },
+        {
+          "id": "community",
+          "label": "공동체",
+          "description": "인간을 존중하며 공동체와 세계 시민의 책임에 참여하는 역량.",
+          "question": "지원 전공과 관련된 사회 문제에서 도움이 필요한 사람들의 관점을 어떻게 반영하겠어요?"
+        },
+        {
+          "id": "problem",
+          "label": "문제해결",
+          "description": "문제를 인식하고 전문 지식을 실천에 연결하는 역량.",
+          "question": "관심 문제의 원인을 어떻게 파악하고, 해결 방법을 실제로 확인하겠어요?"
+        },
+        {
+          "id": "innovation",
+          "label": "혁신",
+          "description": "창의적인 생각과 여러 지식을 융합하는 역량.",
+          "question": "서로 다른 분야의 지식을 연결해 새롭게 설명하거나 해결하고 싶은 문제는 무엇인가요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.catholic.ac.kr/ko/about/educational_philosophy.do",
+        "title": "가톨릭대학교 · 교육이념과 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "성심교정 대표 홈페이지의 대학 공통 인재상과 CUK 핵심역량을 요약. 성의·성신교정이나 개별 학과의 전공 인재상은 임의로 적용하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000050",
+      "revision": 1,
+      "university": "감리교신학대학교",
+      "schoolReferenceId": "bible_8704c828dbe7e8a7",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "교육목표",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "신앙의 양육",
+          "description": "성서와 체험에 바탕을 둔 신앙을 기른다.",
+          "question": "본인이 중요하게 여기는 신념은 무엇이며 일상의 선택에 어떻게 영향을 주나요?"
+        },
+        {
+          "id": "value_2",
+          "label": "에큐메니칼 전통",
+          "description": "기독교의 여러 전통을 이해한다.",
+          "question": "생각이나 전통이 다른 사람과 대화할 때 어떤 자세로 이해하려고 하나요?"
+        },
+        {
+          "id": "value_3",
+          "label": "전통문화와의 간학문적 대화",
+          "description": "신학과 전통문화 및 다른 학문을 연결한다.",
+          "question": "관심 주제를 다른 학문이나 문화의 관점에서 다시 본 경험을 설명해 주세요."
+        },
+        {
+          "id": "value_4",
+          "label": "신앙공동체의 지도력",
+          "description": "공동체를 이끄는 책임과 역량을 기른다.",
+          "question": "공동체에서 맡고 싶은 역할과 그 역할에 필요한 책임을 설명해 주세요."
+        },
+        {
+          "id": "value_5",
+          "label": "사회와 세계를 위한 봉사",
+          "description": "학교 밖 사회와 세계를 섬기는 실천을 지향한다.",
+          "question": "주변의 필요를 발견하고 도움을 실천하려면 무엇부터 알아봐야 하나요?"
+        },
+        {
+          "id": "value_6",
+          "label": "평화와 생명의 구현",
+          "description": "종파·인종·계층·성의 경계를 넘어 평화와 생명을 존중한다.",
+          "question": "배경이 다른 사람들의 권리와 생명을 함께 존중하려면 어떤 판단 기준이 필요할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.mtu.ac.kr/mtu/contents/view.do?mId=71",
+        "title": "감리교신학대학교 학교안내 · 교육이념",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "대학 전체의 6개 교육목표를 사용하며 학과별 목회·상담 인재상을 대학 전체로 확대하지 않는다. 별도로 이름 붙인 인재상이 아닌 교육목표임을 표시한다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000079",
+      "revision": 1,
+      "university": "강서대학교",
+      "schoolReferenceId": "bible_a3364993ac915cc1",
+      "scope": "university",
+      "status": "official_source",
+      "title": "탐나는 GS 인재",
+      "points": [
+        {
+          "label": "General Specialist",
+          "description": "전문성과 실천 능력을 바탕으로 지식을 탐구하고 문제를 해결한다.",
+          "id": "value_1"
+        },
+        {
+          "label": "Global Star",
+          "description": "문화적 차이를 이해하며 세계와 소통한다.",
+          "id": "value_2"
+        },
+        {
+          "label": "Good Samaritan",
+          "description": "사람을 존중하고 공동체의 필요에 응답하며 나눔을 실천한다.",
+          "id": "value_3"
+        }
+      ],
+      "source": {
+        "url": "https://gangseo.ac.kr/kcua/homeService?menuCode=HC1201",
+        "title": "강서대학교 비전 이념: 인재상 및 핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "officialValues": [
+          "General Specialist",
+          "Global Star",
+          "Good Samaritan"
+        ],
+        "additionalUrl": null,
+        "note": "대학 전체 공식 이념 이미지 대체텍스트의 교육목표·GS 인재상 직접 확인. 강서대 간호학과 등 학과별 자료의 인재상을 전체 대학에 적용하지 않음. catalogue websiteUrl은 null이지만 공식 대학 URL 확인. 2027 전형 기출·배점은 아님."
+      }
+    },
+    {
+      "id": "official_talent_0000003",
+      "schoolReferenceId": "bible_c736609f2879bf29",
+      "revision": 1,
+      "university": "강원대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "실사구시형 창의·협동 인재",
+      "points": [
+        {
+          "id": "future",
+          "label": "미래",
+          "description": "학문·지역·현실의 경계를 넘어 변화에 대응하는 역량.",
+          "question": "지원 전공의 미래 변화를 하나 고르고, 다른 분야나 지역과의 연결이 왜 필요한지 설명해 주세요."
+        },
+        {
+          "id": "character",
+          "label": "인성",
+          "description": "지식과 감성, 도덕적 책임을 함께 생각하는 태도.",
+          "question": "효율적인 해결책과 공동체의 이익이 다를 때 어떤 기준으로 판단하겠어요?"
+        },
+        {
+          "id": "creative",
+          "label": "창의",
+          "description": "상상력과 비판적 분석으로 새로운 해결 방법을 찾는 역량.",
+          "question": "관심 문제를 새롭게 해결할 아이디어를 제안하고, 그 아이디어의 한계를 어떻게 검토하겠어요?"
+        },
+        {
+          "id": "cooperation",
+          "label": "협동",
+          "description": "서로 배려하며 역할과 책임을 다해 함께하는 역량.",
+          "question": "협력할 때 본인의 역할과 다른 사람의 의견을 어떻게 조율하겠어요? 실제 경험이 있으면 연결해 주세요."
+        },
+        {
+          "id": "practice",
+          "label": "실천",
+          "description": "스스로 목표를 정하고 진취적으로 도전하는 역량.",
+          "question": "배운 내용을 실천하기 위한 다음 목표를 하나 정하고, 실행과 확인 방법을 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://faculty.kangwon.ac.kr/theme/cookie/mobile/sub1_2.php",
+        "title": "강원대학교 · 교육목표 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 대학 공식 교육목표 페이지의 인재상과 5대 핵심역량을 요약. 페이지에 춘천·강릉·삼척·원주 캠퍼스가 표기됨을 확인했으며 특정 전형의 점수나 배점으로 해석하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000052",
+      "revision": 1,
+      "university": "건국대학교",
+      "schoolReferenceId": "bible_98afbb0916406f78",
+      "scope": "university",
+      "status": "official_source",
+      "title": "WE人",
+      "points": [
+        {
+          "label": "창의적 전문인",
+          "description": "여러 지식을 연결하고 새로운 해결 방법을 탐구한다.",
+          "id": "value_1"
+        },
+        {
+          "label": "실천적 사회인",
+          "description": "성실한 태도로 타인과 소통하며 공동체의 일을 함께 실천한다.",
+          "id": "value_2"
+        },
+        {
+          "label": "선도적 세계인",
+          "description": "세계 공동체의 문제에 관심을 두고 스스로 행동한다.",
+          "id": "value_3"
+        }
+      ],
+      "source": {
+        "url": "https://www.konkuk.ac.kr/ceri/13139/subview.do",
+        "title": "건국대학교 교육성과관리센터 KU인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "officialValues": [
+          "창의적 전문인",
+          "실천적 사회인",
+          "선도적 세계인"
+        ],
+        "additionalUrl": "https://www.konkuk.ac.kr/bbs/gec/6075/1207600/download.do",
+        "note": "대학 전체 교육 인재상. 2027 특정 전형의 면접 출제·배점 정보는 아님. 글로컬캠퍼스 Cogito 인재상과 구분. 웹 검색 도구는 방화벽 페이지를 반환했으나 일반 HTTP fetch는 공식 HTML 및 참고 PDF를 200으로 반환했고 직접 본문 확인."
+      }
+    },
+    {
+      "id": "official_talent_0000056",
+      "schoolReferenceId": "bible_c5addc0cc14c7dd3",
+      "revision": 1,
+      "university": "경기대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "미래 글로벌 공동체를 선도할 ALL BARUN 참 인재",
+      "points": [
+        {
+          "id": "boundless",
+          "label": "창의융합",
+          "description": "여러 관점을 연결해 창의적으로 문제를 해결하는 역량.",
+          "question": "지원 전공의 문제를 다른 교과와 연결한 해결 방법을 제안해 주세요."
+        },
+        {
+          "id": "able",
+          "label": "자기개발",
+          "description": "지식을 탐구하고 스스로 학습을 이끌어 가는 역량.",
+          "question": "스스로 학습 목표를 정하고 배운 결과를 확인한 과정이나 실행할 계획을 설명해 주세요."
+        },
+        {
+          "id": "reliable",
+          "label": "시민의식",
+          "description": "책임을 다하고 사회적 배려를 실천하는 역량.",
+          "question": "관심 분야의 발전이 누군가에게 불리할 수 있다면 어떤 책임과 배려가 필요할까요?"
+        },
+        {
+          "id": "understanding",
+          "label": "소통",
+          "description": "생각을 전달하고 다양한 사회·문화와 이해를 나누는 역량.",
+          "question": "복잡한 전공 주제를 처음 접하는 사람에게 설명한다면 어떤 순서와 예시를 사용하겠어요?"
+        },
+        {
+          "id": "networking",
+          "label": "협업",
+          "description": "리더십과 팀워크를 바탕으로 공동의 성과를 만드는 역량.",
+          "question": "팀에서 맡고 싶은 역할을 말하고, 다른 사람의 강점과 어떻게 협력하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://enter.kyonggi.ac.kr/ajaxfile/CMN_SVC/FileView.do?CONTENTS_NO=2&GBN=X12&MENU_NO=130&SITE_NO=2&TYPE_CODE=C0601",
+        "title": "경기대학교 입학처 · 대학 비전 및 교육목표",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "입학처가 공개한 대학 공통 인재상과 BARUN 핵심역량을 요약. 원문에 특정 적용 입학 연도를 확인하지 못해 applicableYear를 비워 두며, 수원 캠퍼스의 개별 전형 배점으로 단정하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000005",
+      "revision": 1,
+      "university": "경북대학교",
+      "canonicalName": "경북대학교",
+      "schoolReferenceId": "bible_92b8b488a8485202",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "글로벌 창의인재 첨성인",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "창의",
+          "description": "익숙한 인식과 태도에 질문을 던져 새 가능성을 여는 힘",
+          "question": "활동을 통해 당연하게 생각했던 가정을 다시 보게 된 적이 있나요? 없다면 지원 분야에서 점검해 보고 싶은 가정을 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "융합",
+          "description": "학문 간 교류와 협력으로 새 지식 가치를 만드는 힘",
+          "question": "서로 다른 두 분야의 관점을 연결하면 지원 분야의 문제를 어떻게 다르게 해결할 수 있나요?"
+        },
+        {
+          "id": "value_3",
+          "label": "비판",
+          "description": "독단과 편견을 점검하고 열린 근거로 판단하는 태도",
+          "question": "내 주장에 불리한 자료를 만났을 때 무엇을 확인하고 판단을 어떻게 조정하겠어요?"
+        },
+        {
+          "id": "value_4",
+          "label": "탐색",
+          "description": "계속 질문하며 드러나지 않은 원인을 탐구하는 힘",
+          "question": "탐구의 결론 다음에 더 확인해야 할 질문은 무엇인가요?"
+        },
+        {
+          "id": "value_5",
+          "label": "소통",
+          "description": "관계를 맺고 함께 살아가기 위한 대화의 힘",
+          "question": "자신의 전문 설명을 이해하기 어려워하는 상대에게 어떻게 다르게 전달하겠어요?"
+        },
+        {
+          "id": "value_6",
+          "label": "책임",
+          "description": "자연·사회 문제를 자각하고 공동선 실현에 기여하는 태도",
+          "question": "지원 분야의 성과가 사회나 환경에 영향을 줄 때 어떤 책임을 함께 생각해야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.knu.ac.kr/wbbs/wbbs/contents/index.action?menu_idx=&menu_url=intro%2Fabout03",
+        "title": "경북대학교 · 교육목표 — 비전·인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000007",
+      "revision": 1,
+      "university": "경상국립대학교",
+      "canonicalName": "경상국립대학교",
+      "schoolReferenceId": "bible_e5c2a821abbe2dea",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "미래사회를 선도하는 혁신과 상생의 개척인",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "혁신과 상생의 개척인",
+          "description": "개척정신으로 진리를 탐구하고 미래사회·지역사회·국가의 발전에 기여하는 인재",
+          "question": "지원 분야에서 스스로 개척해 보고 싶은 문제가 있나요? 새로운 접근과 함께 영향을 받는 사람들의 입장도 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.gnu.ac.kr/main/cm/cntnts/cntntsView.do?cntntsId=5376&mi=11072",
+        "title": "경상국립대학교 · 이념/비전",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "대학이 명시한 하나의 공통 인재상을 그대로 한 축으로 연결했습니다. 입시 평가요소를 새로운 인재상 유형으로 재분류하지 않았습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000256",
+      "revision": 1,
+      "university": "경인교육대학교",
+      "schoolReferenceId": "bible_7056e20a94c3d756",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "경인교육대학교 교육목적 및 목표",
+      "points": [
+        {
+          "id": "belief",
+          "label": "교육자로서의 신념과 사상",
+          "description": "교육의 의미를 성찰하고 교사로서의 원칙을 형성하는 태도",
+          "question": "학생을 가르칠 때 가장 지키고 싶은 원칙과 그 이유를 설명해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "service",
+          "label": "지역사회 발전과 현장 교육에 봉사",
+          "description": "학교 현장과 지역의 필요를 이해하고 기여하는 자세",
+          "question": "지역의 교육 문제 하나를 골라 예비 교사로서 어떻게 돕고 싶은지 설명해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "research",
+          "label": "학문의 이론과 응용방법 연구",
+          "description": "이론을 깊이 배우고 실제 교육 상황에 적용하는 능력",
+          "question": "배운 내용을 다른 사람에게 설명할 때 어려웠던 점이나 예상되는 어려움과 개선 방법을 말해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "education",
+          "label": "국민교육이념 실천방법 체득",
+          "description": "교육의 공적 역할과 목적을 실제 교육에 연결하려는 태도",
+          "question": "학교 교육이 개인의 성장과 공동체에 함께 기여하려면 무엇이 필요할까요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.ginue.ac.kr/kor/CMS/Contents/Contents.do?mCode=MN145",
+        "title": "경인교육대학교 · 교육목적",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 교육목표를 요약한 학습 기준입니다. 별도 명명된 인재상이나 학과 고유 인재상으로 표기하지 않습니다. 질문은 이 교육목표를 활용해 앱에서 작성한 연습 질문이며 공식 기출이나 입시 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000066",
+      "revision": 1,
+      "university": "경희대학교",
+      "schoolReferenceId": "bible_925d9b5de199c382",
+      "scope": "university",
+      "status": "official_source",
+      "title": "성찰하는 지성인·창조하는 미래인·공존하는 세계인",
+      "points": [
+        {
+          "label": "성찰하는 지성인",
+          "description": "독서와 경험에서 질문을 만들고 논리적으로 문제를 탐구한다.",
+          "id": "value_1"
+        },
+        {
+          "label": "창조하는 미래인",
+          "description": "학문의 경계를 연결해 새로운 주제에 도전하고 생각을 실천한다.",
+          "id": "value_2"
+        },
+        {
+          "label": "공존하는 세계인",
+          "description": "사회문제에 공감하고 서로 다른 문화와 관점을 존중하며 협력한다.",
+          "id": "value_3"
+        }
+      ],
+      "source": {
+        "url": "https://iphak.khu.ac.kr/detail.do?board_seq=17324&menuurl=RnNfVbLHUGrJz9kJgEyRDQ%3D%3D&pageNo=1",
+        "title": "2027학년도 경희대학교 수시 신입생 모집요강(2026-08-11 최종 수정)",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": 2027,
+        "scope": "서울·국제 공통",
+        "officialValues": [
+          "성찰하는 지성인",
+          "창조하는 미래인",
+          "공존하는 세계인"
+        ],
+        "additionalUrl": null,
+        "note": "2027 최종 수시요강 PDF 29쪽 인재상·핵심역량, 39~40쪽 네오르네상스전형 확인. 기존 문화인·세계인·창조인을 2027에 재사용하지 않음. 특정 학과 기출이나 질문 출제 비율을 뜻하지 않음."
+      }
+    },
+    {
+      "id": "official_talent_0000068",
+      "revision": 1,
+      "university": "계명대학교",
+      "canonicalName": "계명대학교",
+      "schoolReferenceId": "bible_2012cb23efad2397",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "빛을 전하는 FACE 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "도전적 개척정신",
+          "description": "도전정신과 자기주도적 태도로 새로운 가능성을 찾는 힘",
+          "question": "아직 답을 모르는 문제를 스스로 탐구한다면 목표와 첫 시도를 어떻게 정하겠어요?"
+        },
+        {
+          "id": "value_2",
+          "label": "윤리적 봉사정신",
+          "description": "윤리적 가치관과 공감으로 타인을 위해 행동하는 태도",
+          "question": "옳다고 생각한 선택이 다른 사람에게 부담이 된다면 무엇을 확인하고 어떻게 결정하겠어요?"
+        },
+        {
+          "id": "value_3",
+          "label": "국제적 문화감각",
+          "description": "문화적 포용력과 소통으로 서로 다른 세계를 이해하는 힘",
+          "question": "지원 분야의 문제를 다른 문화의 사람에게 설명할 때 무엇을 조심해야 할까요?"
+        },
+        {
+          "id": "value_4",
+          "label": "창의적 전문성",
+          "description": "전문 지식을 종합하고 문제를 창의적으로 해결하는 힘",
+          "question": "관심 분야의 지식을 실제 문제에 적용할 때 어떤 점을 새롭게 연결할 수 있나요?"
+        }
+      ],
+      "source": {
+        "url": "https://dept.kmu.ac.kr/koreaneducation/3059/subview.do",
+        "title": "계명대학교 · 교육체계 — 대학 인재상·인재특성",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 학과 페이지의 ‘계명대학교 인재상, 인재특성 및 인재핵심역량’ 대학 공통 절을 사용했습니다. 하단 사범대학 목표와 구분했습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000069",
+      "revision": 1,
+      "university": "고려대학교",
+      "schoolReferenceId": "bible_b552e9fc54ce381f",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "사람중심의 창의인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "공유가치를 만드는 공감형 인재",
+          "description": "다른 사람에게 공감하고 함께 나눌 가치를 만든다.",
+          "question": "자신의 활동이 다른 사람에게 어떤 가치를 줄 수 있었는지 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "기본에 충실한 창의융합형 인재",
+          "description": "기초를 바탕으로 다양한 지식을 연결해 문제를 해결한다.",
+          "question": "기초 개념을 활용해 새로운 해결 방법을 생각한 과정을 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "세계와 소통하는 도전형 인재",
+          "description": "문화적 차이를 이해하며 더 넓은 세계의 과제에 도전한다.",
+          "question": "자신과 다른 문화나 관점을 이해하려고 노력한 일과 앞으로의 도전을 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.korea.ac.kr/ko/369/subview.do",
+        "title": "고려대학교 고대비전 · 교육목표 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": "2023-12-18",
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "현재 대학 홈페이지 인재상 이미지 대체텍스트의 3개 항목을 직접 확인. 서울 본교에 연결하며 별도 세종캠퍼스 전용 인재상으로 해석하지 않는다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000251",
+      "revision": 1,
+      "university": "공주교육대학교",
+      "schoolReferenceId": "bible_a602c0592894687a",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "공주교육대학교 교육목적",
+      "points": [
+        {
+          "id": "creative",
+          "label": "자주적이고 창조적인 인간",
+          "description": "자주성과 합리적·과학적 사고로 새롭게 생각하는 사람",
+          "question": "스스로 정한 학습 목표와 그 목표를 합리적으로 점검할 방법을 설명해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "citizen",
+          "label": "도덕적이고 협동적인 민주시민",
+          "description": "신뢰와 자율, 협동과 봉사를 실천하는 사람",
+          "question": "교실의 공동 문제를 해결할 때 학생들이 서로 신뢰하고 협력하도록 어떻게 돕겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "country",
+          "label": "국가관이 투철한 애국인",
+          "description": "사회와 국가의 발전을 위해 책임 있게 기여하는 사람",
+          "question": "교육이 사회에 기여하는 방식과 본인이 실천하고 싶은 일을 설명해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "teacher",
+          "label": "교직 전문성과 사명감을 지닌 교사",
+          "description": "교육에 대한 책임과 애정을 갖고 계속 연구하는 교사",
+          "question": "교사가 된 이후에도 계속 배우고 개선해야 할 점은 무엇이라고 생각하나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.gjue.ac.kr/kor/contents/22",
+        "title": "공주교육대학교 · 비전과 역사 · 교육목적",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 교육목표를 요약한 학습 기준입니다. 별도 명명된 인재상이나 학과 고유 인재상으로 표기하지 않습니다. 질문은 이 교육목표를 활용해 앱에서 작성한 연습 질문이며 공식 기출이나 입시 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000074",
+      "revision": 1,
+      "university": "광운대학교",
+      "schoolReferenceId": "bible_a176017d0be64d99",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "미래를 열어가는 참빛인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "교양과 깊은 탐구",
+          "description": "인성을 넓게 기르고 전공지식을 깊게 탐구한다.",
+          "question": "궁금한 내용을 깊이 공부하면서 자신의 이해가 바뀐 과정을 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "융합적 소통과 창의성",
+          "description": "기술·사회·사람을 함께 생각하며 소통하고 창의적으로 접근한다.",
+          "question": "한 문제를 기술과 사람의 관점에서 함께 살펴본다면 해결 방법이 어떻게 달라질까요?"
+        },
+        {
+          "id": "value_3",
+          "label": "지속가능한 미래의 실천",
+          "description": "글로벌 소양을 갖추고 지속가능한 사회를 위해 지식을 활용한다.",
+          "question": "관심 분야의 발전이 사회에 오래 도움이 되려면 어떤 책임을 고려해야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://ingenium.kw.ac.kr/univ/greeting.php",
+        "title": "광운대학교 인제니움대학 · 학장인사말의 대학 전체 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "인제니움 학장인사말이 광운대학교 전체 인재상을 명시한다. 3개 포인트 라벨은 한 문장 정의를 읽기 쉽게 나눈 요약이며 공식 하위 인재상 명칭이 아니다. 2026 공식 입학처 가이드북에서도 같은 참빛인재 정의를 확인. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000381",
+      "revision": 1,
+      "university": "광주과학기술원",
+      "schoolReferenceId": "bible_bf8b2f07903ddb3a",
+      "scope": "university",
+      "status": "official_source",
+      "title": "GIST 3C1P 인재상",
+      "points": [
+        {
+          "id": "communication",
+          "label": "의사소통",
+          "description": "생각과 정보를 나누고 다른 관점을 이해하는 능력",
+          "question": "탐구 결과를 배경지식이 다른 사람에게 어떻게 전달하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "cooperation",
+          "label": "협동",
+          "description": "다른 사람과 함께 문제를 해결하는 능력",
+          "question": "모둠 탐구에서 의견이 다를 때 근거를 어떻게 공유하고 합의하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "creativity",
+          "label": "창의",
+          "description": "기존 관점을 넘어 새로운 생각을 탐구하는 능력",
+          "question": "관심 있는 주제를 익숙한 방식과 다르게 바라본다면 무엇을 먼저 바꿔 보고 싶은가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "solving",
+          "label": "문제해결",
+          "description": "배운 지식을 연결해 문제의 해결안을 찾는 능력",
+          "question": "지원 분야의 문제 하나를 정하고 해결에 필요한 정보와 검증 방법을 설명해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.gist.ac.kr/kr/html/sub05/051104.html",
+        "title": "GIST · 3C1P 인재 성장 지원 Calendar",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000252",
+      "revision": 1,
+      "university": "광주교육대학교",
+      "canonicalName": "광주교육대학교",
+      "schoolReferenceId": "bible_46c1c78ed7ea900c",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "교육목표",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "민주시민의 자세",
+          "description": "건전한 시민의 자질을 갖추고 성실한 생활 태도를 확립하는 목표",
+          "question": "학급의 결정 과정에서 소수 의견이 계속 배제된다면 예비 교사로서 어떻게 참여 기회를 만들겠어요?"
+        },
+        {
+          "id": "value_2",
+          "label": "교육자의 사명감",
+          "description": "올바른 인격과 교육자로서의 사명·긍지를 갖추는 목표",
+          "question": "교사의 말과 행동이 학생의 신뢰에 영향을 준다면 어떤 원칙을 지켜야 할까요?"
+        },
+        {
+          "id": "value_3",
+          "label": "자주적·창의적 탐구",
+          "description": "학술을 과학적으로 탐구하고 주도적으로 연구하는 목표",
+          "question": "학생들이 질문을 스스로 탐구하도록 돕는 수업을 만든다면 무엇을 먼저 설계하겠어요?"
+        },
+        {
+          "id": "value_4",
+          "label": "교과교육의 전문성",
+          "description": "교사의 자질과 교육방법을 익혀 교과교육 전문성을 높이는 목표",
+          "question": "학생이 오개념을 갖고 있다면 정답을 알려 주기 전에 어떻게 이해 과정을 확인하겠어요?"
+        },
+        {
+          "id": "value_5",
+          "label": "사회봉사",
+          "description": "세계화·정보화 시대에 필요한 지도력과 봉사 태도를 갖추는 목표",
+          "question": "배운 교육 지식을 지역사회에 연결하는 활동을 계획한다면 누구의 의견을 먼저 듣겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.gnue.ac.kr/index.9is?contentUid=ff8080815bf1bf8b015bf5df8d26007b",
+        "title": "광주교육대학교 · 교육목표/목적",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "이 공식 페이지는 교육목표를 제시하며 별도로 이름 붙인 대학 인재상으로 재명명하지 않았습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000008",
+      "revision": 1,
+      "university": "국립공주대학교",
+      "schoolReferenceId": "bible_c605ba6ea254c4b6",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "국립공주대학교 교육목표",
+      "points": [
+        {
+          "id": "education",
+          "label": "지식·사고·인성을 함께 기르는 교육",
+          "description": "전문 지식과 논리적·창의적 사고, 바른 인성을 함께 발전시키는 목표",
+          "question": "지원 분야의 지식과 사고력, 인성을 함께 발전시키려면 어떤 학습이 필요할까요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "research",
+          "label": "이론과 융복합 기술의 탐구",
+          "description": "다양한 이론과 기술을 탐구하고 지역 발전에 연결하는 목표",
+          "question": "서로 다른 지식을 연결해 지역 문제를 탐구한다면 어떤 주제를 고르겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "service",
+          "label": "배움과 지식의 사회 환원",
+          "description": "교육·지식·기술을 지역사회와 나누어 복지에 기여하는 목표",
+          "question": "지원 분야에서 배운 지식이나 기술을 지역사회에 어떻게 나누고 싶은가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.kongju.ac.kr/KNU/16570/subview.do",
+        "title": "국립공주대학교 · 교육목표 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 교육목표를 요약한 학습 기준입니다. 별도 명명된 인재상이나 학과 고유 인재상으로 표기하지 않습니다. 질문은 이 교육목표를 활용해 앱에서 작성한 연습 질문이며 공식 기출이나 입시 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000013",
+      "revision": 1,
+      "university": "국립부경대학교",
+      "canonicalName": "국립부경대학교",
+      "schoolReferenceId": "bible_932cc4d23c32588a",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "용기와 도전으로 인류의 꿈을 펼치는 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "주도적 사고",
+          "description": "목표를 스스로 정하고 자기관리로 꾸준히 성장하는 힘",
+          "question": "자신의 학습에서 다음 목표를 정할 때 지금까지의 어떤 증거를 살펴보겠어요?"
+        },
+        {
+          "id": "value_2",
+          "label": "융합적 탐색",
+          "description": "다양한 지식과 정보를 통합해 학문적 질문을 탐색하는 힘",
+          "question": "지원 분야의 문제를 서로 다른 관점으로 탐색하면 어떤 새로운 질문이 생기나요?"
+        },
+        {
+          "id": "value_3",
+          "label": "창의적 해결",
+          "description": "융합적 사고로 새로운 해결책을 만들고 문제를 푸는 힘",
+          "question": "기존 해결 방법이 통하지 않을 때 무엇을 바꾸고 어떤 기준으로 대안을 비교하겠어요?"
+        },
+        {
+          "id": "value_4",
+          "label": "소통형 리더십",
+          "description": "명확한 표현과 타인 이해로 의견을 조율하는 힘",
+          "question": "주장이 다른 팀원들을 설득해야 할 때 먼저 확인해야 할 것은 무엇인가요?"
+        },
+        {
+          "id": "value_5",
+          "label": "사회적 기여",
+          "description": "공공의 가치를 실현하는 일에 책임 있게 참여하는 태도",
+          "question": "지원 분야의 성과가 누구에게 도움이 되고 누구에게 부담이 되는지 어떻게 검토하겠어요?"
+        },
+        {
+          "id": "value_6",
+          "label": "글로벌 감각",
+          "description": "다양한 세계 문화를 이해하고 국제적 역량을 갖추는 힘",
+          "question": "지원 분야의 현상이 다른 나라에서도 같은 방식으로 나타날지 무엇을 비교해야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.pknu.ac.kr/main/38",
+        "title": "국립부경대학교 · 대학이념과 인재상 — PKNU VISION 2035",
+        "checkedAt": "2026-10-13",
+        "publishedAt": "2025-10-02",
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "2025-10-02 최종수정 페이지의 두 공식 이미지에서 현행 인재상과 6대 핵심역량의 실제 정의를 확인했습니다. 이미지: https://www.pknu.ac.kr/upload/media/2025/09/30/86ff716a-b3c2-42b2-adea-9be6290804ec.jpg 및 https://www.pknu.ac.kr/upload/media/2025/09/30/8a7cef60-ca1b-4aa6-8fd8-af9eaf7c2e9a.jpg. 구형 4R 자료를 재사용하지 않았습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000028",
+      "revision": 1,
+      "university": "국립창원대학교",
+      "canonicalName": "국립창원대학교",
+      "schoolReferenceId": "bible_2ed8234fdbbbf2d9",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "인성·창의성·전문성을 갖춘 글로컬 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "창의성과 기본에 충실한 민주시민",
+          "description": "기초를 충실히 배우고 사회 변화에 창의적으로 대응하는 태도",
+          "question": "기초 개념을 제대로 이해하지 않은 채 새 해결책을 제안하면 어떤 문제가 생길까요? 실제 탐구와 연결해 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "자기주도적 지역선도 인재",
+          "description": "스스로 배우고 지역의 문제에 주도적으로 참여하는 태도",
+          "question": "지역에서 관찰한 문제를 지원 학과의 관점으로 탐구한다면 첫 단계와 확인할 자료는 무엇인가요?"
+        },
+        {
+          "id": "value_3",
+          "label": "성숙한 공동체 시민",
+          "description": "봉사와 나눔으로 국가·지역사회 발전에 기여하는 태도",
+          "question": "도움을 제공하는 사람의 생각과 실제 필요한 도움이 다를 때 어떻게 확인하겠어요?"
+        },
+        {
+          "id": "value_4",
+          "label": "실용적 지성을 갖춘 전문인",
+          "description": "전공 지식과 기술을 창조적으로 발전시켜 사회에 활용하는 힘",
+          "question": "탐구한 지식을 실제 현장에 적용하기 전에 어떤 한계와 조건을 검토해야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.changwon.ac.kr/common/nttPdfView.do?fileKey=121c679e64effc05dd7bcd316dd2f532&rs=&rs=6899f317dfe00f2af7491d65bc47458a",
+        "title": "국립창원대학교 · 대학요람 대학본부 교육이념·인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공개된 대학요람의 대학 공통 인재상이며 특정 학과 인재상이나 2027 입시 배점을 뜻하지 않습니다. 국립창원대학교 현재 통합캠퍼스 대학소개(https://ilc.gc.ac.kr/CW0101/102011.asp?mi=102011)의 동일한 공통 방향도 교차 확인했습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000034",
+      "revision": 1,
+      "university": "국립한국교통대학교",
+      "schoolReferenceId": "bible_1452eb910cdbd18d",
+      "scope": "university",
+      "status": "official_source",
+      "title": "국립한국교통대학교 공통 인재상",
+      "points": [
+        {
+          "id": "creative",
+          "label": "창조적 전문가",
+          "description": "새로운 사고로 미래와 변화를 개척하고 전문성을 키우는 사람",
+          "question": "지원 분야에서 기존 방식의 한계를 발견한다면 어떻게 새롭게 접근하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "whole",
+          "label": "전인적 교양인",
+          "description": "지성·감정·의지를 기르며 인류에 기여하는 사람",
+          "question": "전문 지식을 활용할 때 다른 사람의 삶에 미치는 영향을 어떻게 고려하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "global",
+          "label": "글로벌 리더",
+          "description": "국제적인 교류와 협력으로 국제사회에 기여하는 사람",
+          "question": "다른 국가나 지역과 협력해 문제를 풀 때 어떤 차이를 먼저 이해해야 할까요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.ut.ac.kr/ipsi/sub04_02.do",
+        "title": "국립한국교통대학교 입학처 · 전형안내",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000033",
+      "revision": 1,
+      "university": "국립한국해양대학교",
+      "canonicalName": "국립한국해양대학교",
+      "schoolReferenceId": "bible_6ad8e2bf4ed32543",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "해양·글로벌·창의형·공익 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "해양 인재",
+          "description": "풍부한 지식과 전문 기술을 갖추는 인재",
+          "question": "지원 전공의 지식이 해양이나 해양과 연결된 사회 문제에 어떻게 활용될 수 있을까요?"
+        },
+        {
+          "id": "value_2",
+          "label": "글로벌 인재",
+          "description": "국제적 감각과 식견을 갖추는 인재",
+          "question": "해양과 관련된 문제가 국가별 이해관계와 충돌할 때 어떤 정보와 관점을 함께 살펴야 할까요?"
+        },
+        {
+          "id": "value_3",
+          "label": "창의형 인재",
+          "description": "융합적 사고력과 문제해결력을 갖추는 인재",
+          "question": "지원 분야의 문제를 다른 학문의 지식과 연결해 새로운 접근을 제안해 주세요."
+        },
+        {
+          "id": "value_4",
+          "label": "공익 인재",
+          "description": "소통과 배려로 공공의 이익에 기여하는 인재",
+          "question": "전문 분야의 선택이 지역 주민과 환경에 영향을 준다면 누구와 어떻게 소통해야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.kmou.ac.kr/cle/main.do",
+        "title": "국립한국해양대학교 교양교육원 · 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "현재 교양교육원 메인에 공개된 대학 공통 네 인재상 문장을 사용했습니다. 특정 해사 모집단위의 면접이나 신체조건을 전체 학과에 적용하지 않았습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000039",
+      "revision": 1,
+      "university": "국립한밭대학교",
+      "canonicalName": "국립한밭대학교",
+      "schoolReferenceId": "bible_5f8efbed7e6da113",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "기본이 강한 글로컬 리더",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "인성윤리",
+          "description": "타인을 배려하고 공유가치·시민의식을 실천하는 태도",
+          "question": "팀의 빠른 성과보다 지켜야 할 윤리적 원칙은 무엇이라고 생각하나요?"
+        },
+        {
+          "id": "value_2",
+          "label": "의사소통",
+          "description": "읽기·쓰기·듣기·말하기와 디지털 문해력으로 뜻을 전달하는 힘",
+          "question": "어려운 정보를 정리하여 상대에게 설명할 때 어떤 순서로 전달하겠어요?"
+        },
+        {
+          "id": "value_3",
+          "label": "실용전문",
+          "description": "수리·정보·기술 지식을 활용하고 스스로 관리하는 힘",
+          "question": "지원 분야의 개념 하나를 실제 생활 문제에 적용해 설명해 주세요."
+        },
+        {
+          "id": "value_4",
+          "label": "문제해결",
+          "description": "문제를 인식하고 비판적·논리적으로 새 대안을 찾는 힘",
+          "question": "결과가 예상과 달랐을 때 원인을 찾기 위한 확인 순서를 설명해 주세요."
+        },
+        {
+          "id": "value_5",
+          "label": "글로벌",
+          "description": "세계시민의식과 적극성으로 지역과 세계를 연결하는 힘",
+          "question": "지역의 문제가 세계의 문제와 연결되는 사례를 지원 분야에서 설명해 주세요."
+        },
+        {
+          "id": "value_6",
+          "label": "리더십",
+          "description": "도전하며 갈등을 중재하고 집단의 협력을 이끄는 힘",
+          "question": "팀의 갈등을 조정해야 한다면 각자의 의견을 어떻게 확인하고 합의하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://goodedu.hanbat.ac.kr/menu.es?mid=a10402000000",
+        "title": "국립한밭대학교 교육성과센터 · 핵심역량 소개",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000078",
+      "revision": 1,
+      "university": "국민대학교",
+      "schoolReferenceId": "bible_76a0e39e6271c1f1",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "도전하는 국민인 · 공동체적 실용융합인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "실천하는 교양인",
+          "description": "윤리의식과 문화적 감성을 바탕으로 사회에 기여한다.",
+          "question": "자신이 배운 내용을 공동체에 도움이 되도록 실천한 일이나 구체적인 계획을 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "소통하는 협력인",
+          "description": "공동체 의식을 갖고 협동하며 서로 소통한다.",
+          "question": "함께 일하는 사람들의 의견이 다를 때 협력하기 위해 무엇을 했나요?"
+        },
+        {
+          "id": "value_3",
+          "label": "앞서가는 미래인",
+          "description": "정체성과 도전정신을 갖추고 미래를 스스로 개척한다.",
+          "question": "처음 시도한 일에서 목표를 어떻게 세우고 자신의 한계를 어떻게 넘어가려 했나요?"
+        },
+        {
+          "id": "value_4",
+          "label": "창의적인 전문인",
+          "description": "전공지식과 비판적 사고를 연결해 현실 문제의 새 가치를 만든다.",
+          "question": "관심 분야의 지식을 현실 문제에 적용한다면 어떤 근거와 한계를 살펴보겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.kookmin.ac.kr/comm/menu/user/f4bf28bb9ab0519299e17737ade33d63/content/index.do",
+        "title": "국민대학교 교육이념·비전 · 인재상 및 교육목표",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "현재 본교 인재상 페이지의 도전하는 국민인과 공식 교육목적 4개 항목을 함께 연결한다. 각 학과의 경제인·인공지능 전문가 인재상과 구분한다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000082",
+      "schoolReferenceId": "bible_55691d423c9fc3b8",
+      "revision": 1,
+      "university": "단국대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "능동·혁신·헌신의 D³ 인재",
+      "points": [
+        {
+          "id": "determination",
+          "label": "능동",
+          "description": "스스로 판단하고 행동하며 미래의 변화에 대응하는 사람.",
+          "question": "변화하는 상황에서 본인이 스스로 판단해야 했던 선택이나 앞으로의 계획을 설명해 주세요."
+        },
+        {
+          "id": "discovery",
+          "label": "혁신",
+          "description": "지속 가능한 발전을 위해 새로운 시도와 가치를 만드는 사람.",
+          "question": "지원 전공에서 지속 가능한 사회를 위해 바꾸고 싶은 점과 새로운 접근 방법을 말해 주세요."
+        },
+        {
+          "id": "dedication",
+          "label": "헌신",
+          "description": "보편적 가치와 공동체를 위해 봉사하고 책임을 다하는 사람.",
+          "question": "관심 전공의 지식으로 공동체에 기여하려면 어떤 책임을 지고 무엇을 실천하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.dankook.ac.kr/ko/extracurricular1",
+        "title": "단국대학교 · 비교과 프로그램과 D³ 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 대학 공통 페이지의 D³ 인재상 도식(능동·혁신·헌신)과 2026학년도 교육과정 편성·수강 안내의 정의를 교차 확인. 도식의 영웅 표기를 입학 평가나 학과별 인재상으로 확대하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000382",
+      "revision": 1,
+      "university": "대구경북과학기술원",
+      "schoolReferenceId": "bible_de1e42bb7f179b37",
+      "scope": "university",
+      "status": "official_source",
+      "title": "DGIST 4C 인재상",
+      "points": [
+        {
+          "id": "creativity",
+          "label": "창의",
+          "description": "새로운 관점과 아이디어로 문제를 살피는 자세",
+          "question": "기존 설명을 다른 관점으로 바꿔 탐구한다면 어떤 질문을 던지고 싶은가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "challenge",
+          "label": "도전",
+          "description": "어려움 속에서도 새로운 가능성을 시도하는 태도",
+          "question": "쉽게 풀리지 않는 문제에 다시 시도할 방법을 어떻게 정하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "collaboration",
+          "label": "협력",
+          "description": "다른 전문성과 관점을 연결해 함께 해결하는 태도",
+          "question": "여러 분야가 함께 풀어야 할 문제에서 본인의 역할과 다른 사람에게 배울 점은 무엇인가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "care",
+          "label": "배려",
+          "description": "다른 사람의 상황과 필요를 고려하는 자세",
+          "question": "기술의 편리함과 사용자의 어려움이 충돌한다면 무엇을 먼저 고려하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.dgist.ac.kr/kor/sub01_02_01.do",
+        "title": "DGIST · VISION · 3대 교육철학과 4대 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000253",
+      "revision": 1,
+      "university": "대구교육대학교",
+      "canonicalName": "대구교육대학교",
+      "schoolReferenceId": "bible_8aa35857f2ad2c40",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "교육목표",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "헌신하는 교육자",
+          "description": "국가와 사회를 위해 교육자의 책임을 다하는 목표",
+          "question": "학생의 배움과 교사의 편의가 충돌할 때 어떤 기준으로 선택해야 할까요?"
+        },
+        {
+          "id": "value_2",
+          "label": "전문 지식을 갖춘 교육자",
+          "description": "교육에 대한 지식과 이론으로 학생의 배움을 돕는 목표",
+          "question": "학생이 어려워하는 개념을 설명하려면 교사는 무엇을 먼저 이해해야 할까요?"
+        },
+        {
+          "id": "value_3",
+          "label": "연구하고 실천하는 교육자",
+          "description": "교직 전문성을 높이기 위해 탐구와 실천을 이어가는 목표",
+          "question": "수업 방법이 효과적인지 확인하려면 어떤 증거를 살펴보고 어떻게 개선하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.dnue.ac.kr/kor/CMS/Contents/Contents.do?mCode=MN047",
+        "title": "대구교육대학교 · 교육비전",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "별도로 이름 붙인 인재상을 추정하지 않고 대학이 공개한 세 가지 교육목표로 연결했습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000099",
+      "revision": 1,
+      "university": "덕성여자대학교",
+      "schoolReferenceId": "bible_5ec50ef5a0c04166",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "창의적 지식인·협력하는 전문인·실천하는 시민",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "창의적 지식인",
+          "description": "새로운 생각을 탐구하고 다양한 지식을 연결한다.",
+          "question": "새로운 아이디어를 생각해 낸 과정을 설명하고 근거를 어떻게 확인했는지 말해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "협력하는 전문인",
+          "description": "책임 있게 소통하며 함께 목표를 달성한다.",
+          "question": "공동의 목표를 위해 자신의 역할과 다른 사람의 전문성을 어떻게 연결했나요?"
+        },
+        {
+          "id": "value_3",
+          "label": "실천하는 시민",
+          "description": "다양성을 존중하고 공동체의 발전에 참여한다.",
+          "question": "자신이 속한 공동체의 문제 하나를 고르고 실천할 수 있는 대안을 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.duksung.ac.kr/contents/contents.do?ciIdx=39&menuId=932",
+        "title": "덕성여자대학교 덕성소개 · 창학이념과 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": "2025-06-20",
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "2025-06-20 수정된 현재 공식 페이지의 인재상 3항목 및 핵심역량 대체텍스트 확인. 과거 IiRUM 자료만으로 현재 라벨을 대체하지 않는다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000100",
+      "revision": 1,
+      "university": "동국대학교",
+      "schoolReferenceId": "bible_68611fc6e72c5e38",
+      "scope": "university",
+      "status": "official_source",
+      "title": "화쟁형 인재",
+      "points": [
+        {
+          "label": "창조적 지식인",
+          "description": "서로 다른 지식과 관점을 연결해 문제의 해결 방법을 찾는다.",
+          "id": "value_1"
+        },
+        {
+          "label": "도덕적 지도자",
+          "description": "차이를 존중하고 배운 내용을 공동체에 도움이 되도록 실천한다.",
+          "id": "value_2"
+        },
+        {
+          "label": "진취적 도전자",
+          "description": "새로운 경험과 학습에 스스로 도전하며 성장한다.",
+          "id": "value_3"
+        }
+      ],
+      "source": {
+        "url": "https://www.dongguk.edu/page/75",
+        "title": "동국대학교 교육목적 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "officialValues": [
+          "창조적 지식인",
+          "도덕적 지도자",
+          "진취적 도전자"
+        ],
+        "additionalUrl": null,
+        "note": "현재 대학 전체 교육목표와 화쟁형 인재 정의를 함께 요약. 별도 WISE캠퍼스나 특정 학과 인재상에 적용하지 않음. 2027 전형의 실제 기출·배점은 아님."
+      }
+    },
+    {
+      "id": "official_talent_0000102",
+      "revision": 1,
+      "university": "동덕여자대학교",
+      "schoolReferenceId": "bible_f29d1e8048711290",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "ARETE형 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "배려하는 지성인",
+          "description": "지성과 덕성을 기르고 다른 사람을 배려한다.",
+          "question": "자신의 판단이 다른 사람에게 미치는 영향을 고려한 경험을 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "창조하는 감성인",
+          "description": "자율적으로 새로운 생각과 감성을 표현한다.",
+          "question": "스스로 선택한 주제에서 새로운 표현이나 아이디어를 만든 과정을 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "융복합형 전문인",
+          "description": "서로 다른 지식을 연결해 전문성을 기른다.",
+          "question": "서로 다른 분야의 개념을 연결했을 때 이해나 해결 방법이 어떻게 달라졌나요?"
+        },
+        {
+          "id": "value_4",
+          "label": "참여하는 사회인",
+          "description": "사회와 공동체의 일에 능동적으로 참여한다.",
+          "question": "공동체의 문제를 발견했을 때 자신의 참여가 어떤 변화를 만들 수 있을까요?"
+        },
+        {
+          "id": "value_5",
+          "label": "소통하는 세계인",
+          "description": "다양한 문화를 이해하며 세계와 소통한다.",
+          "question": "자신과 다른 배경의 사람과 소통할 때 무엇을 배우고 어떤 점을 존중해야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.dongduk.ac.kr/www/contents/kor-eduidea.do",
+        "title": "동덕여자대학교 교육이념의 체계도",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "현재 공식 교육이념 체계도에 나온 ARETE형 인재의 5개 교육목표를 라벨로 사용한다. 보편적 덕의 핵심역량과 각 전공의 탁월성 역량을 구분한다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000105",
+      "revision": 1,
+      "university": "동아대학교",
+      "canonicalName": "동아대학교",
+      "schoolReferenceId": "bible_aad965d2e5df3235",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "도전하고 소통하는 창의인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "도전",
+          "description": "새 문제에 적극적으로 나서며 성장하는 태도",
+          "question": "지원 분야에서 아직 잘 모르지만 도전해 보고 싶은 주제와 그 이유는 무엇인가요?"
+        },
+        {
+          "id": "value_2",
+          "label": "글로컬",
+          "description": "지역과 세계의 변화를 함께 바라보는 힘",
+          "question": "지역에서 관찰한 현상을 다른 나라의 상황과 비교하면 무엇을 새롭게 이해할 수 있나요?"
+        },
+        {
+          "id": "value_3",
+          "label": "인성",
+          "description": "인간존중과 더불어 살아가는 품성을 갖추는 태도",
+          "question": "결정을 내릴 때 본인의 이익과 타인의 권리를 함께 고려한 기준은 무엇인가요?"
+        },
+        {
+          "id": "value_4",
+          "label": "소통",
+          "description": "열린 대화로 타인을 이해하고 협력하는 힘",
+          "question": "팀에서 다른 사람의 의견을 듣고 설명을 바꿔야 한다면 어떻게 하겠어요?"
+        },
+        {
+          "id": "value_5",
+          "label": "창의",
+          "description": "새 관점과 지식의 연결로 가치를 만드는 힘",
+          "question": "익숙한 활동을 지원 학과의 관점에서 다시 보면 어떤 새로운 질문이 생기나요?"
+        },
+        {
+          "id": "value_6",
+          "label": "전문성",
+          "description": "배운 지식과 기술을 정확하게 활용하는 힘",
+          "question": "관심 주제에서 자신이 이해한 범위와 앞으로 더 배워야 할 부분을 구분해 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://donga.ac.kr/about/intro/vision",
+        "title": "동아대학교 · 교육목표 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000109",
+      "revision": 1,
+      "university": "명지대학교",
+      "canonicalName": "명지대학교",
+      "schoolReferenceId": "bible_c5df05e96da614e9",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "명(明)·지(知)·인(人) 인재상",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "명(明) — 배움의 실천",
+          "description": "참신앙을 바탕으로 배움을 실천하고 융합과 실용으로 사회에 기여하는 태도",
+          "question": "학교에서 배운 내용을 실제 문제에 활용한다면 무엇을 해볼 수 있나요? 본인의 실제 활동이 있다면 함께 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "지(知) — 자기주도적 성장",
+          "description": "호기심과 비판적 사고를 바탕으로 참지식을 탐구하고 스스로 성장하는 힘",
+          "question": "탐구하면서 처음의 생각을 수정하게 된 근거는 무엇인가요? 아직 확인하지 못한 부분도 함께 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "인(人) — 어우름과 배려",
+          "description": "세계와 소통하고 기독교의 참사랑을 배려·봉사로 실천하는 가치",
+          "question": "공동체에서 다른 의견을 이해하면서도 자신의 판단을 지켜야 한다면 어떻게 대화하겠어요? 실제 경험이 있다면 연결해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.mju.ac.kr/mjukr/172/subview.do",
+        "title": "명지대학교 · 인재상/핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "명지대학교 공통; 자연캠퍼스 지원 항목",
+        "note": "인문·자연캠퍼스의 대학 공통 인재상을 자연캠퍼스 등록 항목에 연결했습니다. 신앙 여부나 종교적 동의를 평가하지 않습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000254",
+      "revision": 1,
+      "university": "부산교육대학교",
+      "schoolReferenceId": "bible_81a83ae70e0a0740",
+      "scope": "university",
+      "status": "official_source",
+      "title": "부산교육대학교 인재상",
+      "points": [
+        {
+          "id": "professional",
+          "label": "인품과 식견을 갖춘 초등교육 전문가",
+          "description": "폭넓은 이해와 바른 품성을 바탕으로 교육 전문성을 키우는 사람",
+          "question": "좋은 초등교사가 갖춰야 할 인품과 식견은 무엇이며 이를 어떻게 키우고 싶나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "creative",
+          "label": "창의융합형 초등교육 실천가",
+          "description": "여러 분야를 연결해 새로운 교육 방법을 실천하는 사람",
+          "question": "다른 분야의 지식을 초등 수업에 연결한다면 어떤 수업을 만들고 싶은가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "empathy",
+          "label": "공감·소통·협력하는 초등교육 지도자",
+          "description": "학습자와 동료의 입장을 이해하며 함께 교육을 이끄는 사람",
+          "question": "생각이 다른 사람과 협력할 때 어떤 기준으로 상대의 필요를 듣고 조율하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.bnue.ac.kr/content/intro02_01",
+        "title": "부산교육대학교 · 교육이념, 비전",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000014",
+      "revision": 1,
+      "university": "부산대학교",
+      "schoolReferenceId": "bible_abfb932b1d89ca5b",
+      "scope": "university",
+      "status": "official_source",
+      "title": "창조적 지성과 바른 인성을 겸비한 효원인",
+      "points": [
+        {
+          "id": "inquiry",
+          "label": "창의적 탐구",
+          "description": "새로운 관점으로 탐구하고 지적 능력을 기르는 태도",
+          "question": "탐구 중 처음 생각을 바꾼 근거는 무엇이고 다음에는 무엇을 확인하고 싶은가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "challenge",
+          "label": "자유롭고 혁신적인 도전",
+          "description": "스스로 새로운 시도를 하며 도전정신을 기르는 태도",
+          "question": "익숙한 방법 대신 새로운 방법을 시도한다면 무엇을 바꾸고 왜 바꾸겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "community",
+          "label": "바른 인성과 공동체 의식",
+          "description": "배려와 책임을 바탕으로 공동체에 기여하는 태도",
+          "question": "개인의 성과와 공동체의 이익이 다를 때 어떤 기준으로 결정하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.pusan.ac.kr/kor/CMS/Contents/Contents.do?mCode=MN150",
+        "title": "부산대학교 · 교육이념",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000116",
+      "revision": 1,
+      "university": "삼육대학교",
+      "schoolReferenceId": "bible_2b00e71be3a5ebcd",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "Mission·Vision·Passion을 갖춘 전인적 MVP 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "정직한 교양인",
+          "description": "인성과 가치관을 기르며 정직하게 배운다.",
+          "question": "활동 결과를 설명할 때 자신이 실제로 한 일과 하지 않은 일을 어떻게 구분하나요?"
+        },
+        {
+          "id": "value_2",
+          "label": "창의적 지식인",
+          "description": "학문을 창의적으로 탐구하고 스스로 학습한다.",
+          "question": "스스로 공부한 내용을 새로운 문제에 활용한 과정을 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "실천적 봉사인",
+          "description": "공동체와 세계에 나눔을 실천한다.",
+          "question": "타인의 필요를 이해하고 도움이 되는 행동을 정하려면 무엇을 먼저 살펴봐야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.syu.ac.kr/teacher/department-introduction/introduction-to-culture/university-introduction/",
+        "title": "삼육대학교 교양교육원 · 교양교육원 소개의 MVP 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": "2025-05-26",
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "공통 교양교육원의 삼육 MVP 인재양성 정의와 실행목표를 사용. 본교 대학비전 SU-GLORY2030도 전인적 MVP 인재와 6대 핵심역량을 공개한다. 삼육보건대학교나 개별 전공 자료와 혼동하지 않는다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000117",
+      "revision": 1,
+      "university": "상명대학교",
+      "schoolReferenceId": "bible_e41c384366a60705",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "감동을 주는 혁신형 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "전문지식 탐구역량",
+          "description": "자료를 조사하고 원리를 이해해 현실 문제에 활용한다.",
+          "question": "관심 주제의 핵심 개념을 어떻게 이해했고 실제 문제에 어떻게 적용할 수 있나요?"
+        },
+        {
+          "id": "value_2",
+          "label": "창의적 문제해결 역량",
+          "description": "근거를 검토하고 대안을 만들어 문제를 해결한다.",
+          "question": "시도한 해결 방법의 근거와 다른 대안을 비교해 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "융복합 역량",
+          "description": "다른 분야의 지식을 연결하고 다양한 의견에 열린 태도를 갖는다.",
+          "question": "서로 다른 지식이나 의견을 연결해서 얻은 새로운 생각을 설명해 주세요."
+        },
+        {
+          "id": "value_4",
+          "label": "다양성 존중 역량",
+          "description": "문화적 차이를 존중하고 책임 있게 협력한다.",
+          "question": "나와 다른 상황에 있는 사람과 함께할 때 어떤 점을 이해하고 배려해야 할까요?"
+        },
+        {
+          "id": "value_5",
+          "label": "윤리 실천 역량",
+          "description": "생명을 존중하며 공동체와 직업의 책임을 실천한다.",
+          "question": "좋은 결과를 얻는 일과 윤리적 책임이 충돌한다면 어떤 기준으로 판단하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.smu.ac.kr/ko/intro/talent.do",
+        "title": "상명대학교 역사·상징 · 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울·천안 공통",
+        "note": "현재 대학 전체 공식 인재상 및 5대 핵심역량과 세부 정의 직접 확인. 교육 목적의 핵심역량이며 별도 전형의 면접 평가표가 아니다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000120",
+      "revision": 1,
+      "university": "서강대학교",
+      "schoolReferenceId": "bible_1a139ef99cb3babb",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "창의적 지성·봉사적 인성·통합적 영성을 갖춘 전인",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "창의적 지성을 갖춘 인재",
+          "description": "융합적 기초소양과 새로운 시대를 이끄는 창의성을 기른다.",
+          "question": "서로 다른 분야의 기초 개념을 연결해서 만든 질문과 해결 과정을 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "봉사적 인성을 갖춘 인재",
+          "description": "이웃에 공감하고 다양성을 포용하는 시민의식을 기른다.",
+          "question": "자신과 다른 처지의 사람에게 공감한 일과 함께할 수 있는 실천을 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "통합적 영성을 갖춘 인재",
+          "description": "자신과 이웃·사회·자연을 성찰하고 사랑과 지행일치를 추구한다.",
+          "question": "자신이 중요하게 여기는 가치와 실제 행동이 일치했는지 성찰한 경험을 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://scc.sogang.ac.kr/wholeperson/wp02_008.html",
+        "title": "서강대학교 전인교육원 · 서강 교육 이념·인재상·교양교육과정 연계도",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "2026-04-22 업로드된 현재 공식 연계도 이미지(20260422_1414_1410003.png)를 직접 시각 확인. 학부 공통 교육의 인재상 연계도이며 예수회 교육이념과 특정 학과의 크리에이터 인재상을 구분. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000121",
+      "revision": 1,
+      "university": "서경대학교",
+      "schoolReferenceId": "bible_4fac62464e34ac2b",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "CREOS형 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "창의성",
+          "description": "새로운 관점으로 문제를 해결한다.",
+          "question": "문제를 다른 관점에서 다시 정의하고 대안을 만든 과정을 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "책임감",
+          "description": "맡은 책임을 수행해 성과를 만든다.",
+          "question": "공동의 일에서 자신이 맡은 역할을 끝까지 수행하기 위해 무엇을 했나요?"
+        },
+        {
+          "id": "value_3",
+          "label": "전문성",
+          "description": "글로벌 실무 역량을 기른다.",
+          "question": "관심 분야의 실제 문제를 다루기 위해 어떤 지식과 기술을 더 배우고 싶나요?"
+        },
+        {
+          "id": "value_4",
+          "label": "봉사",
+          "description": "공동체를 위한 역할을 실천한다.",
+          "question": "자신의 지식이나 경험을 이웃과 공동체에 도움이 되도록 어떻게 활용하겠어요?"
+        },
+        {
+          "id": "value_5",
+          "label": "자기효능감",
+          "description": "자신을 발전시키고 새로운 목표를 실행한다.",
+          "question": "어려움을 겪은 뒤 스스로 다시 시도할 수 있었던 이유와 바꾼 행동을 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.skuniv.ac.kr/vision",
+        "title": "서경대학교 서경비전2030 · 인재상 및 핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "현재 서경비전2030 표의 C Creativity/R Responsibility/E Expertise/O Outreach/S Self-Efficacy를 직접 확인. 과거 Response·Experience·Sharing 정의로 대체하지 않는다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000036",
+      "revision": 1,
+      "university": "서울과학기술대학교",
+      "schoolReferenceId": "bible_60007b4df6bb867a",
+      "scope": "university",
+      "status": "official_source",
+      "title": "EPiC 인재상",
+      "points": [
+        {
+          "label": "윤리적 인재",
+          "description": "도덕적 기준을 세우고 문제 상황에서 책임 있게 판단한다.",
+          "id": "value_1"
+        },
+        {
+          "label": "실천적 인재",
+          "description": "배운 지식을 실제 문제의 설계와 해결에 활용한다.",
+          "id": "value_2"
+        },
+        {
+          "label": "창의적 인재",
+          "description": "서로 다른 분야의 생각을 연결해 새로운 해결 방법을 찾는다.",
+          "id": "value_3"
+        }
+      ],
+      "source": {
+        "url": "https://www.seoultech.ac.kr/intro/univ/talent",
+        "title": "서울과학기술대학교 대학소개 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "officialValues": [
+          "윤리적 인재",
+          "실천적 인재",
+          "창의적 인재"
+        ],
+        "additionalUrl": "https://www.seoultech.ac.kr/intro/univ/stechplan/plan",
+        "note": "현재 대학 전체 인재상 페이지의 이미지 대체텍스트로 3항목 직접 확인. 예전 비전과 목표 페이지의 5항목 표현과 구분. 전형별 면접 평가 배점이 아님."
+      }
+    },
+    {
+      "id": "official_talent_0000255",
+      "revision": 1,
+      "university": "서울교육대학교",
+      "schoolReferenceId": "bible_170ece487f34804d",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "초등교원 양성을 위한 교육목표",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "국가와 사회를 위한 헌신",
+          "description": "국민과 사회의 행복에 기여하는 교육자를 기른다.",
+          "question": "교육자로서 사회에 기여한다는 것은 어떤 의미이며 어떤 일을 해 보고 싶나요?"
+        },
+        {
+          "id": "value_2",
+          "label": "민주적 능력과 태도",
+          "description": "민주주의 사회에서 살아가는 능력과 태도를 기른다.",
+          "question": "학급의 의견이 나뉘었을 때 모두의 참여를 보장하려면 어떻게 해야 할까요?"
+        },
+        {
+          "id": "value_3",
+          "label": "인격과 교육애",
+          "description": "건전한 인격과 아이들을 위한 헌신적 태도를 기른다.",
+          "question": "학생의 존엄과 자신의 교육적 판단이 충돌한다면 어떤 태도로 접근하겠어요?"
+        },
+        {
+          "id": "value_4",
+          "label": "아동에 대한 이해",
+          "description": "아동의 성장·발달·행동과 개인차를 이해한다.",
+          "question": "같은 활동에 다른 반응을 보이는 아이들을 이해하려면 무엇을 관찰해야 할까요?"
+        },
+        {
+          "id": "value_5",
+          "label": "교과와 교수학습능력",
+          "description": "초등 교과를 이해하고 효과적으로 가르치는 능력을 기른다.",
+          "question": "알고 있는 개념 하나를 어린이가 이해하도록 설명할 방법을 제안해 주세요."
+        },
+        {
+          "id": "value_6",
+          "label": "진지한 연구자세",
+          "description": "교육 경험과 연구를 지속하며 스스로 성장한다.",
+          "question": "학습이 잘되지 않았던 이유를 어떻게 알아보고 설명 방법을 개선하겠어요?"
+        },
+        {
+          "id": "value_7",
+          "label": "교직의 사명과 전문성",
+          "description": "교육의 중요성을 인식하고 교직 전문성을 높인다.",
+          "question": "교사를 선택하려는 동기와 계속 전문성을 키우기 위한 학습 계획을 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.snue.ac.kr/snue/cm/cntnts/cntntsView.do?cntntsId=1121&mi=1316",
+        "title": "서울교육대학교 학교소개 · 교육이념",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "학부 대학 전체의 7개 교육목표를 요약한다. 대학원 전용 인재상인 인격적 교육자·성찰적 실천가 등을 학부 전체 인재상으로 대체하지 않는다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000098",
+      "revision": 1,
+      "university": "서울기독대학교",
+      "schoolReferenceId": "bible_dd4300e7468ec465",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "기독교 정신에 기반한 창의적 글로벌 리더(C2-GPS)",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "섬김역량",
+          "description": "인간과 생명을 존중하며 도덕적 판단과 배려를 실천한다.",
+          "question": "다른 사람의 필요와 자신의 목표가 충돌한다면 무엇을 이해하고 어떻게 판단하겠어요?"
+        },
+        {
+          "id": "value_2",
+          "label": "창의역량",
+          "description": "다양한 지식과 정보를 활용해 새로운 생각과 해결 방법을 찾는다.",
+          "question": "관심 있는 문제의 정보를 살펴보고 기존과 다른 해결 방법을 만든 과정을 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "소통역량",
+          "description": "자신을 관리하고 의견을 나누며 공동의 목표에 책임 있게 협력한다.",
+          "question": "팀의 목표를 위해 자신의 의견을 전달하고 다른 의견을 조율한 경험을 설명해 주세요."
+        },
+        {
+          "id": "value_4",
+          "label": "글로벌역량",
+          "description": "세계시민의식을 갖추고 외국어와 다문화 이해를 기른다.",
+          "question": "배경이 다른 사람의 관점을 이해하려면 어떤 정보와 태도가 필요할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.scu.ac.kr/study/undergraduate/basic",
+        "title": "서울기독대학교 공통 기초교양학부 · 인재상 및 SCU 핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "기초교양학부가 모든 학생이 공통적으로 익혀야 할 핵심역량을 명시하며 C2-GPS 인재상과 SCU 전체 핵심역량을 공개한다. 학과 전용 전공역량이나 대학원 실천이념과 구분. 검색 도구는 JS 셸을 반환하여 공식 사이트를 브라우저로 실제 렌더링해 본문 확인. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000019",
+      "revision": 1,
+      "university": "서울대학교",
+      "schoolReferenceId": "bible_84e40c965cf842a3",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "core_competencies",
+      "title": "학부대학 공통 핵심역량",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "도전 혁신",
+          "description": "주체적으로 도전하고 실패 이후 회복하며 새 길을 찾는다.",
+          "question": "뜻대로 되지 않았던 학습에서 무엇을 바꾸고 다시 시도했는지 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "사회 공헌",
+          "description": "사회적 책임과 시민의식을 바탕으로 기여한다.",
+          "question": "관심 있는 학문을 사회의 문제와 연결하면 어떤 기여와 책임이 생기나요?"
+        },
+        {
+          "id": "value_3",
+          "label": "문제 해결",
+          "description": "비판적 사고와 디지털 문해력을 활용해 창의적으로 문제를 해결한다.",
+          "question": "문제를 해결하기 위해 사용한 정보의 신뢰성과 한계를 어떻게 확인했나요?"
+        },
+        {
+          "id": "value_4",
+          "label": "의사 소통",
+          "description": "공감하고 협업하며 다양한 관점을 존중한다.",
+          "question": "함께 배우는 사람의 생각이 자신과 달랐을 때 어떻게 이해하고 소통했나요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.snu.ac.kr/brochure/ko/initiatives/",
+        "title": "서울대학교 공식 브로슈어 · 교육 및 학부대학 공통 핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "전공에 관계없이 모든 학생을 위한 공통 교육의 4대 핵심역량을 연결한다. 별도로 이름 붙인 대학 인재상이나 SNU 입학전형 역량평가표와 구분한다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "uos_environment_talent",
+      "revision": 1,
+      "university": "서울시립대학교",
+      "campus": "본교",
+      "department": "환경공학부",
+      "scope": "department",
+      "status": "official_source",
+      "title": "환경공학부 인재상",
+      "points": [
+        {
+          "id": "motivation",
+          "label": "환경문제를 해결하려는 동기",
+          "description": "기초 과학을 바탕으로 환경문제에 관심을 갖고 해결하려는 태도",
+          "question": "환경문제를 해결하려는 관심이 생긴 이유는 무엇인가요? 이를 더 알아보기 위해 한 일과 앞으로 배우고 싶은 내용을 설명해 주세요."
+        },
+        {
+          "id": "critical",
+          "label": "창의적·비판적 사고",
+          "description": "해결 방법을 새롭게 생각하고 근거와 한계를 함께 검토하는 힘",
+          "question": "환경문제의 해결 방법 하나를 고르고, 그 방법의 장점과 한계는 어떻게 판단하겠어요? 본인의 탐구 경험이 있다면 함께 설명해 주세요."
+        },
+        {
+          "id": "ethics",
+          "label": "배려와 공학윤리",
+          "description": "타인에 대한 신뢰·배려와 공학적 책임을 함께 생각하는 태도",
+          "question": "환경문제 해결 과정에서 비용이나 편의와 타인에 대한 책임이 충돌한다면 어떤 기준으로 판단하겠어요? 실제로 겪은 상황이 있다면 연결해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://admission.uos.ac.kr/admissionNew/html/susi/total2.do",
+        "title": "서울시립대학교 입학처 · 모집단위별 인재상",
+        "section": "환경공학부",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "note": "현재 공개된 환경공학부 인재상 요약. 질문은 각자ON 연습용으로 작성했으며 공식 기출이 아님."
+      }
+    },
+    {
+      "id": "uos_talent",
+      "revision": 1,
+      "university": "서울시립대학교",
+      "scope": "university",
+      "status": "official_source",
+      "title": "UOS 인재상",
+      "points": [
+        {
+          "id": "academic",
+          "label": "학업역량",
+          "description": "기초 학업과 학습 내용을 스스로 탐구하는 힘",
+          "question": "스스로 깊이 이해하려고 공부한 내용을 하나 고르고, 이해가 달라진 과정을 설명해 주세요."
+        },
+        {
+          "id": "potential",
+          "label": "잠재역량",
+          "description": "새로운 문제를 배우고 해결해 나갈 가능성",
+          "question": "처음에 잘 풀리지 않았던 문제를 다시 시도하면서 접근을 어떻게 바꿨는지 설명해 주세요."
+        },
+        {
+          "id": "social",
+          "label": "사회역량",
+          "description": "공동체 안에서 책임을 다하고 함께하는 태도",
+          "question": "공동체에서 생각이 다른 사람과 함께할 때 지키고 싶은 원칙은 무엇인가요? 본인의 실제 경험이 있다면 연결해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://admission.uos.ac.kr/admissionNew/html/susi/total.do",
+        "title": "서울시립대학교 입학처 · UOS 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "note": "현재 입학처가 공개한 대학 인재상을 요약. 특정 학년도의 평가 배점이나 질문 출제 비율을 뜻하지 않음."
+      }
+    },
+    {
+      "id": "official_talent_0000126",
+      "revision": 1,
+      "university": "서울여자대학교",
+      "schoolReferenceId": "bible_b6abc82e31329cea",
+      "scope": "university",
+      "status": "official_source",
+      "title": "사회적 가치를 선도하는 PLUS형 인재",
+      "points": [
+        {
+          "label": "공감하는 전문성",
+          "description": "전문지식과 감성적 이해를 함께 활용해 문제를 찾고 해결한다.",
+          "id": "value_1"
+        },
+        {
+          "label": "열린 협력",
+          "description": "열린 태도로 다른 사람의 생각을 듣고 수평적으로 협력한다.",
+          "id": "value_2"
+        },
+        {
+          "label": "공동체의 확장",
+          "description": "공동체에 대한 책임을 더 넓은 사회의 문제와 실천으로 이어간다.",
+          "id": "value_3"
+        }
+      ],
+      "source": {
+        "url": "https://www.swu.ac.kr/swu/780/subview.do",
+        "title": "서울여자대학교 중장기 발전계획 교육목표와 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "officialValues": [
+          "감성적 인지력을 갖춘 전문 인재",
+          "개방적 태도와 수평적 협력을 실천하는 인재",
+          "공동체 정신의 사회적 확장을 선도하는 인재"
+        ],
+        "additionalUrl": null,
+        "note": "대학 전체 SWU2030+ 인재상 확인. 산학협력 인재상(/swu/786)의 지·덕·술 모델만으로 대학 전체 값을 대신하지 않음. points 라벨은 읽기 쉬운 재서술이며 공식 고유명칭과 구분. 특정 전형의 기출·배점은 아님."
+      }
+    },
+    {
+      "id": "official_talent_0000205",
+      "revision": 1,
+      "university": "서울한영대학교",
+      "schoolReferenceId": "bible_1ed81fdf5a27697f",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "융합형 창의인·소통형 영성인·섬김형 치유인",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "융합형 창의인",
+          "description": "융합적 사고와 창의적 문제해결로 진리를 탐구한다.",
+          "question": "관심 있는 문제를 여러 관점에서 이해하고 새로운 해결 방법을 찾은 과정을 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "소통형 영성인",
+          "description": "자기 이해와 소통을 바탕으로 전인적으로 성장한다.",
+          "question": "자신을 돌아보면서 다른 사람과의 소통 방식을 바꾼 경험을 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "섬김형 치유인",
+          "description": "배움을 삶에 적용하고 이웃과 사회를 위한 책임을 실천한다.",
+          "question": "이웃의 어려움을 이해하고 도움이 되는 행동을 선택하려면 어떤 점을 고려하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.shyu.ac.kr/fro_end/html/dep_01/1310.php",
+        "title": "서울한영대학교 이념·상징 · 교육이념과 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "현행 공식 교육이념 페이지의 Knowing·Being·Doing 인재상 3항목 직접 확인. 오래된 실천적 지식인 한 문장으로 현재 인재상을 대체하지 않는다. 검색 도구의 403과 달리 공식 HTTP 본문은 200으로 확인. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000132",
+      "revision": 1,
+      "university": "성공회대학교",
+      "schoolReferenceId": "bible_66624e0a828c2bfa",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "인권·평화·생태·민주의 가치를 실천하는 시민",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "가치역량",
+          "description": "인간과 생명을 존중하는 가치로 자신과 사회를 성찰한다.",
+          "question": "본인의 활동을 인권·평화·생태·민주의 관점에서 살펴본다면 어떤 점을 더 고민해야 하나요?"
+        },
+        {
+          "id": "value_2",
+          "label": "대안역량",
+          "description": "통합적이고 창의적으로 문제의 대안을 찾는다.",
+          "question": "한 문제의 대안을 두 가지 이상 비교하고 자신의 선택 이유를 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "실천역량",
+          "description": "연대하고 협력해 대안을 현실로 이어간다.",
+          "question": "혼자 해결하기 어려운 문제에서 다른 사람과 연대해 할 수 있는 실천을 제안해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.skhu.ac.kr/skhu/839/subview.do",
+        "title": "성공회대학교 비전과 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "note": "현재 공식 인재상 페이지에 게시된 대학 전체 시민 인재상 및 3대 핵심역량을 사용. 원문의 3차 중장기발전계획은 2015~2024년이므로 이를 2027 모집요강 또는 새 발전계획으로 표기하지 않는다. 설명은 공식 정의의 요약이며 질문은 각자ON 연습용이다. 공식 기출, 2027 전형의 평가 배점이나 출제 비율을 뜻하지 않는다."
+      }
+    },
+    {
+      "id": "official_talent_0000133",
+      "schoolReferenceId": "bible_d7e7c88a52a9eb2c",
+      "revision": 1,
+      "university": "성균관대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "교양인·전문가·리더",
+      "points": [
+        {
+          "id": "global",
+          "label": "글로벌",
+          "description": "세계의 이슈에 관심을 갖고 문화 차이를 존중하며 소통하는 역량.",
+          "question": "지원 전공과 관련된 세계적 문제 하나를 고르고, 다른 문화권의 관점을 함께 살펴야 하는 이유를 설명해 주세요."
+        },
+        {
+          "id": "self",
+          "label": "자기주도성",
+          "description": "스스로 학습 목표와 전략을 세우고 자신의 학습과 행동을 관리하는 역량.",
+          "question": "배우고 싶은 내용을 위해 목표와 학습 전략을 어떻게 세웠나요? 아직 실천하지 않았다면 구체적인 계획을 말해 주세요."
+        },
+        {
+          "id": "venture",
+          "label": "기업가정신",
+          "description": "새로운 시도를 받아들이고 변화와 성과를 만들어 나가는 태도.",
+          "question": "기존의 방식 대신 새로운 방법을 시도해 볼 만한 문제는 무엇인가요? 위험과 실패 가능성을 어떻게 다루겠어요?"
+        },
+        {
+          "id": "convergence",
+          "label": "융합",
+          "description": "다양한 지식과 관점을 연결해 협업하고 갈등을 조정하는 역량.",
+          "question": "지원 전공의 문제 하나를 다른 분야의 지식과 연결해 해결한다면, 어떤 연결이 필요할까요?"
+        },
+        {
+          "id": "citizen",
+          "label": "시민의식",
+          "description": "사회 규범과 공동체를 존중하고 차이를 인정하며 참여하는 태도.",
+          "question": "공동체 문제에 참여할 때 본인과 다른 처지의 의견을 어떻게 반영하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.skku.edu/skku/edu/challenge/challenge_07.do",
+        "title": "성균관대학교 교무팀 · 학생성공역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "대학 인재상인 교양인·전문가·리더를 명시한 현재 학사 페이지. 아래 항목은 이를 구현하는 5대 학생성공역량이며 입학 평가 배점이나 기출문제가 아님. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000136",
+      "schoolReferenceId": "bible_c595f7cc8171e151",
+      "revision": 1,
+      "university": "성신여자대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "자율적 실천인·전인적 교양인·창조적 전문인",
+      "points": [
+        {
+          "id": "self",
+          "label": "자율적 실천인",
+          "description": "자율적으로 판단하고 리더십을 바탕으로 행동하는 사람.",
+          "question": "스스로 판단해서 움직인 경험이나 실천하고 싶은 계획을 말하고, 다른 사람을 이끌 때 고려할 점을 설명해 주세요."
+        },
+        {
+          "id": "culture",
+          "label": "전인적 교양인",
+          "description": "다양한 지식과 폭넓은 시각을 갖추는 사람.",
+          "question": "관심 전공의 문제를 이해하는 데 다른 교과나 문화적 관점이 도움이 된 사례를 말해 주세요. 없다면 어떤 관점을 더 배우고 싶나요?"
+        },
+        {
+          "id": "creative",
+          "label": "창조적 전문인",
+          "description": "전문 지식을 바탕으로 새로운 결과와 해결 방법을 만드는 사람.",
+          "question": "지원 전공에서 익히고 싶은 지식과, 그 지식으로 새롭게 해결하고 싶은 문제를 연결해 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://ipsi.sungshin.ac.kr/guide/junhyung1.php",
+        "title": "성신여자대학교 입학처 · 학생부종합전형 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "입학처가 명시한 대학 공통 인재 선발 방향을 요약. 전형별 별도 선발 기준과 배점을 대학 인재상의 정의에 섞지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000138",
+      "schoolReferenceId": "bible_a936dda31bbbeb71",
+      "revision": 1,
+      "university": "세종대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "세종형 인재",
+      "points": [
+        {
+          "id": "creative",
+          "label": "창의융합·논리비판적 사고",
+          "description": "새로운 연결을 찾되 근거와 한계를 검토하는 사고 역량.",
+          "question": "관심 전공의 문제를 다른 분야와 연결한 해결책을 제안하고, 그 해결책의 근거와 한계를 설명해 주세요."
+        },
+        {
+          "id": "challenge",
+          "label": "도전·혁신",
+          "description": "새로운 시도를 실행하며 어려움에서 다시 일어서는 태도.",
+          "question": "잘 풀리지 않는 학습이나 탐구를 다시 시도한다면 무엇을 바꾸겠어요? 실제 경험이 있다면 변화 과정을 연결해 주세요."
+        },
+        {
+          "id": "communication",
+          "label": "소통·공동체의식",
+          "description": "타인과 소통하고 사회적 책임과 공헌을 생각하는 태도.",
+          "question": "배운 지식을 공동체와 나누려면 누구에게 어떤 방식으로 전달해야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.sejong.ac.kr/kor/intro/education-vision.do",
+        "title": "세종대학교 · 교육비전",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 대학 교육비전의 인재상과 핵심역량을 요약. 인재상은 창의적 사고·도전·소통·나눔을 지향하며, 항목은 면접 연습을 위한 묶음임. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000141",
+      "schoolReferenceId": "bible_c7c76d1a4c9d719d",
+      "revision": 1,
+      "university": "숙명여자대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "지덕체를 갖춘 미래형 글로벌인재",
+      "points": [
+        {
+          "id": "growth",
+          "label": "자기주도적 성장",
+          "description": "배움을 능동적으로 관리하며 장기 목표를 향해 성장하는 역량.",
+          "question": "최근 배움을 바탕으로 다음 학습 목표를 어떻게 정했나요? 달성 여부는 어떤 기준으로 확인하겠어요?"
+        },
+        {
+          "id": "problem",
+          "label": "창의적 문제해결",
+          "description": "문제의 여러 측면을 살피며 새로운 해결안을 제시하는 역량.",
+          "question": "지원 전공과 관련된 문제를 하나 고르고, 원인을 바꾸기 위한 해결안을 제안해 주세요."
+        },
+        {
+          "id": "communication",
+          "label": "협력적 소통",
+          "description": "타인의 의견과 감정을 이해하고 맥락에 맞게 소통하는 역량.",
+          "question": "협력 과정에서 의견이 달라졌을 때 상대를 어떻게 이해하고 본인의 생각을 전달하겠어요?"
+        },
+        {
+          "id": "global",
+          "label": "글로벌 시민",
+          "description": "다양한 문화와 공동의 가치를 이해하고 존중하는 역량.",
+          "question": "전공 지식이 다른 문화나 사회에도 도움이 되려면 무엇을 고려해야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.sookmyung.ac.kr/kr/intro/core-competence.do",
+        "title": "숙명여자대학교 · 인재상 및 핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "대학 공통 인재상과 현재 공개된 핵심역량을 요약. 지원자의 인성을 점수로 판정하거나 전형별 배점으로 해석하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000142",
+      "revision": 1,
+      "university": "순천향대학교",
+      "schoolReferenceId": "bible_33afd7125737c781",
+      "scope": "university",
+      "status": "official_source",
+      "title": "순천향대학교 인재상",
+      "points": [
+        {
+          "id": "empathy",
+          "label": "소통하는 공감인재",
+          "description": "자신과 타인을 이해하고 상생과 공동 성장을 실천하는 사람",
+          "question": "다른 사람의 어려움을 이해하기 위해 어떻게 듣고 함께 해결하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "creative",
+          "label": "융합하는 창의인재",
+          "description": "경험과 여러 분야의 지식을 연결해 새로운 아이디어를 만드는 사람",
+          "question": "본인의 관심 분야에 다른 분야의 지식을 더한다면 어떤 문제를 새롭게 풀 수 있나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "global",
+          "label": "공헌하는 글로벌인재",
+          "description": "다양한 문화와 공존의 가치를 받아들이고 인류사회에 기여하는 사람",
+          "question": "지원 분야의 일이 다양한 문화와 사회에 영향을 줄 때 무엇을 고려해야 하나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://inno.sch.ac.kr/pages/65d58f759deeed883e0c97d4",
+        "title": "순천향대학교 AI교육혁신연구센터 · SCH 비전-교육목표-인재상 및 핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000143",
+      "revision": 1,
+      "university": "숭실대학교",
+      "schoolReferenceId": "bible_d99c2148b6f16ccd",
+      "scope": "university",
+      "status": "official_source",
+      "title": "미래를 개척하는 글로벌 창의 리더",
+      "points": [
+        {
+          "label": "창조적 지식인",
+          "description": "다양한 관점과 지식을 연결해 새로운 가치를 만든다.",
+          "id": "value_1"
+        },
+        {
+          "label": "균형적 교양인",
+          "description": "바른 태도로 타인에게 공감하고 갈등 속에서도 화합을 이끈다.",
+          "id": "value_2"
+        },
+        {
+          "label": "혁신적 세계인",
+          "description": "도전정신을 갖고 세계의 변화와 미래 과제에 능동적으로 참여한다.",
+          "id": "value_3"
+        }
+      ],
+      "source": {
+        "url": "https://rule.ssu.ac.kr/lmxsrv/law/lawFullContent.do?SEQ=84&SEQ_HISTORY=2520",
+        "title": "숭실대학교 헌장 제3조 인재상(2026-01-29 개정)",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울",
+        "officialValues": [
+          "창조적 지식인",
+          "균형적 교양인",
+          "혁신적 세계인"
+        ],
+        "additionalUrl": null,
+        "note": "현행 헌장 본문 직접 확인. 오래된 전공역량 문서의 조화로운 교양인·도전적 세계인 표현을 사용하지 않음. 2027 입학요강 검색 색인도 같은 3항목이나 일부 PDF URL은 404여서 현행 헌장을 주 출처로 채택. 특정 전형의 배점은 아님."
+      }
+    },
+    {
+      "id": "official_talent_0000146",
+      "revision": 1,
+      "university": "아주대학교",
+      "canonicalName": "아주대학교",
+      "schoolReferenceId": "bible_9e37a5e849bf275e",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "다산(茶山)형 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "감수성",
+          "description": "인간과 자연을 존중하며 타인의 정서와 가치에 공감하는 힘",
+          "question": "지원 분야의 문제를 해결할 때 사람이나 자연에 미치는 영향은 어떻게 함께 고려하겠어요?"
+        },
+        {
+          "id": "value_2",
+          "label": "소통력",
+          "description": "상황에 맞게 대화하고 갈등을 조율하며 협력하는 힘",
+          "question": "팀의 설명이 잘 전달되지 않았을 때 무엇을 바꿀 수 있나요? 실제 경험이 있다면 연결해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "창의성",
+          "description": "서로 다른 지식을 연결해 문제를 새롭게 보고 해결하는 힘",
+          "question": "한 가지 탐구 주제를 다른 교과의 관점으로 다시 본다면 어떤 해결 방법이 가능할까요?"
+        },
+        {
+          "id": "value_4",
+          "label": "사고력",
+          "description": "지식과 정보를 분석하고 근거에 따라 비판적으로 추론하는 힘",
+          "question": "활동의 결론을 뒷받침하는 자료와 그 자료의 한계를 각각 설명해 주세요."
+        },
+        {
+          "id": "value_5",
+          "label": "개방성",
+          "description": "서로 다른 문화와 관점을 이해하고 유연하게 사고하는 힘",
+          "question": "자신과 다른 관점에서 제시한 해결책이 더 타당하다면 어떻게 확인하고 받아들이겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.ajou.ac.kr/kr/intro/objective.do",
+        "title": "아주대학교 · 교육목표/인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000149",
+      "schoolReferenceId": "bible_02f5a3e9a0f7b346",
+      "revision": 1,
+      "university": "연세대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "세상의 틀을 깨는 도전으로 선한 영향력을 나누는 인재",
+      "points": [
+        {
+          "id": "trust",
+          "label": "믿음과 신뢰",
+          "description": "공동체 구성원을 신뢰하며 책임 있는 관계를 만드는 가치.",
+          "question": "함께하는 사람의 신뢰를 얻기 위해 본인이 지킬 약속과, 약속을 지키기 어려울 때의 대처를 설명해 주세요."
+        },
+        {
+          "id": "path",
+          "label": "도전과 개척",
+          "description": "익숙한 한계를 넘어 새로운 가능성을 탐구하는 가치.",
+          "question": "지원 전공에서 기존 생각의 틀을 넘어 탐구해 보고 싶은 질문은 무엇인가요? 어떤 근거로 도전하겠어요?"
+        },
+        {
+          "id": "dedication",
+          "label": "섬김과 헌신",
+          "description": "배움과 역량을 이웃과 공동체에 도움이 되도록 사용하는 가치.",
+          "question": "본인의 관심과 배움이 다른 사람에게 어떤 도움이 될 수 있나요? 실천 방법까지 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.yonsei.ac.kr/sc/223/subview.do",
+        "title": "연세대학교 · VISION YONSEI 150 비전체계도",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 VISION YONSEI 150 페이지의 인재상·가치를 기준으로 작성. 과거 요람의 공동체 정신을 지닌 혁신적 리더 문구를 최신 정의로 재사용하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000151",
+      "revision": 1,
+      "university": "영남대학교",
+      "canonicalName": "영남대학교",
+      "schoolReferenceId": "bible_6619e7b7db4d4246",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "Y형 폴리매스(Polymath)",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "화합적 인성",
+          "description": "타인을 존중하고 공동체 안에서 함께하는 태도",
+          "question": "공동체에 참여하며 본인의 의견보다 함께 지켜야 할 원칙이 중요했던 상황이 있나요? 없다면 가정한 상황으로 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "융복합적 창의성",
+          "description": "지식과 경험의 경계를 넘어 연결하고 새 가치를 만드는 힘",
+          "question": "서로 다른 두 교과의 내용을 연결해 지원 분야의 문제를 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "글로벌 진취성",
+          "description": "다양한 문화를 이해하고 새로운 분야와 세계에 도전하는 태도",
+          "question": "지원 분야의 문제를 다른 나라에서도 해결하려면 어떤 차이를 먼저 이해해야 할까요?"
+        },
+        {
+          "id": "value_4",
+          "label": "실용적 전문성",
+          "description": "기본 지식과 현장에 필요한 전문지식을 갖추고 활용하는 힘",
+          "question": "지원 전공의 기초를 실제 문제에 활용하려면 어떤 지식을 더 배우고 싶나요?"
+        },
+        {
+          "id": "value_5",
+          "label": "이타적 협업",
+          "description": "공동체를 이해하며 다른 사람과 함께 사회를 이롭게 하는 태도",
+          "question": "함께하는 활동의 성과가 일부에게만 돌아가지 않도록 역할과 기여를 어떻게 나누겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.yu.ac.kr/main/intro/y-talent.do",
+        "title": "영남대학교 · 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000250",
+      "revision": 1,
+      "university": "울산과학기술원",
+      "schoolReferenceId": "bible_6cc29bbe9eca95d3",
+      "scope": "university",
+      "status": "official_source",
+      "title": "UNIST PIONEERS 인재상",
+      "points": [
+        {
+          "id": "inquiry",
+          "label": "지적 탐구자",
+          "description": "현상의 이면과 본질을 질문하며 깊이 탐구하는 사람",
+          "question": "관심 주제의 겉으로 드러난 결과보다 근본 원인을 탐구하려면 무엇을 확인해야 하나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "challenge",
+          "label": "담대한 도전자",
+          "description": "학문과 산업의 경계를 넘어 새로운 길을 개척하는 사람",
+          "question": "지원 분야와 다른 분야를 연결하는 도전을 한다면 어떤 문제를 선택하고 왜 선택하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "contribute",
+          "label": "따뜻한 공헌자",
+          "description": "과학기술을 통해 사회에 기여하려는 사람",
+          "question": "본인이 배우려는 과학기술은 누구의 어떤 어려움을 줄일 수 있을까요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://adm-u.unist.ac.kr/admission/introduction/unist-overview.do",
+        "title": "UNIST 학부입학 · 한눈에 보는 UNIST",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다. 현재 학부입학 홈페이지의 UNIST PIONEERS 정의를 사용했습니다."
+      }
+    },
+    {
+      "id": "official_talent_0000158",
+      "revision": 1,
+      "university": "울산대학교",
+      "schoolReferenceId": "bible_387049c1c9750c5f",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "울산대학교 학부 교육목표",
+      "points": [
+        {
+          "id": "inquiry",
+          "label": "창조적 탐구인",
+          "description": "호기심으로 문제를 찾아 과학적이고 합리적으로 탐구하는 자세",
+          "question": "당연하게 여겼던 설명에 의문을 갖고 확인한 경험이나 앞으로 확인하고 싶은 질문을 말해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "independent",
+          "label": "자주적 지성인",
+          "description": "스스로 변화하고 열린 태도와 양심에 따라 행동하는 자세",
+          "question": "스스로 내린 학습의 결정과 그 결정의 책임을 어떻게 받아들이겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "practice",
+          "label": "유능한 직능인",
+          "description": "전문 지식을 실제 상황에 적용하고 직업적 책무를 수행하는 능력",
+          "question": "지원 분야에서 배운 지식을 현실 문제에 적용할 때 어떤 어려움이 예상되나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.ulsan.ac.kr/kor/CMS/Contents/Contents.do?mCode=MN025",
+        "title": "울산대학교 · 교육목적/인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 교육목표를 요약한 학습 기준입니다. 별도 명명된 인재상이나 학과 고유 인재상으로 표기하지 않습니다. 질문은 이 교육목표를 활용해 앱에서 작성한 연습 질문이며 공식 기출이나 입시 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000161",
+      "revision": 1,
+      "university": "을지대학교",
+      "canonicalName": "을지대학교",
+      "schoolReferenceId": "bible_3164ccc738b1776e",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "교육목표",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "성숙한 사회인",
+          "description": "인간사랑·생명존중을 바탕으로 성숙한 사회인의 태도를 기르는 목표",
+          "question": "지원 분야에서 전문적인 판단과 한 사람의 존엄을 함께 지키려면 어떤 기준이 필요할까요?"
+        },
+        {
+          "id": "value_2",
+          "label": "우수한 보건의료인",
+          "description": "보건의료의 전문 지식과 능력을 갖추는 목표",
+          "question": "관심 분야의 정보를 검토할 때 전문적인 근거와 개인의 경험을 어떻게 구분하겠어요?"
+        },
+        {
+          "id": "value_3",
+          "label": "국가·지역사회에 봉사",
+          "description": "국가와 지역사회가 필요로 하는 보건의료 기여를 실천하는 목표",
+          "question": "건강이나 돌봄에서 지역의 필요를 파악하려면 누구의 이야기를 어떤 방식으로 들어야 할까요?"
+        },
+        {
+          "id": "value_4",
+          "label": "미래 사회 준비",
+          "description": "변화하는 미래 사회에 필요한 보건의료 역량을 기르는 목표",
+          "question": "새 기술이 보건의료나 사람들의 삶에 적용될 때 기대 효과와 한계를 함께 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.adiga.kr/ucp/uvt/uni/univDetailIntro.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000161",
+        "title": "한국대학교육협의회 어디가 · 을지대학교 2027 대학소개 — 교육목표",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": 2027,
+        "scope": "을지대학교 대학 공통 교육목표; 대전 캠퍼스 코드의 대학 소개에서 확인",
+        "note": "대학 제출 대교협 어디가 자료입니다. 대학 본교·입학처는 수집 과정에서 400/502·잘못된 헤더·DNS 오류로 접근하지 못해 공식 대교협 2027 페이지의 실제 HTTP 200 본문으로 대체했습니다. 대학 인재상 자체로 재명명하지 않았으며 오래된 EULJI VISION 2022/HUMAN 발전계획 섹션은 제외했습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000163",
+      "schoolReferenceId": "bible_1ed9296bd2a05ea3",
+      "revision": 1,
+      "university": "이화여자대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "THE 인재",
+      "points": [
+        {
+          "id": "telos",
+          "label": "주도하는 인재",
+          "description": "목적을 세우고 전문 지식을 자기주도적으로 배우고 확장하는 사람.",
+          "question": "지원 전공에서 배우고 싶은 목표를 하나 정하고, 지금까지의 배움과 앞으로의 탐구를 연결해 주세요."
+        },
+        {
+          "id": "hokma",
+          "label": "지혜로운 인재",
+          "description": "폭넓은 교양과 성찰로 공동체와 조화를 이루는 사람.",
+          "question": "관심 문제를 바라보는 본인의 시각이 달라진 계기는 무엇인가요? 다른 사람의 처지도 함께 설명해 주세요."
+        },
+        {
+          "id": "experience",
+          "label": "실천하는 인재",
+          "description": "경험과 봉사를 통해 타인과 함께 미래를 만들어 가는 사람.",
+          "question": "배운 것을 사회에서 실천한다면 누구와 어떤 행동부터 시작할까요? 실제로 실천한 경험이 있으면 함께 말해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.ewha.ac.kr/ewha/intro/talent.do",
+        "title": "이화여자대학교 · 인재상 및 핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "대학의 THE 인재 정의를 요약. T·H·E는 각기 주도하는·지혜로운·실천하는 인재이며 특정 모집 전형의 출제 비율을 뜻하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0002660",
+      "revision": 1,
+      "university": "인천대학교",
+      "schoolReferenceId": "bible_45d41d6942c3e6ac",
+      "scope": "university",
+      "status": "official_source",
+      "title": "창의혁신에 도전하는 소통형 인재",
+      "points": [
+        {
+          "id": "inquiry",
+          "label": "지식탐구",
+          "description": "필요한 지식을 찾아 이해하고 깊이 탐구하는 능력",
+          "question": "스스로 조사하고 싶은 질문과 그 질문을 이해하기 위해 필요한 근거를 말해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "communication",
+          "label": "의사소통",
+          "description": "자신의 생각을 전달하고 다른 사람의 의견을 이해하는 능력",
+          "question": "본인의 설명을 상대가 이해했는지 어떻게 확인하고 표현을 바꾸겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "fusion",
+          "label": "창의융합",
+          "description": "서로 다른 지식을 연결해 새롭게 생각하는 능력",
+          "question": "지원 학과의 문제를 다른 과목과 연결한다면 어떤 새로운 설명이 가능할까요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "challenge",
+          "label": "도전창조",
+          "description": "새로운 방향을 시도하며 가치를 만드는 태도",
+          "question": "실패 가능성이 있는 도전을 선택하기 전에 무엇을 확인하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "cooperation",
+          "label": "협업인성",
+          "description": "상호 존중과 책임을 바탕으로 함께하는 태도",
+          "question": "모둠의 의견이 갈릴 때 본인의 역할과 합의 방법을 설명해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "solve",
+          "label": "문제해결",
+          "description": "문제의 원인을 살피고 타당한 해결안을 찾는 능력",
+          "question": "문제의 원인에 대한 추측과 확인된 사실을 어떻게 구분하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.inu.ac.kr/inu/717/subview.do",
+        "title": "인천대학교 · 대학비전 및 교육목표",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000169",
+      "revision": 1,
+      "university": "인하대학교",
+      "schoolReferenceId": "bible_cb9a087b06648704",
+      "scope": "university",
+      "status": "official_source",
+      "title": "인하대학교 참(眞)인재",
+      "points": [
+        {
+          "id": "self",
+          "label": "자기형성人",
+          "description": "인격을 기르고 자율과 책임, 의사소통을 발전시키는 사람",
+          "question": "자신의 학습이나 생활에서 지키는 원칙을 스스로 만든 이유와 점검 방법을 설명해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "creative",
+          "label": "창의도전人",
+          "description": "탐구와 지식 활용으로 새로운 문제에 도전하는 사람",
+          "question": "지원 분야의 문제를 창의적으로 풀기 위해 어떤 지식을 새로 배우고 싶은가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "sharing",
+          "label": "나눔실천人",
+          "description": "공감과 협동, 넓은 세계관으로 공동체에 기여하는 사람",
+          "question": "자신이 배운 지식이나 가진 능력을 다른 사람과 나누려면 무엇을 고려해야 하나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.inha.ac.kr/kr/933/subview.do",
+        "title": "인하대학교 · 창학이념과 교육목표",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000170",
+      "schoolReferenceId": "bible_c08e4b9a9a57b73b",
+      "revision": 1,
+      "university": "장로회신학대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "경건한 신앙인·겸손한 지식인·열정적 실천인",
+      "points": [
+        {
+          "id": "reflection",
+          "label": "경건한 신앙인",
+          "description": "기독교적 성찰을 바탕으로 자신을 돌아보고 타인과 건강한 관계를 만드는 사람.",
+          "question": "배움과 신앙이 본인의 생활이나 다른 사람을 대하는 태도에 어떤 성찰을 주었나요?"
+        },
+        {
+          "id": "knowledge",
+          "label": "겸손한 지식인",
+          "description": "여러 분야의 지식을 비판적으로 연결하고 창의적으로 적용하는 사람.",
+          "question": "지원 분야의 문제를 이해하기 위해 다른 학문이나 관점을 연결한다면 어떤 배움이 필요할까요?"
+        },
+        {
+          "id": "practice",
+          "label": "열정적 실천인",
+          "description": "다양한 공동체와 협력하며 공익과 지속 가능한 환경을 위해 행동하는 사람.",
+          "question": "지역사회나 교회에서 함께 해결하고 싶은 문제 하나를 고르고, 공동의 이익을 위해 어떻게 실천하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.puts.ac.kr/www/main/kor/_Sub/sub-01-03-02-01.asp",
+        "title": "장로회신학대학교 · PUTS 인재상 및 핵심역량 6Cs",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 대학 공통 인재상과 6Cs 정의를 요약. 2026 비전의 열정적 실천인 표기를 확인했으며 학과별 별도 인재상은 공통 정의에 혼합하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000023",
+      "revision": 1,
+      "university": "전남대학교",
+      "canonicalName": "전남대학교",
+      "schoolReferenceId": "bible_8c7b4084da218f0a",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "지역과 미래를 선도하는 창의 융합 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "창의융합",
+          "description": "다양한 지식과 경험을 연결하여 새로운 가치와 해법을 만드는 힘",
+          "question": "탐구 주제를 다른 교과의 지식과 연결하면 새롭게 볼 수 있는 점은 무엇인가요?"
+        },
+        {
+          "id": "value_2",
+          "label": "문제해결",
+          "description": "문제를 분석하고 근거에 따라 대안을 실행하는 힘",
+          "question": "문제의 원인과 겉으로 드러난 현상을 어떻게 구별하겠어요? 실제 활동이 있다면 연결해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "인문문화",
+          "description": "인간과 문화를 이해하고 타인의 관점을 존중하는 힘",
+          "question": "지원 분야의 기술이나 정책을 평가할 때 사람들의 문화와 삶의 방식은 왜 고려해야 할까요?"
+        },
+        {
+          "id": "value_4",
+          "label": "자기주도",
+          "description": "목표를 세우고 스스로 학습 과정을 조절하는 힘",
+          "question": "학습 계획이 잘 맞지 않았을 때 어떤 근거로 계획을 바꿀 수 있나요?"
+        },
+        {
+          "id": "value_5",
+          "label": "소통협력",
+          "description": "다른 사람의 의견을 이해하고 함께 목표를 이루는 힘",
+          "question": "팀의 관점이 달라 결론을 내리기 어려울 때 어떻게 공통 기준을 만들겠어요?"
+        },
+        {
+          "id": "value_6",
+          "label": "공동체",
+          "description": "시민의 책임을 인식하고 지역사회와 함께하는 태도",
+          "question": "지원 전공으로 지역사회에 기여하려면 어떤 문제를 누구와 함께 알아보고 싶나요?"
+        }
+      ],
+      "source": {
+        "url": "https://aisw.jnu.ac.kr/bbs/aisw/64/828336/download.do",
+        "title": "전남대학교 · 2026학년도 대학생활안내 — 대학 인재상 및 핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": "2026-02",
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "2026년 2월 공식 대학생활안내 40쪽의 대학 공통 교육체계입니다. 자료 연도와 입학 전형의 평가 연도는 구분합니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000025",
+      "revision": 1,
+      "university": "전북대학교",
+      "schoolReferenceId": "bible_48567d0846e19d8e",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "전북대학교 대학헌장 교육목표",
+      "points": [
+        {
+          "id": "citizen",
+          "label": "더불어 함께 사는 교양인",
+          "description": "민주시민의 덕목을 갖추고 공동체와 함께하는 사람",
+          "question": "생각이 다른 사람들과 함께 살아가는 데 가장 필요한 태도는 무엇인가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "intellectual",
+          "label": "자유와 정의를 구현하는 지성인",
+          "description": "자유와 정의를 판단과 행동에 연결하는 사람",
+          "question": "자신의 자유와 다른 사람의 권리가 충돌한다면 어떤 기준으로 판단하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "expert",
+          "label": "진리를 탐구하는 창조적 전문인",
+          "description": "끊임없이 탐구하여 전문 지식과 새로운 해법을 키우는 사람",
+          "question": "지원 분야에서 더 깊이 검증하고 싶은 질문과 그 이유는 무엇인가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "culture",
+          "label": "전통을 계승하고 지역의 세계화를 추구하는 문화인",
+          "description": "지역 문화의 의미를 이해하고 세계와 연결하는 사람",
+          "question": "지역의 문화나 문제를 세계적인 관점과 연결한다면 어떤 가능성이 있나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "world",
+          "label": "인류공영에 기여하는 세계인",
+          "description": "국가와 인류의 공동 발전을 지향하는 사람",
+          "question": "지원 분야의 전문성을 인류의 공동 문제 해결에 어떻게 쓰고 싶은가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.jbnu.ac.kr/web/intro/university/sub03.do",
+        "title": "전북대학교 · 대학헌장 제1장 제2조",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 교육목표를 요약한 학습 기준입니다. 별도 명명된 인재상이나 학과 고유 인재상으로 표기하지 않습니다. 질문은 이 교육목표를 활용해 앱에서 작성한 연습 질문이며 공식 기출이나 입시 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000258",
+      "revision": 1,
+      "university": "전주교육대학교",
+      "schoolReferenceId": "bible_287ef2fa3defa01f",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "education_goal",
+      "title": "전주교육대학교 교육이념·목적·목표",
+      "points": [
+        {
+          "id": "leader",
+          "label": "미래를 제시하는 지도자",
+          "description": "사회와 국가의 발전적 미래를 고민하는 지도적 능력",
+          "question": "교육을 통해 바꾸고 싶은 미래의 모습과 그 이유를 설명해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "professional",
+          "label": "올바른 교직관과 교육 전문성",
+          "description": "교사로서의 원칙을 세우고 전문성을 기르는 태도",
+          "question": "교사로서 가장 필요한 전문성과 그것을 키울 학습 계획은 무엇인가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "citizen",
+          "label": "문화에 자긍심을 지닌 세계 시민",
+          "description": "자신의 문화를 이해하고 세계 시민의 자질을 기르는 태도",
+          "question": "다른 문화의 학생과 함께 배울 때 자기 문화와 상대 문화를 어떻게 존중하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.jnue.kr/portal/jnue/contents/contents_view.do?menuId=M0023000200010000",
+        "title": "전주교육대학교 · 교육이념·목적·목표",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 교육목표를 요약한 학습 기준입니다. 별도 명명된 인재상이나 학과 고유 인재상으로 표기하지 않습니다. 질문은 이 교육목표를 활용해 앱에서 작성한 연습 질문이며 공식 기출이나 입시 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000027",
+      "revision": 1,
+      "university": "제주대학교",
+      "schoolReferenceId": "bible_3c219ed4246dcbe5",
+      "scope": "university",
+      "status": "official_source",
+      "title": "소통하고 도전하며 포용하는 글로컬 리더",
+      "points": [
+        {
+          "id": "communication",
+          "label": "소통",
+          "description": "생각을 표현하고 타인과 조화롭게 협력하는 능력",
+          "question": "배경과 생각이 다른 사람에게 자신의 의견을 이해시키고 듣기 위해 어떻게 하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "challenge",
+          "label": "도전",
+          "description": "문제를 탐구하며 역량을 개발하고 새로운 진로를 개척하는 태도",
+          "question": "지원 분야에서 해결해 보고 싶은 문제를 정하고 앞으로 어떤 도전을 할지 말해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "inclusion",
+          "label": "포용",
+          "description": "다양한 문화를 존중하고 분야를 연결해 함께 성장하는 태도",
+          "question": "지역의 문제를 세계와 연결해 해결할 때 서로 다른 문화와 상황을 어떻게 고려하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://jejunu.ac.kr/schoolinfo/univinfo/vission/3.htm",
+        "title": "제주대학교 · 비전과 목표 · 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000172",
+      "revision": 1,
+      "university": "조선대학교",
+      "canonicalName": "조선대학교",
+      "schoolReferenceId": "bible_f2469a4f062b4841",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "함께형 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "자기주도",
+          "description": "자기관리와 리더십을 바탕으로 스스로 배우는 태도",
+          "question": "본인의 탐구 과정을 다시 돌아보면 다음에는 무엇을 다르게 준비하겠어요?"
+        },
+        {
+          "id": "value_2",
+          "label": "창의융합",
+          "description": "정보를 분석하고 지식을 연결해 창의적으로 문제를 해결하는 힘",
+          "question": "지원 학과의 문제를 해결할 때 서로 다른 자료가 충돌하면 어떻게 확인하겠어요?"
+        },
+        {
+          "id": "value_3",
+          "label": "배려봉사",
+          "description": "시민의식과 협업을 바탕으로 함께하는 공동체 가치",
+          "question": "자신의 성과와 공동체의 필요가 다를 때 무엇을 기준으로 행동하겠어요? 실제 경험이나 앞으로의 계획으로 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://dentistry.chosun.ac.kr/sites/dentistry/file/%EC%A1%B0%EC%84%A0%EB%8C%80%ED%95%99%EA%B5%90%20%EC%B9%98%EA%B3%BC%EB%8C%80%ED%95%99%C2%B7%EC%B9%98%EC%9D%98%ED%95%99%EC%A0%84%EB%AC%B8%EB%8C%80%ED%95%99%EC%9B%90%20%ED%91%9C%EC%A4%80%EC%97%AD%EB%9F%89%20%EA%B8%B0%EC%A4%80%EC%A7%91(202302).pdf",
+        "title": "조선대학교 · 표준역량 기준집 — 대학 설립이념·인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": "2023-02",
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "2023년 2월 대학 발행 기준집 중 ‘조선대학교 설립이념, 인재상, 핵심역량’ 절만 연결했습니다. 뒤의 치과대학 전공 역량은 전체 대학에 적용하지 않았습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000175",
+      "revision": 1,
+      "university": "중앙대학교",
+      "schoolReferenceId": "bible_794d7b89a10f736c",
+      "scope": "university",
+      "status": "official_source",
+      "title": "i-Creator",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "세계시민적 중앙人",
+          "description": "사회적 책임을 생각하고 공동체의 문제를 실천으로 이어간다."
+        },
+        {
+          "id": "value_2",
+          "label": "변화주도적 중앙人",
+          "description": "여러 관점을 연결해 사회 변화를 이해하고 창의적으로 대응한다."
+        },
+        {
+          "id": "value_3",
+          "label": "미래지향적 중앙人",
+          "description": "새로운 기술과 지식을 계속 배우며 미래의 문제를 탐구한다."
+        },
+        {
+          "id": "value_4",
+          "label": "문화포용적 중앙人",
+          "description": "다양한 사람과 문화에 공감하며 차이를 존중한다."
+        }
+      ],
+      "source": {
+        "url": "https://www.cau.ac.kr/cms/FR_CON/index.do?MENU_ID=1630",
+        "title": "중앙대학교 교육이념 및 목적: 교육목적 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울·다빈치 공통",
+        "officialValues": [
+          "세계시민적 중앙人",
+          "변화주도적 중앙人",
+          "미래지향적 중앙人",
+          "문화포용적 중앙人"
+        ],
+        "additionalUrl": null,
+        "note": "현재 대학 전체 공식 인재상 4개 항목을 연습 주제 3개로 재서술·묶음. points의 묶은 라벨은 공식 고유명칭 그대로가 아님. 학과별·2027 전형 평가기준으로 확대 해석하지 않음."
+      }
+    },
+    {
+      "id": "official_talent_0000175",
+      "revision": 2,
+      "university": "중앙대학교",
+      "schoolReferenceId": "bible_794d7b89a10f736c",
+      "scope": "university",
+      "status": "official_source",
+      "title": "i-Creator",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "세계시민적 중앙人",
+          "description": "사회적 책임을 생각하고 공동체의 문제를 실천으로 이어간다."
+        },
+        {
+          "id": "value_2",
+          "label": "변화주도적 중앙人",
+          "description": "여러 관점을 연결해 사회 변화를 이해하고 창의적으로 대응한다."
+        },
+        {
+          "id": "value_3",
+          "label": "미래지향적 중앙人",
+          "description": "새로운 기술과 지식을 계속 배우며 미래의 문제를 탐구한다."
+        },
+        {
+          "id": "value_4",
+          "label": "문화포용적 중앙人",
+          "description": "다양한 사람과 문화에 공감하며 차이를 존중한다."
+        }
+      ],
+      "source": {
+        "url": "https://www.cau.ac.kr/cms/FR_CON/index.do?MENU_ID=1630",
+        "title": "중앙대학교 교육이념 및 목적: 교육목적 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "서울·다빈치 공통",
+        "officialValues": [
+          "세계시민적 중앙人",
+          "변화주도적 중앙人",
+          "미래지향적 중앙人",
+          "문화포용적 중앙人"
+        ],
+        "additionalUrl": null,
+        "note": "현재 대학 전체 공식 인재상 4개 항목을 각각 유지하고 설명을 짧게 요약. 학과별·2027 특정 전형의 평가기준이나 실제 기출로 확대 해석하지 않음."
+      }
+    },
+    {
+      "id": "official_talent_0000260",
+      "revision": 1,
+      "university": "진주교육대학교",
+      "canonicalName": "진주교육대학교",
+      "schoolReferenceId": "bible_ae8c4f590328eb84",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "교육경쟁력·시민역량·미래가치를 갖춘 교사",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "교육경쟁력을 지닌 교사",
+          "description": "아동을 이해하고 다양한 정보와 지식을 창의적으로 활용하는 교육 역량",
+          "question": "같은 설명을 들어도 이해 수준이 다른 학생들에게 수업한다면 어떤 정보를 먼저 확인하겠어요?"
+        },
+        {
+          "id": "value_2",
+          "label": "시민역량을 갖춘 교사",
+          "description": "세계시민의식과 사회적 참여·도덕적 책임을 갖추는 태도",
+          "question": "학교 안의 작은 문제가 사회 전체와 이어지는 사례를 고르고 교사로서 어떻게 다루겠어요?"
+        },
+        {
+          "id": "value_3",
+          "label": "미래가치를 공유하는 교사",
+          "description": "반성적 사고로 미래 교육의 기회와 가치를 함께 생각하는 태도",
+          "question": "새 교육 기술이 일부 학생에게만 도움이 된다면 학습 기회를 어떻게 공정하게 만들겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.cue.ac.kr/attach/CONTENTS/PDF/ContentMgr/PDFViewer/2025/8/nGLfKnGQJVtqn8CJ.PDF",
+        "title": "진주교육대학교 · 2026학년도 수시모집요강 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": "2025-05",
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "2026학년도 공식 요강 앞부분에 정의된 대학 공통 인재상입니다. 2027학년도 평가 배점·전형 운영을 이 자료에서 추론하지 않습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000261",
+      "revision": 1,
+      "university": "청주교육대학교",
+      "schoolReferenceId": "bible_060e9c0b6f0415fd",
+      "scope": "university",
+      "status": "official_source",
+      "title": "청주교육대학교 인재상",
+      "points": [
+        {
+          "id": "character",
+          "label": "인성을 갖춘 교육 실천가",
+          "description": "아동에 대한 공감, 협력적 소통과 교직 윤리를 실천하는 사람",
+          "question": "서로 다른 필요를 가진 학생들을 도울 때 교사는 어떤 원칙을 지켜야 하나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "creative",
+          "label": "창의적인 교육 전문가",
+          "description": "스스로 탐구하고 수업을 통합적으로 실행하며 성찰하는 사람",
+          "question": "본인의 학습을 되돌아보고 바꾼 점이나 바꾸고 싶은 점이 가르치는 방법에 어떤 의미를 주나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "leader",
+          "label": "시야가 넓은 교육 지도자",
+          "description": "다양성과 다문화에 열려 있고 미래를 이끄는 사람",
+          "question": "다양한 배경의 학생들이 차이를 존중하며 함께 배우도록 어떻게 돕겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.cje.ac.kr/web/content.do?menu_cd=000044",
+        "title": "청주교육대학교 · 대학 발전 비전 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000180",
+      "schoolReferenceId": "bible_caf7e914c3a6697c",
+      "revision": 1,
+      "university": "총신대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "경건한 인성인·창조적 지성인·글로컬 실천인",
+      "points": [
+        {
+          "id": "character",
+          "label": "경건한 인성인",
+          "description": "코람데오의 관점에서 인성을 가꾸고 타인을 섬기는 사람.",
+          "question": "본인의 가치관이 다른 사람을 배려하는 행동으로 이어진 경험을 설명해 주세요. 경험이 없다면 실천할 방법을 말해 주세요."
+        },
+        {
+          "id": "intellect",
+          "label": "창조적 지성인",
+          "description": "스스로 배움을 개발하며 지식과 다양한 사고를 연결하는 사람.",
+          "question": "스스로 더 탐구한 내용이나 앞으로 탐구할 질문을 고르고, 다른 분야와 연결할 가능성을 설명해 주세요."
+        },
+        {
+          "id": "glocal",
+          "label": "글로컬 실천인",
+          "description": "소통과 윤리적 행동을 통해 지역과 세계 공동체에 참여하는 사람.",
+          "question": "지역사회 문제를 세계적 관점과 함께 바라본다면 어떤 점을 고려해야 할까요? 실천 방법까지 말해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.csu.ac.kr/?m1=page&menu_id=883",
+        "title": "총신대학교 · 인재상 및 핵심역량",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "총신대학교 현재 홈페이지가 공개하는 인재상 페이지와 read-only getMenu 응답의 실제 내용을 교차 확인. 2024-05-20은 원문 최종 수정일이며 입학 전형 연도가 아님. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000181",
+      "schoolReferenceId": "bible_eaa3cffd29f5415a",
+      "revision": 1,
+      "university": "추계예술대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "CUfA Artist · 창의적·세계적·선도적 예술인",
+      "points": [
+        {
+          "id": "creative",
+          "label": "창의적 예술인",
+          "description": "창의적 사고와 전공 지식을 연결해 독창적으로 표현하는 예술인.",
+          "question": "표현하고 싶은 주제 하나를 고르고, 익숙한 표현 방식과 달리 접근할 수 있는 방법을 설명해 주세요."
+        },
+        {
+          "id": "universal",
+          "label": "세계적 예술인",
+          "description": "다양한 문화와 지식을 이해하고 예술로 소통하는 예술인.",
+          "question": "지원 분야의 작품이나 표현을 다른 문화의 사람들과 나눌 때 어떤 맥락을 함께 설명해야 할까요?"
+        },
+        {
+          "id": "foremost",
+          "label": "선도적 예술인",
+          "description": "협력과 주도적인 시도로 예술의 새로운 가능성을 만들어 가는 예술인.",
+          "question": "다른 사람과 함께 시도해 보고 싶은 예술 작업은 무엇인가요? 역할과 새롭게 만들 가치를 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.chugye.ac.kr/mbs/university/subview.jsp?id=university_010200000000",
+        "title": "추계예술대학교 · 교육목표 체계도",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 교육목표 페이지에 게재된 체계도 이미지를 직접 확인. Creative Artist·Universal Artist·Foremost Artist의 인재상을 요약하며, 오래된 자체평가의 교육목표를 현재 인재상으로 대신하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000029",
+      "revision": 1,
+      "university": "충남대학교",
+      "canonicalName": "충남대학교",
+      "schoolReferenceId": "bible_18ed556e19147f72",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "미래혁신주도형 STRONG 창의인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "창의",
+          "description": "지성적 능력과 융복합 역량으로 새로운 가치를 만드는 태도",
+          "question": "지원 분야의 문제를 기존 지식 두 가지 이상으로 연결해 새롭게 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "개발",
+          "description": "리더십과 글로벌 역량으로 새로운 세계를 개척하는 태도",
+          "question": "지원 전공으로 아직 해결되지 않은 어떤 문제에 도전하고 싶나요? 필요한 학습 계획도 설명해 주세요."
+        },
+        {
+          "id": "value_3",
+          "label": "봉사",
+          "description": "국가와 지역 공동체를 위해 헌신하는 태도",
+          "question": "전공의 전문성이 지역사회에 도움이 되려면 어떤 필요와 한계를 먼저 확인해야 할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://plus.cnu.ac.kr/Upl/kr/70y/28.pdf",
+        "title": "충남대학교 · 비전 2030 중장기 발전계획 — 대학 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 비전 2030 자료의 대학 인재상·건학이념 정합성 절입니다. STRONG 교육역량의 운영은 2025 교육과정(https://plus.cnu.ac.kr/html/kr/25file/2025_book.pdf)에도 이어집니다. 발전계획의 일반 인재상이며 특정 입시 연도 배점이 아닙니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000188",
+      "revision": 1,
+      "university": "포항공과대학교",
+      "schoolReferenceId": "bible_bb75e830036e5b4d",
+      "scope": "university",
+      "status": "official_source",
+      "title": "POSTECH 학생선발 인재상",
+      "points": [
+        {
+          "id": "leader",
+          "label": "과학공학계의 글로벌 리더",
+          "description": "학문적 재능과 열정을 발전시켜 과학공학 분야를 세계적으로 이끌 잠재력을 갖춘 사람",
+          "question": "본인의 과학공학에 대한 관심을 어떤 배움과 탐구로 발전시키고, 세계의 어떤 문제에 기여하고 싶은가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://adm-u.postech.ac.kr/wp-content/uploads/2025/05/2027%ED%95%99%EB%85%84%EB%8F%84_POSTECH_%EB%AA%A8%EC%A7%91%EC%9A%94%EA%B0%95_web.pdf",
+        "title": "POSTECH · 2027학년도 모집요강 · 05. 인재상(인쇄 9쪽)",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": 2027,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다. 2027학년도 모집요강 인쇄 9쪽의 인재상 정의를 적용했습니다."
+      }
+    },
+    {
+      "id": "official_talent_0000037",
+      "revision": 1,
+      "university": "한경국립대학교",
+      "canonicalName": "한경국립대학교",
+      "schoolReferenceId": "bible_5ddd3a74a6619f42",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "HKNU 인재상",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "도전하는 지성인",
+          "description": "스스로 배우고 미래에 도전하며 목표를 실현하려는 태도",
+          "question": "아직 잘 모르는 전공 주제에 도전한다면 무엇부터 배우고 어떻게 진행 상황을 점검하겠어요?"
+        },
+        {
+          "id": "value_2",
+          "label": "소통하는 사회인",
+          "description": "건전한 인격과 공동체 의식을 바탕으로 함께하는 태도",
+          "question": "공동체의 목표와 개인의 선택이 충돌할 때 어떤 기준으로 조율하겠어요?"
+        },
+        {
+          "id": "value_3",
+          "label": "융합형 전문인",
+          "description": "여러 지식을 연결해 자신의 꿈과 전문성을 발전시키는 힘",
+          "question": "지원 학과에서 배우고 싶은 지식을 다른 분야와 연결하면 어떤 문제에 활용할 수 있나요?"
+        }
+      ],
+      "source": {
+        "url": "https://ipsi.hknu.ac.kr/student/talent.php",
+        "title": "한경국립대학교 입학처 · 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "일부 페이지 표기에 통합 전 교명이 남아 있지만 현재 한경국립대학교 입학처의 HKNU 인재상 정의를 사용했습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000247",
+      "revision": 1,
+      "university": "한국공학대학교",
+      "canonicalName": "한국공학대학교",
+      "schoolReferenceId": "bible_85b07f768405765d",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "창의형 지식인·실천형 전문가·진취적 세계인",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "창의형 지식인",
+          "description": "열린 마음과 도전정신으로 문제를 발견하고 해결하는 힘",
+          "question": "익숙한 문제를 새로운 관점에서 정의한다면 무엇을 바꿔 볼 수 있나요? 그 판단의 근거도 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "실천형 전문가",
+          "description": "전문지식과 산학협력을 바탕으로 현장 중심의 혁신을 실천하는 태도",
+          "question": "학교에서 배운 원리를 현장에서 적용할 때 어떤 조건을 먼저 확인해야 할까요?"
+        },
+        {
+          "id": "value_3",
+          "label": "진취적 세계인",
+          "description": "개방적 태도와 비전을 가지고 변화하는 세계에 대응하는 힘",
+          "question": "지원 분야의 국제적 문제 하나를 고르고 서로 다른 지역의 조건을 어떻게 비교하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.tukorea.ac.kr/tukorea/1065/subview.do",
+        "title": "한국공학대학교 · 건학이념 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000374",
+      "revision": 1,
+      "university": "한국과학기술원",
+      "schoolReferenceId": "bible_c043bd12c44ecf96",
+      "scope": "university",
+      "status": "official_source",
+      "title": "KAIST C3 핵심가치와 학생선발 인재상",
+      "points": [
+        {
+          "id": "challenge",
+          "label": "도전",
+          "description": "새로운 길을 개척하려는 열정과 도전 의지",
+          "question": "처음 해 보는 문제를 선택한다면 어떤 기준으로 도전하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "creativity",
+          "label": "창의",
+          "description": "과학기술의 지식을 즐겁게 탐구하고 스스로 배우는 태도",
+          "question": "스스로 궁금한 문제를 조사하며 기존 설명을 새롭게 이해한 과정이나 계획을 말해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "caring",
+          "label": "배려",
+          "description": "윤리의식과 협력정신으로 사회와 인류에 기여하는 자세",
+          "question": "연구 성과와 연구 윤리 또는 공동체의 책임이 충돌한다면 어떻게 판단하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://admission.kaist.ac.kr/undergraduate/kaist/sub01",
+        "title": "KAIST 학부 입학 · 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000031",
+      "revision": 1,
+      "university": "한국교원대학교",
+      "schoolReferenceId": "bible_655f71ef96b70f0e",
+      "scope": "university",
+      "status": "official_source",
+      "title": "한국교원대학교 인재상",
+      "points": [
+        {
+          "id": "expert",
+          "label": "교육전문가",
+          "description": "지성과 실력을 바탕으로 지역과 세계를 연결하는 교육 전문성",
+          "question": "지원 분야의 전문 지식은 학생을 가르치는 데 어떻게 도움이 될까요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "innovator",
+          "label": "창의적 혁신가",
+          "description": "융합적으로 생각하고 미래 사회의 교육 대안을 찾는 사람",
+          "question": "현재 수업 방식에서 개선하고 싶은 점과 이를 바꿀 현실적인 방법을 제안해 주세요. 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "empathy",
+          "label": "공감적 리더",
+          "description": "조화로운 인성과 민주적인 지도성으로 함께 성장하는 사람",
+          "question": "학생의 의견과 교사의 판단이 다를 때 어떻게 듣고 결정하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.knue.ac.kr/www/contents.do?key=384",
+        "title": "한국교원대학교 · KNUE's Vision",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000189",
+      "revision": 1,
+      "university": "한국기술교육대학교",
+      "schoolReferenceId": "bible_b3e19565a6e48e12",
+      "scope": "university",
+      "status": "official_source",
+      "title": "기술과 사람을 잇는 다담형 인재",
+      "points": [
+        {
+          "id": "creative",
+          "label": "창의융합형",
+          "description": "지식을 연결하고 창의적으로 문제를 해결하는 능력",
+          "question": "지원 분야의 현실 문제를 다른 분야와 연결해 해결한다면 무엇을 먼저 배우겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "challenge",
+          "label": "도전지향형",
+          "description": "의사소통과 리더십으로 학습을 이끄는 능력",
+          "question": "스스로 배움을 이끌며 다른 사람과 함께 도전하려면 어떤 소통이 필요하나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "practice",
+          "label": "현장실무형 인재",
+          "description": "전공의 기초와 전문성을 현장에서 활용하는 능력",
+          "question": "관심 있는 기술을 실제 상황에 적용하기 전에 어떤 원리와 조건을 확인해야 하나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "community",
+          "label": "나우리형 인재",
+          "description": "자기관리와 대인관계, 세계 시민의식을 함께 기르는 태도",
+          "question": "기술을 개발하거나 활용할 때 자신과 다른 사람, 사회의 요구를 어떻게 함께 고려하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.koreatech.ac.kr/menu.es?mid=a10101010000",
+        "title": "한국기술교육대학교 · 교육목표 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000191",
+      "schoolReferenceId": "bible_e103e9d447079522",
+      "revision": 1,
+      "university": "한국성서대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "성서인·전문인·사회인",
+      "points": [
+        {
+          "id": "bible",
+          "label": "말씀에 기하는 성서인",
+          "description": "성서적 세계관을 갖추고 삶과 공동체의 변화를 성찰하는 사람.",
+          "question": "성서적 가치관을 배움이나 생활 속 선택에 연결한 사례를 설명해 주세요. 앞으로 실천할 계획으로 답해도 좋아요."
+        },
+        {
+          "id": "expert",
+          "label": "복음을 위한 전문인",
+          "description": "여러 지식을 연결해 바르게 사용하고 실천할 전문성을 기르는 사람.",
+          "question": "지원 전공의 지식을 어떤 문제에 사용하고 싶은가요? 지식을 바르게 사용하기 위해 지킬 원칙도 말해 주세요."
+        },
+        {
+          "id": "society",
+          "label": "화합과 관용의 사회인",
+          "description": "봉사와 서로를 존중하는 협력으로 공동체의 목표에 기여하는 사람.",
+          "question": "생각이 다른 사람과도 공동의 목표를 이루려면 어떤 태도와 역할이 필요할까요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.bible.ac.kr/ko/intro/ideology1",
+        "title": "한국성서대학교 · 교육이념과 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 교육이념 페이지의 인재상 이미지 원본을 직접 확인. 성서인·전문인·사회인과 이에 연결된 교육목표·6대 핵심역량을 요약함. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0003139",
+      "revision": 1,
+      "university": "한국에너지공과대학교",
+      "schoolReferenceId": "bible_2b8bc0e1dea4b1e7",
+      "scope": "university",
+      "status": "official_source",
+      "title": "KENTECH 인재상",
+      "points": [
+        {
+          "id": "research",
+          "label": "탁월한 연구역량",
+          "description": "미래 에너지의 새로운 가능성을 연구하고 도전하는 역량",
+          "question": "관심 있는 에너지 문제를 해결하기 위해 어떤 근거를 모으고 검증하고 싶은가요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "entrepreneurship",
+          "label": "기업가정신",
+          "description": "연구와 도전을 지역과 인류의 가치 창출로 잇는 태도",
+          "question": "새로운 에너지 기술을 실제로 사용하게 하려면 기술 성능 외에 어떤 조건을 고려해야 하나요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        },
+        {
+          "id": "global",
+          "label": "글로벌 시민의식",
+          "description": "성실과 정직을 바탕으로 세계와 협력하는 자세",
+          "question": "에너지 전환이 지역마다 다른 영향을 줄 때 어떤 기준으로 공정한 협력을 설계하겠어요? 실제 경험이 있다면 연결하고, 아직 경험이 없다면 앞으로의 실천 방법으로 답해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://admission.kentech.ac.kr/resources/sites/eng/file/2026%20%EB%B4%84%ED%95%99%EA%B8%B0%20%ED%95%99%EC%82%AC%ED%8E%B8%EB%9E%8C.pdf",
+        "title": "KENTECH · 2026 봄학기 학사편람 · KENTECH College 소개",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "공식 대학 공통 인재상을 요약했습니다. 각 학과의 고유 인재상 또는 입시 배점과 구분합니다. 질문은 앱에서 작성한 연습 질문이며 공식 기출이 아닙니다. 2026 봄학기 학사편람에 실린 대학 교육철학을 사용하며 2026학년도 입시 전용 정의로 제한하지 않습니다."
+      }
+    },
+    {
+      "id": "official_talent_0000192",
+      "schoolReferenceId": "bible_48c21babe9214203",
+      "revision": 1,
+      "university": "한국외국어대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "미래시대를 선도하는 글로벌 창의융합 인재",
+      "points": [
+        {
+          "id": "explore",
+          "label": "자주적 탐구인",
+          "description": "스스로 탐구하며 합리적으로 생각하고 폭넓은 교양을 쌓는 사람.",
+          "question": "스스로 품은 질문을 하나 고르고, 답을 찾기 위해 어떤 정보를 확인해야 할지 설명해 주세요."
+        },
+        {
+          "id": "global",
+          "label": "국제적 한국인",
+          "description": "문화의 다양성을 존중하고 세계 시민의 책임을 생각하는 사람.",
+          "question": "지원 전공과 관련된 국제 문제를 볼 때 문화 차이와 민주적 의식을 어떻게 고려하겠어요?"
+        },
+        {
+          "id": "original",
+          "label": "독창적 전문인",
+          "description": "국제적 시각과 전문 지식을 연결해 고유한 전문성을 만드는 사람.",
+          "question": "지원 전공에서 기르고 싶은 전문성을 말하고, 국제적 시각이 그 전문성에 어떤 도움을 주는지 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.hufs.ac.kr/hufs/11120/subview.do",
+        "title": "한국외국어대학교 · 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "대학 공통 인재상의 자주적 탐구인·국제적 한국인·독창적 전문인을 요약. 서울·글로벌 캠퍼스의 개별 학과 인재상이나 모집 전형 배점으로 확대하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000032",
+      "schoolReferenceId": "bible_f1315d9c83ebb02a",
+      "revision": 1,
+      "university": "한국체육대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "스포츠로 세상을 연결하는 스포츠혁신리더",
+      "points": [
+        {
+          "id": "truth",
+          "label": "진리인",
+          "description": "책임 있는 태도와 탐구를 통해 체육·스포츠 지식을 발전시키는 사람.",
+          "question": "지원 전공의 체육·스포츠 문제를 하나 고르고, 신뢰할 수 있는 근거를 어떻게 찾고 판단하겠어요?"
+        },
+        {
+          "id": "service",
+          "label": "봉사인",
+          "description": "스포츠를 통해 공동체와 인류의 행복에 기여하는 사람.",
+          "question": "스포츠가 참여하기 어려운 사람들에게도 도움이 되려면 어떤 배려와 실천이 필요할까요?"
+        },
+        {
+          "id": "creation",
+          "label": "창조인",
+          "description": "새로운 스포츠 지식을 만들고 실제 현장에 적용하는 사람.",
+          "question": "스포츠 현장에서 개선하고 싶은 점을 하나 고르고, 새로운 해결 방법과 확인 방법을 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.knsu.ac.kr/knsu/info/type-of-talent001.do",
+        "title": "한국체육대학교 · 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 인재상 페이지의 도식 원본을 직접 확인. 전체 인재상은 스포츠혁신리더이고 아래 항목은 연결된 교육목표의 진리인·봉사인·창조인. 2022-08-08은 페이지 최종 수정일임. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000194",
+      "revision": 1,
+      "university": "한국항공대학교",
+      "canonicalName": "한국항공대학교",
+      "schoolReferenceId": "bible_46b6ffc9cc5526d6",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "창의적·실용적·지도적 인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "창의적 인재",
+          "description": "항공우주와 관련 학문 분야의 미래를 개척하는 태도",
+          "question": "지원 분야에서 기존 방법의 한계를 바꾸려면 어떤 새로운 질문을 던질 수 있나요?"
+        },
+        {
+          "id": "value_2",
+          "label": "실용적 인재",
+          "description": "다양한 학문의 이론을 실제 사회 문제에 응용하는 힘",
+          "question": "배운 이론과 실제 결과가 다를 때 적용 조건을 어떻게 점검하겠어요?"
+        },
+        {
+          "id": "value_3",
+          "label": "지도적 인재",
+          "description": "화합과 봉사정신으로 국제사회에 기여하는 균형 잡힌 태도",
+          "question": "서로 다른 전문 지식을 가진 팀원들과 협력할 때 어떤 방식으로 판단과 책임을 나누겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://kau.ac.kr/doc/aboutkau/rules/5-1-34.pdf",
+        "title": "한국항공대학교 · 교과과정 편성 및 운영 규정 별표 2",
+        "checkedAt": "2026-10-13",
+        "publishedAt": "2026-02-09",
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "2026-02-09 개정 규정의 대학 공통 교육목적 체계도에서 인재상 정의를 확인했습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000196",
+      "revision": 1,
+      "university": "한동대학교",
+      "canonicalName": "한동대학교",
+      "schoolReferenceId": "bible_fe422a25a8428020",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "‘工’자형 글로벌 창의융합인재",
+      "points": [
+        {
+          "id": "value_1",
+          "label": "인성과 영성",
+          "description": "정직과 봉사의 가치를 바탕으로 책임을 다하는 태도",
+          "question": "관심 분야에서 빠른 성과와 정직한 과정이 충돌할 때 어떤 선택을 하겠어요? 자신의 판단 근거를 설명해 주세요."
+        },
+        {
+          "id": "value_2",
+          "label": "창의·융합",
+          "description": "다학제 지식을 연결하고 논리적 사고로 문제를 해결하는 힘",
+          "question": "지원 분야의 사회 문제를 서로 다른 학문의 관점으로 설명하면 해결 방법이 어떻게 달라질까요?"
+        },
+        {
+          "id": "value_3",
+          "label": "글로벌 섬김",
+          "description": "지역과 세계의 문제를 이해하고 인류에 기여하는 태도",
+          "question": "자신의 전공 공부가 지역이나 세계의 사람들에게 어떻게 도움이 될 수 있나요? 아직 경험이 없다면 앞으로의 계획으로 설명해 주세요."
+        }
+      ],
+      "source": {
+        "url": "https://www.handong.edu/kor/about/vision/V2020/vision2025/",
+        "title": "한동대학교 · 이념과 비전 — 한동의 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "대학 공통",
+        "note": "현재 공개된 대학 공통 정의를 2026학년도 공식 입학 요강(https://cms.handong.edu/ext/bbs/download.dcp?id=15589) 4쪽과 교차 확인했습니다. 종교적 동의나 신앙 여부를 점수화하지 않습니다. 공식 내용을 요약했으며 질문은 각자ON 연습용으로 작성했습니다. 공식 기출이나 전형별 평가 배점이 아닙니다."
+      }
+    },
+    {
+      "id": "official_talent_0000198",
+      "schoolReferenceId": "bible_2c2a9c7869ea2c24",
+      "revision": 1,
+      "university": "한림대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "인류 보편의 가치를 실천하는 창의적 선진인재",
+      "points": [
+        {
+          "id": "convergence",
+          "label": "융합적 인재",
+          "description": "지식의 경계를 넘어 협력하며 지속 가능한 사회의 문제에 도전하는 사람.",
+          "question": "지원 전공의 문제를 해결할 때 다른 분야와 협력해야 한다면 어떤 역할과 지식이 필요할까요?"
+        },
+        {
+          "id": "self",
+          "label": "자기주도적 인재",
+          "description": "스스로 삶과 학습을 설계하며 역량을 개발하는 사람.",
+          "question": "본인의 학습을 돌아보고 다음 목표를 세운 과정이나 앞으로의 계획을 설명해 주세요."
+        },
+        {
+          "id": "creative",
+          "label": "창의적 인재",
+          "description": "열린 사고로 새로운 과제와 해결 방법에 도전하는 사람.",
+          "question": "익숙한 접근에서 벗어나 탐구해 보고 싶은 질문은 무엇인가요?"
+        },
+        {
+          "id": "practical",
+          "label": "실용적 인재",
+          "description": "사회 문제에 합리적이고 효과적인 해법을 구현하는 사람.",
+          "question": "제안한 해결 방법이 실제로 도움이 되는지는 어떤 자료와 기준으로 확인하겠어요?"
+        },
+        {
+          "id": "harmony",
+          "label": "조화로운 인재",
+          "description": "배려와 소통, 나눔으로 다른 사람과 함께 성장하는 사람.",
+          "question": "다른 처지의 사람과 함께 일할 때 어떤 의견을 먼저 듣고 어떻게 반영하겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.hallym.ac.kr/hallym/401/subview.do",
+        "title": "한림대학교 · 교육이념 및 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 대학 공통 인재상과 창의·융합·실용·조화의 세부 방향을 요약. 일송자유교양대학만의 인재상이나 옛 학과 자료를 대학 공통 정의로 대신하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000203",
+      "schoolReferenceId": "bible_773d4913d4213b86",
+      "revision": 1,
+      "university": "한양대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "교양인·전문인·실용인·세계인·봉사인",
+      "points": [
+        {
+          "id": "culture",
+          "label": "교양인",
+          "description": "근면·정직·겸손을 바탕으로 폭넓은 배움과 인성을 기르는 사람.",
+          "question": "학습이나 협력에서 정직과 겸손이 왜 필요한가요? 본인의 선택 또는 실천 계획을 연결해 설명해 주세요."
+        },
+        {
+          "id": "expert",
+          "label": "전문인",
+          "description": "관심 분야의 지식과 기술을 깊이 배우는 사람.",
+          "question": "지원 전공에서 깊이 배우고 싶은 지식 하나를 고르고, 지금의 배움과 어떻게 이어지는지 말해 주세요."
+        },
+        {
+          "id": "practical",
+          "label": "실용인",
+          "description": "배운 지식을 실제 사회의 문제 해결에 응용하는 사람.",
+          "question": "배운 개념 하나를 실제 문제에 적용한다면 어떻게 적용하고 효과를 확인하겠어요?"
+        },
+        {
+          "id": "world",
+          "label": "세계인",
+          "description": "다양한 문화를 이해하며 세계와 함께 소통하는 사람.",
+          "question": "전공 문제를 국제적인 관점에서 이해할 때 어떤 문화적 차이를 고려해야 할까요?"
+        },
+        {
+          "id": "service",
+          "label": "봉사인",
+          "description": "배움과 역량으로 지역사회와 인류의 발전에 기여하는 사람.",
+          "question": "지원 전공의 지식으로 다른 사람을 돕는다면 누구에게 어떤 도움부터 줄 수 있을까요?"
+        }
+      ],
+      "source": {
+        "url": "https://site.hanyang.ac.kr/web/academic/-31",
+        "title": "한양대학교 서울 학사안내 · 교육과정 개편철학 및 전략",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "서울 학사안내가 명시한 사랑의 실천을 구현하는 공통 5대 교육목표·인재상 방향을 요약. ERICA의 특성화 교육목표나 전형별 평가 기준을 서울 모집단위에 혼합하지 않음. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    },
+    {
+      "id": "official_talent_0000212",
+      "schoolReferenceId": "bible_960063db6fe40b63",
+      "revision": 1,
+      "university": "홍익대학교",
+      "scope": "university",
+      "status": "official_source",
+      "definitionKind": "talent",
+      "title": "국가와 인류 발전에 기여하는 자주·창조·협동적 인재",
+      "points": [
+        {
+          "id": "independent",
+          "label": "자주적인 교양인",
+          "description": "스스로 책임을 다하며 근거에 맞게 사고하고 소통하는 사람.",
+          "question": "관심 문제에 대한 본인의 의견을 근거와 함께 말하고, 반대 의견에 어떻게 응답하겠어요?"
+        },
+        {
+          "id": "creative",
+          "label": "창조적 전문인",
+          "description": "학문과 예술을 연결해 새로운 문제 해결과 가치를 만드는 사람.",
+          "question": "지원 분야의 문제를 기존 방식과 달리 해결한다면 어떤 학문이나 예술적 관점을 연결할 수 있을까요?"
+        },
+        {
+          "id": "cooperative",
+          "label": "협동적 사회인",
+          "description": "공동의 행복을 위해 협력하고 사회 발전에 참여하는 사람.",
+          "question": "공동의 목표와 개인의 의견이 충돌할 때, 함께 이익을 얻을 수 있는 방법을 어떻게 찾겠어요?"
+        }
+      ],
+      "source": {
+        "url": "https://www.hongik.ac.kr/kr/introduction/educational-ideology.do",
+        "title": "홍익대학교 · 교육이념과 인재상",
+        "checkedAt": "2026-10-13",
+        "publishedAt": null,
+        "applicableYear": null,
+        "scope": "university",
+        "note": "현재 대학 공통 인재상과 핵심역량을 요약. 서울·세종의 개별 학과 교육목표나 선발 기준은 별도 정보임. 질문은 공식 기출이 아닌 인재상·교육목표에 따른 앱 연습 질문."
+      }
+    }
+  ]
+}

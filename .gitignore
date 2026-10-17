@@ -1,0 +1,27 @@
+node_modules/
+.next/
+.turbo/
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+.local/
+test-results/
+playwright-report/
+*.tsbuildinfo
+*.log
+
+# Private source materials and local review artifacts
+/기존 자료/
+/확정안/
+/2027_면접바이블_*
+/각자의답_PRD_*
+/Whisper 도입 관련.md
+/design-qa.md
+/qa.html
+/.impeccable/
+*.pem
+*.key
+*service-account*.json
+

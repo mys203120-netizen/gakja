@@ -1,0 +1,6 @@
+.question-carry { position:fixed; z-index:85; pointer-events:none; margin:0; padding:0; white-space:pre-wrap; word-break:keep-all; overflow-wrap:anywhere; background:#fffffff2; }
+.study-receipt-dot { position:fixed; z-index:120; left:-5px; top:-5px; width:10px; height:10px; border-radius:50%; background:#00ee77; pointer-events:none; box-shadow:0 0 0 5px #00ee7715; }
+.interviewer-avatar.is-listening svg { animation:none; }
+.interviewer-gesture { transform-origin:90px 92px; }
+.interviewer-eyes { transform-box:fill-box; }
+@media(prefers-reduced-motion:reduce) { .question-carry,.study-receipt-dot { display:none; } }

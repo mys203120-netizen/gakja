@@ -1,0 +1,57 @@
+/* A conversation has two sides, with room to read the answer. */
+.app-shell .on-workspace .chat-messages { padding: 18px 8px 20px 0; }
+.app-shell .on-workspace .message { align-items: flex-start; gap: 11px; margin-bottom: 28px; }
+.app-shell .on-workspace .message.assistant { justify-content: flex-start; padding-right: 24px; }
+.app-shell .on-workspace .message.assistant .message-avatar { width: 27px; height: 27px; margin-top: 2px; background: transparent; }
+.app-shell .on-workspace .message.assistant .message-body { flex: 1; max-width: 100%; }
+.app-shell .on-workspace .message.assistant .message-author { display: block; font-size: 12px; color: #64707c; margin-bottom: 9px; }
+.app-shell .on-workspace .message.assistant .message-content { padding: 0; white-space: normal; font-size: 16px; line-height: 1.75; color: #28323e; }
+.app-shell .on-workspace .message.user { justify-content: flex-end; padding-left: 56px; }
+.app-shell .on-workspace .message.user :is(.message-avatar,.message-author) { display: none; }
+.app-shell .on-workspace .message.user .message-body { flex: 0 1 auto; max-width: min(78%,680px); }
+.app-shell .on-workspace .message.user .message-content {
+  margin-top: 0;
+  max-width: 100%;
+  padding: 13px 17px;
+  border: 0;
+  border-radius: 16px 16px 4px 16px;
+  background: #edf2fb;
+  color: #304667;
+  font-size: 15px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.app-shell .on-workspace .message-sources { column-gap: 16px; row-gap: 6px; margin: 14px 0 8px; }
+.app-shell .on-workspace .message-sources button { color: #386f65; font-size: 12px; padding: 4px 0; }
+.app-shell .on-workspace .message-save { color: #697c91; font-size: 12px; margin-top: 10px; }
+.app-shell .on-workspace .chat-context { margin-bottom: 2px; }
+.app-shell .on-workspace .on-starter-list { display: grid; gap: 6px; }
+.app-shell .on-workspace .on-starter-list button { padding: 14px 15px; border: 0; border-radius: 7px; background: #f6f8fb; font-size: 15px; line-height: 1.6; }
+.app-shell .on-workspace .on-starter-list button:hover:enabled { background: #edf2fb; color: #304e78; }
+.app-shell .on-workspace .on-starter-list button svg { flex-shrink: 0; color: #6580a2; }
+.app-shell .on-workspace .chat-history > a.active { background: #eff3f9; color: #38567a; }
+.app-shell .on-workspace .typing-dots { padding-top: 10px; }
+
+@media (max-width: 700px) {
+  .app-shell .app-body:has(.on-workspace) { display:flex; flex-direction:column; height:calc(100dvh - 71px - env(safe-area-inset-bottom)); min-height:0; }
+  .app-shell .app-body:has(.on-workspace) > :is(.topbar,.mobile-tools) { flex-shrink:0; }
+  .app-shell .app-body:has(.on-workspace) > .app-footer { display:none; }
+  .app-shell .main-content:has(.on-workspace) { display:flex; flex-direction:column; flex:1; min-height:0; padding-top:18px; padding-bottom:12px; }
+  .app-shell .main-content:has(.on-workspace) > .page-motion { display:flex; flex-direction:column; flex:1; min-height:0; }
+  .app-shell .page-motion:has(.on-workspace) > :is(.breadcrumb,.page-title,.assisted-banner,.chat-mobile-history,.inline-notice) { flex-shrink:0; }
+  .app-shell .on-workspace { flex:1; min-height:0; height:auto; }
+  .app-shell .chat-mobile-history[open] { max-height:140px; overflow:auto; scrollbar-width:thin; }
+  .app-shell .on-workspace .chat-context { flex-shrink:0; }
+  .app-shell .on-workspace [data-chat-composer] { flex-shrink:0; }
+  .app-shell .on-workspace .chat-messages { padding: 14px 3px 16px 0; }
+  .app-shell .on-workspace .message { gap: 8px; margin-bottom: 23px; }
+  .app-shell .on-workspace .message.assistant { padding-right: 0; }
+  .app-shell .on-workspace .message.assistant .message-avatar { width: 23px; height: 23px; }
+  .app-shell .on-workspace .message.assistant .message-content { font-size: 15px; }
+  .app-shell .on-workspace .message.user { padding-left: 24px; }
+  .app-shell .on-workspace .message.user .message-body { max-width: 88%; }
+  .app-shell .on-workspace .message.user .message-content { padding: 11px 14px; font-size: 14px; }
+  .app-shell .on-workspace .on-starter-list button { font-size: 14px; padding: 12px 13px; }
+}

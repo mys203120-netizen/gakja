@@ -1,0 +1,1 @@
+{"tasks":{"build":{"dependsOn":["^build"],"outputs":[".next/**","!.next/cache/**"],"env":["DATABASE_URL","DATABASE_SSL","AUTH_MODE","ALLOW_LOCAL_AUTH","OPENAI_API_KEY","OPENAI_MODEL","NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_ANON_KEY","SUPABASE_SERVICE_ROLE_KEY"]},"typecheck":{"dependsOn":["^typecheck"]},"dev":{"cache":false,"persistent":true}}}

@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+const module={exports:{}};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/lib/quiz-session-view.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,Set});
+const {recallRating,quizResponseNeedsReview,quizAssistanceLabel,savedQuizSubmission}=module.exports;
+let checks=0;const check=(value,message)=>{assert.ok(value,message);checks++;};
+check(recallRating('unchecked')==='hard','saving an unchecked answer does not schedule it as remembered');
+check(recallRating('remembered')==='good','only an explicit remembered self-check gets the ordinary interval');
+for(const status of ['uncertain','needs_confirmation']){
+  check(recallRating(status)==='again','uncertain or fact-check answers return soon');
+  check(quizResponseNeedsReview({outcome:null,rating:'good',data:{recall_state:status}}),'review status overrides a legacy good rating');
+}
+check(quizResponseNeedsReview({outcome:null,rating:'hard',data:{recall_state:'unchecked'}}),'unchecked self-check remains visible for review');
+check(quizResponseNeedsReview({outcome:null,rating:'good',data:{}}),'a legacy ungraded save is not proof of recall');
+check(!quizResponseNeedsReview({outcome:null,rating:'good',data:{recall_state:'remembered'}}),'an explicit remembered answer stays in saved answers');
+check(!quizResponseNeedsReview({outcome:true,rating:'good',data:{}}),'an objectively correct choice keeps its recorded outcome');
+check(quizResponseNeedsReview({outcome:true,rating:'again',data:{}}),'an explicitly requested revisit is respected');
+check(quizResponseNeedsReview({outcome:null,timed_out:true,data:{recall_state:'remembered'}}),'a time-out remains reviewable');
+check(quizAssistanceLabel({data:{assisted:false}})==='도움 기록 미확인','legacy absence is unknown');
+check(quizAssistanceLabel({data:{assistance_recorded:true,assisted:false}})==='','recorded no-help does not add distracting metadata');
+check(quizAssistanceLabel({data:{assisted:true}})==='도움 사용','a legacy positive assistance flag does not invent AI use');
+check(quizAssistanceLabel({hint_used:true,data:{helpKinds:['evidence','video','evidence']}})==='근거 확인 · 영상 확인 · 힌트 사용','source, video and hint stay distinct and deduplicated');
+check(quizAssistanceLabel({data:{helpKinds:['ai_partial']}})==='AI 도움 일부 확인','interrupted visible AI help remains assistance');
+const rows=[{item_index:1,data:{requestId:'foreign'}},{item_index:0,data:{requestId:'same'},response:'원래 답변'},{item_index:1,data:{request_id:'same'},response:'다음 답변'}];
+check(savedQuizSubmission(rows,{itemIndex:0,requestId:'same'})?.response==='원래 답변','lost-response recovery binds both request and item');
+check(savedQuizSubmission(rows,{itemIndex:1,requestId:'same'})?.response==='다음 답변','snake-case historical request receipt also recovers');
+check(!savedQuizSubmission(rows,{itemIndex:2,requestId:'same'}),'a different item cannot acknowledge the pending answer');
+console.log(`Quiz session view: ${checks} assertions passed; no DB, model or device calls.`);

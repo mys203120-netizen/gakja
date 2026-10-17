@@ -1,0 +1,55 @@
+.studentShell { --sidebar-width:72px; }
+.studentShell :global(.sidebar) { width:72px; padding:20px 12px 14px; overflow:visible; background:#f0f4f9; border-right:0; }
+.studentShell :global(.sidebar-brand) { justify-content:center!important; width:48px; margin:0 0 35px; }
+.studentShell :global(.sidebar-brand .service-wordmark) { display:none; }
+.studentShell :global(.app-body) { margin-left:72px; }
+.studentShell :global(.sidebar-navigation) { overflow:visible; flex:1; }
+.studentShell :global(.main-nav) { gap:10px; }
+.studentShell :global(.main-nav)>a { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; width:48px; height:60px; padding:6px 0; gap:5px; border-radius:12px; }
+.studentShell :global(.sidebar .sidebar-navigation .main-nav)>a>.navigationLabel { display:block; background:transparent; color:inherit; border-radius:0; box-shadow:none; white-space:nowrap; font-size:11px; font-weight:450; line-height:1.4; }
+.studentShell :global(.main-nav)>a:focus-visible { outline:2px solid #20834e; outline-offset:4px; }
+.studentShell :global(.main-nav)>a>svg { width:21px; height:21px; }
+.studentShell :global(.sidebar-selection) { border-radius:16px; background:#dce8fc; }
+.studentShell :global(.sidebar-account) { padding-top:15px; }
+.studentShell :global(.sidebar-account .account-trigger) { width:48px; padding:8px; justify-content:center; }
+.studentShell :global(.sidebar-account .account-name),.studentShell :global(.sidebar-account .account-chevron) { display:none; }
+.studentShell :global(.main-content) { max-width:1640px; padding-inline:clamp(28px,4.2vw,72px); }
+.studentShell :global(.topbar) { padding-inline:clamp(28px,4.2vw,72px); }
+.studentShell :global(.topbar .target-select select) { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.studentShell :global(.topbar .icon-button).assistantLink { width:auto; gap:6px; padding-inline:10px; font-size:13px; white-space:nowrap; }
+.studentShell :global(.mobile-tools) { display:none!important; }
+.studentShell :global(.app-footer) { padding-inline:clamp(28px,4.2vw,72px); }
+.sectionNavigation { display:flex; align-items:center; gap:8px; overflow-x:auto; scrollbar-width:none; margin:-2px 0 24px; padding:2px 0 6px; }
+.sectionNavigation::-webkit-scrollbar { display:none; }
+.sectionNavigation>a { position:relative; display:flex; align-items:center; min-height:36px; flex-shrink:0; padding:8px 14px; border-radius:20px; color:var(--clarity-muted); font-size:13px; font-weight:500; line-height:1.4; white-space:nowrap; text-decoration:none; }
+.sectionNavigation>a[aria-current=page] { color:#185abc; background:#e8f0fe; }
+.sectionNavigation>a:hover { background:#f1f5fa; }
+.sectionNavigation>a:hover { color:#234832; }
+.sectionNavigation>a:focus-visible { outline:2px solid #38835b; outline-offset:4px; }
+.sectionNavigation>.factLink { margin-left:auto; font-size:13px; }
+.practiceHome { max-width:1130px; }
+.practiceHome header>p { margin:0 0 8px; color:#738078; font-size:14px; }
+.practiceHome h1 { margin:0 0 32px; font-size:34px; font-weight:550; }
+.resume { display:flex; justify-content:space-between; align-items:center; gap:15px; padding:18px 22px; margin-bottom:26px; background:#f1f7f3; border-radius:12px; color:#4f6858; font-size:14px; }
+.resume a,.practiceLinks a,.openPaths a { display:inline-flex; align-items:center; gap:8px; font-size:14px; }
+.practiceChoices { display:grid; grid-template-columns:1fr 1fr; gap:36px; padding:12px 0 34px; }
+.practiceChoices>a { display:flex; gap:20px; align-items:flex-start; padding:30px 8px; text-decoration:none; color:#22352a; }
+.practiceChoices>a>svg:first-child { width:44px; height:44px; padding:10px; border-radius:50%; background:var(--clarity-mint); color:var(--clarity-green); flex-shrink:0; margin-top:1px; }
+.practiceChoices>a>svg:last-child { margin-left:auto; margin-top:7px; flex-shrink:0; color:#7b8d81; }
+.practiceChoices h2 { font-size:24px; font-weight:450; margin:0 0 10px; }
+.practiceChoices p { margin:0 0 10px; font-size:16px; line-height:1.7; color:#55665b; }
+.practiceChoices span { color:#849187; font-size:13px; }
+.practiceChoices>a:hover h2 { color:#00874e; }
+.practiceChoices>a:focus-visible { outline:2px solid #2b8154; outline-offset:5px; border-radius:8px; }
+.practiceLinks { display:flex; flex-wrap:wrap; gap:20px 30px; padding:18px 8px 35px; color:#5d6b62; }
+.openPaths { display:flex; flex-wrap:wrap; gap:25px; margin-top:22px; padding:22px 8px; background:transparent; color:var(--clarity-muted); }
+@media(min-width:701px) { .studentShell:has(:global(.quiz-session)) :global(.sidebar),.studentShell:has(:global(.interview-room)) :global(.sidebar) { display:flex; } .studentShell:has(:global(.quiz-session)) :global(.app-body),.studentShell:has(:global(.interview-room)) :global(.app-body) { margin-left:72px; } }
+@media(max-width:1000px) { .studentShell :global(.main-content),.studentShell :global(.topbar) { padding-inline:28px; } .practiceChoices { gap:15px; } }
+@media(max-width:700px) { .studentShell :global(.topbar .icon-button).assistantLink { width:36px; padding-inline:0; gap:0; } .studentShell .assistantLink>span { display:none; } .studentShell :global(.sidebar) { display:none; } .studentShell :global(.app-body) { margin-left:0; } .studentShell :global(.main-content) { padding:22px 20px calc(71px + 24px + env(safe-area-inset-bottom, 0px)); } .studentShell :global(.topbar) { padding-inline:18px; } .studentShell :global(.mobile-nav) { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); } .studentShell :global(.mobile-nav)>a { min-width:0; } .sectionNavigation { gap:6px; margin-bottom:20px; } .sectionNavigation>a { min-height:44px; padding-inline:12px; } .sectionNavigation>.factLink { margin-left:0; } .sectionNavigation>a { font-size:13px; } .practiceHome h1 { font-size:28px; margin-bottom:22px; } .practiceChoices { grid-template-columns:1fr; gap:0; padding-bottom:12px; } .practiceChoices>a { padding:25px 2px; gap:16px; } .practiceChoices h2 { font-size:23px; } .practiceChoices p { font-size:14px; } .practiceLinks { gap:16px 25px; padding-left:2px; } .resume { align-items:flex-start; flex-direction:column; padding:16px; } .openPaths { padding-left:2px; gap:15px; } }
+
+@media(max-width:700px) {
+ .practiceLinks { gap:8px 18px; padding:10px 0 16px; }
+ .practiceLinks a,.openPaths a,.resume a { min-height:44px; line-height:1.6; }
+ .openPaths { gap:8px 18px; margin-top:8px; padding:16px 0; border-top:1px solid var(--clarity-line); }
+ .practiceChoices { padding-bottom:16px; }
+}

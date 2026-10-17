@@ -1,0 +1,125 @@
+import {registerReviewedSchool} from './school-registration-fixture.mts';
+import assert from 'node:assert/strict';
+import {randomUUID,createHash} from 'node:crypto';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import pg from 'pg';
+import {loadProjectEnv,projectRoot} from '../scripts/load-env.mjs';
+loadProjectEnv();
+const base=process.env.SMOKE_BASE_URL || JSON.parse(readFileSync(join(projectRoot,'.local/server.json'),'utf8')).url;
+if(process.env.AUTH_MODE!=='local' || !['localhost','127.0.0.1'].includes(new URL(base).hostname) || !['localhost','127.0.0.1'].includes(new URL(process.env.DATABASE_URL!).hostname))throw Error('Local synthetic fixtures only');
+const db=new pg.Client({connectionString:process.env.DATABASE_URL});
+const students=[randomUUID(),randomUUID()],tokens=[randomUUID(),randomUUID()],prefix='school-task-'+randomUUID();let checks=0;
+function check(value:unknown,label:string){assert.ok(value,label);checks++;}
+async function request(actor:number,path:string,body?:unknown){const response=await fetch(base+path,{method:body?'POST':'GET',headers:{Origin:base,Cookie:'gakja_session='+tokens[actor],...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});return {status:response.status,body:await response.json()};}
+async function action(actor:number,body:Record<string,unknown>){return request(actor,'/api/learning',{requestId:randomUUID(),...body});}
+await db.connect();
+try{
+  for(let i=0;i<students.length;i++){
+    await db.query("insert into profiles(id,email,name,role) values($1,$2,'학교 과제 합성 검증','student')",[students[i],`${prefix}-${i}@gakja.test`]);
+    await db.query("insert into sessions(id,user_id,expires_at) values($1,$2,now()+interval '1 hour')",[createHash('sha256').update(tokens[i]).digest('hex'),students[i]]);
+  }
+  const catalogue=(await request(0,'/api/schools')).body.catalog;
+  const school=catalogue.find((item:any)=>item.canonicalName==='서울시립대학교');
+  const departments=(await request(0,'/api/schools/catalog?schoolId='+school.id)).body.school.departments;
+  const environment=departments.find((item:any)=>item.name==='환경공학부'),other=departments.find((item:any)=>item.name!==environment.name);
+  const target=(await registerReviewedSchool((path,body)=>request(0,path,body),{referenceId:school.id,departmentId:environment.id,admissionYear:2027,track:'합성 학교 과제'})).body.target;
+  const otherTarget=(await registerReviewedSchool((path,body)=>request(0,path,body),{referenceId:school.id,departmentId:other.id,admissionYear:2027,track:'합성 학교 과제'})).body.target;
+  const pool=(await request(0,`/api/quiz?targetId=${target.id}&mode=answer`)).body;
+  const question=pool.library.answer.find((item:any)=>item.talent_profile?.scope==='department'&&item.talent_profile?.point.id==='ethics');
+  check(question,'actual environment department ethics practice is available');
+  check((await action(0,{action:'assignment_create',memoryItemIds:['not-published']})).status===409,'personal assignment still requires published student content');
+  check((await action(0,{action:'assignment_create',questionIds:[question.question_id]})).status===400,'school task requires a selected target');
+  check((await action(0,{action:'assignment_create',targetId:target.id,questionIds:[question.question_id],memoryItemIds:['any']})).status===400,'personal and school item inputs cannot be mixed');
+  check((await action(0,{action:'assignment_create',targetId:target.id,questionIds:[question.question_id,question.question_id]})).status===400,'duplicate questions rejected');
+  check((await action(1,{action:'assignment_create',targetId:target.id,questionIds:[question.question_id]})).status===404,'another student cannot use this target');
+  check((await action(0,{action:'assignment_create',targetId:otherTarget.id,questionIds:[question.question_id]})).status===404,'department-specific talent cannot become another department task');
+  const key=randomUUID(),createBody={action:'assignment_create',requestId:key,targetId:target.id,questionIds:[question.question_id],source_kind:'personal',source_snapshot:{title:'forged-source'},correct:true};
+  const created=await request(0,'/api/learning',createBody);check(created.status===200,'no-record student can create a real assigned task');
+  const task=created.body.assignment,item=task.items[0];
+  check(task.package_id===null&&task.content_version===0&&task.state==='assigned','public task has a real lifecycle and no fake private package');
+  check(task.source_kind==='common'&&task.target_id===target.id&&task.target_snapshot.department===environment.name,'task fixes actual owned school and department');
+  check(item.id===question.id&&item.question_id===question.question_id,'task and free Q&A use the same practice identity');
+  check(item.common_revision===question.common_revision&&item.source_snapshot.url===question.source_snapshot.url,'actual approved revision and official source exported');
+  check(!JSON.stringify(task).includes('forged-source')&&!Object.hasOwn(item,'modelAnswer')&&!Object.hasOwn(item,'correct_option_id'),'client source/key forgery cannot enter task');
+  const stored=(await db.query('select items from quiz_assignments where id=$1',[task.id])).rows[0].items;
+  async function rejectsShape(sourceKind:string,items:unknown,sourceSnapshot:unknown){try{await db.query('insert into quiz_assignments(student_id,assigned_by,title,package_id,content_version,items,source_kind,target_id,target_snapshot,source_snapshot) values($1,$1,\'bad shape\',null,0,$2,$3,$4,$5,$6)',[students[0],JSON.stringify(items),sourceKind,target.id,JSON.stringify(task.target_snapshot),JSON.stringify(sourceSnapshot)]);return false;}catch(error:any){return error.code==='23514';}}
+  check(await rejectsShape('common',stored,{}),'missing public-source index cannot pass a nullable PostgreSQL CHECK');
+  check(await rejectsShape('personal',stored,task.source_snapshot),'private task cannot bypass published-package FK with null package');
+  check(await rejectsShape('common',stored.map((row:any)=>({...row,evaluation_method:'reviewed_correct_answer'})),task.source_snapshot),'public personal values cannot acquire an objective answer key at DB layer');
+  const duplicated=await request(0,'/api/learning',createBody);check(duplicated.body.assignment.id===task.id,'same create request creates one task');
+  check((await request(0,'/api/learning',{...createBody,title:'different-title'})).status===409,'same request key cannot change assignment input');
+  check((await action(1,{action:'assignment_start',assignmentId:task.id})).status===403,'another student cannot start the task');
+  check((await action(0,{action:'assignment_start',assignmentId:task.id})).body.assignment.state==='in_progress','real task start works before private publication');
+  check((await action(0,{action:'assignment_submit',assignmentId:task.id,responses:[{memoryItemId:'foreign-item',response:'fake',rating:'good'}]})).status===400,'foreign response item rejected');
+  const submitBody={action:'assignment_submit',requestId:randomUUID(),assignmentId:task.id,responses:[{memoryItemId:item.memory_item_id,response:'[합성 검증] 직접 경험은 없지만 위험을 확인하고 주변 사람을 배려하는 실천 계획을 세우겠습니다.',rating:'good',selfCheckedMeanings:item.required_meaning_elements,correct:true,source_snapshot:{title:'forged-answer'},target_id:otherTarget.id}]};
+  const submitted=await request(0,'/api/learning',submitBody);check(submitted.status===200,'school values answer is submitted without invented personal experiences');
+  check(submitted.body.results[0].correct===null&&submitted.body.results[0].evaluation_method==='self_check','personal values are not graded by keyword or rating');
+  check(submitted.body.assignment.state==='submitted','self-check is submission, not automatic factual mastery');
+  const attempt=submitted.body.assignment.attempts[0];
+  check(attempt.response.target_id===target.id&&attempt.response.target_snapshot.department===environment.name&&attempt.response.common_revision===item.common_revision,'submitted answer retains server-owned source/target metadata');
+  check(!JSON.stringify(attempt).includes('forged-answer'),'client grade and source fields are stripped');
+  check((await request(0,'/api/learning',submitBody)).body.assignment.attempts[0].id===attempt.id,'duplicate submit does not add another answer');
+  check((await action(0,{action:'assignment_submit',assignmentId:task.id,responses:submitBody.responses})).status===409,'a new submit request cannot resubmit a locked task');
+  const [event]=(await db.query("select data from study_session_events where student_id=$1 and kind='assignment_submission' and source_id=$2",[students[0],attempt.id])).rows;
+  check(event.data.questionId===item.question_id&&event.data.target_id===target.id&&event.data.common_revision===item.common_revision&&event.data.verified===false,'report event fixes same question/source without false correctness');
+  const [memory]=(await db.query('select data from memory_attempts where student_id=$1 and memory_item_id=$2',[students[0],item.id])).rows;
+  check(memory.data.correct===null&&memory.data.target_snapshot.department===environment.name,'future recall keeps the same owned school context');
+  const version=submitted.body.data.answerRevisions.find((row:any)=>row.assignment_id===task.id);
+  check(version.question_id===item.question_id&&version.source_kind==='common'&&version.source_type===item.source_type&&version.common_revision===item.common_revision,'assignment answer joins the real common-question answer history');
+  check(version.target_snapshot.department===environment.name&&version.question===item.prompt,'comparison uses saved prompt and selected target');
+  const retry=(await action(0,{action:'assignment_retry',assignmentId:task.id})).body.assignment;
+  check(retry.parent_assignment_id===task.id&&retry.items[0].id===item.id&&retry.items[0].source_snapshot.url===item.source_snapshot.url,'retry copies immutable school source and question identity');
+  check((await action(0,{action:'assignment_retry',assignmentId:task.id})).body.assignment.id===retry.id,'one active retry reused');
+  await db.query('update support_targets set data=data || $3::jsonb where id=$1 and student_id=$2',[target.id,students[0],JSON.stringify({major:other.name,department:other.name,department_catalog_id:other.id})]);
+  check((await action(0,{action:'assignment_start',assignmentId:retry.id})).status===200,'historic retry remains usable after target changes');
+  const recalled=await action(0,{action:'assignment_submit',assignmentId:retry.id,responses:[{memoryItemId:item.memory_item_id,response:'',rating:'again',cannotRecall:true}]});
+  check(recalled.status===200&&recalled.body.assignment.state==='retry_due','not recalled school value becomes a real retry task');
+  check(recalled.body.assignment.attempts[0].response.target_snapshot.department===environment.name,'old task not reinterpreted using changed department');
+  check(!(await db.query('select id from student_confirmations where student_id=$1',[students[0]])).rows.length,'a values practice is not misclassified as unconfirmed student-record fact');
+  check((await action(0,{action:'assignment_create',targetId:target.id,questionIds:[item.question_id]})).status===404,'new task cannot borrow stale department talent');
+  const currentGeneral=await action(0,{action:'assignment_create',targetId:target.id,questionIds:['common_motivation']});
+  check(currentGeneral.status===200&&currentGeneral.body.assignment.target_snapshot.department===other.name,'new general task follows current school/department');
+  const pack=prefix+'-pack';
+  const activity={id:prefix+'-activity',title:'역할을 나누어 실험 진행',area:'동아리',fact_confirmation:'confirmed_from_record',source_ref_ids:[prefix+'-record'],priority_assignments:[]};
+  const privateMemory={id:prefix+'-memory',question_id:prefix+'-personal-q',prompt:'정확한 개념',kind:'short_answer',category:'concept',activity_ids:[],source_ref_ids:[],memory_keywords:[],verification_status:'approved',evaluation_method:'reviewed_correct_answer',accepted_answers:['정답']};
+  const learning={activities:[activity,{...activity,id:prefix+'-disputed',fact_confirmation:'needs_confirmation'}],questions:[],memory_items:[privateMemory],answer_scripts:[],answer_designs:[],support_targets:[],student_context:{},source_refs:[{id:prefix+'-record',type:'student_record',revision:1,quote:'실험 진행 중 역할을 나누어 조율함',area:'동아리'}]};
+  await db.query('insert into production_links(id,student_id) values($1,$2)',[pack,students[0]]);
+  await db.query('insert into content_packages(id,student_id,active_version) values($1,$2,1)',[pack,students[0]]);
+  await db.query("insert into content_versions(package_id,version,data,learning_hash,status,production_job_ref) values($1,1,$2,$3,'published',$1)",[pack,JSON.stringify(learning),createHash('sha256').update(JSON.stringify(learning)).digest('hex')]);
+  const personal=(await action(0,{action:'assignment_create',targetId:otherTarget.id,memoryItemIds:[privateMemory.id]})).body.assignment;
+  check(personal.package_id===pack&&personal.content_version===1&&personal.source_kind==='personal','existing private assignment remains on published package FK');
+  const personalSubmit=await action(0,{action:'assignment_submit',assignmentId:personal.id,responses:[{memoryItemId:privateMemory.id,response:'정답',rating:'good'}]});
+  check(personalSubmit.status===200&&personalSubmit.body.results[0].correct===true&&personalSubmit.body.assignment.state==='completed','reviewed factual task keeps existing objective evaluation');
+  check(personalSubmit.body.data.answerRevisions.find((row:any)=>row.assignment_id===personal.id).target_id===otherTarget.id,'private task can join selected-school answer history');
+  const environmentTarget=(await registerReviewedSchool((path,body)=>request(0,path,body),{referenceId:school.id,departmentId:environment.id,admissionYear:2027,track:'활동 연결 합성 검증'})).body.target;
+  check((await action(0,{action:'assignment_create',targetId:environmentTarget.id,questionIds:[item.question_id],activityId:prefix+'-disputed'})).status===404,'disputed record activity cannot enter talent task');
+  check((await action(0,{action:'assignment_create',targetId:environmentTarget.id,questionIds:[item.question_id],activityId:'foreign-activity'})).status===404,'foreign/nonexistent activity rejected');
+  const joined=(await action(0,{action:'assignment_create',targetId:environmentTarget.id,questionIds:[item.question_id],activityId:activity.id})).body.assignment;
+  check(joined.items[0].activity_snapshot.id===activity.id&&joined.items[0].activity_content_version===1,'approved activity joins the exact school talent with saved publication provenance');
+  check(joined.items[0].sourceQuotes.some((source:any)=>source.text==='실험 진행 중 역할을 나누어 조율함'),'real student-record quote retained with official school source');
+  const changed={...learning,activities:[{...activity,title:'재발행한 제목'}],source_refs:[{...learning.source_refs[0],quote:'바뀐 원문'}]};
+  await db.query("insert into content_versions(package_id,version,data,learning_hash,status,production_job_ref) values($1,2,$2,'changed','published',$1)",[pack,JSON.stringify(changed)]);await db.query('update content_packages set active_version=2 where id=$1',[pack]);
+  const historic=(await request(0,'/api/learning')).body.assignments.find((row:any)=>row.id===joined.id);
+  check(historic.items[0].activity_snapshot.title===activity.title&&historic.items[0].sourceQuotes.some((source:any)=>source.text==='실험 진행 중 역할을 나누어 조율함'),'private republication never rewrites the saved school task activity evidence');
+  const paid=Number((await db.query('select count(*)::int as n from ai_usage_logs where student_id=any($1::uuid[])',[students])).rows[0].n);check(paid===0,'no paid AI calls');
+  const result={checks,paidAiCalls:paid,syntheticStudents:2,cleanup:'owned fixtures only',school:school.canonicalName,departments:[environment.name,other.name]};
+  writeFileSync(join(projectRoot,'.local/school-assignment-api-check.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+}finally{
+  await db.query('begin');
+  await db.query('delete from learning_requests where student_id=any($1::uuid[])',[students]);
+  await db.query('delete from quiz_assignment_events where student_id=any($1::uuid[])',[students]);
+  await db.query('delete from quiz_submissions where student_id=any($1::uuid[])',[students]);
+  await db.query('delete from quiz_assignments where student_id=any($1::uuid[])',[students]);
+  for(const table of ['student_confirmations','study_sessions','quiz_sessions','interview_reports','media_assets','interview_sessions','ai_usage_logs','student_preferences','sessions','audit_logs','school_profiles','support_targets']){
+    if(table==='sessions')await db.query('delete from sessions where user_id=any($1::uuid[])',[students]);
+    else if(table==='audit_logs')await db.query('delete from audit_logs where actor_id=any($1::uuid[]) or student_id=any($1::uuid[])',[students]);
+    else await db.query(`delete from ${table} where student_id=any($1::uuid[])`,[students]);
+  }
+  await db.query('delete from memory_attempts where student_id=any($1::uuid[])',[students]);
+  await db.query('delete from documents where package_id in(select id from content_packages where student_id=any($1::uuid[]))',[students]);
+  await db.query('delete from content_versions where package_id in(select id from content_packages where student_id=any($1::uuid[]))',[students]);
+  await db.query('delete from content_packages where student_id=any($1::uuid[])',[students]);
+  await db.query('delete from production_links where student_id=any($1::uuid[])',[students]);
+  await db.query('delete from profiles where id=any($1::uuid[])',[students]);await db.query('commit');await db.end();
+}

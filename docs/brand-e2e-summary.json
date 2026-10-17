@@ -1,0 +1,295 @@
+{
+  "date": "2026-10-12",
+  "generatedAt": "2026-10-12T05:16:43.299106+00:00",
+  "scope": {
+    "canonicalTemplates": 59,
+    "roleCounts": {
+      "public": 5,
+      "student": 38,
+      "admin": 16
+    },
+    "coverageByRole": {
+      "public": {
+        "templates": 5,
+        "desktopObserved": 5,
+        "mobileObserved": 5,
+        "bothObserved": 5
+      },
+      "student": {
+        "templates": 38,
+        "desktopObserved": 38,
+        "mobileObserved": 38,
+        "bothObserved": 38
+      },
+      "admin": {
+        "templates": 16,
+        "desktopObserved": 16,
+        "mobileObserved": 16,
+        "bothObserved": 16
+      }
+    },
+    "canonicalBothViewports": 59,
+    "missing": {
+      "desktop": [],
+      "mobile": []
+    }
+  },
+  "captures": {
+    "rawObservations": 194,
+    "latestUniqueIdRoleViewport": 164,
+    "latestByRole": {
+      "public": 13,
+      "student": 98,
+      "admin": 37,
+      "empty": 16
+    },
+    "latestAutomaticDomIssues": [],
+    "mixedBeforeAfterFixes": true
+  },
+  "browserFlows": {
+    "latestCount": 28,
+    "passed": 28,
+    "failed": 0,
+    "method": "Actual CUA browser interactions through Playwright API; not a separate Playwright CLI suite.",
+    "latestResults": [
+      {
+        "id": "login-student",
+        "status": "pass"
+      },
+      {
+        "id": "global-search",
+        "status": "pass",
+        "detail": "라벨 있는 검색창 입력 → 활동·질문 결과",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-global-search.png"
+      },
+      {
+        "id": "search-escape",
+        "status": "pass",
+        "detail": "Escape로 검색 대화상자 닫힘",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-search-escape.png"
+      },
+      {
+        "id": "logout-confirm",
+        "status": "pass",
+        "detail": "계정 이름 → 로그아웃 확인, 즉시 종료하지 않음",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-logout-confirm.png"
+      },
+      {
+        "id": "logout-cancel",
+        "status": "pass",
+        "detail": "취소 뒤 로그인과 현재 화면 유지",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-logout-cancel.png"
+      },
+      {
+        "id": "answer-save-reload",
+        "status": "pass",
+        "detail": "답변 입력 → 저장 → 새로고침 유지; 필드 이름 연결",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-answer-save-reload.png"
+      },
+      {
+        "id": "answer-history",
+        "status": "pass",
+        "detail": "새 수정본과 이전 답변 이력이 함께 보임",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-answer-history.png"
+      },
+      {
+        "id": "interview-finish-confirm",
+        "status": "pass",
+        "detail": "미전송 초안이 있으면 종료 전 확인",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-interview-finish-confirm.png"
+      },
+      {
+        "id": "interview-draft-reload",
+        "status": "pass",
+        "detail": "종료 취소·새로고침 후 초안 유지",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-interview-draft-reload.png"
+      },
+      {
+        "id": "live-permission-gate",
+        "status": "pass",
+        "detail": "권한 요청 전 녹음 비활성; 하드웨어 연결은 미실행",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-live-permission-gate.png"
+      },
+      {
+        "id": "quiz-hint",
+        "status": "pass",
+        "detail": "힌트 클릭 즉시 첫 문장이 표시됨",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-hint.png"
+      },
+      {
+        "id": "quiz-answer-save",
+        "status": "pass",
+        "detail": "첫 답변 저장 → 다음 문항 대기",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-answer-save.png"
+      },
+      {
+        "id": "quiz-result-next-context",
+        "status": "pass",
+        "detail": "중간 저장 결과 → 같은 질문을 면접·영상으로 연결",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-result-next-context.png"
+      },
+      {
+        "id": "comparison-range",
+        "status": "pass",
+        "detail": "겹쳐 보기 슬라이더 키보드 Home/End = 0/100",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-comparison-range.png"
+      },
+      {
+        "id": "quiz-result-expand",
+        "status": "pass",
+        "detail": "모범답안 펼침 뒤 전체 답변 표시",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-result-expand.png"
+      },
+      {
+        "id": "quiz-timer-keyboard",
+        "status": "pass",
+        "detail": "10초 경과 2문항 자동 저장·마지막 문항 키보드1 정답·완료 결과",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-quiz-timer-keyboard.png"
+      },
+      {
+        "id": "knowledge-note-reload",
+        "status": "pass",
+        "detail": "영상 메모 저장 → 새로고침 유지",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-knowledge-note-reload.png"
+      },
+      {
+        "id": "assistant-markdown-layout",
+        "status": "pass",
+        "detail": "메시지 본문 사용자 우측·AI 좌측; Markdown 제목·강조·목록·표 정상; 기존 대화 자동 알림 없음",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-assistant-markdown-layout.png"
+      },
+      {
+        "id": "student-admin-guard",
+        "status": "pass",
+        "detail": "학생 /admin 접근 → 대시보드로 이동",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-student-admin-guard.png"
+      },
+      {
+        "id": "logout-execute",
+        "status": "pass",
+        "detail": "확인 버튼을 누른 뒤 로그인 화면으로 이동",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-logout-execute.png"
+      },
+      {
+        "id": "login-invalid",
+        "status": "pass",
+        "detail": "잘못된 비밀번호에 오류 표시·로그인 화면 유지",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-login-invalid.png"
+      },
+      {
+        "id": "admin-login",
+        "status": "pass",
+        "detail": "관리자 로그인 → 운영 화면",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-admin-login.png"
+      },
+      {
+        "id": "admin-mobile-nav",
+        "status": "pass",
+        "detail": "관리자 가로 메뉴 스크롤 유지·상시 스크롤바 숨김",
+        "viewport": "mobile",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-admin-mobile-nav.png"
+      },
+      {
+        "id": "empty-onboarding",
+        "status": "pass",
+        "detail": "학습 데이터가 없으면 학교 등록으로 첫 학습 안내",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-empty-onboarding.png"
+      },
+      {
+        "id": "login-logo-pause",
+        "status": "pass",
+        "detail": "일시정지 버튼으로 회전 정지",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-login-logo-pause.png"
+      },
+      {
+        "id": "login-logo-sweep",
+        "status": "pass",
+        "detail": "90도 정지점 사이의 중간 회전 행렬 관측·재생 정상",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-login-logo-sweep.png"
+      },
+      {
+        "id": "not-found-brand-layout",
+        "status": "pass",
+        "detail": "404 로고·제목·복귀 버튼 중앙 정렬 및 좌우 여백",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-not-found-brand-layout.png"
+      },
+      {
+        "id": "unauthenticated-guard",
+        "status": "pass",
+        "detail": "로그아웃 상태의 학습 화면 접근 → 로그인",
+        "viewport": "desktop",
+        "screenshot": "C:/Users/MaYunsong/Documents/각자의답/.local/previews/brand-e2e-2026-10-12/flow-unauthenticated-guard.png"
+      }
+    ]
+  },
+  "regression": {
+    "nodeTestCases": 92,
+    "componentAssertions": 95,
+    "existingLocalApiAssertions": 130,
+    "independentHttpAssertions": 114,
+    "independentHttpRequests": 61,
+    "isolatedPostgreSQLAssertions": 50,
+    "allPassed": true
+  },
+  "fixGroups": 7,
+  "cleanup": {
+    "status": "pass",
+    "originalUserDataPreserved": true
+  },
+  "productionBuild": {
+    "status": "passed",
+    "executed": true,
+    "evidence": "Next 16.4 compiled successfully (3.5s); TypeScript completed (25.9s); static pages 16/16 (1746ms); Turbo 1 successful / 1 total (45.661s).",
+    "exitCode": 0
+  },
+  "fallbacks": {
+    "notFound": "browser checked in desktop/mobile",
+    "errorBoundary": "source refinement only; no forced render exception"
+  },
+  "limits": [
+    "실제 Google·Kakao OAuth 가입/로그인, 이메일·복구 토큰",
+    "유료 AI 응답 품질·실제 입력에 따른 면접관 표정 품질",
+    "STT·TTS 공급자, 실제 마이크·카메라",
+    "실제 스크린리더 음성·다른 브라우저 엔진 호환성",
+    "의도적 장애로 오류 경계를 유발하는 브라우저 검증"
+  ],
+  "report": "docs/brand-e2e-qa-2026-10-12.html",
+  "infrastructure": {
+    "status": "recovered",
+    "observation": "Turbopack persistent-cache TaskId missing / parent_count underflow on dev server restart after production build.",
+    "action": "Dev cache preserved by moving within workspace; server restarted successfully with a new cache.",
+    "scope": "Infrastructure observation, separated from product UI/function QA.",
+    "evidence": [
+      "Server startup exitCode 0",
+      "GET /login 200",
+      "Actual CUA login screen rendered; default viewport restored."
+    ],
+    "screenshot": ".local/previews/brand-e2e-2026-10-12/server-restored-login.png",
+    "countingNote": "Recovery screenshot is evidence only; browser observation/flow counts remain 194/28."
+  }
+}

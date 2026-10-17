@@ -1,0 +1,47 @@
+/* Bright brand surfaces retain quiet color cues with readable small text. */
+.app-shell .dashboard-compact .dashboard-group-label { color: #76553a; }
+.app-shell .dashboard-compact .dashboard-item-state.reviewing { color: #7f6944; }
+.app-shell .school-learning :is(.school-source-line, .school-input-note) { color: #65726a; }
+.auth-page .auth-form input::placeholder { color: #686870; }
+
+/* Keyboard focus remains visible without adding permanent separators. */
+.account-popover > :focus-visible,
+.app-shell select:focus-visible {
+  outline: 2px solid #3d7357;
+  outline-offset: 3px;
+}
+
+.app-shell .interview-capture-actions .interview-recording-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.app-shell .admin-mobile-nav {
+  scrollbar-width: none;
+}
+.app-shell .admin-mobile-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.brand-status-page {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 48px 24px;
+  color: var(--text);
+  text-align: center;
+}
+.brand-status-page h1 {
+  max-width: 680px;
+  margin: 0;
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 550;
+  line-height: 1.4;
+  word-break: keep-all;
+  text-wrap: balance;
+}
+.app-shell .brand-status-page { min-height: 65svh; }

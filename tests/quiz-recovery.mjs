@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+
+const load=(path,require=()=>{throw new Error('Unexpected import');})=>{const module={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL(path,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,require,Set});return module.exports;};
+const view=load('../apps/web/src/lib/quiz-session-view.ts');
+const contracts=load('../packages/content-contracts/src/workflows.ts',name=>name==='./index'?{}:{});
+const target={id:'target',university:'서울시립대학교',campus:'본교',department:'환경공학부',admission_year:2027,admission_type:'학생부종합전형Ⅰ(면접형)',interview_stage:'2단계'};
+const savedTarget={...target,interview_stage:undefined};
+const item={id:'m1',question_id:'q1',prompt:'본인 역할은 무엇인가요?',activity_ids:['a1'],source_kind:'personal',target_id:'target',target_snapshot:savedTarget};
+const info={serverTime:new Date().toISOString(),session:{id:'session',student_id:'student',state:'active',mode:'answer',current_index:0,content_version:6,items:[item],metadata:{targetId:'target',targetSnapshot:savedTarget,drafts:{0:{response:'서버에 저장한 초안'}}}},responses:[],recordings:[],learning:{questions:[{id:'q1',prompt:item.prompt}],support_targets:[savedTarget],memory_items:[]}};
+const state={values:[],refs:[],hook:0,refHook:0,effects:[],calls:[],toasts:[],listener:null,adapter:null,apiAdapter:null,storage:new Map(),local:new Map()};
+let uuid=0;
+const module={exports:{}};
+const actionButton=({pending=false,pendingLabel,disabled,children,type='button',...props})=>({type:'button',props:{...props,type,disabled:disabled||pending,'aria-busy':pending||undefined,children:pending?[{type:'LoaderCircle',props:{size:16,'aria-hidden':true}},pendingLabel??children]:children}});
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/quiz-v3.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,console,Date,Set,JSON,Blob,URL,URLSearchParams,performance,crypto:{randomUUID:()=>`request-${++uuid}`},setTimeout,clearTimeout,setInterval,clearInterval,HTMLElement:class {},document:{activeElement:null,addEventListener(){},removeEventListener(){}},navigator:{},localStorage:{getItem:key=>state.local.get(key)??null,setItem:(key,value)=>state.local.set(key,value),removeItem:key=>state.local.delete(key)},sessionStorage:{getItem:key=>state.storage.get(key)??null,setItem:(key,value)=>state.storage.set(key,value),removeItem:key=>state.storage.delete(key)},window:{addEventListener:(name,listener)=>{if(name==='gakja:open-on')state.listener=listener;},removeEventListener(){}},require(name){
+  if(name==='react')return{useState(initial){const index=state.hook++;if(!(index in state.values))state.values[index]=typeof initial==='function'?initial():initial;return[state.values[index],value=>{state.values[index]=typeof value==='function'?value(state.values[index]):value;}];},useRef(initial){const index=state.refHook++;if(!(index in state.refs))state.refs[index]={current:initial};return state.refs[index];},useEffect(callback){state.effects.push(callback);},useCallback:callback=>callback};
+  if(name==='react/jsx-runtime')return{jsx:(type,props)=>type===actionButton?actionButton(props):({type,props}),jsxs:(type,props)=>type===actionButton?actionButton(props):({type,props}),Fragment:'Fragment'};
+  if(name==='next/link')return{__esModule:true,default:'Link'};
+  if(name==='next/navigation')return{useRouter:()=>({push:path=>state.calls.push({navigate:path})}),useSearchParams:()=>new URLSearchParams()};
+  if(name==='lucide-react')return new Proxy({},{get:(_,key)=>String(key)});
+  if(name==='./app-shell')return{useApp:()=>({data:{user:{id:'student'},targets:[target]},refresh:async()=>{},toast:text=>state.toasts.push(text),openResource(){}})};
+  if(name==='./shared')return{ActionButton:actionButton,post:async(url,payload)=>{state.calls.push({url,payload});return state.adapter?state.adapter(url,payload):info;},api:async url=>{state.calls.push({url,method:'GET'});return state.apiAdapter?state.apiAdapter(url):info;},PageTitle:'PageTitle',Breadcrumb:'Breadcrumb',Alert:'Alert',Empty:'Empty',Spinner:'Spinner'};
+  if(name==='./learning-help')return{LearningHelp:'LearningHelp'};
+  if(name==='./audio-level-dot')return{AudioLevelDot:'AudioLevelDot'};
+  if(name==='./playful-flow')return{animateStudyReceipt(){}};
+  if(name==='@/lib/client/speech-recorder')return{startSpeechCapture(){throw new Error('No hardware access');}};
+  if(name==='@gakja/content-contracts/workflows')return contracts;
+  if(name==='@/lib/quiz-session-view')return view;
+  if(name==='./quiz-session-ui.module.css')return{__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
+  throw new Error(name);
+}});
+const render=()=>{state.hook=0;state.refHook=0;state.effects=[];return module.exports.QuizSession({id:'session'});};
+const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();};
+const nodes=tree=>Array.isArray(tree)?tree.flatMap(nodes):tree&&typeof tree==='object'?[tree,...nodes(tree.props?.children),...nodes(tree.props?.aside)]:[];
+const text=value=>Array.isArray(value)?value.map(text).join(''):value&&typeof value==='object'?text(value.props?.children):typeof value==='string'?value:'';
+const saveButton=tree=>nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='답변 저장');
+const settle=()=>new Promise(resolve=>setImmediate(resolve));
+let checks=0;const check=(value,message)=>{assert.ok(value,message);checks++;};
+
+reset();let tree=render();state.effects.find(effect=>effect.toString().includes("metadata?.drafts"))();check(state.values[4]==='서버에 저장한 초안','fresh browser uses the server draft');check(state.values[15]==='unchecked','new recall self-check starts unchecked');
+reset();state.local.set('gakja-quiz:student:session:0','로컬 최신 초안');tree=render();state.effects.find(effect=>effect.toString().includes("metadata?.drafts"))();check(state.values[4]==='로컬 최신 초안','newer local fallback survives interrupted network saving');
+
+reset();tree=render();state.effects.find(effect=>effect.toString().includes('gakja:open-on'))();let prevented=false;state.listener({preventDefault(){prevented=true;}});await settle();check(prevented,'global ON navigation is held until saving');check(state.calls[0].payload.action==='draft'&&state.calls[0].payload.response===state.values[4],'the draft is saved before leaving');check(state.calls[1].payload.action==='pause','the owned quiz is paused before ON');const destination=new URL(state.calls.find(call=>call.navigate).navigate,'https://local.test');check(destination.searchParams.get('quizSessionId')==='session'&&destination.searchParams.get('quizItemIndex')==='0'&&destination.searchParams.get('sourceVersion')==='6','ON receives the exact session, item and original content version');
+
+for(const blocked of ['choice','recording','blob']){reset(blocked==='choice'?{...info,session:{...info.session,mode:'choice',items:[{...item,options:[]}]}}:info);if(blocked==='recording')state.values[11]='recording';if(blocked==='blob')state.values[17]={blob:new Blob(['unsaved']),index:0,durationMs:500,telemetry:undefined};tree=render();state.effects.find(effect=>effect.toString().includes('gakja:open-on'))();state.listener({preventDefault(){}});await settle();check(state.calls.length===0,`${blocked} cannot leave the current answer through ON`);check(state.toasts.length===1,'save-first instruction is visible');}
+
+reset();state.adapter=async()=>{throw new Error('draft failed');};tree=render();state.effects.find(effect=>effect.toString().includes('gakja:open-on'))();state.listener({preventDefault(){}});await settle();check(!state.calls.some(call=>call.navigate),'failed durable draft blocks navigation');check(state.values[16]==='failed','failed draft saving remains visible and retryable');
+
+reset();state.adapter=async()=>{throw new Error('response lost');};tree=render();await saveButton(tree).props.onClick();const first=state.calls.find(call=>call.payload?.action==='answer');check(first.payload.rating==='hard'&&first.payload.recallStatus==='unchecked','saving without self-check does not rate recall good');check(state.calls.some(call=>call.method==='GET'),'ambiguous submit checks the server receipt');check(state.values[4].includes('채취 조건'),'unconfirmed submit keeps the draft');tree=render();await saveButton(tree).props.onClick();const answers=state.calls.filter(call=>call.payload?.action==='answer');check(answers[0].payload.requestId===answers[1].payload.requestId,'unchanged retry reuses its answer request identity');
+
+reset();state.adapter=async()=>{throw new Error('response lost after commit');};state.apiAdapter=async()=>{const request=state.calls.find(call=>call.payload?.action==='answer').payload;return{...info,session:{...info.session,state:'completed',current_index:1},responses:[{id:'response',item_index:0,response:request.response,outcome:null,rating:request.rating,data:{requestId:request.requestId,recall_state:request.recallStatus,assistance_recorded:true}}]};};tree=render();await saveButton(tree).props.onClick();check(state.values[0].session.state==='completed','committed answer is recovered without a second answer write');check(state.toasts.includes('저장된 답변을 다시 불러왔어요.'),'recovered commit is explicit');
+
+reset({...info,session:{...info.session,state:'completed',current_index:1},responses:[{id:'r',item_index:0,response:'저장된 답변',outcome:null,rating:'hard',data:{recall_state:'unchecked',helpKinds:['evidence'],assistance_recorded:true}}]});tree=render();const flat=nodes(tree);check(flat.some(node=>node.type==='Link'&&node.props.href?.startsWith('/interview/chat?')),'omitted old stage still exposes the same-question interview path');check(!text(tree).includes('지원 정보가 바뀌었어요'),'unknown old stage does not claim the support target changed');check(text(tree).includes('근거 확인')&&!text(tree).includes('AI 도움'),'source help is not labelled AI assistance');check(text(tree).includes('다시 볼 답변'),'unchecked answer is included in review');
+const oralRecording={id:'owned-oral-recording',item_index:0,url:'/api/quiz?recordingId=owned-oral-recording',raw_transcript:'음 저는 관찰 했습니다',display_transcript:'저는 관찰했습니다.',transcript_cleanup:{status:'completed'}};
+const oralInfo={...info,session:{...info.session,mode:'oral',metadata:{...info.session.metadata,drafts:{}}},recordings:[oralRecording]};
+reset(oralInfo);tree=render();state.effects.find(effect=>effect.toString().includes('metadata?.drafts'))();check(state.values[4]==='저는 관찰했습니다.','restored oral draft uses finished display rather than raw STT');
+reset({...oralInfo,recordings:[{...oralRecording,display_transcript:null,transcript_cleanup:{status:'failed'}}]});tree=render();state.effects.find(effect=>effect.toString().includes('metadata?.drafts'))();check(state.values[4]==='','failed formatting does not restore raw STT into the main answer');
+reset(oralInfo);state.values[9]={...oralRecording,display_transcript:null,transcript_cleanup:{status:'failed'}};tree=render();state.adapter=async(url,payload)=>({transcript:'저는 관찰했습니다.',rawTranscript:oralRecording.raw_transcript,cleanupStatus:'completed',transcriptionStatus:'completed'});const retry=nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='문장 정리 다시 시도');await retry.props.onClick();check(state.calls[0].url==='/api/reports'&&state.calls[0].payload.recordingId===oralRecording.id,'oral retry formats the same stored owned recording');check(state.values[4]==='내 역할은 채취 조건 설계였습니다.','formatted oral retry preserves a manually typed draft');check(state.values[9].display_transcript==='저는 관찰했습니다.'&&state.values[9].raw_transcript===oralRecording.raw_transcript,'finished oral display and raw source remain separately available');
+console.log(`Quiz recovery: ${checks} handler/render checks passed; no DB, provider or device calls.`);

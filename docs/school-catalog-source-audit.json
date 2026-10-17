@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-12",
+  "coverage": {"universities":88,"departments":3934,"officialAdmissionLinks":88,"localOfficialLogos":88},
+  "departmentSource": {
+    "provider":"교육부",
+    "title":"대학알리미 신입생 충원 현황 대학·학과별 20260908",
+    "url":"https://www.data.go.kr/data/15163924/fileData.do",
+    "originalDownloadUrl":"https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007658068&fileDetailSn=1&insertDataPrcus=N",
+    "year":2026,
+    "license":"공공누리 제1유형(출처표시)",
+    "filter":"2026 공시, 대학교·교육대학, 모집인원 합계 1명 이상",
+    "caveat":"공시된 학과 목록은 지원 학년도 모집단위와 다를 수 있음. 신설·변경 모집단위는 공식 모집요강 확인 후 직접 입력 가능. 직접 입력은 student_entered로 저장하며 공공 학과코드를 생성하지 않음."
+  },
+  "universitySource": {
+    "provider":"한국대학교육협의회",
+    "title":"대입정보포털 어디가 2027 대학정보",
+    "url":"https://www.adiga.kr/",
+    "primaryDirectoryCount":80,
+    "officialUniversitySupplementCount":8,
+    "evidenceFile":"apps/web/src/data/school-directory.json",
+    "supplementFile":"apps/web/src/data/school-directory-overrides.json",
+    "refreshScript":"scripts/build-school-directory.py"
+  },
+  "verifiedHarinTarget": {
+    "university":"서울시립대학교",
+    "department":"환경공학부",
+    "campus":"본교",
+    "admissionYear":2027,
+    "track":"학생부종합전형Ⅰ(면접형)",
+    "officialGuideUrl":"https://file.uos.ac.kr/upload/admission/2027%ED%95%99%EB%85%84%EB%8F%84%20%EC%88%98%EC%8B%9C%EB%AA%A8%EC%A7%91%20%EC%8B%A0%EC%9E%85%EC%83%9D%20%EB%AA%A8%EC%A7%91%EC%9A%94%EA%B0%95_260831.pdf",
+    "sha256":"e7c88c470663d53adad1b30a67d339a571eda8ee98e179a56e7ba132ecfc8050",
+    "pdfPages":[13,24,25,46],
+    "printedPages":[11,22,23,44],
+    "verifiedFacts":{"interviewers":2,"applicants":1,"approximateMinutes":12,"interviewWeight":50,"evaluationWeights":{"학업역량":35,"잠재역량":40,"사회역량":25},"interviewDate":"2026-11-29T10:00:00+09:00"},
+    "questionTopicDistribution":null,
+    "questionTopicCaveat":"평가 요소 배점은 질문 주제 출제 비율이 아님. 공식 질문 주제 비율을 추정하거나 생성하지 않음.",
+    "historyPreservation":"이전 가상 지원처 및 발행본은 보존하고 실제 지원처를 추가·선택함. 등록 당시 과거 5개 버전의 learning_hash 불변 검증."
+  },
+  "validation":{"pureContractCases":9,"realHttpAssertions":26,"existingSchoolHttpAssertions":35,"existingSchoolUnitCases":15,"typecheck":"passed","paidAiCalls":0,"syntheticFixtureCleanup":"passed"}
+}

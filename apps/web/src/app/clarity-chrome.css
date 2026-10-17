@@ -1,0 +1,341 @@
+/* Shared chrome: quiet surfaces and readable green accents, without glass. */
+.app-shell .sidebar {
+  background: #f8fafb;
+  border-right: 0;
+}
+.app-shell :is(.topbar, .mobile-nav, .mobile-tools) {
+  background: var(--clarity-surface);
+  backdrop-filter: none;
+  box-shadow: none;
+}
+.app-shell .topbar { border-bottom: 0; }
+.app-shell .topbar .icon-button { width: 40px; height: 40px; border-radius: 10px; }
+.app-shell [data-chat-composer] textarea {
+  backdrop-filter: none;
+}
+.app-shell .main-nav > a {
+  color: var(--clarity-muted);
+  font-weight: 450;
+  border-radius: 10px;
+  transition: color var(--clarity-motion) ease, background var(--clarity-motion) ease;
+}
+.app-shell .main-nav > a > svg { color: inherit; }
+.app-shell .main-nav > a:hover {
+  color: var(--clarity-green);
+  background: var(--clarity-mint);
+}
+.app-shell .main-nav > a.active {
+  color: var(--clarity-action);
+  background: var(--clarity-mint);
+  font-weight: 450;
+}
+.app-shell .sidebar-selection {
+  background: var(--clarity-mint);
+  border-radius: 10px;
+}
+.app-shell .sidebar-navigation[data-motion-ready=true] .main-nav > a.active {
+  background: transparent;
+}
+.app-shell:not(.admin-shell) .sidebar .main-nav > a > span {
+  background: var(--clarity-ink);
+  color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px #25332b0d;
+  font-weight: 450;
+}
+.app-shell .sidebar-navigation {
+  scrollbar-color: transparent transparent;
+}
+.app-shell .sidebar-navigation:is(:hover, :focus-within) {
+  scrollbar-color: #b4c6b9 transparent;
+}
+.app-shell .sidebar-navigation:is(:hover, :focus-within)::-webkit-scrollbar-thumb {
+  background: #b4c6b9;
+}
+.app-shell :is(.topbar .icon-button, .account-trigger) {
+  color: var(--clarity-muted);
+  transition: background var(--clarity-motion) ease, color var(--clarity-motion) ease;
+}
+.app-shell :is(.topbar .icon-button:hover, .account-trigger:hover, .account-trigger[aria-expanded=true]) {
+  background: var(--clarity-soft);
+  color: var(--clarity-green);
+}
+.app-shell .account-trigger .avatar {
+  background: #edf1ef;
+  color: var(--clarity-ink);
+  font-weight: 450;
+}
+.app-shell .notification-button i {
+  background: var(--clarity-green);
+  box-shadow: 0 0 0 2px var(--clarity-surface);
+}
+.app-shell :is(.app-footer, .admin-caption) { color: var(--clarity-muted); }
+.app-shell .mobile-nav > :is(a, button) { color: var(--clarity-muted); }
+.app-shell .mobile-nav > :is(a.active, a[aria-current=page], button[data-active=true]) {
+  color: var(--clarity-green);
+  font-weight: 450;
+}
+.app-shell .mobile-nav > button[aria-expanded=true] { background: var(--clarity-mint); }
+
+/* Retain native selects and their keyboard/validation behavior. */
+.app-shell select {
+  background: var(--clarity-surface);
+  border-color: var(--clarity-line);
+  border-radius: 8px;
+  color: var(--clarity-ink);
+  font-weight: 450;
+  box-shadow: none;
+  transition: border-color var(--clarity-motion) ease, background var(--clarity-motion) ease;
+}
+.app-shell select:hover:not(:disabled) {
+  background: var(--clarity-soft);
+  border-color: #b7ccbc;
+}
+.app-shell .topbar-context .target-select select {
+  background: var(--clarity-soft);
+  color: var(--clarity-ink);
+  border-radius: 8px;
+  font-weight: 450;
+}
+.app-shell select:focus-visible {
+  outline: 2px solid var(--clarity-green);
+  outline-offset: 3px;
+}
+.app-shell select:disabled { color: var(--clarity-muted); }
+@supports (appearance: base-select) {
+  .app-shell select::picker(select) {
+    background: var(--clarity-surface);
+    border-color: var(--clarity-line);
+    border-radius: 10px;
+    color: var(--clarity-ink);
+    box-shadow: 0 6px 22px #25332b12;
+  }
+  .app-shell select::picker-icon { color: var(--clarity-muted); }
+  .app-shell select option {
+    background: var(--clarity-surface);
+    color: var(--clarity-ink);
+    border-radius: 6px;
+    font-weight: 450;
+  }
+  .app-shell select option:is(:hover, :focus) { background: var(--clarity-soft); }
+  .app-shell select option:checked { background: var(--clarity-mint); color: var(--clarity-green); }
+  .app-shell select option::checkmark { color: var(--clarity-green); }
+  .app-shell select option:disabled { color: var(--clarity-muted); opacity: .65; }
+}
+
+/* Portalled account and confirmation surfaces share the same visual language. */
+@supports not (appearance: base-select) {
+  .app-shell select:not([multiple]):not([size]) {
+    appearance: none;
+    padding-inline-end: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236c776f'%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='19' cy='12' r='2'/%3E%3C/svg%3E") !important;
+    background-position: right 12px center !important;
+    background-size: 18px 18px !important;
+    background-repeat: no-repeat !important;
+  }
+}
+
+.account-popover {
+  background: var(--clarity-surface);
+  border-color: var(--clarity-line);
+  border-radius: 10px;
+  box-shadow: 0 6px 22px #25332b12;
+}
+.account-popover > :is(a, button) { color: var(--clarity-ink); font-weight: 450; }
+.account-popover > :is(a, button):hover { background: var(--clarity-soft); }
+.account-popover > :is(a, button):focus-visible {
+  background: var(--clarity-soft);
+  outline: 2px solid var(--clarity-green);
+  outline-offset: -2px;
+}
+.account-popover svg { color: var(--clarity-muted); }
+.account-popover > button:last-child,
+.account-popover > button:last-child svg { color: var(--clarity-danger); }
+.modal-backdrop,
+.logout-dialog::backdrop {
+  background: #25332b4d;
+  backdrop-filter: none;
+}
+.native-modal::backdrop { background: transparent; backdrop-filter: none; }
+.native-modal .modal,
+.logout-dialog {
+  background: var(--clarity-surface);
+  color: var(--clarity-ink);
+  border: 1px solid var(--clarity-line);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px #25332b14;
+}
+.native-modal .modal { padding: 28px; }
+.native-modal .modal .section-heading h2,
+.logout-dialog h2 {
+  color: var(--clarity-ink);
+  font-weight: 500;
+  letter-spacing: -.025em;
+  line-height: 1.5;
+}
+.logout-dialog p { color: var(--clarity-muted); }
+.logout-dialog .logout-error { color: var(--clarity-danger); }
+.logout-symbol { color: var(--clarity-muted); }
+.logout-actions .button { border-radius: 8px; font-weight: 450; }
+.logout-actions .button.ghost { background: var(--clarity-soft); color: var(--clarity-ink); }
+.logout-actions .button.primary { background: var(--clarity-danger); border-color: var(--clarity-danger); color: #fff; }
+.logout-actions .button.primary:hover:not(:disabled) { background: #963c30; border-color: #963c30; }
+.native-modal .modal .search-field {
+  background: var(--clarity-soft);
+  border-color: var(--clarity-line);
+  border-radius: 8px;
+  color: var(--clarity-muted);
+}
+.native-modal .modal .search-field input { color: var(--clarity-ink); }
+.native-modal .modal .search-field:focus-within { outline: 2px solid var(--clarity-green); outline-offset: 3px; }
+.native-modal .modal .search-field input:focus-visible { outline: none; box-shadow: none; }
+.native-modal .modal .notification-item {
+  padding: 16px 0;
+  border-bottom-color: var(--clarity-line);
+}
+.native-modal .modal .notification-item:last-child { border-bottom: 0; }
+.native-modal .modal .notification-item strong { color: var(--clarity-ink); font-weight: 500; line-height: 1.6; }
+.native-modal .modal .notification-item p { color: var(--clarity-muted); line-height: 1.75; margin-top: 6px; }
+.native-modal .modal nav[aria-label="추가 운영 메뉴"] > a[aria-current=page] {
+  background: var(--clarity-mint);
+  color: var(--clarity-green);
+}
+
+/* Central authentication stays open; the animated brand mark is untouched. */
+.auth-page.auth-centered { background: var(--clarity-bg); color: var(--clarity-ink); }
+.auth-centered .auth-center-intro h1 {
+  color: var(--clarity-ink);
+  font-weight: 550;
+  letter-spacing: -.035em;
+}
+.auth-page.auth-centered .auth-intro {
+  color: var(--clarity-muted);
+  letter-spacing: -.02em;
+}
+.auth-page.auth-centered .auth-form label { color: var(--clarity-ink); font-weight: 450; }
+.auth-centered .auth-field-heading a,
+.auth-page.auth-centered .auth-foot a { color: var(--clarity-green); font-weight: 450; }
+.auth-page.auth-centered .auth-form input {
+  background: var(--clarity-surface);
+  border-color: var(--clarity-line);
+  border-radius: 9px;
+  color: var(--clarity-ink);
+  box-shadow: none;
+  letter-spacing: -.02em;
+  transition: border-color var(--clarity-motion) ease, background var(--clarity-motion) ease;
+}
+.auth-page.auth-centered .auth-form input::placeholder { color: var(--clarity-muted); }
+.auth-page.auth-centered .auth-form input:focus {
+  border-color: var(--clarity-green);
+  background: var(--clarity-surface);
+  box-shadow: none;
+}
+.auth-page.auth-centered .auth-form input:focus-visible {
+  outline: 2px solid var(--clarity-green);
+  outline-offset: 3px;
+}
+.auth-page.auth-centered .password-field button { color: var(--clarity-muted); }
+.auth-page.auth-centered .password-field button:hover { background: var(--clarity-soft); color: var(--clarity-green); }
+.auth-page.auth-centered .auth-submit {
+  background: var(--clarity-action);
+  border-color: var(--clarity-action);
+  color: #fff;
+  border-radius: 9px;
+  font-weight: 500;
+  box-shadow: none;
+}
+.auth-page.auth-centered .auth-submit:hover:not(:disabled) {
+  background: var(--clarity-action-hover);
+  border-color: var(--clarity-action-hover);
+}
+.auth-page.auth-centered .auth-foot,
+.auth-centered :is(.auth-entry-back, .auth-entry-footer, .auth-entry-footer > a) { color: var(--clarity-muted); }
+.auth-page.auth-centered .auth-center-mark .auth-motion-toggle { color: var(--clarity-muted); }
+.auth-page.auth-centered .auth-center-mark .auth-motion-toggle:hover { background: var(--clarity-soft); color: var(--clarity-green); }
+.auth-page.auth-centered .auth-privacy-cue { background: var(--clarity-mint); color: var(--clarity-green); box-shadow: none; }
+.auth-page.auth-centered .alert { color: var(--clarity-danger); background: #fbf0ec; border-radius: 8px; }
+.auth-page.auth-centered .success-message { color: var(--clarity-green); background: var(--clarity-mint); border-radius: 8px; }
+
+/* Registration: alignment and distinct states carry the hierarchy. */
+.school-registration :is(input, select) {
+  background: var(--clarity-surface);
+  color: var(--clarity-ink);
+  border-color: var(--clarity-line);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.school-registration label { color: var(--clarity-ink); font-weight: 450; }
+.school-onboarding-steps { color: var(--clarity-muted); gap: 20px; }
+.school-onboarding-steps .current { color: var(--clarity-green); }
+.school-onboarding-steps .current::before { content: ''; width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: var(--clarity-green); }
+.school-selected-summary,
+.school-calendar-review { background: var(--clarity-soft); border-radius: 8px; box-shadow: none; }
+.school-selected-summary strong,
+.school-review-identity h2 { color: var(--clarity-ink); font-weight: 500; }
+.school-learning :is(.school-input-note, .school-selected-summary span, .school-review-identity span, .school-calendar-review > p, .school-calendar-dates small, .school-calendar-checked, .school-calendar-ack) {
+  color: var(--clarity-muted);
+}
+.school-learning :is(.school-text-action, .school-source-link, .school-admission-button) { color: var(--clarity-green); }
+.school-calendar-review h2 { color: var(--clarity-ink); font-weight: 500; }
+.school-calendar-dates time { color: var(--clarity-green); font-weight: 500; font-variant-numeric: tabular-nums; }
+.school-calendar-dates span { color: var(--clarity-ink); }
+.school-calendar-state { color: var(--clarity-muted); }
+.school-calendar-state[data-status=registered] { color: var(--clarity-green); }
+.school-calendar-state[data-status=no_interview] { color: var(--clarity-blue); }
+.school-calendar-state:is([data-status=pending], [data-status=unconfirmed]) { color: var(--clarity-warning); }
+.school-registration .school-calendar-ack input { accent-color: var(--clarity-green); }
+.school-completion-mark { color: var(--clarity-green); background: var(--clarity-mint); }
+
+/* Settings and the operational workspace use the same type and control rhythm. */
+.app-shell .account-profile {
+  align-items: flex-start;
+  text-align: left;
+  padding: 24px 0;
+  background: none;
+  box-shadow: none;
+}
+.app-shell .account-profile h2 { color: var(--clarity-ink); font-weight: 500; }
+.app-shell .account-profile p { color: var(--clarity-muted); font-size: 14px; }
+.app-shell .settings-list > h2 { color: var(--clarity-muted); font-size: 14px; font-weight: 450; margin-bottom: 8px; }
+.app-shell .settings-row { padding-block: 18px; }
+.app-shell .settings-row strong,
+.app-shell .preparation-note strong { color: var(--clarity-ink); font-size: 15px; font-weight: 450; }
+.app-shell .settings-row p { color: var(--clarity-muted); font-size: 13px; line-height: 1.7; }
+.app-shell .preparation-note { display: grid; gap: 12px; margin-block: 28px; }
+.app-shell .preparation-note textarea { background: var(--clarity-surface); border-color: var(--clarity-line); border-radius: 8px; }
+.admin-shell :is(.panel, .admin-form) { color: var(--clarity-ink); box-shadow: none; }
+.admin-shell .admin-stat { background: var(--clarity-soft); border-radius: 8px; }
+.admin-shell .admin-stat.highlight { background: var(--clarity-mint); }
+.admin-shell .admin-stat strong { color: var(--clarity-green); font-weight: 500; font-variant-numeric: tabular-nums; }
+.admin-shell :is(.admin-stat > span, .admin-meta-grid > div > span, .admin-meta-grid small, .admin-table th, .admin-table-head) { color: var(--clarity-muted); }
+.admin-shell :is(.admin-form input, .admin-form select, .admin-form textarea, .filter-bar input) {
+  background: var(--clarity-surface);
+  color: var(--clarity-ink);
+  border-color: var(--clarity-line);
+  border-radius: 8px;
+}
+.admin-shell :is(.admin-form label, .admin-meta-grid strong, .admin-meta-grid a, .admin-table-row strong) { font-weight: 450; }
+.admin-shell :is(.admin-table-row:hover, .admin-table tbody tr:hover) { background: var(--clarity-soft); }
+.admin-shell :is(.admin-table th, .admin-table td, .admin-table-row) { border-bottom-color: var(--clarity-line); }
+.admin-shell :is(.admin-tabs, .admin-calendar-tabs) > button {
+  color: var(--clarity-muted);
+  font-weight: 450;
+  border-radius: 8px;
+}
+.admin-shell :is(.admin-tabs, .admin-calendar-tabs) > button.active {
+  background: var(--clarity-mint);
+  color: var(--clarity-green);
+  font-weight: 450;
+}
+.admin-shell :is(.admin-danger-row, .admin-danger-row .button) { color: var(--clarity-danger); }
+
+@media (max-width: 700px) {
+  .native-modal .modal { padding: 22px; }
+  .school-onboarding-steps { gap: 10px; }
+  .app-shell .account-profile { padding: 12px 0 20px; }
+  .app-shell .settings-row { gap: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell :is(.main-nav > a, .topbar .icon-button, .account-trigger, select),
+  .auth-page.auth-centered .auth-form input { transition: none; }
+}

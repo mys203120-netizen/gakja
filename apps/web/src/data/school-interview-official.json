@@ -1,0 +1,1367 @@
+{
+  "schemaVersion": 1,
+  "admissionYear": 2027,
+  "checkedAt": "2026-10-13T04:35:47.720995+00:00",
+  "schools": [
+    {
+      "university": "감리교신학대학교",
+      "sources": [
+        {
+          "url": "https://www.mtu.ac.kr/mtu/contents/view.do?mId=175",
+          "title": "감리교신학대학교 수시 모집요강"
+        },
+        {
+          "url": "https://www.mtu.ac.kr/mtu/file/2027_hakbu_info.pdf",
+          "title": "2027학년도 감리교신학대학교 수시모집요강 (2026.5.)"
+        }
+      ],
+      "entries": [
+        {
+          "trackLabel": "일반전형",
+          "departments": [
+            "신학부"
+          ],
+          "startDate": "2026-10-16",
+          "endDate": "2026-10-16",
+          "dates": [
+            "2026-10-16"
+          ],
+          "rawDate": "일반전형 2026년 10월 16일(금) 14:00",
+          "note": "신석구목사기념관. 2027 수시모집요강 3쪽. 신학부로 모집하며 신학·기독교교육학·종교철학·기독교심리상담학 전공은 1학년 이수 후 선택.",
+          "sourceUrl": "https://www.mtu.ac.kr/mtu/file/2027_hakbu_info.pdf"
+        },
+        {
+          "trackLabel": "추천자전형(담임교역자,교목,교사)",
+          "departments": [
+            "신학부"
+          ],
+          "startDate": "2026-10-17",
+          "endDate": "2026-10-17",
+          "dates": [
+            "2026-10-17"
+          ],
+          "rawDate": "특별전형 2026년 10월 17일(토) 14:00",
+          "note": "추천자전형은 특별전형 공통 면접일. 신석구목사기념관. 요강 3쪽 일정·모집인원 및 6쪽 전형방법 확인.",
+          "sourceUrl": "https://www.mtu.ac.kr/mtu/file/2027_hakbu_info.pdf"
+        },
+        {
+          "trackLabel": "사회적배려대상자및자녀",
+          "departments": [
+            "신학부"
+          ],
+          "startDate": "2026-10-17",
+          "endDate": "2026-10-17",
+          "dates": [
+            "2026-10-17"
+          ],
+          "rawDate": "특별전형 2026년 10월 17일(토) 14:00",
+          "note": "특별전형 공통 면접일. 신석구목사기념관. 요강 3쪽 및 8~9쪽 전형방법 확인.",
+          "sourceUrl": "https://www.mtu.ac.kr/mtu/file/2027_hakbu_info.pdf"
+        },
+        {
+          "trackLabel": "검정고시출신자",
+          "departments": [
+            "신학부"
+          ],
+          "startDate": "2026-10-17",
+          "endDate": "2026-10-17",
+          "dates": [
+            "2026-10-17"
+          ],
+          "rawDate": "특별전형 2026년 10월 17일(토) 14:00",
+          "note": "특별전형 공통 면접일. 신석구목사기념관. 요강 3쪽 및 11쪽 전형방법 확인.",
+          "sourceUrl": "https://www.mtu.ac.kr/mtu/file/2027_hakbu_info.pdf"
+        },
+        {
+          "trackLabel": "농어촌학생",
+          "departments": [
+            "신학부"
+          ],
+          "startDate": "2026-10-17",
+          "endDate": "2026-10-17",
+          "dates": [
+            "2026-10-17"
+          ],
+          "rawDate": "특별전형 2026년 10월 17일(토) 14:00",
+          "note": "정원외 특별전형 공통 면접일. 신석구목사기념관. 요강 3쪽 및 12쪽 전형방법 확인.",
+          "sourceUrl": "https://www.mtu.ac.kr/mtu/file/2027_hakbu_info.pdf"
+        },
+        {
+          "trackLabel": "기초생활수급권자및차상위계층",
+          "departments": [
+            "신학부"
+          ],
+          "startDate": "2026-10-17",
+          "endDate": "2026-10-17",
+          "dates": [
+            "2026-10-17"
+          ],
+          "rawDate": "특별전형 2026년 10월 17일(토) 14:00",
+          "note": "정원외 특별전형 공통 면접일. 신석구목사기념관. 요강 3쪽 및 14쪽 전형방법 확인.",
+          "sourceUrl": "https://www.mtu.ac.kr/mtu/file/2027_hakbu_info.pdf"
+        },
+        {
+          "trackLabel": "특수교육대상자전형",
+          "departments": [
+            "신학부"
+          ],
+          "startDate": "2026-10-17",
+          "endDate": "2026-10-17",
+          "dates": [
+            "2026-10-17"
+          ],
+          "rawDate": "특별전형 2026년 10월 17일(토) 14:00",
+          "note": "정원외 특별전형 공통 면접일. 신석구목사기념관. 요강 3쪽 및 16쪽 전형방법 확인.",
+          "sourceUrl": "https://www.mtu.ac.kr/mtu/file/2027_hakbu_info.pdf"
+        }
+      ],
+      "decisions": [],
+      "scopeNote": "2027 수시모집요강에 있는 국내 신입학 7전형을 확인. 일반전형과 6개 특별전형 모두 면접 실시·날짜 확정. 재외국민 및 외국인은 별도 모집요강 범위이므로 국내 7전형 정보로 일괄 판정하지 않음.",
+      "schoolReferenceId": "bible_8704c828dbe7e8a7"
+    },
+    {
+      "university": "서울기독대학교",
+      "sources": [
+        {
+          "url": "https://admission.scu.ac.kr/entrance/university/early",
+          "title": "서울기독대학교 2027학년도 수시모집요강"
+        },
+        {
+          "url": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "title": "서울기독대학교 2027 수시모집요강 최종본 (공식 입학처 다운로드)"
+        },
+        {
+          "url": "https://admission.scu.ac.kr/entrance/university/early/202610080005",
+          "title": "2027학년도 수시 면접고사 안내 (2026-10-08 게시)"
+        },
+        {
+          "url": "https://admission.scu.ac.kr/api/file?path=entrance-notice-files&filename=20261008_183624_594_1f4062c8.pdf",
+          "title": "2027학년도 수시 면접고사 안내 첨부 PDF"
+        }
+      ],
+      "departmentAliases": [
+        {
+          "registeredName": "기독교신학전공",
+          "admissionUnit": "기독교신학"
+        },
+        {
+          "registeredName": "상담심리전공",
+          "admissionUnit": "상담심리(야)"
+        },
+        {
+          "registeredName": "사회복지전공",
+          "admissionUnit": "사회복지"
+        },
+        {
+          "registeredName": "글로벌휴먼경영전공",
+          "admissionUnit": "글로벌휴먼경영"
+        },
+        {
+          "registeredName": "무용전공",
+          "admissionUnit": "무용"
+        },
+        {
+          "registeredName": "음악전공",
+          "admissionUnit": "음악"
+        },
+        {
+          "registeredName": "뮤지컬전공",
+          "admissionUnit": "뮤지컬"
+        },
+        {
+          "registeredName": "운동건강관리전공",
+          "admissionUnit": "운동건강관리"
+        }
+      ],
+      "entries": [
+        {
+          "trackLabel": "일반전형",
+          "departments": [
+            "기독교신학",
+            "상담심리(야)"
+          ],
+          "startDate": "2026-10-16",
+          "endDate": "2026-10-16",
+          "dates": [
+            "2026-10-16"
+          ],
+          "rawDate": "면접고사 2026.10.16.(금)",
+          "note": "공식 모집단위 2개: 기독교신학·상담심리(야). 함께 기재한 ‘전공’ 명칭은 2026 공시명 별칭으로 추가 학과가 아님. 최종공지 기준 상담심리 14:00(13:30 입실), 기독교신학 15:00(14:30 입실). 원문 첨부 제목에 ‘2026학년도’ 오기가 있으나 게시글 제목·본문 합격발표는 2027학년도이고 면접 날짜는 2027 모집요강과 일치.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "기독교신학전공",
+            "상담심리전공"
+          ]
+        },
+        {
+          "trackLabel": "SCU인재전형",
+          "departments": [
+            "기독교신학"
+          ],
+          "startDate": "2026-10-16",
+          "endDate": "2026-10-16",
+          "dates": [
+            "2026-10-16"
+          ],
+          "rawDate": "면접고사 2026.10.16.(금)",
+          "note": "교회추천자 대상 기독교신학 1개 모집단위만 면접 20%. SCU인재전형 글로벌휴먼경영(학교장추천자)은 면접 없음. 요강 5~6쪽 일정·반영비율, 13쪽 면접고사 확인.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "기독교신학전공"
+          ]
+        },
+        {
+          "trackLabel": "기회균형전형(만학도)",
+          "departments": [
+            "기독교신학",
+            "상담심리(야)"
+          ],
+          "startDate": "2026-10-16",
+          "endDate": "2026-10-16",
+          "dates": [
+            "2026-10-16"
+          ],
+          "rawDate": "면접고사 2026.10.16.(금)",
+          "note": "정원내 만학도 전형. 공식 모집단위 2개: 기독교신학·상담심리(야), 면접 20%. 정원외 특별전형을 이 일정에 포함하지 않음. 요강 5~6쪽 및 13쪽 확인.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "기독교신학전공",
+            "상담심리전공"
+          ]
+        }
+      ],
+      "decisions": [
+        {
+          "trackLabel": "일반전형",
+          "departments": [
+            "사회복지",
+            "글로벌휴먼경영"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 6쪽 일반전형 반영표: 사회복지·글로벌휴먼경영은 학생부 100%, 면접은 ‘-’. 면접 대상은 같은 전형의 기독교신학·상담심리(야)와 구분됨.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "사회복지전공",
+            "글로벌휴먼경영전공"
+          ]
+        },
+        {
+          "trackLabel": "일반전형",
+          "departments": [
+            "무용",
+            "음악",
+            "뮤지컬",
+            "운동건강관리"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 6쪽 실기위주 일반전형 반영표: 무용·음악·뮤지컬·운동건강관리는 학생부 20%+실기 80%, 면접은 ‘-’. 10월 23일 실기는 면접 캘린더에 가져오지 않음.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "무용전공",
+            "음악전공",
+            "뮤지컬전공",
+            "운동건강관리전공"
+          ]
+        },
+        {
+          "trackLabel": "SCU인재전형",
+          "departments": [
+            "글로벌휴먼경영"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 6쪽 SCU인재전형 학교장추천자 글로벌휴먼경영은 학생부 100%, 면접은 ‘-’. 교회추천자 기독교신학의 면접과 구분.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "글로벌휴먼경영전공"
+          ]
+        },
+        {
+          "trackLabel": "농어촌출신자",
+          "departments": [
+            "기독교신학",
+            "사회복지",
+            "글로벌휴먼경영",
+            "무용",
+            "음악",
+            "뮤지컬"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 4쪽 모집인원 및 6쪽 정원외 특별전형 반영표에서 농어촌출신자 해당 모집단위 면접은 ‘-’. 휴먼서비스는 학생부 100%, 예술은 학생부 20%+실기 80%.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "기독교신학전공",
+            "사회복지전공",
+            "글로벌휴먼경영전공",
+            "무용전공",
+            "음악전공",
+            "뮤지컬전공"
+          ]
+        },
+        {
+          "trackLabel": "특성화고교졸업자",
+          "departments": [
+            "기독교신학",
+            "사회복지",
+            "글로벌휴먼경영",
+            "무용",
+            "음악",
+            "뮤지컬"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 4쪽 모집인원 및 6쪽 정원외 특별전형 반영표에서 특성화고교졸업자 해당 모집단위 면접은 ‘-’. 휴먼서비스는 학생부 100%, 예술은 학생부 20%+실기 80%.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "기독교신학전공",
+            "사회복지전공",
+            "글로벌휴먼경영전공",
+            "무용전공",
+            "음악전공",
+            "뮤지컬전공"
+          ]
+        },
+        {
+          "trackLabel": "기초생활수급자 및 차상위계층 등",
+          "departments": [
+            "기독교신학",
+            "사회복지",
+            "글로벌휴먼경영",
+            "무용",
+            "음악",
+            "뮤지컬"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 4쪽 모집인원 및 6쪽 정원외 특별전형 반영표에서 기초생활수급자 및 차상위계층 등 해당 모집단위 면접은 ‘-’. 휴먼서비스는 학생부 100%, 예술은 학생부 20%+실기 80%.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "기독교신학전공",
+            "사회복지전공",
+            "글로벌휴먼경영전공",
+            "무용전공",
+            "음악전공",
+            "뮤지컬전공"
+          ]
+        },
+        {
+          "trackLabel": "특성화고 등을 졸업한 재직자",
+          "departments": [
+            "상담심리(야)",
+            "무용",
+            "음악",
+            "뮤지컬"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 4쪽 모집인원 및 6쪽 정원외 특별전형 반영표에서 재직자 해당 모집단위 면접은 ‘-’. 상담심리(야)는 학생부 100%, 예술은 학생부 20%+실기 80%.",
+          "sourceUrl": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "departmentAliases": [
+            "상담심리전공",
+            "무용전공",
+            "음악전공",
+            "뮤지컬전공"
+          ]
+        }
+      ],
+      "scopeNote": "2027 최종 수시요강 및 2026-10-08 공식 면접공지 대조. 면접 있는 모집단위와 같은 학교·전형의 면접 없는 모집단위를 분리. 서울기독 ‘전공’ 공시명은 해당학교 공식2027 모집단위와 대조하여 함께 넣음. AI경영·AI빅데이터융합 등 외국인전담학과는 별도 외국인 요강 범위여서 이 국내 수시 면접 자료로 판정하지 않음.",
+      "schoolReferenceId": "bible_dd4300e7468ec465"
+    },
+    {
+      "university": "장로회신학대학교",
+      "sources": [
+        {
+          "url": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/",
+          "title": "장로회신학대학교 대학 입학안내 2027 입학전형 일정"
+        },
+        {
+          "url": "https://www.puts.ac.kr/main/iphak_annae_db/yogang/2027_susi.pdf",
+          "title": "2027학년도 장로회신학대학교 수시모집요강"
+        },
+        {
+          "url": "https://www.puts.ac.kr/www/board/list.general.asp?bd_name=boarddb_board05&m1=4&m2=1&design=ipsi_db",
+          "title": "2027 수시 면접고사 공지 (2026-10-01)"
+        }
+      ],
+      "entries": [
+        {
+          "trackLabel": "성경고사성적우수자",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-16",
+          "endDate": "2026-10-16",
+          "dates": [
+            "2026-10-16"
+          ],
+          "rawDate": "2026. 10. 16.(금) 수시 성경고사성적우수자 성경·면접",
+          "note": "모집요강 15~17쪽 모집단위·일정. 2026-10-01 공식 공지에서 자유전공·신학과·기독교교육과 고사일 재확인.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        },
+        {
+          "trackLabel": "학생부우수자",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-16",
+          "endDate": "2026-10-16",
+          "dates": [
+            "2026-10-16"
+          ],
+          "rawDate": "2026. 10. 16.(금) 수시 학생부우수자 면접",
+          "note": "모집요강 15~17쪽 모집단위·일정. 2026-10-01 공식 면접공지 재확인.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        },
+        {
+          "trackLabel": "사회기여 및 배려자",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-23",
+          "endDate": "2026-10-23",
+          "dates": [
+            "2026-10-23"
+          ],
+          "rawDate": "2026. 10. 23.(금) 수시 사회기여 및 배려자 면접",
+          "note": "모집요강 15~17쪽 모집단위·일정. 2026-10-01 공식 면접공지 재확인.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        },
+        {
+          "trackLabel": "대안학교출신자",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-23",
+          "endDate": "2026-10-23",
+          "dates": [
+            "2026-10-23"
+          ],
+          "rawDate": "2026. 10. 23.(금) 수시 대안학교출신자 면접",
+          "note": "모집요강 15~17쪽 모집단위·일정. 2026-10-01 공식 면접공지 재확인.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        },
+        {
+          "trackLabel": "드림(PUTS인재)",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-30",
+          "endDate": "2026-10-30",
+          "dates": [
+            "2026-10-30"
+          ],
+          "rawDate": "2026. 10. 30.(금) 수시 드림(PUTS인재) 면접",
+          "note": "모집요강 15~17쪽 모집단위·일정. 2026-10-01 공식 면접공지 재확인.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        },
+        {
+          "trackLabel": "농어촌 및 도서·벽지 지역 학생",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-30",
+          "endDate": "2026-10-30",
+          "dates": [
+            "2026-10-30"
+          ],
+          "rawDate": "2026. 10. 30.(금) 수시 신학과·자유전공·기독교교육과 정원외 면접",
+          "note": "인문·사범 모집단위만 이 면접에 해당. 같은 정원외 전형의 교회음악학과 실기는 면접 일정에서 제외. 모집요강 16~17쪽, 22쪽.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        },
+        {
+          "trackLabel": "특수교육대상자",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-30",
+          "endDate": "2026-10-30",
+          "dates": [
+            "2026-10-30"
+          ],
+          "rawDate": "2026. 10. 30.(금) 수시 신학과·자유전공·기독교교육과 정원외 면접",
+          "note": "인문·사범 모집단위만 이 면접에 해당. 같은 정원외 전형의 교회음악학과 실기는 면접 일정에서 제외. 모집요강 16~17쪽, 22쪽.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        },
+        {
+          "trackLabel": "기회균형선발제",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-30",
+          "endDate": "2026-10-30",
+          "dates": [
+            "2026-10-30"
+          ],
+          "rawDate": "2026. 10. 30.(금) 수시 신학과·자유전공·기독교교육과 정원외 면접",
+          "note": "모집요강 16~17쪽 및 22쪽 확인. 2026-10-01 공식 정원외 전형 면접공지 재확인.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        },
+        {
+          "trackLabel": "재외국민·외국인",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-30",
+          "endDate": "2026-10-30",
+          "dates": [
+            "2026-10-30"
+          ],
+          "rawDate": "2026. 10. 30.(금) 수시 신학과·자유전공·기독교교육과 정원외(재외국민·외국인) 면접",
+          "note": "공식 입학처 전형일정 및 수시모집요강 17쪽에서 인문·사범 면접일을 명시. 자격·전형방법은 별도 재외국민·외국인 모집요강 확인 필요.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        },
+        {
+          "trackLabel": "북한이탈주민",
+          "departments": [
+            "자유전공",
+            "신학과",
+            "기독교교육과"
+          ],
+          "startDate": "2026-10-30",
+          "endDate": "2026-10-30",
+          "dates": [
+            "2026-10-30"
+          ],
+          "rawDate": "2026. 10. 30.(금) 수시 신학과·자유전공·기독교교육과 정원외(북한이탈주민) 면접",
+          "note": "공식 입학처 전형일정 및 수시모집요강 17쪽에서 인문·사범 면접일을 명시. 자격·전형방법은 별도 북한이탈주민 모집요강 확인 필요.",
+          "sourceUrl": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/"
+        }
+      ],
+      "decisions": [
+        {
+          "trackLabel": "일반전형",
+          "departments": [
+            "교회음악학과"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 22쪽 일반전형(실기위주) 전형방법에서 ‘면접고사 없음’을 명시하고 실기 100%로 선발. 10월 31일 실기는 면접 캘린더에서 제외.",
+          "sourceUrl": "https://www.puts.ac.kr/main/iphak_annae_db/yogang/2027_susi.pdf"
+        },
+        {
+          "trackLabel": "농어촌 및 도서·벽지 지역 학생",
+          "departments": [
+            "교회음악학과"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 16·18쪽 교회음악학과 정원외 농어촌 및 도서·벽지 지역 학생은 실기 100%. 같은 전형의 인문·사범 모집단위 면접과 구분.",
+          "sourceUrl": "https://www.puts.ac.kr/main/iphak_annae_db/yogang/2027_susi.pdf"
+        },
+        {
+          "trackLabel": "특수교육대상자",
+          "departments": [
+            "교회음악학과"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시모집요강 16·18쪽 교회음악학과 정원외 특수교육대상자는 실기 100%. 같은 전형의 인문·사범 모집단위 면접과 구분.",
+          "sourceUrl": "https://www.puts.ac.kr/main/iphak_annae_db/yogang/2027_susi.pdf"
+        }
+      ],
+      "scopeNote": "2027 수시모집요강과 2026-10-01 공식 면접공지 및 입학처 전형일정 대조. 인문·사범 3모집단위의 면접은10/16·10/23·10/30 전형별 확정. 교회음악학과의 일반 및 확인된 두 정원외 전형은 실제 면접 미실시. 10/31 실기, 정시1/19 면접, 편입학 일정은 이번 수시 면접 캘린더에서 제외.",
+      "schoolReferenceId": "bible_c08e4b9a9a57b73b"
+    },
+    {
+      "university": "추계예술대학교",
+      "sources": [
+        {
+          "url": "https://enter.chugye.ac.kr/BoardView.do?categorySeq=235&dataSeq=218&idx=1754287128&menuSeq=15&pageNum=1&searchBy=all&searchValue=",
+          "title": "2027학년도 신입학전형 수시모집 수험생 유의사항 및 실기일정 안내(2026-09-18)"
+        },
+        {
+          "url": "https://enter.chugye.ac.kr/BoardView.do?dataSeq=218&idx=1649162878&menuSeq=114",
+          "title": "2027학년도 수시모집요강 공식게시글"
+        },
+        {
+          "url": "https://enter.chugye.ac.kr/file/fileDownLoad.do?seq=1755686778",
+          "title": "2027학년도 수시모집요강 최종합본"
+        }
+      ],
+      "entries": [
+        {
+          "trackLabel": "학생부교과(미래인재전형)",
+          "trackAliases": [
+            "미래인재전형"
+          ],
+          "departments": [
+            "콘텐츠창작학부"
+          ],
+          "startDate": "2026-10-17",
+          "endDate": "2026-10-17",
+          "dates": [
+            "2026-10-17"
+          ],
+          "rawDate": "10.17.(토)",
+          "note": "1단계 합격자 대상. 세부 면접시간은 10월14일 합격자 발표 때 안내. 콘텐츠스토리·콘텐츠비즈니스·메타콘텐츠는 입학 후 선택하는 세부전공.",
+          "sourceUrl": "https://enter.chugye.ac.kr/BoardView.do?categorySeq=235&dataSeq=218&idx=1754287128&menuSeq=15&pageNum=1&searchBy=all&searchValue=",
+          "evidencePage": 15
+        }
+      ],
+      "decisions": [
+        {
+          "trackLabel": "실기/실적(일반학생전형)",
+          "trackAliases": [
+            "일반학생전형"
+          ],
+          "departments": [
+            "국악과",
+            "성악과",
+            "피아노과",
+            "관현악과",
+            "작곡과",
+            "미술창작학부"
+          ],
+          "status": "no_interview",
+          "reason": "공식 전형방법: 국악·성악·피아노·관현악·작곡 실기100%, 미술창작학부 실기80%+학생부20%. 면접평가 없음.",
+          "sourceUrl": "https://enter.chugye.ac.kr/file/fileDownLoad.do?seq=1755686778",
+          "evidencePage": 9
+        },
+        {
+          "trackLabel": "실기/실적(수상실적특기자전형)",
+          "trackAliases": [
+            "수상실적특기자전형"
+          ],
+          "departments": [
+            "문예창작과"
+          ],
+          "status": "no_interview",
+          "reason": "공식 전형방법: 서류100% 일괄합산. 면접평가 없음.",
+          "sourceUrl": "https://enter.chugye.ac.kr/file/fileDownLoad.do?seq=1755686778",
+          "evidencePage": 12
+        },
+        {
+          "trackLabel": "외국의 전교육과정 이수자",
+          "trackAliases": [],
+          "departments": [
+            "국악과",
+            "성악과",
+            "피아노과",
+            "관현악과",
+            "작곡과",
+            "미술창작학부",
+            "문예창작과"
+          ],
+          "status": "no_interview",
+          "reason": "공식 선발원칙: 작곡과 제출작품 심사, 그 외 지정학과 실기고사 성적순. 면접평가 없음. 콘텐츠창작학부 구술면접 영상제출은 제외.",
+          "sourceUrl": "https://enter.chugye.ac.kr/file/fileDownLoad.do?seq=1755686778",
+          "evidencePage": 19
+        },
+        {
+          "trackLabel": "외국의 전교육과정 이수자",
+          "trackAliases": [],
+          "departments": [
+            "콘텐츠창작학부"
+          ],
+          "status": "unverified",
+          "reason": "녹화형 구술면접 영상자료 이메일 제출로 평가(자료 제출기한9월23일17시). 대면면접 일자가 없으며 면접 미실시로 취급하지 않음. 면접문항은 원서접수 이후 공식홈페이지 안내.",
+          "sourceUrl": "https://enter.chugye.ac.kr/file/fileDownLoad.do?seq=1755686778",
+          "evidencePage": 19
+        },
+        {
+          "trackLabel": "북한이탈주민",
+          "trackAliases": [],
+          "departments": [
+            "국악과",
+            "성악과",
+            "피아노과",
+            "관현악과",
+            "작곡과",
+            "미술창작학부",
+            "문예창작과"
+          ],
+          "status": "no_interview",
+          "reason": "공식 선발원칙: 작곡과 제출작품 심사, 그 외 지정학과 실기고사 성적순. 면접평가 없음. 콘텐츠창작학부 구술면접 영상제출은 제외.",
+          "sourceUrl": "https://enter.chugye.ac.kr/file/fileDownLoad.do?seq=1755686778",
+          "evidencePage": 19
+        },
+        {
+          "trackLabel": "북한이탈주민",
+          "trackAliases": [],
+          "departments": [
+            "콘텐츠창작학부"
+          ],
+          "status": "unverified",
+          "reason": "녹화형 구술면접 영상자료 이메일 제출로 평가(자료 제출기한9월23일17시). 대면면접 일자가 없으며 면접 미실시로 취급하지 않음. 면접문항은 원서접수 이후 공식홈페이지 안내.",
+          "sourceUrl": "https://enter.chugye.ac.kr/file/fileDownLoad.do?seq=1755686778",
+          "evidencePage": 19
+        },
+        {
+          "trackLabel": "재외국민·외국인",
+          "trackAliases": [
+            "재외국민·외국인 특별전형"
+          ],
+          "departments": [
+            "성악과",
+            "피아노과",
+            "관현악과",
+            "미술창작학부"
+          ],
+          "status": "no_interview",
+          "reason": "모집단위별 실기100% 평가. 대면 면접평가 없음.",
+          "sourceUrl": "https://enter.chugye.ac.kr/file/fileDownLoad.do?seq=1755686778",
+          "evidencePage": 18
+        }
+      ],
+      "scopeNote": "수시 대면면접 확정일은 미래인재전형 콘텐츠창작학부10/17. 정원외 녹화형 구술면접은 별도 구분하며 실기고사일은 면접일에 넣지 않음.",
+      "schoolReferenceId": "bible_eaa3cffd29f5415a"
+    },
+    {
+      "university": "한국체육대학교",
+      "sources": [
+        {
+          "url": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?mode=view&articleNo=56433",
+          "title": "2027학년도 수시모집요강 변경 알림(공연예술학과 실기고사 일정,2026-10-08)"
+        },
+        {
+          "url": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "title": "2027학년도 수시모집요강 통합본(2026-10-08)"
+        }
+      ],
+      "entries": [
+        {
+          "trackLabel": "교과성적우수자전형",
+          "trackAliases": [
+            "교과성적우수자"
+          ],
+          "departments": [
+            "특수체육교육과"
+          ],
+          "startDate": "2026-11-12",
+          "endDate": "2026-11-12",
+          "dates": [
+            "2026-11-12"
+          ],
+          "rawDate": "2026.11.12.(목)14:00~",
+          "note": "면접14:00부터. 개인별 시간·장소는 입학처 별도 공지. 교과성적우수자는1차합격자 대상; 다른 해당전형은 지원자 대상.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 33
+        },
+        {
+          "trackLabel": "국가보훈대상자특별전형",
+          "trackAliases": [
+            "국가보훈대상자전형",
+            "국가보훈대상자"
+          ],
+          "departments": [
+            "특수체육교육과"
+          ],
+          "startDate": "2026-11-12",
+          "endDate": "2026-11-12",
+          "dates": [
+            "2026-11-12"
+          ],
+          "rawDate": "2026.11.12.(목)14:00~",
+          "note": "면접14:00부터. 개인별 시간·장소는 입학처 별도 공지. 교과성적우수자는1차합격자 대상; 다른 해당전형은 지원자 대상.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 35
+        },
+        {
+          "trackLabel": "특수교육대상자특별전형",
+          "trackAliases": [
+            "특수교육대상자전형",
+            "특수교육대상자"
+          ],
+          "departments": [
+            "특수체육교육과",
+            "경기지도학과"
+          ],
+          "startDate": "2026-11-12",
+          "endDate": "2026-11-12",
+          "dates": [
+            "2026-11-12"
+          ],
+          "rawDate": "2026.11.12.(목)14:00~",
+          "note": "면접14:00부터. 개인별 시간·장소는 입학처 별도 공지. 교과성적우수자는1차합격자 대상; 다른 해당전형은 지원자 대상.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 38
+        },
+        {
+          "trackLabel": "외국인(북한이탈주민)군 특별전형",
+          "trackAliases": [
+            "외국인전형",
+            "외국인특별전형",
+            "외국인군 특별전형"
+          ],
+          "departments": [
+            "경기지도학과"
+          ],
+          "startDate": "2026-11-12",
+          "endDate": "2026-11-12",
+          "dates": [
+            "2026-11-12"
+          ],
+          "rawDate": "2026.11.12.(목)14:00~",
+          "note": "면접14:00부터. 개인별 시간·장소는 입학처 별도 공지. 교과성적우수자는1차합격자 대상; 다른 해당전형은 지원자 대상.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 5
+        }
+      ],
+      "decisions": [
+        {
+          "trackLabel": "체육특기자전형",
+          "trackAliases": [
+            "체육특기자"
+          ],
+          "departments": [
+            "체육학과"
+          ],
+          "status": "no_interview",
+          "reason": "개인종목: 경기입상실적90%+학생부10%, 단체종목: 경기입상실적40%+실기50%+학생부10%. 면접평가 없음.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 10
+        },
+        {
+          "trackLabel": "경기입상실적우수자전형",
+          "trackAliases": [
+            "경기입상실적우수자"
+          ],
+          "departments": [
+            "경기지도학과",
+            "태권도학과"
+          ],
+          "status": "no_interview",
+          "reason": "경기지도학과: 학생부40%+입상실적60%, 태권도학과:1단계 학생부35%+입상실적65%,2단계1단계성적60%+실기40%. 면접평가 없음.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 18
+        },
+        {
+          "trackLabel": "실기우수자전형",
+          "trackAliases": [
+            "실기우수자"
+          ],
+          "departments": [
+            "공연예술학과",
+            "태권도학과"
+          ],
+          "status": "no_interview",
+          "reason": "학생부30%+실기70%. 면접평가 없음.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 24
+        },
+        {
+          "trackLabel": "교과성적우수자전형",
+          "trackAliases": [
+            "교과성적우수자"
+          ],
+          "departments": [
+            "사회체육학과",
+            "운동건강관리학과",
+            "노인체육복지학과",
+            "스포츠산업학과",
+            "스포츠청소년지도학과"
+          ],
+          "status": "no_interview",
+          "reason": "해당5개학과 전형요소표 교직적성면접란 없음. 특수체육교육과는 면접10% 있으므로 제외.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 27
+        },
+        {
+          "trackLabel": "국가보훈대상자특별전형",
+          "trackAliases": [
+            "국가보훈대상자전형",
+            "국가보훈대상자"
+          ],
+          "departments": [
+            "사회체육학과",
+            "스포츠청소년지도학과",
+            "노인체육복지학과",
+            "운동건강관리학과"
+          ],
+          "status": "no_interview",
+          "reason": "공식 전형요소표 면접고사란 없음. 특수체육교육과는 면접10% 있으므로 제외.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 34
+        },
+        {
+          "trackLabel": "특수교육대상자특별전형",
+          "trackAliases": [
+            "특수교육대상자전형",
+            "특수교육대상자"
+          ],
+          "departments": [
+            "태권도학과"
+          ],
+          "status": "no_interview",
+          "reason": "학생부10%+경기입상실적90%, 면접고사란 없음. 경기지도학과·특수체육교육과 면접20%와 구분.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 36
+        },
+        {
+          "trackLabel": "농어촌지역학생특별전형",
+          "trackAliases": [
+            "농어촌지역학생전형",
+            "농어촌지역학생"
+          ],
+          "departments": [
+            "공연예술학과"
+          ],
+          "status": "no_interview",
+          "reason": "학생부30%+실기70%, 면접고사란 없음.",
+          "sourceUrl": "https://ipsi.knsu.ac.kr/ipsi/rolling/application.do?articleNo=56433&attachNo=122951&mode=download",
+          "evidencePage": 39
+        }
+      ],
+      "scopeNote": "같은 수시전형 내 학과별로 면접 실시 여부가 다름. 면접고사는11/12 14:00부터, 개인별 시간·장소는 별도 공지. 실기고사 일정은 면접일로 포함하지 않음.",
+      "schoolReferenceId": "bible_f1315d9c83ebb02a"
+    },
+    {
+      "university": "공주교육대학교",
+      "sources": [
+        {
+          "url": "https://www.gjue.ac.kr/ipsi/72/pdfViewer/CAT183",
+          "title": "공주교육대학교 2027학년도 수시모집요강 공식뷰어"
+        },
+        {
+          "url": "https://www.gjue.ac.kr/attach/image/5e71f4afee0548f3702e6acd40270b82/debc2e19d8870bf491bf5e73464259e8",
+          "title": "2027학년도 수시모집 신입생모집요강"
+        },
+        {
+          "url": "https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000251",
+          "title": "대학제출2027학년도 전형평가기준: 학생부종합 모든전형 면접미실시"
+        }
+      ],
+      "entries": [],
+      "decisions": [
+        {
+          "trackLabel": "교직적성인재",
+          "trackAliases": [
+            "교직적성인재 전형"
+          ],
+          "departments": [
+            "초등교육과"
+          ],
+          "status": "no_interview",
+          "reason": "공식수시모집요강 전형단계·요소: 서류평가(정성평가)100%, 일괄합산. 대학제출2027전형평가기준에도 모든학생부종합전형 면접미실시 명시.",
+          "sourceUrl": "https://www.gjue.ac.kr/attach/image/5e71f4afee0548f3702e6acd40270b82/debc2e19d8870bf491bf5e73464259e8",
+          "evidencePage": 4
+        },
+        {
+          "trackLabel": "지역인재선발",
+          "trackAliases": [
+            "지역인재선발 전형"
+          ],
+          "departments": [
+            "초등교육과"
+          ],
+          "status": "no_interview",
+          "reason": "공식수시모집요강 전형단계·요소: 서류평가(정성평가)100%, 일괄합산. 대학제출2027전형평가기준에도 모든학생부종합전형 면접미실시 명시.",
+          "sourceUrl": "https://www.gjue.ac.kr/attach/image/5e71f4afee0548f3702e6acd40270b82/debc2e19d8870bf491bf5e73464259e8",
+          "evidencePage": 5
+        },
+        {
+          "trackLabel": "국가보훈대상자",
+          "trackAliases": [
+            "국가보훈대상자 전형"
+          ],
+          "departments": [
+            "초등교육과"
+          ],
+          "status": "no_interview",
+          "reason": "공식수시모집요강 전형단계·요소: 서류평가(정성평가)100%, 일괄합산. 대학제출2027전형평가기준에도 모든학생부종합전형 면접미실시 명시.",
+          "sourceUrl": "https://www.gjue.ac.kr/attach/image/5e71f4afee0548f3702e6acd40270b82/debc2e19d8870bf491bf5e73464259e8",
+          "evidencePage": 6
+        },
+        {
+          "trackLabel": "농·어촌학생",
+          "trackAliases": [
+            "농·어촌학생 전형"
+          ],
+          "departments": [
+            "초등교육과"
+          ],
+          "status": "no_interview",
+          "reason": "공식수시모집요강 전형단계·요소: 서류평가(정성평가)100%, 일괄합산. 대학제출2027전형평가기준에도 모든학생부종합전형 면접미실시 명시.",
+          "sourceUrl": "https://www.gjue.ac.kr/attach/image/5e71f4afee0548f3702e6acd40270b82/debc2e19d8870bf491bf5e73464259e8",
+          "evidencePage": 7
+        },
+        {
+          "trackLabel": "기회균형선발",
+          "trackAliases": [
+            "기회균형선발 전형"
+          ],
+          "departments": [
+            "초등교육과"
+          ],
+          "status": "no_interview",
+          "reason": "공식수시모집요강 전형단계·요소: 서류평가(정성평가)100%, 일괄합산. 대학제출2027전형평가기준에도 모든학생부종합전형 면접미실시 명시.",
+          "sourceUrl": "https://www.gjue.ac.kr/attach/image/5e71f4afee0548f3702e6acd40270b82/debc2e19d8870bf491bf5e73464259e8",
+          "evidencePage": 9
+        },
+        {
+          "trackLabel": "장애인 등 대상자",
+          "trackAliases": [
+            "장애인 등 대상자 전형"
+          ],
+          "departments": [
+            "초등교육과"
+          ],
+          "status": "no_interview",
+          "reason": "공식수시모집요강 전형단계·요소: 서류평가(정성평가)100%, 일괄합산. 대학제출2027전형평가기준에도 모든학생부종합전형 면접미실시 명시.",
+          "sourceUrl": "https://www.gjue.ac.kr/attach/image/5e71f4afee0548f3702e6acd40270b82/debc2e19d8870bf491bf5e73464259e8",
+          "evidencePage": 11
+        },
+        {
+          "trackLabel": "*",
+          "trackAliases": [],
+          "departments": [
+            "초등교육과"
+          ],
+          "status": "no_interview",
+          "reason": "2027학년도 수시6전형 전체가 서류평가100% 일괄합산이며 면접미실시. 날짜미정이 아님.",
+          "sourceUrl": "https://www.gjue.ac.kr/attach/image/5e71f4afee0548f3702e6acd40270b82/debc2e19d8870bf491bf5e73464259e8",
+          "evidencePage": 4
+        }
+      ],
+      "scopeNote": "2027학년도 수시6전형 모두 초등교육과 학생부종합 서류평가100% 일괄합산. 실제 면접미실시이며 날짜미정과 구분. 정시 면접 여부를 의미하지 않음.",
+      "schoolReferenceId": "bible_a602c0592894687a"
+    },
+    {
+      "university": "국립부경대학교",
+      "sources": [
+        {
+          "url": "https://iphak.pknu.ac.kr/pknu/plan/paper.htm?ctg_cd=oa",
+          "title": "국립부경대학교 입학본부 2027학년도 수시 모집요강"
+        },
+        {
+          "url": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596",
+          "title": "2027학년도 국립부경대학교 수시 신입생 모집요강 PDF (86쪽)"
+        },
+        {
+          "url": "https://iphak.pknu.ac.kr/pknu/board/board.htm?bbsid=notice&bltn_seq=1163&code=iphak_help&ctg_cd=oa&mode=view",
+          "title": "2027학년도 수시 신입생 모집요강 공고 (2026. 7. 6.자 수정)"
+        }
+      ],
+      "entries": [],
+      "decisions": [
+        {
+          "trackLabel": "학생부교과(교과성적우수인재전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 26쪽: 교과성적 900점과 출석성적 100점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=26",
+          "trackAliases": [
+            "교과성적우수인재전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부교과(일반전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 27쪽: 교과성적 900점과 출석성적 100점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=27",
+          "trackAliases": [
+            "일반전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부교과(지역혁신인재전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 28쪽: 교과성적 900점과 출석성적 100점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=28",
+          "trackAliases": [
+            "지역혁신인재전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부교과(평생학습자전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 30쪽: 교과성적 900점과 출석성적 100점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=30",
+          "trackAliases": [
+            "평생학습자전형"
+          ]
+        },
+        {
+          "trackLabel": "실기/실적(실기우수인재전형)",
+          "departments": [
+            "해양스포츠학과",
+            "시각디자인학과",
+            "공업디자인학과"
+          ],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 32쪽: 1단계는 교과·출석, 2단계는 1단계 성적 400점과 실기 600점입니다. 해양스포츠는 달리기·에르고미터, 디자인은 기초디자인 실기로 면접이 아닙니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=32",
+          "trackAliases": [
+            "실기우수인재전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(학교생활우수인재전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 34쪽: 서류종합평가 1,000점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=34",
+          "trackAliases": [
+            "학교생활우수인재전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(사회적배려대상자Ⅰ전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 35쪽: 사회적배려대상자Ⅰ·Ⅱ·Ⅲ 모두 서류종합평가 1,000점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=35",
+          "trackAliases": [
+            "사회적배려대상자Ⅰ전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(사회적배려대상자Ⅱ전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 35쪽: 사회적배려대상자Ⅰ·Ⅱ·Ⅲ 모두 서류종합평가 1,000점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=35",
+          "trackAliases": [
+            "사회적배려대상자Ⅱ전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(사회적배려대상자Ⅲ전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 35쪽: 사회적배려대상자Ⅰ·Ⅱ·Ⅲ 모두 서류종합평가 1,000점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=35",
+          "trackAliases": [
+            "사회적배려대상자Ⅲ전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부교과(농어촌인재전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 38쪽: 교과성적 900점과 출석성적 100점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=38",
+          "trackAliases": [
+            "농어촌인재전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부교과(미래인재전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 38쪽: 교과성적 900점과 출석성적 100점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=38",
+          "trackAliases": [
+            "미래인재전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부교과(특성화고교인재전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 40쪽: 교과성적 900점과 출석성적 100점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=40",
+          "trackAliases": [
+            "특성화고교인재전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(특수교육대상자전형)",
+          "departments": [],
+          "status": "no_interview",
+          "reason": "2027 수시 모집요강 43쪽: 서류종합평가 1,000점으로 일괄 선발하며 면접 전형요소가 없습니다.",
+          "sourceUrl": "https://iphak.pknu.ac.kr/bbs/filedown.php?bbsid=pdf_paper&file_seq=1596#page=43",
+          "trackAliases": [
+            "특수교육대상자전형"
+          ]
+        }
+      ],
+      "scopeNote": "입학처 2027학년도 수시 모집요강의 정원 내·외 13개 전형을 확인했습니다. 날짜 미정이 아니라 면접 전형요소가 없습니다. 실기우수인재전형의 실기 일정을 면접 일정으로 가져오지 않습니다. 별도 모집요강인 재외국민 특별전형·외국인·편입·전형기간자율화에 무면접 결론을 확대하지 않습니다. 학과가 해당 전형의 모집단위인지와 지원자격은 별도 확인해야 합니다.",
+      "schoolReferenceId": "bible_932cc4d23c32588a"
+    },
+    {
+      "university": "경인교육대학교",
+      "sources": [
+        {
+          "url": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=46345&mCode=MN019&mgr_seq=134&mode=view",
+          "title": "경인교육대학교 입학본부 2027학년도 수시모집 신입생 모집요강 (2026. 5. 29.)"
+        },
+        {
+          "url": "https://www.ginue.ac.kr/ipsi/ajx_json/UploadMgr/downloadRun.do?qcode=Qm9hcmQsNzczNTIsWQ==",
+          "title": "2027학년도 수시모집 신입생 모집요강 PDF (46쪽)"
+        },
+        {
+          "url": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47227&mCode=MN028&mgr_seq=142&mode=view",
+          "title": "2027학년도 수시 학생부교과(학교장추천전형) 및 학생부종합 전체 전형 면접평가 동영상 업로드 관련 안내 (2026. 8. 31.)"
+        },
+        {
+          "url": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47508&mCode=MN028&mgr_seq=142&mode=view",
+          "title": "2027학년도 수시 학생부위주전형 면접평가 동영상 제출 수험생 유의사항 및 문항공개 (2026. 9. 21.)"
+        }
+      ],
+      "entries": [
+        {
+          "trackLabel": "학생부교과(학교장추천전형)",
+          "departments": [
+            "초등교육과"
+          ],
+          "startDate": "2026-09-21",
+          "endDate": "2026-09-23",
+          "dates": [
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23"
+          ],
+          "rawDate": "면접평가 동영상 제출: 2026.9.21.(월) 10:00 ~ 9.23.(수) 11:00",
+          "note": "비대면 동영상 면접 제출기간입니다. 대면 면접일이 아닙니다. 지원자 전체 대상, 9월 23일 오전 11시 마감. 진학어플라이에 필수 제출하며 미제출 시 불합격입니다.",
+          "sourceUrl": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47508&mCode=MN028&mgr_seq=142&mode=view",
+          "format": "video_submission",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "trackAliases": [
+            "학교장추천전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(교직적성전형)",
+          "departments": [
+            "초등교육과"
+          ],
+          "startDate": "2026-09-21",
+          "endDate": "2026-09-23",
+          "dates": [
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23"
+          ],
+          "rawDate": "면접평가 동영상 제출: 2026.9.21.(월) 10:00 ~ 9.23.(수) 11:00",
+          "note": "비대면 동영상 면접 제출기간입니다. 대면 면접일이 아닙니다. 지원자 전체 대상, 9월 23일 오전 11시 마감. 진학어플라이에 필수 제출하며 미제출 시 불합격입니다.",
+          "sourceUrl": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47508&mCode=MN028&mgr_seq=142&mode=view",
+          "format": "video_submission",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "trackAliases": [
+            "교직적성전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(국가보훈대상자전형)",
+          "departments": [
+            "초등교육과"
+          ],
+          "startDate": "2026-09-21",
+          "endDate": "2026-09-23",
+          "dates": [
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23"
+          ],
+          "rawDate": "면접평가 동영상 제출: 2026.9.21.(월) 10:00 ~ 9.23.(수) 11:00",
+          "note": "비대면 동영상 면접 제출기간입니다. 대면 면접일이 아닙니다. 지원자 전체 대상, 9월 23일 오전 11시 마감. 진학어플라이에 필수 제출하며 미제출 시 불합격입니다.",
+          "sourceUrl": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47508&mCode=MN028&mgr_seq=142&mode=view",
+          "format": "video_submission",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "trackAliases": [
+            "국가보훈대상자전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(저소득층학생전형)",
+          "departments": [
+            "초등교육과"
+          ],
+          "startDate": "2026-09-21",
+          "endDate": "2026-09-23",
+          "dates": [
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23"
+          ],
+          "rawDate": "면접평가 동영상 제출: 2026.9.21.(월) 10:00 ~ 9.23.(수) 11:00",
+          "note": "비대면 동영상 면접 제출기간입니다. 대면 면접일이 아닙니다. 지원자 전체 대상, 9월 23일 오전 11시 마감. 진학어플라이에 필수 제출하며 미제출 시 불합격입니다.",
+          "sourceUrl": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47508&mCode=MN028&mgr_seq=142&mode=view",
+          "format": "video_submission",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "trackAliases": [
+            "저소득층학생전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(농어촌학생전형)",
+          "departments": [
+            "초등교육과"
+          ],
+          "startDate": "2026-09-21",
+          "endDate": "2026-09-23",
+          "dates": [
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23"
+          ],
+          "rawDate": "면접평가 동영상 제출: 2026.9.21.(월) 10:00 ~ 9.23.(수) 11:00",
+          "note": "비대면 동영상 면접 제출기간입니다. 대면 면접일이 아닙니다. 지원자 전체 대상, 9월 23일 오전 11시 마감. 진학어플라이에 필수 제출하며 미제출 시 불합격입니다.",
+          "sourceUrl": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47508&mCode=MN028&mgr_seq=142&mode=view",
+          "format": "video_submission",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "trackAliases": [
+            "농어촌학생전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(장애인학생전형)",
+          "departments": [
+            "초등교육과"
+          ],
+          "startDate": "2026-09-21",
+          "endDate": "2026-09-23",
+          "dates": [
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23"
+          ],
+          "rawDate": "면접평가 동영상 제출: 2026.9.21.(월) 10:00 ~ 9.23.(수) 11:00",
+          "note": "비대면 동영상 면접 제출기간입니다. 대면 면접일이 아닙니다. 지원자 전체 대상, 9월 23일 오전 11시 마감. 진학어플라이에 필수 제출하며 미제출 시 불합격입니다.",
+          "sourceUrl": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47508&mCode=MN028&mgr_seq=142&mode=view",
+          "format": "video_submission",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "trackAliases": [
+            "장애인학생전형"
+          ]
+        },
+        {
+          "trackLabel": "학생부종합(서해5도학생전형)",
+          "departments": [
+            "초등교육과"
+          ],
+          "startDate": "2026-09-21",
+          "endDate": "2026-09-23",
+          "dates": [
+            "2026-09-21",
+            "2026-09-22",
+            "2026-09-23"
+          ],
+          "rawDate": "면접평가 동영상 제출: 2026.9.21.(월) 10:00 ~ 9.23.(수) 11:00",
+          "note": "비대면 동영상 면접 제출기간입니다. 대면 면접일이 아닙니다. 지원자 전체 대상, 9월 23일 오전 11시 마감. 진학어플라이에 필수 제출하며 미제출 시 불합격입니다.",
+          "sourceUrl": "https://ipsi.ginue.ac.kr/ipsi/CMS/Board/Board.do?board_seq=47508&mCode=MN028&mgr_seq=142&mode=view",
+          "format": "video_submission",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "trackAliases": [
+            "서해5도학생전형"
+          ]
+        }
+      ],
+      "decisions": [],
+      "scopeNote": "2027 수시는 초등교육과 단일 모집단위의 7개 전형 모두 비대면 동영상 면접입니다. 공식 모집요강 인쇄 1쪽(PDF3), 인쇄3쪽(PDF5)과 8월31일·9월21일 입학본부 공지를 대조했습니다. 9월21~23일은 답변 녹화파일 제출기간으로 개별 대면 면접 날짜가 아닙니다. Acon에 면접 항목이 없다는 사유로 면접 미실시로 표시하면 잘못입니다. 현재 확인일 기준 이미 지난 제출기간입니다.",
+      "schoolReferenceId": "bible_7056e20a94c3d756"
+    }
+  ]
+}

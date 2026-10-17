@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {join} from 'node:path';
+import pg from 'pg';
+import {hash} from 'bcryptjs';
+import {loadProjectEnv,projectRoot} from '../scripts/load-env.mjs';
+loadProjectEnv();
+const base=process.env.SMOKE_BASE_URL||JSON.parse(readFileSync(join(projectRoot,'.local/server.json'),'utf8')).url;
+if(process.env.AUTH_MODE!=='local'||!['localhost','127.0.0.1'].includes(new URL(base).hostname)||!['localhost','127.0.0.1'].includes(new URL(process.env.DATABASE_URL!).hostname))throw new Error('로컬 전용 합성 계정으로 실행해 주세요.');
+const db=new pg.Client({connectionString:process.env.DATABASE_URL}),students=[randomUUID(),randomUUID()],fixture=randomUUID(),cookies:Record<string,string>={};let checks=0;
+const checkLabels:string[]=[];
+function check(value:unknown,label:string){assert.ok(value,label);checks++;checkLabels.push(label);}
+async function req(actor:string,path:string,body?:unknown){const response=await fetch(base+path,{method:body?'POST':'GET',headers:{Origin:base,...(cookies[actor]?{Cookie:cookies[actor]}:{}),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});const set=response.headers.getSetCookie();if(set.length)cookies[actor]=set.map(cookie=>cookie.split(';')[0]).join('; ');return {status:response.status,body:await response.json()};}
+await db.connect();
+const qaSchema=(await db.query('select current_schema() as name')).rows[0].name;
+if(!/^qa_fix_[a-z0-9_]+$/.test(qaSchema)){await db.end();throw new Error('운영 public 스키마에서는 실행하지 않아요. 격리한 QA 스키마 연결을 지정해 주세요.');}
+const publicTables=(await db.query("select table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE' order by table_name")).rows.map(row=>row.table_name);
+async function publicSnapshot(){const result:Record<string,unknown>={};for(const table of publicTables){assert.match(table,/^[a-z0-9_]+$/);/* An already-open real app tab may advance only its last_seen_at heartbeat. Preserve every other field, row ID and count in this public no-write assertion. */const value=['study_sessions','study_session_tabs'].includes(table)?"(to_jsonb(t)-'last_seen_at')":'to_jsonb(t)';result[table]=(await db.query(`select count(*)::int count,md5(string_agg(md5(${value}::text),'' order by md5(${value}::text))) digest from public."${table}" t`)).rows[0];}return result;}
+const publicBefore=await publicSnapshot();
+try{
+  const publicList=await req('anonymous','/api/schools/catalog');check(publicList.status===200&&publicList.body.schools.length===88,'public registration directory exposes all 88 universities');check(publicList.body.schools.every((s:any)=>s.logoUrl&&s.admissionUrl&&!s.departments),'directory lists logos and official links without shipping all departments');
+  check((await req('anonymous','/api/schools/catalog?schoolId=does-not-exist')).status===404,'unknown university is rejected');
+  const uos=publicList.body.schools.find((s:any)=>s.canonicalName==='서울시립대학교');const detail=await req('anonymous','/api/schools/catalog?schoolId='+uos.id);const department=detail.body.school.departments.find((d:any)=>d.name==='환경공학부');check(detail.status===200&&department.departmentCode==='0002122','actual 2026 public department code is served');check(detail.body.departmentSource.year===2026,'catalog year is explicit instead of pretending 2027 unit data');
+  const password='SchoolCatalog!2026',passwordHash=await hash(password,12);
+  for(let index=0;index<students.length;index++){await db.query("insert into profiles(id,email,name,role,password_hash) values($1,$2,'대학 카탈로그 합성 검증','student',$3)",[students[index],`school-catalog-${index}-${fixture}@gakja.test`,passwordHash]);check((await req(String(index),'/api/auth',{action:'login',email:`school-catalog-${index}-${fixture}@gakja.test`,password})).status===200,'fixture student login');}
+  check((await req('0','/api/schools',{referenceId:uos.id,admissionYear:2027})).status===400,'first registration cannot leave major undecided');
+  const foreign=publicList.body.schools.find((s:any)=>s.id!==uos.id);const foreignDetail=await req('anonymous','/api/schools/catalog?schoolId='+foreign.id);const foreignDepartment=foreignDetail.body.school.departments.find((d:any)=>!detail.body.school.departments.some((owned:any)=>owned.id===d.id));
+  check((await req('0','/api/schools',{referenceId:uos.id,admissionYear:2027,departmentId:foreignDepartment.id,major:'환경공학부'})).status===400,'cross university department ID cannot be attached');
+  const input={referenceId:uos.id,departmentId:department.id,admissionYear:2027,track:'학생부종합전형Ⅰ(면접형)',campus:'다른 캠퍼스',major:'클라이언트 위조 학과',school_logo_url:'https://malicious.example/',status:'official_confirmed'};
+  check((await req('anonymous','/api/schools/onboarding-calendar',input)).status===401,'calendar preview requires a student session');
+  check((await req('0','/api/schools',input)).status===400,'first registration cannot skip calendar review even without an onboarding flag');
+  const preview=await req('0','/api/schools/onboarding-calendar',input);check(preview.status===200,'calendar preview accepts the owned university department');const calendar=preview.body.calendar;
+  check(calendar.admissionYear===2027&&calendar.calendarYear===2026&&calendar.status==='registered','2027 susi preview distinguishes the 2026 calendar year');
+  check(calendar.matched.length===1&&calendar.matched[0].startDate==='2026-11-29'&&calendar.matched[0].matchedDepartment==='환경공학부','only the selected natural-science department interview day is matched');
+  check(calendar.matched[0].sourceUrl&&calendar.matched[0].checkedAt&&/^[a-f0-9]{64}$/.test(calendar.fingerprint),'calendar evidence and review fingerprint are explicit');
+  const reviewed={...input,onboarding:true,calendarReview:{fingerprint:calendar.fingerprint,acknowledged:true}};
+  check((await req('0','/api/schools',{...reviewed,calendarReview:{fingerprint:'0'.repeat(64),acknowledged:true}})).status===409,'stale or fabricated calendar review fails before registration');
+  check((await req('0','/api/schools',{...reviewed,track:'공식 확인 전 다른 전형'})).status===409,'changed selected track invalidates the reviewed calendar');
+  check((await req('0','/api/schools',{...reviewed,calendarReview:{fingerprint:calendar.fingerprint,acknowledged:false}})).status===400,'final registration requires acknowledgement of the displayed calendar');
+  check(Number((await db.query('select count(*)::int n from support_targets where student_id=$1',[students[0]])).rows[0].n)===0&&Number((await db.query('select count(*)::int n from student_preferences where student_id=$1',[students[0]])).rows[0].n)===0,'rejected review writes neither a target nor completion preferences');
+  const created=await req('0','/api/schools',reviewed);check(created.status===200,'verified department and reviewed calendar register');const target=created.body.target;
+  check(target.department==='환경공학부'&&target.major==='환경공학부'&&target.campus==='본교','server uses canonical public department and campus');check(target.school_public_code==='0000040'&&target.department_public_code==='0002122','public identity codes are stored');check(target.school_logo_url===uos.logoUrl,'student cannot replace trusted school logo URL');check(target.profile.status==='official_confirmed'&&target.profile.interview_minutes.min===12,'exact 2027 official interview overview is returned');check(target.profile.question_distribution===null,'evaluation weights are never converted into fake topic percentages');check(target.school_interview_date==='2026-11-29'&&target.profile.interview_date==='2026-11-29','official natural science public day joins the school context');
+  check(target.interview_date===undefined&&target.interview_at===undefined&&target.admission_calendar_registration.personal_appointment_confirmed===false,'school public day never manufactures a private 10:00 appointment');
+  check(target.admission_calendar_registration.calendar_year===2026&&target.admission_calendar_registration.fingerprint===calendar.fingerprint,'final registration retains the reviewed 2026 evidence fingerprint');
+  check((await req('0','/api/schools',reviewed)).body.target.id===target.id,'repeated registration preserves the same student target');
+  const aliasInput={...input,track:'학생부종합전형I (면접형)'},aliasPreview=await req('0','/api/schools/onboarding-calendar',aliasInput);
+  check(aliasPreview.status===200&&(await req('0','/api/schools',{...aliasInput,calendarReview:{fingerprint:aliasPreview.body.calendar.fingerprint,acknowledged:true}})).body.target.id===target.id,'canonical Unicode track variants reuse the same owned target');
+  check(Number((await db.query('select count(*)::int n from support_targets where student_id=$1',[students[0]])).rows[0].n)===1,'repeated and canonical-alias registration do not duplicate support targets');
+  const pref=(await db.query('select data from student_preferences where student_id=$1',[students[0]])).rows[0].data;check(pref.selectedTargetId===target.id&&pref.schoolOnboardingCompleted===true&&pref.schoolCalendarOnboardingCompleted===true,'school setup activates target and completes the calendar onboarding');
+  const planner=await req('0','/api/planner?targetId='+encodeURIComponent(target.id));check(planner.status===200&&planner.body.interviewSchedules.some((schedule:any)=>schedule.startDate==='2026-11-29'&&schedule.targetId===target.id&&schedule.applicability==='track_match'),'registered public interview day immediately appears in the student calendar projection');
+  check((await req('1','/api/schools?targetId='+target.id)).status===404,'another student cannot request target question scope');
+  const started=await req('0','/api/interviews',{action:'start',targetId:target.id,questionId:'common_motivation',sourceType:'common',sourceVersion:1,questionCount:1,followups:false,feedbackTiming:'end'});check(started.status===200,'common question practice starts with real target before private upload');check(started.body.session.data.schoolProfile.status==='official_confirmed','mock interview receives matching official school profile');check(started.body.session.data.schoolProfile.data.evaluation_weights.length===3,'real interview evaluation criteria flow into session snapshot');check(started.body.session.data.schoolProfile.data.question_distribution===null,'interview snapshot does not invent question quotas');
+  check((await req('1','/api/interviews?id='+started.body.session.id)).status===404,'official school context does not weaken interview ownership');check((await req('0','/api/schools')).body.targets.some((row:any)=>row.id===target.id&&row.school_logo_url===uos.logoUrl),'registered school and logo survive reload');
+  check(Number((await db.query('select count(*)::int as n from ai_usage_logs where student_id=any($1::uuid[])',[students])).rows[0].n)===0,'directory and session tests make no AI calls');
+}finally{
+  await db.query('begin');await db.query('delete from interview_turns where session_id in (select id from interview_sessions where student_id=any($1::uuid[]))',[students]);for(const table of ['study_session_events','study_session_tabs','study_sessions','interview_reports','media_assets','interview_sessions','ai_usage_logs','student_preferences','school_profiles','support_targets'])await db.query(`delete from ${table} where student_id=any($1::uuid[])`,[students]);await db.query('delete from sessions where user_id=any($1::uuid[])',[students]);await db.query('delete from audit_logs where actor_id=any($1::uuid[]) or student_id=any($1::uuid[])',[students]);await db.query('delete from profiles where id=any($1::uuid[])',[students]);await db.query('commit');
+  const publicAfter=await publicSnapshot();assert.deepEqual(publicAfter,publicBefore,'all public row counts and non-heartbeat fields remain unchanged');checkLabels.push('all public row counts and content digests remain unchanged; last_seen_at heartbeat timestamps are excluded in the two session-presence tables');checks++;
+  await db.end();
+}
+console.log(JSON.stringify({checks,checkLabels,schema:qaSchema,schools:88,sourceDepartments:3934,paidAiCalls:0,publicTablesUnchanged:publicTables.length,cleanup:'owned synthetic profiles only in isolated QA schema'}));

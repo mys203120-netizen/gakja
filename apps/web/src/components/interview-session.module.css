@@ -1,0 +1,104 @@
+.session {
+  min-width: 0;
+  color: var(--clarity-ink);
+}
+
+.session :global(.breadcrumb) { margin-bottom: 10px; }
+.heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.heading h1 { margin: 0; font-size: 25px; line-height: 1.4; letter-spacing: -.035em; font-weight: 500; }
+.heading :global(.inline-actions) { gap: 8px; }
+.heading :global(.button) { min-height: 36px; padding: 7px 15px; }
+
+.session :global(.interview-room-header) { align-items: flex-start; padding: 0; margin-bottom: 18px; border: 0; gap: 16px; }
+.session :global(.interview-room-header) > div:first-child { gap: 4px; }
+.session :global(.interview-room-header strong) { font-size: 16px; line-height: 1.5; font-weight: 500; }
+.session :global(.interview-room-header span) { font-size: 13px; line-height: 1.6; color: #58645d; }
+.settings { position: relative; flex: 0 0 auto; max-width: 100%; font-size: 14px; }
+.settings summary { cursor: pointer; padding: 8px 12px; min-height:36px; background:#eef3fc; border-radius:18px; color:#345b8f; text-align:right; list-style:none; }
+.settings[open] { width: min(360px, 100%); }
+.settings :global(.interview-live-settings) { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 12px; }
+.settings :global(.toggle-row) { flex-direction: column; gap: 8px; align-items: flex-start; }
+.settings :global(.interview-reaction-note) { font-size: 13px; margin: 12px 0 0; color: #58645d; }
+
+.focus { display: flex; align-items: flex-start; gap: 24px; margin: 0 0 18px; padding:22px; background:#edf4ff; border-radius:16px; }
+.focus :global(.interview-message.current) { flex: 1; min-width: 0; margin: 0; }
+.focus :global(.interview-message.current) > div { max-width: 100%; padding: 0; background: transparent; border-radius: 0; }
+.focus :global(.interview-message.current span) { color: #53705d; font-size: 13px; margin: 0 0 8px; line-height: 1.5; }
+.focus :global(.interview-message.current p) { font-size: 20px; line-height: 1.65; font-weight: 450; letter-spacing: -.025em; }
+.focus :global(.interview-message.current .button) { margin-top: 10px; min-height: 32px; padding: 5px 12px; }
+.focus :global(.interview-panelists) { flex: 0 0 auto; max-width: 38%; align-items: flex-start; padding: 0; border: 0; gap: 12px; }
+.focus :global(.interview-panelists .interviewer-avatar) { flex: 0 1 68px; width: 68px; max-width: 68px; }
+.focus :global(.interviewer-avatar > div) { gap: 3px; margin-top: 4px; }
+.focus :global(.interviewer-avatar strong) { font-size: 12px; font-weight: 450; line-height: 1.4; }
+.focus :global(.interviewer-avatar span) { font-size: 12px; line-height: 1.45; color: #58645d; }
+.session :global(.interview-paused) { margin: 0 0 16px; padding: 12px 0; border: 0; }
+
+.session :global(.interview-capture) { grid-template-columns: minmax(0, 152px) minmax(0, 1fr); align-items: center; gap: 16px; margin: 0 0 12px; padding: 0; border: 0; }
+.session :global(.interview-capture .camera-placeholder) { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 86px; padding: 12px 8px; background: #eef3fc; border-radius: 12px; color: #66766b; font-size: 13px; }
+.session :global(.interview-capture .camera-placeholder) > svg { width: 22px; height: 22px; flex-shrink: 0; }
+.session :global(.interview-capture .camera-placeholder .button) { min-height: 36px; padding: 5px; font-size: 13px; border: 0; background: none; }
+.session :global(.interview-capture .camera-preview) { width: 100%; height: 86px; aspect-ratio: 16/9; border-radius: 8px; }
+.session :global(.interview-capture-actions) { flex-direction: row; justify-content: flex-start; align-items: center; flex-wrap: wrap; gap: 12px; }
+.session :global(.interview-capture-actions .interview-recording-status) { max-width: none; color: #58645d; }
+.session :global(.interview-capture-actions .button) { min-height: 38px; padding: 8px 15px; }
+.session :global(.recording-playback) { padding: 4px 0 12px; }
+.session :global(.interview-answer-block) { padding: 0; }
+.answerLabel { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: #52655a; font-size: 13px; line-height: 1.6; }
+.answerLabel a { display: none; color: #52655a; }
+.session :global(.interview-answer-block [data-chat-composer]) { padding-top: 8px; }
+.session :global(.interview-answer-block .transcript-processing) { margin: 8px 0; }
+.session :global(.interview-answer-block .transcript-raw) { font-size: 13px; color: #58645d; margin-top: 8px; }
+.history { margin-top: 24px; }
+.history > summary { cursor: pointer; font-size: 14px; color: #52655a; line-height: 1.6; padding: 8px 0; }
+.history :global(.interview-room-log) { padding: 16px 0 0; }
+.history :global(.interview-message p) { font-size: 16px; line-height: 1.8; }
+.history :global(.interview-message.interviewer > div:not(.interviewer-avatar)) { background: #f6f8f6; border-radius: 8px; }
+
+@media (max-width: 700px) {
+  :global(.app-shell) :global(.main-content):has(.session) { padding-top: 8px; }
+  .session :global(.breadcrumb) { margin-bottom: 8px; }
+  .heading { gap: 10px; margin-bottom: 10px; }
+  .heading h1 { font-size: 22px; }
+  .heading :global(.button) { min-height: 44px; padding: 8px 12px; font-size: 13px; }
+  .session :global(.interview-room-header) { flex-direction: row; gap: 10px; margin-bottom: 8px; }
+  .session :global(.interview-room-header strong) { font-size: 15px; }
+  .session :global(.interview-room-header span) { font-size: 13px; }
+  .settings[open] { width: 100%; }
+  .session :global(.interview-room-header):has(.settings[open]) { flex-wrap: wrap; }
+  .settings :global(.interview-live-settings) { justify-content: start; width: 100%; }
+  .settings summary { white-space: nowrap; }
+  .focus { flex-direction: column; gap: 12px; margin-bottom: 16px; padding:18px; }
+  .focus :global(.interview-message.current p) { font-size: 18px; line-height: 1.7; }
+  .focus :global(.interview-panelists) { flex: none; max-width: 100%; width: 100%; justify-content: flex-start; gap: 14px; }
+  .focus :global(.interview-panelists .interviewer-avatar) { flex: 0 1 76px; width: 76px; max-width: 76px; }
+  .focus :global(.interviewer-avatar > svg) { width: 46px; height: auto; margin-inline: auto; }
+  .focus :global(.interviewer-avatar > div) { gap: 1px; margin-top: 2px; }
+  .focus :global(.interviewer-avatar span) { font-size: 12px; line-height: 1.4; word-break: keep-all; }
+  .session :global(.interview-capture) { display: grid; grid-template-columns: minmax(0, 110px) minmax(0, 1fr); gap: 12px; }
+  .session :global(.interview-capture .camera-placeholder) { flex-direction: column; gap: 4px; min-height: 72px; padding: 8px 5px; }
+  .session :global(.interview-capture .camera-placeholder .button) { min-height: 44px; font-size: 13px; }
+  .session :global(.interview-capture .camera-preview) { height: 72px; }
+  .session :global(.interview-capture-actions) { gap: 6px 8px; }
+  .session :global(.interview-capture-actions .interview-recording-status) { font-size: 12px; }
+  .session :global(.interview-capture-actions .button) { font-size: 13px; padding: 7px 12px; }
+  .answerLabel { gap: 10px; }
+  .answerLabel a { display: inline; white-space: nowrap; }
+}
+
+.settings summary::-webkit-details-marker {display:none}
+.settings summary::after {content:'+';margin-left:10px}
+.settings[open] summary::after {content:'−'}
+.session :global(.interview-answer-block) {padding:16px 0 0;border-top:1px solid var(--clarity-line)}
+.history > summary {min-height:44px;padding:10px 14px;border-radius:12px;background:#f4f7fc;list-style:none}
+.history > summary::-webkit-details-marker {display:none}
+.history > summary::after {content:'+';float:right}
+.history[open] > summary::after {content:'−'}
+@media(max-width:700px){
+ .heading{flex-wrap:wrap;gap:8px 12px}
+ .heading :global(.inline-actions){margin-left:auto;flex-wrap:wrap}
+ .settings summary{min-height:44px;display:flex;align-items:center;justify-content:space-between}
+ .session :global(.interview-capture-actions .button),.focus :global(.interview-message.current .button){min-height:44px}
+ .session :global(.interview-capture-actions){align-items:stretch}
+ .session :global(.interview-capture-actions .button){white-space:normal;line-height:1.5}
+ .focus :global(.interview-message.current p){font-size:18px;line-height:1.6}
+}

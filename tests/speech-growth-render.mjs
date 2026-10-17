@@ -1,0 +1,116 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import ts from 'typescript';
+import { tsImport } from 'tsx/esm/api';
+
+const studyLinks=await tsImport('../apps/web/src/lib/study-record-links.ts',import.meta.url);
+
+// Actual report component; lightweight hooks/JSX preserve scope and event behavior.
+const source=fs.readFileSync(new URL('../apps/web/src/components/speech-growth.tsx',import.meta.url),'utf8');
+const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
+const hooks={states:[],refs:[],stateIndex:0,refIndex:0,effects:[]};
+const pending=[],posts=[];
+const module={exports:{}};
+vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,AbortController,Event,
+  document:{visibilityState:'visible'},window:{addEventListener(){},removeEventListener(){},dispatchEvent(){}},
+  require(name){
+    if(name==='react')return {useState(initial){const index=hooks.stateIndex++;if(!(index in hooks.states))hooks.states[index]=initial;return [hooks.states[index],value=>{hooks.states[index]=typeof value==='function'?value(hooks.states[index]):value;}];},useRef(initial){const index=hooks.refIndex++;return hooks.refs[index]||(hooks.refs[index]={current:initial});},useCallback:callback=>callback,useEffect:callback=>{hooks.effects.push(callback);}};
+    if(name==='react/jsx-runtime')return {jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'Fragment'};
+    if(name==='next/link')return {__esModule:true,default:'Link'};
+    if(name==='lucide-react')return new Proxy({},{get:(_,key)=>String(key)});
+    if(name==='./school-picker')return {SchoolPicker:'SchoolPicker'};
+    if(name==='@/lib/client/speech-recorder')return {decodeRecordingTelemetry:()=>{throw new Error('No private file decoding in a render test.');}};
+    if(name==='@/lib/study-record-links')return studyLinks;
+    if(name==='./shared')return {Alert:'Alert',Spinner:'Spinner',dateLabel:value=>String(value),api:(url,options)=>new Promise(resolve=>pending.push({url,options,resolve})),post:async(url,body)=>{posts.push({url,body});return {cleanupStatus:'completed'};}};
+    throw new Error('Unexpected import '+name);
+  }});
+function render(props={},state){if(state){hooks.states=state;hooks.refs=[];}hooks.stateIndex=0;hooks.refIndex=0;hooks.effects=[];return module.exports.SpeechGrowth(props);}
+function nodes(value){if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=='object')return [];return [value,...nodes(value.props?.children)];}
+function text(value){if(Array.isArray(value))return value.map(text).join(' ');if(value&&typeof value==='object')return text(value.props?.children);return value==null?'':String(value);}
+const scope=JSON.stringify(['','']);
+const base={speech:{recordings:[],trend:null},content:{comparisons:[],newsComparisons:[]},next:{prompt:'녹음으로 첫 발화 남기기',reason:'같은 질문을 다시 녹음해요.',href:'/quiz?mode=oral'}};
+let checks=0;const check=(value,message)=>{assert.ok(value,message);checks++;};
+let tree=render({},[base,scope,'','',false]);
+check(text(tree).includes('녹음 기록이 없어요. 쉼·습관어는 녹음 후 확인할 수 있어요.'),'missing audio has an honest compact empty state');
+check(nodes(tree).some(node=>node.type==='Link'&&node.props.href==='/quiz?mode=oral'),'empty report leads to recording');
+check(!nodes(tree).some(node=>node.props?.className==='speech-metrics'),'empty report never invents acoustic numbers');
+check(!text(tree).includes('도움 없이 정답 확인'),'mastery totals are not the report hero');
+const recorded={...base,speech:{recordings:[{id:'own-audio',kind:'quiz',prompt:'내 역할을 말해 주세요.',createdAt:'2026-01-01',playbackUrl:'/api/quiz?recordingId=own-audio',analysisAudioUrl:'/api/quiz?recordingId=own-audio',analysis:{timing:{durationMs:10000,silenceRatio:.3,longPauseCount:1,reliable:true,speechSegments:[{startMs:1000,endMs:7000}],pauses:[{startMs:3000,endMs:5000,durationMs:2000,long:true}]},transcript:null,limitations:['원전사 확인 전이에요.']}}],trend:null}};
+tree=render({},[recorded,scope,'','',false]);
+check(nodes(tree).some(node=>node.type==='SchoolPicker'&&node.props.label==='분석할 답변'),'record selector uses the shared searchable picker');
+check(!nodes(tree).some(node=>node.type==='select'),'no native select overlay is introduced');
+check(nodes(tree).some(node=>typeof node.type==='function'&&node.props.label==='확인한 습관어'&&node.props.value==='—'),'missing raw STT does not become zero fillers');
+check(nodes(tree).some(node=>typeof node.type==='function'&&node.props.label==='말하기 속도'&&node.props.value==='—'),'missing raw STT does not invent a speaking rate');
+check(nodes(tree).some(node=>node.type==='audio'&&node.props.src.includes('own-audio')),'playback refers to the selected owned recording');
+check(nodes(tree).some(node=>node.type==='audio'&&node.props.preload==='metadata'&&!node.props.autoPlay),'playback requests duration metadata before play without starting private audio automatically');
+check(nodes(tree).some(node=>node.type==='svg'&&node.props.role==='img'),'timeline has an accessible image description');
+const transcribe=nodes(tree).find(node=>node.type==='button'&&text(node)==='전사 생성');
+const transcribing=transcribe.props.onClick();await new Promise(resolve=>setImmediate(resolve));
+check(posts[0].url==='/api/reports'&&posts[0].body.action==='transcribe'&&posts[0].body.recordingId==='own-audio','quiz STT action uses its recording ID, not a typed answer');
+pending.at(-1).resolve(recorded);await transcribing;
+tree=render({reportId:'new-report'},[recorded,JSON.stringify(['old-report','']),'','',false]);
+check(nodes(tree).some(node=>node.type==='Spinner'),'a new route hides previous report data before its effect runs');
+check(!text(tree).includes('내 역할을 말해 주세요.'),'old report question never flashes in a new report scope');
+
+// Real effect cleanup and out-of-order requests: an aborted old response cannot overwrite the new report.
+tree=render({reportId:'report-a'},[null,'','','',false]);
+const cleanupA=hooks.effects[0](),requestA=pending.at(-1);
+cleanupA();render({reportId:'report-b'});const cleanupB=hooks.effects[0](),requestB=pending.at(-1);
+requestB.resolve({...base,marker:'new-scope'});await new Promise(resolve=>setImmediate(resolve));
+requestA.resolve({...base,marker:'stale-scope'});await new Promise(resolve=>setImmediate(resolve));
+check(requestA.options.signal.aborted===true,'route cleanup aborts the old request');
+check(hooks.states[0].marker==='new-scope','late old response is discarded');
+check(hooks.states[1]===JSON.stringify(['report-b','']),'loaded data is bound to the new report scope');
+cleanupB();
+const savedNext={questionId:'question-a',prompt:'이전 질문',reason:'이 질문 다시 말하기',href:'/interview/new?questionId=question-a&targetId=fictional-target&sourceType=personal&sourceVersion=1'};
+const currentContext={targetId:'real-school-target',contentVersion:6,targets:[{id:'real-school-target'}],questions:[{id:'question-a',prompt:'현재 발행 질문',support_target_ids:['real-school-target']}]};
+const currentNext=module.exports.resolveGrowthNext(savedNext,currentContext);
+check(currentNext.href.includes('targetId=real-school-target')&&currentNext.href.includes('sourceVersion=6'),'overall next practice uses the eligible selected school and current published version');
+check(currentNext.prompt==='현재 발행 질문'&&savedNext.prompt==='이전 질문'&&savedNext.href.includes('fictional-target'),'current next label updates without rewriting the original record');
+check(module.exports.resolveGrowthNext(savedNext,{...currentContext,questions:[]})===savedNext,'removed current question falls back to its historical source');
+check(module.exports.resolveGrowthNext(savedNext,{...currentContext,questions:[{id:'question-a',support_target_ids:['another-school']}]})===savedNext,'ineligible current school does not overwrite historical provenance');
+check(module.exports.resolveGrowthNext(savedNext,{...currentContext,targets:[]})===savedNext,'a target outside the owned current choices cannot override the source');
+check(module.exports.resolveGrowthNext(savedNext,currentContext,true)===savedNext,'frozen interview and study detail remain pinned to historical context');
+const newsNext={...savedNext,questionId:'briefing_owned_0',href:'/interview/new?briefingId=owned-news&targetId=news-school&briefingQuestionIndex=0'};
+check(module.exports.resolveGrowthNext(newsNext,currentContext)===newsNext,'news practice retains the same article and original school context');
+check(module.exports.contentCueLabel({change:'added',beforeEvidence:[],afterEvidence:['새 근거 문장']})==='새 문장','new quoted evidence is labeled as added');
+check(module.exports.contentCueLabel({change:'changed',beforeEvidence:['이전 문장'],afterEvidence:['바뀐 문장']})==='표현 변화','changed quoted evidence has its own label');
+check(module.exports.contentCueLabel({change:'not_found',beforeEvidence:['제가 시료 준비를 맡았습니다.'],afterEvidence:[]})==='최근 표현 미확인','a previously present cue missing in the latest answer remains visible as a change');
+check(module.exports.contentCueLabel({change:'same',beforeEvidence:[],afterEvidence:[]})==='문장 확인 필요','a cue never seen in either version invites inspection instead of claiming a missing meaning');
+check(module.exports.contentCueLabel({change:'same',beforeEvidence:['역할을 맡았습니다.'],afterEvidence:['역할을 맡았습니다.']})==='표현 확인','unchanged existing evidence is retained');
+check(module.exports.comparisonAttemptLabels({after:{assisted:false}}).includes('도움 여부 미기록'),'old records never silently become independent answers');
+const reviewed={...base,content:{comparisons:[{questionId:'role-only',prompt:'본인 역할은?',before:{id:'a',script:'참여했습니다.',created_at:'2026-01-01'},after:{id:'b',script:'제 담당은 측정표 작성이었습니다.',created_at:'2026-01-01'},criterionBasis:'reviewed_meanings',elements:[{key:'role',label:'본인 역할',change:'added',beforeEvidence:[],afterEvidence:['제 담당은 측정표 작성이었습니다.']}],addedDetails:['제 담당은 측정표 작성이었습니다.'],attempt:{label:'바로 재답변',helpLabel:'도움 사용',scheduledRecall:false,note:'24시간 안에 다시 남긴 답변이에요.'},note:'실제 문장을 확인해요.'}],newsComparisons:[]}};
+tree=render({},[reviewed,scope,'','',false]);
+check(text(tree).indexOf('답변 내용의 변화')<text(tree).indexOf('음성 관찰')||text(tree).indexOf('답변 내용의 변화')<text(tree).indexOf('녹음 기록이 없어요.'),'actual content appears before the missing-audio notice');
+check(text(tree).indexOf('다음 연습')<text(tree).indexOf('녹음 기록이 없어요.'),'the next practice precedes optional missing-audio status');
+check(!nodes(tree).some(node=>node.type==='h3'&&text(node)==='목소리의 변화는 녹음부터'),'missing audio does not occupy a large hero heading');
+check(text(tree).includes('바로 재답변')&&text(tree).includes('도움 사용'),'retry interval and actual assistance appear together');
+check(nodes(tree).some(node=>node.props?.['aria-label']==='이번 질문의 검수된 요소'),'question-specific criteria remain labeled separately from generic cues');
+check(text(tree).includes('달라진 문장')&&!text(tree).includes('더 구체화한 문장'),'a longer or added sentence is not automatically called an improvement');
+check(!text(tree).includes('결과·한계'),'a role-only question does not receive unrelated missing result dimensions');
+for(const saved of [{target_id:'school-a',common_revision:3,turn_id:'turn-school-a'},{target_id:'school-b',common_revision:4,turn_id:'turn-school-b'}]){
+  const comparison=reviewed.content.comparisons[0];
+  const scoped={...reviewed,content:{...reviewed.content,comparisons:[{...comparison,questionId:'common_motivation',after:{...comparison.after,...saved,source_type:'general_practice',content_version:8}}]}};
+  tree=render({currentContext},[scoped,scope,'','',false]);
+  const link=nodes(tree).find(node=>node.type==='Link'&&text(node).includes('이 질문의 답변 비교'));
+  const href=new URL(link.props.href,'http://localhost');
+  check(href.pathname==='/records/comparisons/common_motivation'&&href.searchParams.get('targetId')===saved.target_id,'actual content-change link preserves the compared school instead of current context');
+  check(href.searchParams.get('sourceType')==='common'&&href.searchParams.get('sourceVersion')===String(saved.common_revision),'the same common question in two schools retains each reviewed revision rather than guidebook version');
+  check(href.searchParams.get('turnId')===saved.turn_id,'actual content-change comparison anchors its saved interview turn');
+}
+const cleaned={...recorded,speech:{...recorded.speech,recordings:[{...recorded.speech.recordings[0],transcript:'저는 관찰했습니다.\n이유가 궁금했습니다.',rawTranscript:'음 저는 관찰 했습니다 이유가 궁금했습니다',cleanupStatus:'completed',analysis:{...recorded.speech.recordings[0].analysis,transcript:{fillerCount:1,fillers:[{text:'음',count:1}],repeatedPhrases:[],repeatedWords:[],eojeolPerMinute:12}}}]}};
+tree=render({},[cleaned,scope,'','',false]);
+check(text(tree).includes('정리된 전사')&&text(tree).includes('원전사 보기'),'cleaned speech display and explicit raw inspection are distinct');
+check(nodes(tree).some(node=>typeof node.type==='function'&&node.props.label==='확인한 습관어'&&node.props.value==='1회'),'raw filler observation survives display cleanup');
+check(!nodes(tree).some(node=>node.type==='button'&&text(node)==='문장 정리 다시 시도'),'completed formatting does not offer a redundant paid retry');
+const silentDiagnostic={...recorded.speech.recordings[0],id:'silent-diagnostic',growthEligible:false,transcriptionStatus:'failed',createdAt:'2026-10-16',analysis:{timing:{...recorded.speech.recordings[0].analysis.timing,silenceRatio:1,longPauseCount:0},transcript:null,limitations:[]}};
+const diagnostics={...recorded,speech:{...recorded.speech,defaultRecordingId:'own-audio',recordings:[silentDiagnostic,...recorded.speech.recordings],trend:null}};
+tree=render({},[diagnostics,scope,'','',false]);
+check(nodes(tree).some(node=>node.type==='SchoolPicker'&&node.props.value==='own-audio'),'latest silent diagnostic does not displace a normal utterance as default');
+check(nodes(tree).find(node=>node.type==='SchoolPicker').props.choices.some(choice=>choice.id==='silent-diagnostic'&&choice.detail.includes('비교 제외')),'diagnosed silent file stays explicitly labeled and selectable in recording archive');
+tree=render({},[diagnostics,scope,'','silent-diagnostic',false]);
+check(text(tree).includes('말하기 변화 비교에는 포함하지 않아요.')&&text(tree).includes('다시 녹음'),'explicit diagnostic selection explains its exclusion and a recording recovery');
+check(!nodes(tree).some(node=>node.props?.className==='speech-metrics'||node.type==='svg'),'silence diagnosis never displays misleading 100% silence metrics as growth');
+check(nodes(tree).some(node=>node.type==='audio'),'diagnosed file remains available for owned playback');
+console.log(`Speech growth render and scope: ${checks} checks passed; external API and device calls: 0.`);

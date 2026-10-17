@@ -1,0 +1,48 @@
+.schoolIdentity { margin-bottom: 18px; }
+.schoolIdentity :global(.school-input-note) { margin: 4px 0 0; font-size: 13px; color: #637168; line-height: 1.65; }
+.schoolSummary { padding: 22px 24px; background: #edf4ff; border-radius: 18px; margin-bottom: 24px; }
+.summaryHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 18px; }
+.summaryHeading h2 { margin: 0; font-size: 17px; font-weight: 500; }
+.summaryHeading > span { color: #596d60; font-size: 13px; line-height: 1.6; }
+.summaryMetrics { display: grid; grid-template-columns: 1.6fr .8fr 1.1fr; gap: 18px; margin: 19px 0 21px; }
+.summaryMetrics > div { min-width: 0; }
+.summaryMetrics dt { color: #637168; font-size: 13px; margin-bottom: 7px; }
+.summaryMetrics dd { margin: 0; color: #1c3024; font-size: 17px; line-height: 1.55; word-break: keep-all; overflow-wrap: anywhere; }
+.scheduleSummary { display: grid; grid-template-columns: 88px 1fr; gap: 14px; align-items: start; font-size: 14px; }
+.scheduleSummary > span { color: #637168; padding-top: 2px; }
+.scheduleSummary p { margin: 0; font-size: 16px; color: #263d2f; line-height: 1.6; }
+.scheduleSummary small { display: block; font-size: 13px; color: #596d60; line-height: 1.6; margin-top: 3px; }
+.scheduleSummary a { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; width: fit-content; font-size: 13px; color: #426a50; margin-top: 7px; }
+.scheduleSummary a span { margin-left: 5px; color: #637168; }
+.summarySources { display: flex; gap: 7px 16px; flex-wrap: wrap; margin-top: 19px; color: #637168; font-size: 13px; line-height: 1.7; }
+.summarySources a { display: inline-flex; align-items: center; gap: 5px; color: #426a50; }
+.currentContext, .calendarScope p { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 14px; color: #5b6e60; line-height: 1.65; margin: -9px 0 23px; }
+.currentContext span, .calendarScope p span { color: #263d2f; }
+.resumeSection { margin-bottom: 25px; }
+.resumeEmpty { margin: 0 0 26px; font-size: 15px; color: #5b6e60; line-height: 1.7; }
+.otherSessions, .otherCalendar { margin: 20px 0 24px; }
+.otherSessions summary, .otherCalendar summary { cursor: pointer; color: #536b5a; font-size: 14px; line-height: 1.7; padding: 9px 0; }
+.historyNote { color: #637168; font-size: 13px; line-height: 1.7; margin: 5px 0 8px; }
+.interviewHome :global(.linked-row .row-text > span) { white-space: pre-line; font-size: 14px; line-height: 1.75; color: #5b6e60; }
+.interviewHome :global(.row-action) { white-space: nowrap; }
+.calendarScope { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between; gap: 8px 14px; }
+.calendarScope p { margin: 1px 0 10px; }
+.otherCoverage { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 12px 0; font-size: 14px; color: #637168; line-height: 1.65; }
+.otherCoverage a { display: inline-flex; align-items: center; gap: 4px; color: #304d39; }
+.otherCalendar > button { margin-top: 14px; }
+@media (max-width: 640px) {
+  .schoolSummary { padding: 18px; }
+  .summaryMetrics { grid-template-columns: 1fr 1fr; gap: 15px 20px; margin-top: 16px; }
+  .summaryMetrics > div:first-child { grid-column: 1 / -1; }
+  .summaryMetrics dd { font-size: 16px; }
+  .scheduleSummary { grid-template-columns: 1fr; gap: 6px; }
+  .summarySources { gap: 6px 12px; }
+  .interviewHome :global(.linked-row) { gap: 12px; }
+  .interviewHome :global(.linked-row .row-text > strong) { font-size: 17px; line-height: 1.65; }
+  .interviewHome :global(.linked-row .row-text > span) { font-size: 13px; }
+  .interviewHome :global(.row-action) { font-size: 13px; }
+  .otherCoverage { align-items: flex-start; }
+}
+
+.schoolSummary { color:var(--clarity-ink); }
+@media(max-width:640px) { .summarySources a,.scheduleSummary a { min-height:44px; } }

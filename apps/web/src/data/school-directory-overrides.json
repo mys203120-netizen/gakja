@@ -1,0 +1,110 @@
+[
+  {
+    "id": "bible_925d9b5de199c382",
+    "university": "경희대학교",
+    "admissionUrl": "http://iphak.khu.ac.kr",
+    "logoUrl": "/school-logos/925d9b5de199.ico",
+    "logoSourceUrl": "https://iphak.khu.ac.kr/favicon.ico",
+    "logoSha256": "45aaff2bc79d92c801d7f15478165046af9c3df8f20903dc4ea10a7663b5b2cb",
+    "linkStatus": "official_directory",
+    "checkedAt": "2026-10-12"
+  },
+  {
+    "id": "bible_b552e9fc54ce381f",
+    "university": "고려대학교",
+    "admissionUrl": "https://oku.korea.ac.kr/",
+    "logoUrl": "/school-logos/0000069.gif",
+    "logoSourceUrl": "https://www.adiga.kr/cmm/com/file/imageFileDown.do?fileId=00000000000000006263&fileSn=4",
+    "logoSha256": "44663d1bc2e028acad06c9f469bc7cd43a8e0cb5653bf37dc170fafc63d87157",
+    "officialSourceUrl": "https://oku.korea.ac.kr/",
+    "linkStatus": "official_site",
+    "checkedAt": "2026-10-12"
+  },
+  {
+    "id": "bible_e5c2a821abbe2dea",
+    "university": "경상국립대학교",
+    "admissionUrl": "https://new.gnu.ac.kr/enter/main.do",
+    "logoUrl": "/school-logos/0000007.jpg",
+    "logoSourceUrl": "https://www.adiga.kr/cmm/com/file/imageFileDown.do?fileId=00000000000000005540&fileSn=1",
+    "logoSha256": "eea04646e040dc8c88c9f93f6f1d09dda4e72b84fab2086a5681668b052166f2",
+    "officialSourceUrl": "https://new.gnu.ac.kr/enter/main.do",
+    "linkStatus": "official_site",
+    "checkedAt": "2026-10-12"
+  },
+  {
+    "id": "bible_81a83ae70e0a0740",
+    "university": "부산교육대학교",
+    "admissionUrl": "http://enter.bnue.ac.kr",
+    "logoUrl": "/school-logos/81a83ae70e0a.png",
+    "logoSourceUrl": "https://enter.bnue.ac.kr/resources/custom/images/enter/common/hd-logo.png",
+    "logoSha256": "6308610139e1b004c6739246a4a6ca62753b27e0b44b8671d3b0e399676020eb",
+    "linkStatus": "official_directory",
+    "checkedAt": "2026-10-12"
+  },
+  {
+    "id": "bible_45d41d6942c3e6ac",
+    "university": "인천대학교",
+    "admissionUrl": "https://admission.inu.ac.kr/",
+    "logoUrl": "/school-logos/0002660.gif",
+    "logoSourceUrl": "https://www.adiga.kr/cmm/com/file/imageFileDown.do?fileId=00000000000000008502&fileSn=1",
+    "logoSha256": "6afefef0828aea6c9be091794eae5f6dc75ec2c3a1c87d67ec40dd2cb2531f66",
+    "officialSourceUrl": "https://admission.inu.ac.kr/",
+    "linkStatus": "official_site",
+    "checkedAt": "2026-10-12"
+  },
+  {
+    "id": "bible_bf8b2f07903ddb3a",
+    "university": "광주과학기술원 GIST",
+    "admissionUrl": "https://admission.gist.ac.kr/",
+    "logoUrl": "/school-logos/bf8b2f07903d.ico",
+    "logoSourceUrl": "https://www.gist.ac.kr/common/img/favicon.ico",
+    "logoSha256": "a6fb84271c6777b858bbd8f72c385fd3e450a37d023d3dd414a19db3049f2dc2",
+    "officialSourceUrl": "https://www.gist.ac.kr/uadm/main.html",
+    "linkStatus": "official_site",
+    "checkedAt": "2026-10-12"
+  },
+  {
+    "id": "bible_de1e42bb7f179b37",
+    "university": "대구경북과학기술원 DGIST",
+    "admissionUrl": "https://www.dgist.ac.kr/adm/",
+    "logoUrl": "/school-logos/0000382.png",
+    "logoSourceUrl": "https://www.dgist.ac.kr/images/kor/sub01/sub01020601_img1.png",
+    "logoSha256": "cff5519e2bf2e5fa9aab047d46b952c0b174d9fc201f6fbb98c8b621864c4666",
+    "officialSourceUrl": "https://www.dgist.ac.kr/adm/",
+    "linkStatus": "official_site",
+    "checkedAt": "2026-10-12"
+  },
+  {
+    "id": "bible_6cc29bbe9eca95d3",
+    "university": "울산과학기술원 UNIST",
+    "admissionUrl": "https://adm-u.unist.ac.kr/",
+    "logoUrl": "/school-logos/6cc29bbe9eca.png",
+    "logoSourceUrl": "https://adm-u.unist.ac.kr/_res/unist/admission/img/common/logo.png",
+    "logoSha256": "4bca998a242efadae5745f484788ccdfe337189092b9435932f921ee5536ab58",
+    "officialSourceUrl": "https://adm-u.unist.ac.kr/admission/index.do",
+    "linkStatus": "official_site",
+    "checkedAt": "2026-10-12"
+  },
+  {
+    "id": "bible_c043bd12c44ecf96",
+    "university": "한국과학기술원 KAIST",
+    "admissionUrl": "https://admission.kaist.ac.kr/undergraduate/",
+    "logoUrl": "/school-logos/0000374.svg",
+    "logoSourceUrl": "https://admission.kaist.ac.kr/kaistAdmission/images/main/kaist_logo.svg",
+    "logoSha256": "0b810829262de2c35ff66d3aaf145704140dd1b75c0388153e65054f64f4b71f",
+    "officialSourceUrl": "https://admission.kaist.ac.kr/",
+    "linkStatus": "official_site",
+    "checkedAt": "2026-10-12"
+  },
+  {
+    "id": "bible_2b8bc0e1dea4b1e7",
+    "university": "한국에너지공과대학교 KENTECH",
+    "admissionUrl": "https://admission.kentech.ac.kr/",
+    "logoUrl": "/school-logos/2b8bc0e1dea4.ico",
+    "logoSourceUrl": "https://admission.kentech.ac.kr/resources/favicon.ico",
+    "logoSha256": "bf5a0aaa0d4cb0e844e3ca6233d543755cbf4ead413dfc7944ad5202aac2565c",
+    "officialSourceUrl": "https://admission.kentech.ac.kr/ipsi",
+    "linkStatus": "official_site",
+    "checkedAt": "2026-10-12"
+  }
+]

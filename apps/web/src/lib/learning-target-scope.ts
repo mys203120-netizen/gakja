@@ -1,0 +1,40 @@
+import { learningTargetIdentityMatches } from '@gakja/content-contracts/workflows';
+
+type RecordValue = Record<string, any>;
+
+/** Client-safe aliases only: this never rewrites a stored support-target snapshot. */
+export function learningScopeIdentity(target: RecordValue) {
+  return {
+    university: target.university || '',
+    admission_year: target.admission_year || target.year || null,
+    campus: target.campus || '',
+    department: target.department || target.major || '',
+    admission_type: target.admission_type || target.track || '',
+    interview_stage: target.interview_stage || target.stage || null,
+  };
+}
+
+export function interviewTargetSnapshot(session: RecordValue): RecordValue | null {
+  return session.data?.context?.target || session.supportTarget || null;
+}
+
+/** A stable ID alone must not move a frozen interview into a changed school context. */
+export function interviewMatchesLearningTarget(session: RecordValue, target: RecordValue | null | undefined): boolean {
+  if (!target?.id) return false;
+  const savedId = session.target_id || session.data?.context?.targetId;
+  const snapshot = interviewTargetSnapshot(session);
+  return Boolean(savedId === target.id && snapshot
+    && learningTargetIdentityMatches(learningScopeIdentity(snapshot), learningScopeIdentity(target)));
+}
+
+export function splitInterviewsByLearningTarget<T extends RecordValue>(sessions: T[], target: RecordValue | null | undefined) {
+  return {
+    current: sessions.filter(session => interviewMatchesLearningTarget(session, target)),
+    other: sessions.filter(session => !interviewMatchesLearningTarget(session, target)),
+  };
+}
+
+/** Unscoped personal plans stay visible; school-specific items follow the selected target. */
+export function inLearningTargetScope(itemTargetId: unknown, selectedTargetId: string, includeAll = false): boolean {
+  return includeAll || !selectedTargetId || !itemTargetId || itemTargetId === selectedTargetId;
+}

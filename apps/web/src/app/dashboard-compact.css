@@ -1,0 +1,130 @@
+.app-shell .on-dashboard.dashboard-compact {
+  --dashboard-peach: #f9f0e7;
+  --dashboard-purple: #8676ab;
+  --dashboard-blue: #5685ab;
+  --dashboard-green: #32a775;
+  color: #28312d;
+}
+.app-shell .dashboard-compact .on-dashboard-heading { margin-bottom: 23px; align-items: center; }
+.app-shell .dashboard-compact .on-dashboard-heading h1 { margin-top: 5px; font-size: 29px; font-weight: 500; line-height: 1.35; }
+.app-shell .dashboard-compact .dashboard-greeting { font-size: 12px; }
+.app-shell .dashboard-compact .on-dashboard-heading time { color: #657169; font-size: 12px; }
+.app-shell .dashboard-compact .dashboard-next {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center;
+  padding: 25px 28px; margin-bottom: 29px; border-radius: 14px;
+  background: linear-gradient(112deg, #f9efe4 0%, #fbf6ee 58%, #f0f6ef 100%);
+}
+.app-shell .dashboard-compact .dashboard-next-copy { min-width: 0; }
+.app-shell .dashboard-compact .dashboard-group-label { display: block; color: #957153; font-size: 12px; margin-bottom: 9px; }
+.app-shell .dashboard-compact .dashboard-next h2 { font-size: clamp(23px, 2vw, 29px); font-weight: 500; line-height: 1.42; letter-spacing: -.04em; margin: 0 0 9px; word-break: keep-all; overflow-wrap: anywhere; text-wrap: pretty; }
+.app-shell .dashboard-compact .dashboard-next p { font-size: 13px; color: #72776c; line-height: 1.65; margin: 0; max-width: 590px; word-break: keep-all; overflow-wrap: anywhere; }
+.app-shell .dashboard-compact .dashboard-next-action { display: flex; flex-direction: column; align-items: flex-end; gap: 13px; max-width: 250px; }
+.app-shell .dashboard-compact .dashboard-next-action .button { min-height: 45px; font-size: 13px; gap: 8px; white-space: nowrap; box-shadow: none; }
+.app-shell .dashboard-compact .dashboard-next-action .text-link { color: #697569; font-size: 12px; line-height: 1.65; text-align: right; word-break: keep-all; }
+.app-shell .dashboard-compact .dashboard-next-action .text-link > svg { flex-shrink: 0; }
+.app-shell .dashboard-compact .dashboard-workspace { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .85fr); gap: 34px; align-items: start; margin-bottom: 28px; }
+.app-shell .dashboard-compact :is(.dashboard-agenda, .dashboard-preparation) { min-width: 0; }
+.app-shell .dashboard-compact .dashboard-group-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 15px; }
+.app-shell .dashboard-compact .dashboard-group-heading h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; font-weight: 500; letter-spacing: -.025em; line-height: 1.5; }
+.app-shell .dashboard-compact .dashboard-agenda .dashboard-group-heading h2 > svg { color: #b78b65; }
+.app-shell .dashboard-compact .dashboard-preparation .dashboard-group-heading h2 > svg { color: var(--dashboard-purple); }
+.app-shell .dashboard-compact .dashboard-group-heading .text-link { font-size: 12px; color: #657169; white-space: nowrap; gap: 4px; }
+.app-shell .dashboard-compact .dashboard-agenda-summary { display: flex; gap: 17px; flex-wrap: wrap; font-size: 12px; color: #657169; margin: -5px 0 10px; }
+.app-shell .dashboard-compact .linked-row { border: 0; padding: 12px 0; gap: 13px; }
+.app-shell .dashboard-compact .linked-row .row-text strong { font-size: 14px; font-weight: 450; line-height: 1.65; word-break: keep-all; overflow-wrap: anywhere; }
+.app-shell .dashboard-compact .linked-row .row-text span { font-size: 12px; color: #657169; margin-top: 3px; line-height: 1.65; word-break: keep-all; overflow-wrap: anywhere; }
+.app-shell .dashboard-compact .linked-row > svg:last-child { color: #919b94; width: 16px; }
+.app-shell .dashboard-compact .dashboard-item-state { display: flex; align-items: center; gap: 5px; flex-shrink: 0; font-size: 12px; color: #508667; }
+.app-shell .dashboard-compact .dashboard-item-state.reviewing { color: #9b8764; }
+.app-shell .dashboard-compact .dashboard-today-plan { display: flex; align-items: center; gap: 10px; padding: 10px 0; font-size: 13px; line-height: 1.65; }
+.app-shell .dashboard-compact .dashboard-today-plan > svg { flex-shrink: 0; color: #657169; }
+.app-shell .dashboard-compact .dashboard-today-plan > span { min-width: 0; word-break: keep-all; overflow-wrap: anywhere; }
+.app-shell .dashboard-compact .dashboard-today-plan .text-link { margin-left: auto; font-size: 12px; color: #758578; white-space: nowrap; flex-shrink: 0; }
+.app-shell .dashboard-compact .dashboard-today-plan.completed > span { text-decoration: line-through; color: #657169; }
+.app-shell .dashboard-compact .dashboard-today-plan.completed > svg { color: #68a886; }
+.app-shell .dashboard-compact .dashboard-empty-copy { margin: 11px 0 17px; font-size: 13px; color: #657169; line-height: 1.75; word-break: keep-all; }
+.app-shell .dashboard-compact .dashboard-practice-links { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; }
+.app-shell .dashboard-compact .dashboard-practice-links a { display: flex; align-items: center; gap: 5px; color: #657169; font-size: 12px; min-height: 32px; }
+.app-shell .dashboard-compact .dashboard-practice-links a:hover { color: #236b48; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure { margin-top: 17px; background: #f8faf7; border-radius: 9px; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure > summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 16px; font-size: 12px; color: #6a776a; cursor: pointer; list-style: none; }
+.app-shell .dashboard-compact .dashboard-calendar-summary-action { display: flex; align-items: center; gap: 6px; color: #657169; font-size: 12px; }
+.app-shell .dashboard-compact :is(.dashboard-calendar-disclosure, .dashboard-check-disclosure) > summary::-webkit-details-marker { display: none; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure[open] > summary .dashboard-calendar-summary-action > svg,
+.app-shell .dashboard-compact .dashboard-check-disclosure[open] > summary > span:last-child > svg { transform: rotate(180deg); }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure .dashboard-planner { border: 0; padding: 9px 16px 15px; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure .section-heading h2 { font-size: 14px; font-weight: 450; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure .section-heading { margin-bottom: 12px; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure .calendar-heading { margin: 15px 0; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure .calendar-heading strong { font-size: 14px; font-weight: 450; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure .calendar-days > button { height: auto; }
+.app-shell .dashboard-compact .dashboard-calendar-disclosure .week-plan-disclosure { border: 0; }
+.app-shell .dashboard-compact .dashboard-preparation { padding: 19px 21px 18px; background: #f7f5fb; border-radius: 12px; }
+.app-shell .dashboard-compact .dashboard-stage-chart { display: flex; flex-direction: column; gap: 15px; }
+.app-shell .dashboard-compact .dashboard-stage { display: block; color: inherit; }
+.app-shell .dashboard-compact .dashboard-stage > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 8px; }
+.app-shell .dashboard-compact .dashboard-stage-count { font-variant-numeric: tabular-nums; font-size: 13px; }
+.app-shell .dashboard-compact .dashboard-stage-count small { font-size: 12px; color: #657169; padding-left: 4px; }
+.app-shell .dashboard-compact .dashboard-stage-track { display: block; height: 6px; background: #e9e5ee; border-radius: 3px; overflow: hidden; }
+.app-shell .dashboard-compact .dashboard-stage-track i { display: block; height: 100%; border-radius: 3px; background: var(--dashboard-green); }
+.app-shell .dashboard-compact .dashboard-stage.blue .dashboard-stage-track i { background: var(--dashboard-blue); }
+.app-shell .dashboard-compact .dashboard-stage.purple .dashboard-stage-track i { background: var(--dashboard-purple); }
+.app-shell .dashboard-compact .dashboard-chart-note { display: block; color: #657169; font-size: 12px; margin-top: -3px; }
+.app-shell .dashboard-compact .dashboard-review-link { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; color: #7b6e90; margin-top: 18px; }
+.app-shell .dashboard-compact .dashboard-review-link > span > span { margin-left: 5px; color: #6f5a87; }
+.app-shell .dashboard-compact .dashboard-check-disclosure { margin-top: 16px; }
+.app-shell .dashboard-compact .dashboard-check-disclosure > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; font-size: 12px; color: #71627f; min-height: 30px; }
+.app-shell .dashboard-compact .dashboard-check-disclosure > summary > span:last-child { display: flex; align-items: center; gap: 6px; }
+.app-shell .dashboard-compact .dashboard-check-disclosure > div { padding-top: 7px; }
+.app-shell .dashboard-compact .dashboard-check-disclosure a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 12px; color: #756b80; }
+.app-shell .dashboard-compact .dashboard-check-disclosure a > span:last-child { display: flex; align-items: center; gap: 6px; }
+.app-shell .dashboard-compact .dashboard-practice-counts { display: flex; flex-direction: column; gap: 17px; padding-top: 4px; }
+.app-shell .dashboard-compact .dashboard-practice-counts a { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+.app-shell .dashboard-compact .dashboard-practice-counts a > span:last-child { font-size: 15px; font-variant-numeric: tabular-nums; }
+.app-shell .dashboard-compact .dashboard-practice-counts small { font-size: 12px; margin-left: 5px; color: #657169; }
+.app-shell .dashboard-compact .dashboard-reading { padding-top: 4px; }
+.app-shell .dashboard-compact .dashboard-reading-switch { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 9px; }
+.app-shell .dashboard-compact .dashboard-reading-switch > button { display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; padding: 8px 11px; color: #657169; font-size: 12px; line-height: 1.5; border-radius: 6px; min-height: 35px; cursor: pointer; }
+.app-shell .dashboard-compact .dashboard-reading-switch > button[aria-pressed="true"] { background: #edf3f9; color: #40658b; }
+.app-shell .dashboard-compact .dashboard-reading[data-view="knowledge"] .dashboard-reading-switch > button[aria-pressed="true"] { background: #f8eee3; color: #87613e; }
+.app-shell .dashboard-compact .dashboard-reading[data-view="records"] .dashboard-reading-switch > button[aria-pressed="true"] { background: #f0edf7; color: #706084; }
+.app-shell .dashboard-compact .dashboard-reading-content { min-height: 84px; }
+.app-shell .dashboard-compact .dashboard-reading-content .linked-row { padding: 13px 0 9px; }
+.app-shell .dashboard-compact .dashboard-reading-video { display: flex; align-items: center; gap: 15px; padding: 12px 0; }
+.app-shell .dashboard-compact .dashboard-reading-video > img { width: 91px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; flex-shrink: 0; }
+.app-shell .dashboard-compact .dashboard-reading-video > div { min-width: 0; flex: 1; }
+.app-shell .dashboard-compact .dashboard-reading-video > div > span { display: block; font-size: 14px; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+.app-shell .dashboard-compact .dashboard-reading-video small { display: block; font-size: 12px; color: #657169; line-height: 1.65; margin-top: 4px; }
+.app-shell .dashboard-compact .dashboard-reading-video > svg { flex-shrink: 0; color: #929b93; }
+.app-shell .dashboard-compact .dashboard-answer-resume { font-size: 12px; color: #71627f; margin-top: 4px; }
+@media (max-width: 1100px) {
+  .app-shell .dashboard-compact .dashboard-next { gap: 22px; padding: 23px; }
+  .app-shell .dashboard-compact .dashboard-next-action { max-width: 220px; }
+  .app-shell .dashboard-compact .dashboard-workspace { gap: 25px; grid-template-columns: minmax(0, 1fr) minmax(245px, .9fr); }
+}
+@media (max-width: 800px) {
+  .app-shell .dashboard-compact .dashboard-next { grid-template-columns: 1fr; gap: 19px; }
+  .app-shell .dashboard-compact .dashboard-next-action { max-width: none; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 11px; }
+  .app-shell .dashboard-compact .dashboard-next-action .text-link { text-align: left; }
+  .app-shell .dashboard-compact .dashboard-workspace { grid-template-columns: 1fr; gap: 25px; }
+  .app-shell .dashboard-compact .dashboard-preparation { padding: 19px 21px; }
+  .app-shell .dashboard-compact .dashboard-stage-chart { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .app-shell .dashboard-compact .dashboard-stage-chart .dashboard-chart-note { grid-column: 1 / -1; margin-top: -8px; }
+}
+@media (max-width: 500px) {
+  .app-shell .dashboard-compact .on-dashboard-heading { gap: 12px; margin-bottom: 20px; }
+  .app-shell .dashboard-compact .on-dashboard-heading h1 { font-size: 25px; }
+  .app-shell .dashboard-compact .on-dashboard-heading time { max-width: 92px; text-align: right; font-size: 12px; white-space: normal; line-height: 1.7; word-break: keep-all; }
+  .app-shell .dashboard-compact .dashboard-next { padding: 22px 20px; border-radius: 12px; margin-bottom: 25px; }
+  .app-shell .dashboard-compact .dashboard-next h2 { font-size: 23px; line-height: 1.45; }
+  .app-shell .dashboard-compact .dashboard-next p { font-size: 12px; line-height: 1.7; }
+  .app-shell .dashboard-compact .dashboard-next-action { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .app-shell .dashboard-compact .dashboard-next-action .button { width: 100%; justify-content: space-between; min-height: 44px; }
+  .app-shell .dashboard-compact .dashboard-group-heading h2 { font-size: 15px; }
+  .app-shell .dashboard-compact .dashboard-preparation { padding: 19px 17px; }
+  .app-shell .dashboard-compact .dashboard-stage-chart { display: flex; gap: 15px; }
+  .app-shell .dashboard-compact .dashboard-stage-chart .dashboard-chart-note { margin-top: -3px; }
+  .app-shell .dashboard-compact .dashboard-reading-switch { gap: 5px; }
+  .app-shell .dashboard-compact .dashboard-reading-switch > button { padding: 8px; gap: 5px; font-size: 12px; }
+  .app-shell .dashboard-compact .dashboard-reading-video > img { width: 80px; }
+}
