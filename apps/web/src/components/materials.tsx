@@ -1,4 +1,5 @@
 'use client';
+import { loadDocumentOriginal } from '@/lib/document-delivery-client';
 import Link from 'next/link';
 import type {ComponentProps} from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -141,7 +142,7 @@ function BookReader({kind}:{kind:string}){
     setShowOriginal(true);setOriginalError('');
     if(original?.id===doc.id&&original?.content_version===doc.content_version)return;
     setOriginalLoading(true);setOriginal(null);
-    try{const result=await api('/api/documents?'+new URLSearchParams({kind:doc.kind,contentVersion:String(doc.content_version||data.package?.active_version)}).toString());if(typeof result.document?.html!=='string')throw new Error('교재 원본을 찾을 수 없어요.');setOriginal(result.document);}
+    try{const result=await api('/api/documents?'+new URLSearchParams({kind:doc.kind,contentVersion:String(doc.content_version||data.package?.active_version)}).toString());if(typeof result.document?.original_url!=='string')throw new Error('교재 원본을 찾을 수 없어요.');setOriginal(await loadDocumentOriginal(result.document));}
     catch(error){setOriginalError((error as Error).message);}
     finally{setOriginalLoading(false);}
   }

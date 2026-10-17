@@ -119,7 +119,8 @@ try{
   });
   const boot=await request('student','/api/bootstrap');check(boot.status===200&&boot.body.package.active_version===1&&boot.body.documents.length===1&&boot.body.documents[0].kind==='guidebook','student receives only the published final guidebook');
   check(stable(boot.body.learning)===stable(pack.learning_data),'published student content matches approved imported learning data');
-  const original=await request('student','/api/documents?kind=guidebook&contentVersion=1');check(original.status===200&&original.body.document.html===renderLearningHtml(pack)&&original.body.document.file_hash===createHash('sha256').update(renderLearningHtml(pack)).digest('hex'),'private student document returns exact uploaded original HTML and file hash');
+  const original=await request('student','/api/documents?kind=guidebook&contentVersion=1');check(original.status===200&&!('html' in original.body.document)&&typeof original.body.document.original_url==='string'&&original.body.document.file_hash===createHash('sha256').update(renderLearningHtml(pack)).digest('hex'),'private student document returns original URL and file hash without HTML');
+  const raw=await fetch(base+original.body.document.original_url,{headers:{Cookie:'gakja_session='+tokens.student}});check(raw.status===200&&await raw.text()===renderLearningHtml(pack),'separate authenticated raw request returns exact HTML');
   check(original.headers.get('cache-control')?.includes('private')&&original.headers.get('cache-control')?.includes('no-store'),'original student HTML is private and not cacheable');
   check((await request('student','/api/documents?kind=handbook&contentVersion=1')).status===404,'single-book publication does not invent a handbook');
   check((await request('other','/api/documents?kind=guidebook&contentVersion=1')).status===404,'other account cannot retrieve original uploaded HTML');

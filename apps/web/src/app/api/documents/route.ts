@@ -1,3 +1,4 @@
+import { documentDelivery, localDocumentResponse } from '@/lib/document-delivery';
 import { requireUser } from '@/lib/auth';
 import { ApiError, errorResponse, query } from '@/lib/db';
 import { validatePublication } from '@/lib/content-publication';
@@ -15,6 +16,8 @@ export async function GET(request: Request) {
     validatePublication(version, documents);
     const document = documents.find(document => document.kind === kind);
     if (!document) throw new ApiError(404, '이 버전에는 해당 교재가 없어요.');
-    return Response.json({ document: { ...document, content_version: version.version } }, { headers: { 'Cache-Control': 'private, no-store' } });
+    if (url.searchParams.get('original') === '1') return localDocumentResponse(document.html);
+    url.searchParams.set('original', '1');
+    return Response.json({ document: { ...await documentDelivery(document, url.pathname + url.search), content_version: version.version } }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) { return errorResponse(error); }
 }

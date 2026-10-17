@@ -2,8 +2,8 @@
 
 ## 적용 순서
 
-1. 대상 DB를 백업하고 `20261017143841_active_accounts_direct_uploads.sql`까지 마이그레이션을 적용한다. 기존 마이그레이션 파일은 수정하지 않았다. 앱 배포 전에 적용한다. 로컬 PostgreSQL에는 Auth/Storage 부분이 자동으로 생략된다.
-2. Supabase 환경은 `AUTH_MODE=supabase`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_MEDIA_BUCKET=student-media`를 설정한다. 공개 변수는 **빌드 시점**에도 필요하다. 사용자 브라우저에는 service-role 키를 제공하지 않는다. 다른 이름의 버킷은 자동으로 허용하지 않는다.
+1. 대상 DB를 백업하고 `202610180001_document_originals.sql`까지 마이그레이션을 적용한다. 기존 마이그레이션 파일은 수정하지 않았다. 앱 배포 전에 적용한다. 로컬 PostgreSQL에는 Auth/Storage 부분이 자동으로 생략된다.
+2. Supabase 환경은 `AUTH_MODE=supabase`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_MEDIA_BUCKET=student-media`와 서버 전용 `SUPABASE_SERVICE_ROLE_KEY`를 설정한다. 공개 변수는 **빌드 시점**에도 필요하다. 사용자 브라우저에는 service-role 키를 제공하지 않는다. 다른 이름의 버킷은 자동으로 허용하지 않는다.
 3. 앱을 빌드·배포한다. 이미 열려 있던 이전 화면은 새로고침해야 한다. Supabase 모드에서 예전 multipart 파일 업로드 API는 415로 거절한다. 로컬 인증 모드에서는 기존 PostgreSQL 녹화 저장과 로컬 첨부 저장을 유지한다.
 4. 실제 학생 두 계정으로 아래 운영 검사를 수행한다. 이 문서의 로컬 검증 결과를 호스팅 환경 검증으로 해석하지 않는다.
 
@@ -51,3 +51,16 @@ PowerShell에서는 `$env:TEST_DATABASE_URL='...'`처럼 프로세스 환경 변
 ## 2026-10-18 로컬 최종 검증
 
 저장소 스냅샷을 새 임시 디렉터리에 풀고 개인 환경 파일 없이 npm ci를 실행했다. 전체 테스트 505개, bootstrap 실제 컴포넌트/query 검사 28개, 타입 검사와 프로덕션 빌드가 통과했다. 별도 로컬 PostgreSQL 임시 DB에서 전체 마이그레이션 및 RLS 검사 29개가 통과했다. 호스팅된 Supabase HTTP·Vercel 실배포·휴대폰·유료 AI 검증은 수행하지 않았다.
+
+
+## 교재 원문 열람 경로
+
+학생 열람과 관리자 미리보기 API는 HTML과 구조화 본문 대신 문서 ID·종류·해시·원문 URL을 반환한다. 발행 상태/현재 활성 계정/담당자 배정과 기존 원문 계약·해시 검증을 마친 뒤에만 URL을 발급한다. 관리자 확인 digest는 원본 데이터로 계산하므로 이전 발행 검수 절차는 유지된다.
+
+Supabase 모드에서는 `document-originals` 비공개 버킷에 문서 ID/해시별로 보관한다. 브라우저의 직접 읽기·쓰기·변경은 허용하지 않고 서버만 60초 URL을 발급한다. 기존 교재도 첫 열람 때 검증된 DB 원문을 저장하므로 재등록할 필요가 없다. 이미 저장된 원문은 재업로드하지 않으며 동시 최초 요청의 중복 파일 응답만 허용한다. 저장소 장애 시 HTML JSON으로 우회하지 않는다. DB 원문은 계약 검증용으로 유지한다. 이 버킷은 임시 업로드 정리 대상이 아니며 교재 삭제 시 별도 보존 정책에 따라 정리해야 한다.
+
+브라우저는 Storage에서 직접 바이트를 받은 뒤 SHA-256을 확인하고 구조화 본문을 추출한다. 원문은 기존 `sandbox=""` iframe에 넣어 실행 권한을 주지 않는다. 로컬 개발에서는 같은 인증/권한 검사를 거친 별도 원문 요청을 text/plain으로 제공한다. Supabase 모드에서는 이 로컬 원문 경로를 차단한다.
+
+배포 전에 새 마이그레이션과 서버 전용 키를 적용해야 한다. 실제 Supabase/Vercel에서 5MiB 교재 등록 → 관리자 미리보기/확인 → 발행 → 학생 원문 열람을 확인하고, 개발자 도구에서 원문 바이트가 Storage로부터 전송되는지 확인한다. 기존에 발급된 URL은 비활성화 후에도 만료까지 최대 60초 유효하다.
+
+추가 원문 분리 검증: 계약을 통과하는 정확히 5MiB HTML로 작은 메타데이터 응답과 원본 바이트 보존을 확인했다. 서버/브라우저 원문 전달 회귀 검사 6개, PostgreSQL RLS 검사 32개, 로컬 HTTP/PostgreSQL 교재 통합 검사 97개가 통과했다. HTTP 검사의 합성 계정 5개는 모두 정리했다. 프로덕션 빌드도 통과했다. 실제 Supabase Storage HTTP·Vercel 배포 검증은 별도로 남아 있다.

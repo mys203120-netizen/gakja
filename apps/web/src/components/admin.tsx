@@ -1,4 +1,5 @@
 'use client';
+import { loadDocumentOriginal } from '@/lib/document-delivery-client';
 import { uploadPrivateFiles } from '@/lib/recording-upload-client';
 
 import Link from 'next/link';
@@ -182,7 +183,7 @@ function VersionDetail({ id, history = false }: { id: string; history?: boolean 
   async function openBookPreview() {
     if (previewLoading) return;
     setPreviewLoading(true); setPreviewError(''); setPreviewReady(false); setAcknowledged(false);
-    try { const result = await api(`/api/imports/${encodeURIComponent(id)}/preview`); setPreview(result); }
+    try { const result = await api(`/api/imports/${encodeURIComponent(id)}/preview`); result.documents = await Promise.all(result.documents.map(loadDocumentOriginal)); setPreview(result); }
     catch (error) { setPreviewError((error as Error).message); }
     finally { setPreviewLoading(false); }
   }

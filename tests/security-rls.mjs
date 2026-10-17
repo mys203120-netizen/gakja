@@ -39,6 +39,8 @@ try {
   await db.query("insert into support_targets(id,student_id,data) values('own',$1,'{}'),('other',$2,'{}')",[own,other]);
   await db.query("insert into recording_uploads(id,student_id,kind,fields,files) values($1,$2,'quiz','{}',$3)",[upload,own,JSON.stringify([{field:'recording',path,bucket:'student-media'}])]);
   await db.query("insert into storage.objects(bucket_id,name) values('student-chat-files',$1),('student-media',$2)",[own+'/note.txt',other+'/old.webm']);
+  await db.query("insert into storage.objects(bucket_id,name) values('document-originals',$1)",[own+'/book.html']);
+  assert.equal((await db.query("select public from storage.buckets where id='document-originals'")).rows[0].public,false);checks++;
   async function asUser(id, callback) {
     await db.query('set role authenticated');
     await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);
@@ -46,6 +48,9 @@ try {
   }
   const count=async table=>(await db.query(`select count(*)::int n from ${table}`)).rows[0].n;
   await asUser(own,async()=>{
+    assert.equal((await db.query("select * from storage.objects where bucket_id='document-originals'")).rowCount,0);checks++;
+    await assert.rejects(db.query("insert into storage.objects(bucket_id,name) values('document-originals',$1)",[own+'/forged.html']),/row-level security/);checks++;
+
     assert.equal(await count('profiles'),1); checks++;
     assert.equal(await count('support_targets'),1); checks++;
     assert.equal(await count('recording_uploads'),1); checks++;
