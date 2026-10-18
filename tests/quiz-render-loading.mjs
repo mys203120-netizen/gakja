@@ -189,6 +189,51 @@ state.query = 'focus=free';
 tree = render('QuizHome', [home]);
 check(!primary(tree), 'unrequested free practice keeps the existing mode-picker flow');
 
+// Apply the actual radio setter writes before rerendering, rather than injecting
+// an assumed hook index/value. This catches settings that render but never reach create.
+const timingFieldset=tree=>nodes(tree).find(node=>node.type==='fieldset'&&nodes(node).some(child=>child.type==='legend'&&text(child)==='선택형 퀴즈 시간'));
+const timingRadio=(tree,label)=>nodes(nodes(timingFieldset(tree)).find(node=>node.type==='label'&&text(node)===label)).find(node=>node.type==='input'&&node.props.type==='radio');
+const modeRow=(tree,title)=>nodes(tree).find(node=>node.type==='button'&&node.props.className==='quiz-mode-row'&&nodes(node).some(child=>child.type==='h2'&&text(child)===title));
+function applyHomeWrites() {
+  const values=[...state.values];
+  for(const {index,value} of state.writes.splice(0))values[index]=typeof value==='function'?value(values[index]):value;
+  return render('QuizHome',values);
+}
+for(const focus of ['today','free']) {
+  state.query='focus='+focus;
+  tree=render('QuizHome',[home]);
+  const timing=timingFieldset(tree);
+  check(!!timing&&!!timingRadio(tree,'10초')&&!!timingRadio(tree,'제한 없음'),`${focus} choice setup offers a labelled fieldset with both time limits`);
+  check(!nodes(tree).some(node=>node.type==='input'&&node.props.type==='checkbox'),`${focus} does not leave a detached old timing checkbox`);
+  if(focus==='today') {
+    const recommendation=nodes(tree).find(node=>node.type==='section'&&node.props.className==='quiz-today');
+    check(nodes(recommendation).includes(timing),'today timing settings live beside the recommended choice start');
+  } else {
+    const choice=modeRow(tree,'선택형 퀴즈');
+    const wrapper=nodes(tree).find(node=>node.type==='div'&&Array.isArray(node.props.children)&&node.props.children.includes(choice));
+    check(!!wrapper&&wrapper.props.children.includes(timing),'free timing settings are direct siblings of the choice row in the same wrapper');
+    for(const title of ['Q&A','답변 녹음']) {
+      const row=modeRow(tree,title),entry=nodes(tree).find(node=>node.type==='div'&&Array.isArray(node.props.children)&&node.props.children.includes(row));
+      check(!!entry&&!nodes(entry).some(node=>node.type==='fieldset'),'written and oral entries do not inherit the choice timing controls');
+    }
+  }
+  for(const [label,timed] of [['제한 없음',false],['10초',true]]) {
+    // Start each case from default state, then drive the visible radio handler.
+    tree=render('QuizHome',[home]);state.writes=[];
+    timingRadio(tree,label).props.onChange();tree=applyHomeWrites();
+    check(timingRadio(tree,label).props.checked&&!timingRadio(tree,timed?'제한 없음':'10초').props.checked,`${focus} ${label} handler updates the mutually exclusive radio state`);
+    await (focus==='today'?primary(tree):modeRow(tree,'선택형 퀴즈')).props.onClick();
+    check(state.starts.at(-1).mode==='choice'&&state.starts.at(-1).timed===timed,`${focus} ${label} actual create request uses the selected timing`);
+  }
+}
+state.query='focus=free';
+for(const label of ['10초','제한 없음'])for(const [title,mode] of [['Q&A','answer'],['답변 녹음','oral']]) {
+  tree=render('QuizHome',[home]);state.writes=[];
+  timingRadio(tree,label).props.onChange();tree=applyHomeWrites();
+  await modeRow(tree,title).props.onClick();
+  check(state.starts.at(-1).mode===mode&&state.starts.at(-1).timed===false,`${mode} is always untimed even when the choice setting is ${label}`);
+}
+
 // Publication can change the same logical question/activity IDs. A stored quiz
 // must still use its own published resources and never borrow the latest rubric.
 data.learning.questions[0].prompt='새 발행본의 다른 질문';

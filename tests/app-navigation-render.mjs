@@ -30,8 +30,10 @@ function load(name,context,environment={}){
 }
 equal(nav.STUDENT_NAVIGATION.map(item=>item.label),['오늘','연습','AI 비서','무기고','자료','내 리포트']);
 equal(nav.MOBILE_STUDENT_NAVIGATION.map(item=>[item.href,item.label]),[
- ['/my','홈'],['/learn','연습'],['/on','AI 비서'],['/knowledge','자료'],['/records','기록'],
+ ['/my','오늘'],['/learn','연습'],['/on','AI 비서'],['/knowledge','자료'],['/records','내 리포트'],
 ]);
+equal(nav.MOBILE_STUDENT_NAVIGATION.map(item=>[item.href,item.label]),nav.STUDENT_NAVIGATION.filter(item=>item.id!=='armory').map(item=>[item.href,item.label]));
+equal(nav.STUDENT_NAVIGATION.find(item=>item.id==='armory').description,'내 경험 정리');
 for(const [href,routes] of Object.entries({
  '/my':['/my','/my/today'],
  '/learn':['/learn','/armory','/armory/answer/edit','/quiz/session/answer','/quiz/assignments/task','/interview/new','/interview/session','/chat/interviews/session','/practice/video/session','/on/interviews','/on/interviews/new','/on/interviews/session','/on/interviews/session/turn'],
@@ -93,5 +95,9 @@ equal(markup.includes('/interview/current?kind=chat'),true);equal(markup.include
 equal(markup.includes('/quiz?targetId=target'),true);equal(markup.includes('/interview?targetId=target'),true);
 equal(markup.includes('aria-label="약점 집중 훈련" data-target-id="target"'),true);
 equal(markup.includes('href="/knowledge"'),true);equal(markup.includes('href="/armory"'),true);equal(markup.includes('href="/records/comparisons"'),true);
+equal((markup.match(/href="\/armory"/g)||[]).length,1);
+equal(markup.indexOf('href="/interview?targetId=target"')<markup.indexOf('href="/armory"'),true);
+equal(markup.indexOf('href="/armory"')<markup.indexOf('aria-label="약점 집중 훈련"'),true);
+equal(markup.includes('<strong>내 경험 정리</strong>'),true);
 context.data.interviews=[old];markup=renderToStaticMarkup(React.createElement(PracticeHome));equal(markup.includes('저장한 답에서 이어가기'),false);
 console.log(`App navigation: ${checks} route/context/render checks passed; independent armory, mobile practice access, nested active routes, focused answer workspaces and frozen-target resume verified.`);

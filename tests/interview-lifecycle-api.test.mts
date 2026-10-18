@@ -38,7 +38,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync('apps/web/src/app/api/intervi
     return require(name);
   }
 });
-function setup(extra:any={}){session={id,student_id:'owner',state:'active',data:{context:{},elapsedMs:2000,activeSince:Date.now()-5000,timerLeaseUntil:Date.now()+25000,generation:3,...extra}};report=null;writes=0;}
+function setup(extra:any={}){const now=Date.now();session={id,student_id:'owner',state:'active',data:{context:{},elapsedMs:2000,activeSince:now-5000,timerLeaseUntil:now+25000,generation:3,...extra}};report=null;writes=0;}
 async function action(action:string){const r=await mod.exports.POST(new Request('http://localhost/api/interviews',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,sessionId:id})}));return {status:r.status,body:await r.json()};}
 test('suspend during AI processing preserves generation and in-flight answer',async()=>{
   setup({processing:'in-flight',processingAt:Date.now()});const r=await action('suspend');
@@ -48,7 +48,8 @@ test('suspend during AI processing preserves generation and in-flight answer',as
   const elapsed=session.data.elapsedMs;await action('suspend');assert.equal(session.data.elapsedMs,elapsed);
 });
 test('an expired heartbeat settles the session and requires explicit resume',async()=>{
-  setup({activeSince:Date.now()-90000,timerLeaseUntil:Date.now()-60000});
+  const now=Date.now();
+  setup({activeSince:now-90000,timerLeaseUntil:now-60000});
   assert.equal((await action('heartbeat')).status,200);assert.equal(session.data.paused,true);assert.equal(session.data.elapsedMs,32000);
   await action('resume');assert.equal(session.data.paused,false);assert.ok(session.data.timerLeaseUntil>Date.now());assert.equal(session.data.elapsedMs,32000);
 });

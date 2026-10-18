@@ -49,7 +49,7 @@ function harness() {
     if (name === './shared') return { api, post: () => { throw new Error('Unexpected mutation'); }, Logo: 'Logo', Spinner: 'Spinner', Alert: 'Alert', Modal: 'Modal', Badge: 'Badge', targetName: () => '', targetMajor: () => '' };
     if (name === '@/lib/student-onboarding') return { studentOnboardingDestination: () => null };
     if (name === '@/lib/material-search') return { normalizeMaterialQuery: value => value.trim(), searchStudentMaterials: () => [] };
-    if (name === '@/lib/app-navigation') return { STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], MOBILE_STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '홈' }], mobileStudentActive: (path, href) => path === href, studentSection: () => 'today' };
+    if (name === '@/lib/app-navigation') return { STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], MOBILE_STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], mobileStudentActive: (path, href) => path === href, studentSection: () => 'today' };
     return new Proxy({}, { get: (_, key) => String(key) });
   } });
   const render = () => { cursor = 0; queued.length = 0; const tree = module.exports.AppShell({ children: 'Student screen' }); while (queued.length) queued.shift()(); return tree; };

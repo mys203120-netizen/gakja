@@ -3,18 +3,12 @@ export const STUDENT_NAVIGATION = [
   {id:'today',href:'/my',label:'오늘'},
   {id:'practice',href:'/learn',label:'연습'},
   {id:'assistant',href:'/on',label:'AI 비서'},
-  {id:'armory',href:'/armory',label:'무기고'},
+  {id:'armory',href:'/armory',label:'무기고',description:'내 경험 정리'},
   {id:'resources',href:'/knowledge',label:'자료'},
   {id:'reports',href:'/records',label:'내 리포트'},
 ] as const;
 /** Mobile keeps five destinations; personal experience preparation opens from 연습. */
-export const MOBILE_STUDENT_NAVIGATION = [
-  {id:'today',href:'/my',label:'홈'},
-  {id:'practice',href:'/learn',label:'연습'},
-  {id:'assistant',href:'/on',label:'AI 비서'},
-  {id:'resources',href:'/knowledge',label:'자료'},
-  {id:'reports',href:'/records',label:'기록'},
-] as const;
+export const MOBILE_STUDENT_NAVIGATION = STUDENT_NAVIGATION.filter(item=>item.id!=='armory');
 export function mobileStudentActive(path:string,href:string) {
   if(href==='/on')return within(path,'/on')&&!within(path,'/on/interviews');
   if(href==='/learn'&&within(path,'/armory'))return true;

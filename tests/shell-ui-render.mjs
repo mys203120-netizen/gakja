@@ -63,7 +63,8 @@ assert.equal((desktop.match(/<a /g) || []).length, 10);
 const student = render({path:'/materials/questions/q1'});
 const studentRail = student.match(/<nav class="main-nav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || '';
 assert.equal((studentRail.match(/<a /g)||[]).length,6);
-assert.ok(studentRail.includes('href="/armory"')&&studentRail.includes('aria-label="무기고"'));
+assert.ok(studentRail.includes('href="/armory"')&&studentRail.includes('aria-label="무기고 · 내 경험 정리"'));
+assert.ok(studentRail.includes('<small class="navigationDescription">내 경험 정리</small>'),'the armory entry explains its purpose in the sidebar');
 assert.ok(studentRail.includes('href="/on"')&&studentRail.includes('title="AI 비서"'));
 const resourceLink=studentRail.match(/<a[^>]*href="\/knowledge"[^>]*>/)?.[0]||'';
 assert.ok(resourceLink.includes('aria-label="자료"')&&resourceLink.includes('aria-current="page"'));
@@ -73,7 +74,7 @@ const dockOf=markup=>markup.match(/<nav class="mobile-nav [^"]*"[^>]*aria-label=
 const dockLinks=dock=>[...dock.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(match=>({attributes:match[1],body:match[2],href:match[1].match(/href="([^"]+)"/)?.[1]}));
 const dock=dockOf(student),links=dockLinks(dock);
 assert.deepEqual(links.map(item=>item.href),['/my','/learn','/on','/knowledge','/records']);
-for(const [index,label] of ['홈','연습','AI 비서','자료','기록'].entries())assert.ok(links[index].body.includes(`<span>${label}</span>`));
+for(const [index,label] of ['오늘','연습','AI 비서','자료','내 리포트'].entries())assert.ok(links[index].body.includes(`<span>${label}</span>`));
 assert.ok(links[0].body.includes('data-logo-size="25"')&&links[0].body.includes('data-wordmark="false"'),'mobile home receives the compact brand mark');
 assert.ok(!dock.includes('href="/armory"'),'mobile armory opens from the practice home while retaining five primary destinations');
 assert.ok(student.includes('src="/brand-on.png"')&&student.includes('alt="" width="42" height="24"'),'wordmark uses the provided ON image');
@@ -83,7 +84,8 @@ assert.ok(student.includes('class="sidebar-account"'),'desktop keeps the sidebar
 assert.ok(!topbar.includes('href="/on"'),'desktop AI primary link replaces the duplicate header shortcut');
 assert.ok(!topbar.includes('class="mobile-brand"')&&!topbar.includes('data-logo-size='),'student topbar leaves space for the school context');
 assert.ok(topbar.includes('<span class="target-copy" aria-hidden="true"><strong>서울시립대학교</strong><small>환경공학부</small></span>'),'school and major have separate visible text elements');
-assert.ok(topbar.includes('지원처 선택')&&topbar.includes('<select')&&topbar.includes('<option value="uos" selected="">'),'school switcher retains its labelled native select and selected target');
+assert.ok(topbar.includes('지원 학교 변경')&&topbar.includes('<select')&&topbar.includes('<option value="uos" selected="">'),'school switcher retains its labelled native select and selected target');
+assert.match(topbar,/<span class="target-change-cue" aria-hidden="true">변경<svg[^>]*lucide-chevron-down/,'school switching has a visible change label and chevron');
 for(const [path,href] of [
  ['/my/today','/my'],['/quiz/session/answer','/learn'],['/chat/interviews/session','/learn'],
  ['/on/interviews','/learn'],['/on/interviews/new','/learn'],['/on/interviews/session','/learn'],['/on/interviews/session/turn','/learn'],
@@ -96,7 +98,7 @@ for(const [path,href] of [
 for(const path of ['/on','/on/conversation','/on/interviews-extra']){
  const assistant=render({path});
  assert.match(assistant,/class="app-shell [^"]*\bassistant-shell\b/);
- assert.match(assistant,/<a href="\/my" class="assistant-back icon-button" aria-label="홈으로 돌아가기"/);
+ assert.match(assistant,/<a href="\/my" class="assistant-back icon-button" aria-label="오늘로 돌아가기"/);
  assert.ok(assistant.includes('id="main-content"')&&assistant.includes('본문'),'chat shell keeps the page content and keyboard target');
 }
 for(const options of [{path:'/my'},{path:'/online'},{path:'/on/interviews'},{path:'/on/interviews/new'},{path:'/on/interviews/session'},{path:'/on/interviews/session/turn'},{admin:true,path:'/on'}]){

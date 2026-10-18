@@ -75,7 +75,7 @@
 }
 
 /* School and department own the mobile header; the brand lives in the dock. */
-.target-copy,.assistant-back { display:none; }
+.target-copy,.target-change-cue,.assistant-back { display:none; }
 .app-shell .account-trigger .avatar { background:var(--clarity-soft); color:var(--clarity-ink); }
 .app-shell .calendar-school-key > span { color:var(--clarity-muted); background:transparent; border-color:var(--clarity-green); }
 .app-shell :is(.calendar-days,.calendar-legend) i.school { background:var(--clarity-green); }
@@ -96,10 +96,11 @@
  .app-shell .content-growth-evidence > :is(.content-growth-evidence-row,.content-growth-originals,.speech-caption) { margin-inline-start:0!important; }
  .app-shell .main-content { padding:24px 20px calc(110px + env(safe-area-inset-bottom,0px)); }
  .app-shell:not(.admin-shell) .topbar { min-height:80px; padding:10px 16px; }
- .app-shell:not(.admin-shell) .topbar .target-select { position:relative; display:block; padding-right:12px; }
- .app-shell:not(.admin-shell) .target-copy { display:flex; flex-direction:column; gap:2px; width:100%; }
- .target-copy strong { color:var(--clarity-ink); font-size:15px; font-weight:650; line-height:1.5; }
+ .app-shell:not(.admin-shell) .topbar .target-select { position:relative; display:flex; align-items:center; gap:6px; min-height:44px; max-width:none; padding:0; cursor:pointer; }
+ .app-shell:not(.admin-shell) .target-copy { display:flex; flex:1; flex-direction:column; gap:2px; min-width:0; }
+ .target-copy strong { color:var(--clarity-ink); font-size:15px; font-weight:650; line-height:1.5; word-break:keep-all; overflow-wrap:anywhere; }
  .target-copy small { color:var(--clarity-muted); font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+ .app-shell:not(.admin-shell) .target-change-cue { display:inline-flex; align-items:center; flex-shrink:0; gap:2px; color:var(--clarity-action); font-size:12px; font-weight:600; line-height:1.5; white-space:nowrap; pointer-events:none; }
  .app-shell:not(.admin-shell) .topbar .target-select select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; }
  .app-shell:not(.admin-shell) .topbar .target-select:focus-within { outline:2px solid var(--clarity-green); outline-offset:4px; border-radius:4px; }
  .app-shell:not(.admin-shell) .topbar-actions > a[href="/on"] { display:none; }
