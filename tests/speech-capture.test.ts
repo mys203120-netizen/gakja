@@ -65,6 +65,36 @@ test('amplitude and time bounds reject corrupt samples and deduplicate time stam
   assert.equal(telemetry.coverage.observedMs, 200);
 });
 
+test('sub-ms stop and near-coincident frames cannot produce zero-length spoken intervals', () => {
+  const finalFrame = buildSpeechTelemetry([{atMs:0,rms:0},{atMs:999.6,rms:.04}], 999.7)!;
+  assert.equal(finalFrame.durationMs, 1000);
+  assert.deepEqual(finalFrame.speechSegments, []);
+  assert.deepEqual(finalFrame.observedSegments, [{startMs:0,endMs:100}]);
+  assert.ok(validateSpeechTelemetry(finalFrame));
+  const adjacent = buildSpeechTelemetry([{atMs:0,rms:0},{atMs:100.1,rms:.04},{atMs:100.2,rms:0},{atMs:200,rms:.04}], 300)!;
+  assert.deepEqual(adjacent.speechSegments, [{startMs:200,endMs:300}]);
+  assert.ok(validateSpeechTelemetry(adjacent));
+  assert.equal(buildSpeechTelemetry([{atMs:0,rms:.04}], .1), null);
+  assert.equal(buildSpeechTelemetry([{atMs:999.6,rms:.04}], 999.7), null);
+});
+
+test('jittered frames and throttled long captures retain server-valid timing evidence', () => {
+  let seed = 17;
+  const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32);
+  for (let run = 0; run < 200; run++) {
+    let atMs = 0;
+    const samples = Array.from({length:run === 199 ? 2000 : 100}, () => {
+      const sample = {atMs,rms:random() > .7 ? .05 : .001};
+      atMs += random() < .1 ? random() : 90 + random() * 25;
+      if (run % 10 === 0 && random() < .05) atMs += 4000;
+      return sample;
+    });
+    const telemetry = buildSpeechTelemetry(samples, atMs - 90)!;
+    assert.ok(validateSpeechTelemetry(telemetry), `capture ${run}`);
+    assert.ok(telemetry.speechSegments.every(segment => segment.endMs > segment.startMs));
+  }
+});
+
 test('high background level is disclosed and bounded captures flag truncation', () => {
   const noisy = buildSpeechTelemetry(frames(1000, () => .04), 1000)!;
   assert.ok(noisy.limitations.includes('high-background-level'));
@@ -131,6 +161,21 @@ test('discarding a recording clears intervals and cannot resurrect its measureme
     assert.equal(capture.finish(), null);
     assert.equal(state.timers.size, 0);
     assert.equal(state.closes, 1);
+  });
+});
+
+test('finishing at the stop request freezes timing before delayed MediaRecorder stop delivery', async () => {
+  await fakeAudio(async state => {
+    const capture = startSpeechCapture(state.stream)!;
+    await Promise.resolve();
+    for (let index = 1; index < 1800; index++) { state.now = index * 100; state.tick(); }
+    state.now = 179999.7;
+    const telemetry = capture.finish()!;
+    state.now += 2500; state.tick();
+    assert.equal(telemetry.durationMs, 180000);
+    assert.equal(capture.finish(), telemetry);
+    assert.equal(Math.round(capture.elapsedMs()), 180000);
+    assert.ok(validateSpeechTelemetry(telemetry));
   });
 });
 

@@ -25,8 +25,8 @@ function equal(actual, expected) { assert.equal(actual, expected); checks++; }
 function fixture(props = {}) {
   let sends = 0, changed = '';
   const tree = module.exports.ChatComposer({ value: '내 답변', onChange: value => { changed = value; }, onSend: () => { sends++; }, label: '면접 답변', ...props });
-  const form = tree.props.children[0], textarea = form.props.children[0], button = form.props.children[1];
-  return { form: form.props, input: textarea.props, button: button.props, sends: () => sends, changed: () => changed };
+  const form = tree.props.children[0], textarea = form.props.children.find(child => child?.type === 'textarea'), button = form.props.children.find(child => child?.type === 'button');
+  return { tree, form: form.props, input: textarea.props, button: button.props, sends: () => sends, changed: () => changed };
 }
 function enter(input, details = {}) {
   let prevented = false;
@@ -54,4 +54,11 @@ f = fixture({ maxLength: 12000, inputId: 'interview-answer', sendLabel: '답변 
 equal(f.input.maxLength, 12000); equal(f.input.id, 'interview-answer'); equal(f.button['aria-label'], '답변 보내기');
 equal(f.button['aria-busy'], false);
 f = fixture({busy:true,sendLabel:'답변 보내기'});equal(f.button['aria-busy'], true);equal(f.button['aria-label'], '전송 중');equal(f.button.title, '전송 중');
+const attachmentAction = { type: 'button', props: { type: 'button', 'aria-label': '자료 첨부' } };
+f = fixture({ variant: 'conversation', actions: attachmentAction });
+equal(f.form.children.find(child => child?.type === 'div').props.children[0], attachmentAction);
+equal(f.tree.props.children[1], false);
+equal(enter(f.input), true); equal(f.sends(), 1);
+f = fixture({ variant: 'conversation', busy: true, actions: attachmentAction });
+equal(f.button.disabled, true); equal(f.button['aria-busy'], true); equal(f.input.disabled, true);
 console.log(`Composer keyboard/guard behavior: ${checks} checks passed; API calls: 0`);

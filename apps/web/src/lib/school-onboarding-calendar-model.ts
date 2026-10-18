@@ -3,6 +3,7 @@ import {projectAdmissionCalendar,type AdmissionCalendarSnapshot} from './admissi
 import {validateDateOnly} from './schedule';
 import {visibleCalendarSourceUrl} from './calendar-source-presentation';
 import {interviewSupportForTarget} from './school-interview-scope';
+import {officialDecisionForTarget} from './official-admission-calendar';
 
 export const schoolCalendarStatusLabels:Record<string,string>={
   registered:'전형 일정 확인',school_reference:'학교 참고 일정',no_interview:'면접 미실시',date_pending:'날짜 미정',
@@ -24,14 +25,19 @@ export function buildSchoolCalendarPreview(snapshot:AdmissionCalendarSnapshot,ta
   const selectedMajor=String(target.department||target.major||'');
   const supportsMajor=(departments:string[],aliases:string[]=[] ,complete=false)=>!meaningful(selectedMajor)||!complete||[...departments,...aliases].some(name=>normalize(name)===normalize(selectedMajor));
   const labels=year!==snapshot.catalogue.source.admissionYear?[]:[
-    ...(school?.entries||[]).filter(entry=>!entry.sourceCampus||!campus||normalize(entry.sourceCampus.replace(/캠퍼스|교정/g,''))===normalize(campus)).filter(entry=>supportsMajor(entry.departments,entry.departmentAliases,entry.departmentCount===entry.departments.length)).map(entry=>entry.trackLabel),
+    ...(school?.entries||[]).filter(entry=>entry.format!=='video_submission').filter(entry=>!entry.sourceCampus||!campus||normalize(entry.sourceCampus.replace(/캠퍼스|교정/g,''))===normalize(campus)).filter(entry=>supportsMajor(entry.departments,entry.departmentAliases,entry.departmentCount===entry.departments.length)).map(entry=>entry.trackLabel),
     ...(school?.unresolved||[]).filter(entry=>entry.kind==='interview').map(entry=>entry.trackLabel),
     ...(official?.decisions||[]).filter(decision=>!decision.campus||Boolean(campus&&normalize(campus)===normalize(decision.campus.replace(/캠퍼스|교정/g,'')))).filter(decision=>supportsMajor(decision.departments,decision.departmentAliases,decision.departments.length>0)).map(decision=>decision.trackLabel),
   ];
-  const tracks=[...new Map(labels.filter(label=>label&&label!=='*'&&interviewSupportForTarget({...target,admission_type:label}).supported).map(label=>[normalize(label),label])).values()].sort((a,b)=>a.localeCompare(b,'ko'));
+  const tracks=[...new Map(labels.filter(label=>{
+    const candidate={...target,admission_type:label};
+    const decision=official&&officialDecisionForTarget(official,candidate);
+    return label&&label!=='*'&&interviewSupportForTarget(candidate).supported&&!['no_interview','unverified'].includes(decision?.status||'');
+  }).map(label=>[normalize(label),label])).values()].sort((a,b)=>a.localeCompare(b,'ko'));
   const interviewSupport=interviewSupportForTarget(target);
   const invalidYearDates=projected.interviewSchedules.length!==schedules.length;
   const status=invalidYearDates?'unverified':matched.length?'registered':references.length?'school_reference':coverage.status;
+  const knownTrack=tracks.some(label=>normalize(label)===normalize(target.admission_type||target.track))||matched.length>0;
   const note=invalidYearDates?'지원 학년도의 실제 면접 연도와 맞지 않는 날짜는 등록하지 않았어요.':matched.length?'학교에서 공개한 전형 일정이에요. 개인 응시 시간은 입학처 발표 후 확인해 주세요.':references.length?'전형·학과와 대조되지 않은 날짜는 학교 참고 일정으로만 표시해요.':coverage.note||'선택한 전형의 면접 여부와 날짜를 입학처에서 확인해 주세요.';
   const preview={
     admissionYear:year,calendarYear,sourceAdmissionYear:snapshot.catalogue.source.admissionYear,
@@ -41,7 +47,7 @@ export function buildSchoolCalendarPreview(snapshot:AdmissionCalendarSnapshot,ta
     unresolved:coverage.unresolved||[],decisionSourceUrl:coverage.decisionSourceUrl||null,decisionSourceLabel:coverage.decisionSourceLabel||null,
     checkedAt:coverage.decisionCheckedAt||snapshot.catalogue.source.checkedAt,stale:snapshot.stale,
     officialSources:coverage.officialSources,sourceUrl:visibleCalendarSourceUrl(snapshot.catalogue.source.url),
-    canReview:interviewSupport.supported&&meaningful(target.admission_type||target.track)&&meaningful(target.department||target.major),
+    canReview:interviewSupport.supported&&knownTrack&&status!=='no_interview'&&meaningful(target.admission_type||target.track)&&meaningful(target.department||target.major),
   };
   return preview;
 }

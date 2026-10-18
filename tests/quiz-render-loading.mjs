@@ -53,6 +53,7 @@ vm.runInNewContext(output, {
     if (name === './audio-level-dot') return { AudioLevelDot: 'AudioLevelDot' };
     if (name === './playful-flow') return { animateStudyReceipt: () => { throw new Error('Render must not play a completion animation'); } };
     if (name === '@/lib/client/speech-recorder') return { startSpeechCapture: () => { throw new Error('Render must not start microphone capture'); } };
+    if (name === '@/lib/recording-upload-client') return { uploadRecording: () => { state.calls++; throw new Error('Render must not upload recordings'); } };
     throw new Error(`Unexpected import: ${name}`);
   },
 });

@@ -1,27 +1,27 @@
-/* Mobile audit: shared controls and secondary student surfaces. */
+/* Shared secondary surfaces, then the open mobile workspace. */
 .app-shell:not(.admin-shell) :is(.learning-tabs,.training-filters) { gap:6px; flex-wrap:wrap; border:0; }
 .app-shell:not(.admin-shell) :is(.learning-tabs,.training-filters) > button { min-height:44px; border:0; border-radius:22px; padding:10px 14px; font-size:14px; }
-.app-shell:not(.admin-shell) :is(.learning-tabs,.training-filters) > button.active { background:#e7f0ff; color:var(--clarity-action); box-shadow:none; }
+.app-shell:not(.admin-shell) :is(.learning-tabs,.training-filters) > button.active { background:var(--clarity-mint); color:var(--clarity-action); box-shadow:none; }
 .app-shell .settings-list { max-width:760px; }
 .app-shell .settings-list > h2 { font-size:17px; color:var(--clarity-ink); }
-.app-shell .settings-row { padding:14px 16px; margin:8px 0; border:0; border-radius:14px; background:#f5f8fc; }
-.app-shell .settings-row select { background:#fff; min-height:44px; }
+.app-shell .settings-row { padding:14px 16px; margin:8px 0; border:0; border-radius:14px; background:var(--clarity-surface); }
+.app-shell .settings-row select { background:var(--clarity-surface); min-height:44px; }
 .app-shell .preparation-note { margin-block:24px 32px; }
 .app-shell .preparation-note textarea { padding:14px 16px; border-radius:14px; line-height:1.8; }
 .app-shell .learning-preferences-row { gap:16px; padding-block:18px; }
-.app-shell .account-profile { background:#edf4ff; border-radius:18px; padding:22px; }
+.app-shell .account-profile { background:var(--clarity-surface); border-radius:18px; padding:22px; }
 .app-shell .account-profile p { overflow-wrap:anywhere; }
 .app-shell .assignment-library .learning-rows { display:grid; gap:12px; }
-.app-shell .assignment-library .learning-row { padding:18px; border:0; border-radius:16px; background:#f5f8fc; gap:12px; }
+.app-shell .assignment-library .learning-row { padding:18px; border:0; border-radius:16px; background:var(--clarity-surface); gap:12px; }
 .app-shell .assignment-library .learning-row h2 { font-size:18px; line-height:1.6; overflow-wrap:anywhere; }
 .app-shell:not(.admin-shell) :is(.page-title h1,.row-text strong,.row-text > span,.notification-item p) { word-break:keep-all; overflow-wrap:anywhere; }
 .app-shell:not(.admin-shell) :is(.text-link,select,input,textarea):focus-visible,
 .native-modal :is(button,a,select,input,textarea):focus-visible { outline:2px solid var(--clarity-action); outline-offset:3px; }
-.native-modal .modal { background:#fff; border-radius:20px; border-color:var(--clarity-line); }
+.native-modal .modal { background:var(--clarity-surface); border-radius:20px; border-color:var(--clarity-line); }
 .native-modal .modal .section-heading { gap:16px; align-items:center; margin-bottom:20px; }
 .native-modal .modal .section-heading h2 { font-size:22px; line-height:1.5; overflow-wrap:anywhere; }
 .native-modal .modal .icon-button { min-width:44px; min-height:44px; border-radius:50%; flex-shrink:0; }
-.native-modal .modal .search-field { border-radius:14px; background:#f1f5fa; }
+.native-modal .modal .search-field { border-radius:14px; background:var(--clarity-soft); }
 .native-modal .modal .search-field:focus-within { outline-color:var(--clarity-action); }
 .native-modal .modal :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { border-radius:12px; font-size:16px; }
 .native-modal .modal select { min-height:48px; padding:10px 40px 10px 14px; }
@@ -35,9 +35,9 @@
  .app-shell .interview-setup-layout { display:grid; grid-template-columns:minmax(0,1fr); }
  .app-shell .interview-setup-layout > * { width:100%; min-width:0; }
  .app-shell .interview-v2 .toggle { position:relative; width:48px; height:44px; min-width:48px; min-height:44px; padding:0; border:0; background:transparent; flex-shrink:0; }
- .app-shell .interview-v2 .toggle::before { content:''; position:absolute; width:38px; height:22px; top:11px; left:5px; border-radius:20px; background:#c3cbd6; }
+ .app-shell .interview-v2 .toggle::before { content:''; position:absolute; width:38px; height:22px; top:11px; left:5px; border-radius:20px; background:var(--clarity-line); }
  .app-shell .interview-v2 .toggle.on::before { background:var(--clarity-action); }
- .app-shell .interview-v2 .toggle i { position:absolute; top:14px; left:8px; width:16px; height:16px; margin:0; background:#fff; transform:none; }
+ .app-shell .interview-v2 .toggle i { position:absolute; top:14px; left:8px; width:16px; height:16px; margin:0; background:var(--clarity-surface); transform:none; }
  .app-shell .interview-v2 .toggle.on i { transform:translateX(16px); }
  .app-shell:not(.admin-shell) .topbar { padding-inline:12px; gap:8px; }
  .app-shell:not(.admin-shell) .topbar-context { flex:1; min-width:0; gap:8px; }
@@ -72,4 +72,68 @@
  .native-modal .modal .form-actions { gap:10px; flex-wrap:wrap; }
  .native-modal .modal .form-actions .button { flex:1; }
  .account-popover :is(a,button) { min-height:44px; }
+}
+
+/* School and department own the mobile header; the brand lives in the dock. */
+.target-copy,.assistant-back { display:none; }
+.app-shell .account-trigger .avatar { background:var(--clarity-soft); color:var(--clarity-ink); }
+.app-shell .calendar-school-key > span { color:var(--clarity-muted); background:transparent; border-color:var(--clarity-green); }
+.app-shell :is(.calendar-days,.calendar-legend) i.school { background:var(--clarity-green); }
+.app-shell .topbar { background:var(--clarity-bg); border-bottom:0; }
+.app-shell .badge { background:var(--clarity-soft); color:var(--clarity-muted); }
+.app-shell .badge.green { background:var(--clarity-mint); color:var(--clarity-green); }
+.app-shell :is(.alert,.error-message) { background:#fff0ef; color:var(--clarity-danger); }
+.app-shell .records-view :is(.records-overview strong,.speech-metrics strong) { color:var(--clarity-ink); }
+.app-shell .records-view .records-row-icon { background:var(--clarity-soft); color:var(--clarity-muted); }
+.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a { background:var(--clarity-soft); border:0; border-radius:18px; }
+.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) svg:first-child { color:var(--clarity-green); background:var(--clarity-soft); }
+.app-shell .interview-entry-choices > a,
+.app-shell .quiz-v3 .quiz-mode-row,
+.app-shell .records-view .records-overview > div { background:var(--clarity-soft); }
+
+@media(max-width:700px) {
+ .app-shell { --section-indent:0px; }
+ .app-shell .content-growth-evidence > :is(.content-growth-evidence-row,.content-growth-originals,.speech-caption) { margin-inline-start:0!important; }
+ .app-shell .main-content { padding:24px 20px calc(110px + env(safe-area-inset-bottom,0px)); }
+ .app-shell:not(.admin-shell) .topbar { min-height:80px; padding:10px 16px; }
+ .app-shell:not(.admin-shell) .topbar .target-select { position:relative; display:block; padding-right:12px; }
+ .app-shell:not(.admin-shell) .target-copy { display:flex; flex-direction:column; gap:2px; width:100%; }
+ .target-copy strong { color:var(--clarity-ink); font-size:15px; font-weight:650; line-height:1.5; }
+ .target-copy small { color:var(--clarity-muted); font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+ .app-shell:not(.admin-shell) .topbar .target-select select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; }
+ .app-shell:not(.admin-shell) .topbar .target-select:focus-within { outline:2px solid var(--clarity-green); outline-offset:4px; border-radius:4px; }
+ .app-shell:not(.admin-shell) .topbar-actions > a[href="/on"] { display:none; }
+ .app-shell .app-footer { display:none; }
+ .app-shell nav.mobile-nav { position:fixed; z-index:50; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom,0px)); width:auto; max-width:460px; height:72px; margin-inline:auto; padding:6px; gap:2px; border:1px solid var(--clarity-line); border-radius:40px; background:#ffffffed; backdrop-filter:blur(18px); box-shadow:0 6px 28px #2023291a; }
+ .app-shell nav.mobile-nav > :is(a,button) { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; width:100%; height:58px; min-height:44px; padding:7px 2px; color:var(--clarity-muted); border:0; border-radius:30px; background:transparent; font-size:10px; font-weight:550; line-height:1.2; }
+ .app-shell nav.mobile-nav > :is(a[aria-current=page],button[data-active=true]) { background:var(--clarity-action); color:var(--clarity-on-action); }
+ .app-shell nav.mobile-nav > a[aria-current=page] > svg { color:var(--clarity-on-action); background:transparent; outline:0; border-radius:0; }
+ .app-shell nav.mobile-nav .brand { display:flex; align-items:center; justify-content:center; }
+ .app-shell nav.mobile-nav .brand img { width:25px; height:25px; }
+ .app-shell:not(.admin-shell) .main-content :is(.panel,.detail-section,.reader-article,.reader-toc,.quiz-today,.quiz-mode-row,.quiz-resume-list,.interview-setup-settings,.interview-quick-start,.interview-device-note,.school-first-practice,.knowledge-understanding,.speech-empty,.speech-next,.speech-trend,.speech-timeline,.speech-measurement-empty,.content-growth-evidence-row,.content-growth-added,.study-answer,.records-report-row,.account-profile,.settings-row,.learning-row) { border:0; border-radius:0; box-shadow:none; background:transparent; padding-inline:0; }
+ .app-shell:not(.admin-shell) .main-content :is(.panel,.detail-section,.reader-article) { padding-block:0; }
+ .app-shell .records-view :is(.records-overview,.speech-metrics) > div { border:0; border-radius:0; background:transparent; padding:12px 0; }
+ .app-shell .records-view .records-overview { gap:20px; margin-block:26px 40px; }
+ .app-shell .records-view .speech-growth-view { gap:44px; }
+ .app-shell .records-view .speech-empty { gap:14px; padding-block:16px; }
+ .app-shell .records-view .speech-empty-icon { background:transparent; color:var(--clarity-green); width:28px; height:28px; }
+ .app-shell .records-view .speech-next { padding-block:16px; }
+ .app-shell .records-view :is(.records-report-row,.study-answer) { padding-block:20px; }
+ .app-shell .records-view .records-row-icon { background:transparent; }
+ .app-shell:not(.admin-shell) .main-content :is(.alert,.inline-notice,.interview-common-note,.knowledge-reading-art) { background:transparent; border:0; border-radius:0; box-shadow:none; padding-inline:0; }
+ .app-shell .interview-entry-choices > a { border:0; border-radius:0; background:transparent; padding:22px 0; box-shadow:none; }
+ .app-shell .interview-setup-main .interview-quick-start { background:transparent; padding:12px 0 28px; }
+ .app-shell .quiz-v3 .quiz-mode-row { padding-block:24px; background:transparent; }
+ .app-shell .quiz-v3 .quiz-today { background:transparent; padding:12px 0 28px; }
+ .app-shell .knowledge-page .knowledge-row { padding-block:28px; border:0; }
+ .app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a { padding:24px 0; border:0; border-radius:0; box-shadow:none; background:transparent; }
+ .app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a:hover { box-shadow:none; background:transparent; }
+ .app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) svg:first-child { width:32px; height:32px; padding:0; border-radius:0; background:transparent; }
+ .app-shell .assistant-back { display:inline-flex; flex-shrink:0; }
+ .app-shell.assistant-shell { height:100dvh; overflow:hidden; }
+ .app-shell.assistant-shell .app-body { height:100%; min-height:0; display:flex; flex-direction:column; }
+ .app-shell.assistant-shell .topbar { flex:0 0 72px; min-height:72px; padding:8px 12px; }
+ .app-shell.assistant-shell .main-content { flex:1; min-height:0; height:calc(100dvh - 72px); width:100%; max-width:none; padding:0; overflow:hidden; }
+ .app-shell.assistant-shell nav.mobile-nav { display:none; }
+ .app-shell.assistant-shell .main-content > .page-motion { height:100%; min-height:0; }
 }

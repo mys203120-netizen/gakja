@@ -37,7 +37,7 @@ export function normalizeSchoolSelection(input:{referenceId?:string|null;departm
   const department=input.departmentId?school!.departments.find(row=>row.id===input.departmentId):null;
   if(input.departmentId&&!department)throw new SchoolSelectionError('선택한 대학의 학과를 다시 선택해 주세요.');
   if(input.interestDepartment&&!department?.programs?.includes(input.interestDepartment))throw new SchoolSelectionError('선택한 모집단위에 속한 관심 전공을 다시 선택해 주세요.');
-  if(school&&!schoolDepartmentAvailable(school.canonicalName,department?.name||major))throw new SchoolSelectionError('제시문·교과 구술 면접을 제외한 학생부형 학과를 선택해 주세요.');
+  if(!schoolDepartmentAvailable(school?.canonicalName||input.university||'',department?.name||major))throw new SchoolSelectionError('제시문·교과 구술 면접을 제외한 학생부형 학과를 선택해 주세요.');
   if(!department&&(!major||major==='미정'))throw new SchoolSelectionError('지원 학과·학부를 선택하거나 입력해 주세요.');
   return {
     university:school?.university||input.university?.trim(),

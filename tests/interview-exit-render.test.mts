@@ -29,7 +29,7 @@ function harness(){
       return new Proxy({},{get:(_,key)=>String(key)});
     }
   });
-  const render=()=>{index=0;const tree=mod.exports.InterviewSession({id:'session',kind:'chat'});while(effects.length)effects.shift()();return tree;};
+  const render=()=>{index=0;const tree=mod.exports.ChatInterviewSession({id:'session',kind:'chat'});while(effects.length)effects.shift()();return tree;};
   const flush=()=>new Promise(resolve=>setImmediate(resolve));
   return {render,flush,faults,values,listeners,posts,destinations,document,cleanup:()=>cleanups.forEach(fn=>fn?.())};
 }

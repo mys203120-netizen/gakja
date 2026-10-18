@@ -38,7 +38,7 @@ export function interviewSupportForTarget(target:Target):InterviewSupport{
   if(/제시문|교과형|창의성면접/.test(track))return result(false,'passage','제시문·교과 문제 풀이 면접은 이 앱에서 다루지 않아요.');
   if(university==='고려대학교'){
     const url='https://oku.korea.ac.kr/';
-    if(/사이버국방/.test(track))return result(true,'document','사이버국방전형의 제출서류 기반 면접을 준비해요.',url);
+    if(/사이버국방/.test(track)&&/사이버국방/.test(major))return result(true,'document','사이버국방전형의 제출서류 기반 면접을 준비해요.',url);
     if(/특기자/.test(track)&&/디자인조형|체육교육/.test(major))return result(true,'document','제출서류·활동 경험 확인 질문을 준비해요.',url);
     return result(false,track&&track!=='미정'?'passage':'needs_selection','계열적합·고른기회·다문화·재직자 제시문 면접은 제외해요. 서류형인 사이버국방전형 등 해당 전형을 선택해 주세요.',url);
   }
@@ -65,4 +65,18 @@ export function interviewSupportForTarget(target:Target):InterviewSupport{
   if(['아주대학교','울산대학교','부산대학교','한림대학교'].includes(university)&&/의예|의학과|의학부/.test(major))return result(false,'mixed','의과대학의 제시문·상황 또는 공통 문제 면접을 포함하는 전형은 제외해요.');
   if(university==='광주교육대학교'&&/교직적성우수자.*ii|농어촌|기초|차상위|한부모/.test(track))return result(false,'other','공개 공통 문항에 답하는 비대면 영상 제출 전형은 제외해요.','https://www.gnue.ac.kr/');
   return result(true,'document','학생부·제출서류에 있는 활동과 지원 학과를 연결해 준비해요.');
+}
+
+/** Call only after published-content ownership and target/version matching are resolved.
+ * A historical target outside the school's supported format must not prevent students
+ * from practising their own record. Public school questions cannot use this exception. */
+export function interviewPracticeForContext(context:{target?:Target|null;packageId?:string;sourceKind?:string;questionId?:string|null;briefingId?:string|null;questions:Target[]}){
+  const support=context.target?interviewSupportForTarget(context.target):null;
+  if(support?.supported!==false)return {allowed:true,scope:'school' as const,label:null,notice:null,questions:context.questions};
+  const questions=context.questions.filter(question=>question.verification_status!=='rejected'&&!question.common_revision&&!question.parent_question_id&&!question.parent_answer_id
+    &&!['general_practice','book_reference','verified_past'].includes(String(question.source_type||''))&&isStudentRecordQuestion(question));
+  const allowed=Boolean(context.packageId&&context.packageId!=='common-bank'&&context.sourceKind!=='common'&&!context.briefingId
+    &&questions.length&&(!context.questionId||questions.some(question=>question.id===context.questionId)));
+  return {allowed,scope:allowed?'personal_record' as const:'blocked' as const,label:allowed?'일반 경험 면접':null,
+    notice:allowed?'내 자료의 활동·경험을 말하는 일반 연습이에요. 선택한 지원 전형의 실제 면접 방식이나 학교별 출제 기준을 재현하지 않아요.':support.reason,questions:allowed?questions:[]};
 }

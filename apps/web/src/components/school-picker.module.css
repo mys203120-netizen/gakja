@@ -10,7 +10,7 @@
 .picker .label {
   display: block;
   margin: 0;
-  color: var(--clarity-ink, #25332b);
+  color: var(--clarity-ink);
   font-size: 13px;
   font-weight: 450;
   line-height: 1.5;
@@ -25,10 +25,10 @@
   min-width: 0;
   min-height: 48px;
   padding: 12px 14px;
-  border: 1px solid var(--clarity-line, #dce4de);
+  border: 1px solid var(--clarity-line);
   border-radius: 9px;
-  background: #fff;
-  color: var(--clarity-ink, #25332b);
+  background: var(--clarity-surface);
+  color: var(--clarity-ink);
   font: inherit;
   font-size: 14px;
   line-height: 1.55;
@@ -44,11 +44,11 @@
   overflow-wrap: anywhere;
 }
 
-.trigger > svg { flex-shrink: 0; color: var(--clarity-muted, #6c776f); }
-.trigger > :global(.school-picker-placeholder) { color: var(--clarity-muted, #6c776f); }
-.picker .trigger:hover:not(:disabled) { border-color: #b7ccbc; }
-.picker .trigger[aria-expanded=true] { border-color: var(--clarity-action, #1967d2); }
-.picker .trigger:focus-visible { outline: 2px solid var(--clarity-action, #1967d2); outline-offset: 3px; }
+.trigger > svg { flex-shrink: 0; color: var(--clarity-muted); }
+.trigger > :global(.school-picker-placeholder) { color: var(--clarity-muted); }
+.picker .trigger:hover:not(:disabled) { border-color: var(--clarity-muted); }
+.picker .trigger[aria-expanded=true] { border-color: var(--clarity-action); }
+.picker .trigger:focus-visible { outline: 2px solid var(--clarity-action); outline-offset: 3px; }
 .trigger:disabled { cursor: not-allowed; opacity: .55; }
 
 .picker .popover {
@@ -60,10 +60,10 @@
   min-width: 0;
   max-height: min(380px, 60dvh);
   overflow: hidden;
-  border: 1px solid var(--clarity-line, #dce4de);
+  border: 1px solid var(--clarity-line);
   border-radius: 11px;
-  background: #fff;
-  box-shadow: 0 8px 24px #25332b14;
+  background: var(--clarity-surface);
+  box-shadow: 0 8px 24px #20232914;
 }
 
 .picker .search {
@@ -73,12 +73,12 @@
   gap: 9px;
   min-width: 0;
   padding: 10px 14px;
-  border-bottom: 1px solid var(--clarity-line, #dce4de);
-  color: var(--clarity-muted, #6c776f);
+  border-bottom: 1px solid var(--clarity-line);
+  color: var(--clarity-muted);
 }
 
 .search > svg { flex-shrink: 0; }
-.picker .search:focus-within { box-shadow: inset 0 -2px 0 var(--clarity-action, #1967d2); }
+.picker .search:focus-within { box-shadow: inset 0 -2px 0 var(--clarity-action); }
 .picker .search .searchInput {
   flex: 1;
   width: 100%;
@@ -92,7 +92,7 @@
   outline: 0;
   background: transparent;
   box-shadow: none;
-  color: var(--clarity-ink, #25332b);
+  color: var(--clarity-ink);
   font: inherit;
   font-size: 14px;
   line-height: 1.5;
@@ -106,7 +106,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #d1dbd3 transparent;
+  scrollbar-color: var(--clarity-line) transparent;
   padding: 5px;
 }
 
@@ -121,7 +121,7 @@
   border: 0;
   border-radius: 6px;
   background: none;
-  color: var(--clarity-ink, #25332b);
+  color: var(--clarity-ink);
   font: inherit;
   font-size: 14px;
   line-height: 1.55;
@@ -132,14 +132,14 @@
 
 .optionLabel { display: block; flex: 1; min-width: 0; }
 .optionText { display: block; word-break: keep-all; overflow-wrap: anywhere; }
-.picker .option small { display: block; margin-top: 4px; color: var(--clarity-muted, #6c776f); font-size: 12px; line-height: 1.5; }
+.picker .option small { display: block; margin-top: 4px; color: var(--clarity-muted); font-size: 12px; line-height: 1.5; }
 .option > svg { flex-shrink: 0; margin-top: 3px; }
 .picker .options .option:global(.is-active),
 .picker .options .option:hover,
-.picker .options .option:focus-visible { background: var(--clarity-soft, #f1f5f1); }
-.picker .options .option:focus-visible { outline: 2px solid var(--clarity-action, #1967d2); outline-offset: -2px; }
-.picker .options .option[aria-selected=true] { background: #e7f0ff; color: var(--clarity-action, #1967d2); }
-.picker .empty { margin: 0; padding: 18px 12px; color: var(--clarity-muted, #6c776f); font-size: 14px; line-height: 1.6; }
+.picker .options .option:focus-visible { background: var(--clarity-soft); }
+.picker .options .option:focus-visible { outline: 2px solid var(--clarity-action); outline-offset: -2px; }
+.picker .options .option[aria-selected=true] { background: var(--clarity-soft); color: var(--clarity-action); }
+.picker .empty { margin: 0; padding: 18px 12px; color: var(--clarity-muted); font-size: 14px; line-height: 1.6; }
 
 @media (max-width: 640px) {
   .picker .search .searchInput { font-size: 16px; }

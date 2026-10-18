@@ -18,9 +18,10 @@ type ChatComposerProps = {
   textareaRef?: RefObject<HTMLTextAreaElement | null>;
   actions?: ReactNode;
   showCount?: boolean;
+  variant?: 'default' | 'conversation';
 };
 
-export function ChatComposer({ value, onChange, onSend, label, placeholder = '', sendLabel = '메시지 보내기', busy = false, disabled = false, maxLength, inputId, textareaRef, actions, showCount = false }: ChatComposerProps) {
+export function ChatComposer({ value, onChange, onSend, label, placeholder = '', sendLabel = '메시지 보내기', busy = false, disabled = false, maxLength, inputId, textareaRef, actions, showCount = false, variant = 'default' }: ChatComposerProps) {
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const input = textareaRef || internalRef;
   const composing = useRef(false);
@@ -48,7 +49,7 @@ export function ChatComposer({ value, onChange, onSend, label, placeholder = '',
     }
   }
 
-  return <div className={styles.composer} data-chat-composer>
+  return <div className={`${styles.composer} ${variant === 'conversation' ? styles.conversation : ''}`} data-chat-composer>
     <form className={styles.shell} aria-label={label} onSubmit={event => { event.preventDefault(); void submit(); }}>
       <textarea
         ref={input}
@@ -69,13 +70,14 @@ export function ChatComposer({ value, onChange, onSend, label, placeholder = '',
         maxLength={maxLength}
         rows={1}
       />
+      {variant === 'conversation' && <div className={styles.inlineActions}>{actions}{showCount && <span className={styles.count}>{value.length.toLocaleString()}자</span>}</div>}
       <button type="submit" className={styles.send} disabled={!value.trim() || unavailable} aria-busy={busy || pending} aria-label={busy || pending ? '전송 중' : sendLabel} title={busy || pending ? '전송 중' : sendLabel}>
         {busy || pending ? <LoaderCircle size={20} className="spin" aria-hidden="true" /> : <ArrowUp size={20} strokeWidth={2.4} aria-hidden="true" />}
       </button>
     </form>
-    <div className={styles.tools}>
+    {variant !== 'conversation' && <div className={styles.tools}>
       {actions && <div className={styles.actions}>{actions}</div>}
       <div className={styles.helper}>{showCount && <span>{value.length.toLocaleString()}자</span>}<span className={styles.keyboard}>Enter로 전송 · Shift+Enter로 줄바꿈</span></div>
-    </div>
+    </div>}
   </div>;
 }

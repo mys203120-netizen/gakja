@@ -54,6 +54,11 @@ test('the preview route resolves an owned university department without acceptin
 test('first registration cannot skip the calendar review using a missing onboarding flag',async()=>{
   reset();await assert.rejects(registerStudentSchool(state.user.id,{...input,onboarding:undefined}),(error:any)=>error.status===400);assert.equal(state.writeCount,0);assert.equal(state.preferences.size,0);
 });
+test('an additional registration cannot bypass known-track validation by omitting onboarding and review',async()=>{
+  reset();state.targets.push({id:'existing',student_id:state.user.id,data:{...target}});
+  await assert.rejects(registerStudentSchool(state.user.id,{...input,onboarding:undefined,track:'임의로 입력한 전형'}),(error:any)=>error.status===409);
+  assert.equal(state.targets.length,1);assert.equal(state.writeCount,0);
+});
 test('changed identity or changed published dates invalidates final confirmation before writes',async()=>{
   reset();const approved=await reviewed();await assert.rejects(registerStudentSchool(state.user.id,{...approved,track:'다른 전형'}),(error:any)=>error.status===409);assert.equal(state.writeCount,0);
   const entry=state.snapshot.catalogue.schools.find((row:any)=>row.schoolReferenceId===school.id)!.entries.find((row:any)=>row.departments.includes(department.name)&&row.trackLabel.includes('면접형'))!;

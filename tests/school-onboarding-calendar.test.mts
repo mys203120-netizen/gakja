@@ -25,6 +25,7 @@ test('unknown tracks may show reference dates but cannot assert a personal match
   const preview=buildSchoolCalendarPreview(snapshot(),{...target,admission_type:'공식 확인 전 입력 전형'});
   assert.equal(preview.status,'school_reference');assert.equal(preview.matched.length,0);assert.ok(preview.references.length);
   assert.ok(preview.references.every(item=>item.applicability==='school_reference'));
+  assert.equal(preview.canReview,false,'free text cannot turn unmatched school reference dates into a registrable target');
 });
 test('an empty track cannot complete the calendar confirmation step',()=>{
   const preview=buildSchoolCalendarPreview(snapshot(),{...target,admission_type:'미정'});
@@ -44,6 +45,7 @@ test('a no-interview decision is separate from a pending date and never borrows 
     school.decisions=[{trackLabel:'Fixture track',departments:['Fixture major'],status,reason:'Fixture evidence only.',sourceUrl:school.sources[0].url}];
     const preview=buildSchoolCalendarPreview(data,{university:school.university,school_reference_id:school.schoolReferenceId,campus:'본교',department:'Fixture major',admission_type:'Fixture track',admission_year:2027});
     assert.equal(preview.status,status);assert.equal(preview.matched.length+preview.references.length,0);assert.ok(preview.decisionSourceUrl);
+    if(status==='no_interview'||status==='unverified'){assert.equal(preview.canReview,false);assert.ok(!preview.tracks.includes('Fixture track'));}
   }
 });
 test('a department ID is resolved only inside its actual selected university',()=>{

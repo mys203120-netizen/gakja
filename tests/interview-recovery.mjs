@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import {tsImport} from 'tsx/esm/api';
+
+const timer=await tsImport('../apps/web/src/lib/interview-timer.ts',import.meta.url);
 
 // The real event handlers run with deterministic browser and API adapters.
 // No camera, DB or paid AI request is used by this regression suite.
@@ -26,10 +29,13 @@ vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleK
   if(name==='./interviewer-character')return{Interviewer:'Interviewer'};
   if(name==='./playful-flow')return{animateStudyReceipt:()=>{}};
   if(name==='./audio-level-dot')return{AudioLevelDot:'AudioLevelDot'};
+  if(name==='./live-interview-session')return{LiveInterviewSession:'LiveInterviewSession'};
+  if(name==='@/lib/interview-timer')return timer;
+  if(name==='@/lib/recording-upload-client')return{uploadRecording:()=>{throw new Error('No upload in Chat recovery regression');}};
   if(name==='@/lib/client/speech-recorder')return{startSpeechCapture:()=>{throw new Error('No hardware access');}};
   throw new Error(name);
 }});
-function render(){state.hook=0;state.refHook=0;state.effects=[];return module.exports.InterviewSession({id:'session',kind:'chat'});}
+function render(){state.hook=0;state.refHook=0;state.effects=[];return module.exports.ChatInterviewSession({id:'session',kind:'chat'});}
 function reset(){state.values=[info,'내 역할은 채취 조건 설계였습니다.'];state.refs=[];state.effects=[];state.calls=[];state.resources=[];state.toasts=[];state.storage.clear();state.listener=null;state.adapter=null;state.apiAdapter=null;}
 function nodes(tree){if(Array.isArray(tree))return tree.flatMap(nodes);if(!tree||typeof tree!=='object')return[];return[tree,...nodes(tree.props?.children),...nodes(tree.props?.actions)];}
 let checks=0;function check(value,message){assert.ok(value,message);checks++;}

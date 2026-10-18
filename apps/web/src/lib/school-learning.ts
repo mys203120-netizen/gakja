@@ -87,9 +87,11 @@ async function prepareSchoolRegistration(input:z.infer<typeof schoolRegistration
   const support=interviewSupportForTarget(data);
   if(!support.supported)throw new ApiError(400,support.reason);
   if((input.onboarding||requireReview)&&!input.calendarReview)throw new ApiError(400,'면접 일정 안내를 확인한 뒤 등록해 주세요.');
-  const calendar=input.calendarReview?await previewSchoolAdmissionCalendar(data):null;
-  if(calendar&&(!calendar.canReview||calendar.fingerprint!==input.calendarReview!.fingerprint))throw new ApiError(409,'지원 정보나 면접 일정이 달라졌어요. 일정을 다시 확인해 주세요.');
-  const calendarRegistration=calendar?schoolCalendarRegistration(calendar,new Date().toISOString()):null;
+  // Validate every registration, including clients that omit onboarding/review flags.
+  const calendar=await previewSchoolAdmissionCalendar(data);
+  if(!calendar.canReview)throw new ApiError(409,'이 학교·학과에서 확인된 학생부형 전형을 선택해 주세요. 기존 지원 정보와 학습 기록은 그대로 유지돼요.');
+  if(input.calendarReview&&calendar.fingerprint!==input.calendarReview.fingerprint)throw new ApiError(409,'지원 정보나 면접 일정이 달라졌어요. 일정을 다시 확인해 주세요.');
+  const calendarRegistration=input.calendarReview?schoolCalendarRegistration(calendar,new Date().toISOString()):null;
   if(calendarRegistration)data.admission_calendar_registration=calendarRegistration;
   const official=officialProfileForTarget(data);
   if(official){data.information_status='official_confirmed';data.school_interview_date=official.data.interview_date.slice(0,10);data.interview_stage=official.data.interview_stage;}

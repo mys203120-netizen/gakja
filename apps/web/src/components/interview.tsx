@@ -16,9 +16,18 @@ import { startSpeechCapture, type SpeechCapture } from '@/lib/client/speech-reco
 import type { SpeechTelemetry } from '@/lib/speech-telemetry';
 import styles from './interview-session.module.css';
 import { stoppedInterviewTimer } from '@/lib/interview-timer';
+import { LiveInterviewSession } from './live-interview-session';
 function Switch({ label, value, disabled, onChange }: { label: string; value: boolean; disabled?: boolean; onChange: () => void }) { return <label className="toggle-row"><span>{label}</span><button type="button" role="switch" aria-label={label} aria-checked={value} disabled={disabled} className={`toggle ${value ? 'on' : ''}`} onClick={onChange}><i /></button></label>; }
 export { InterviewSetup } from './interview-setup';
-export function InterviewSession({ id, kind: initialKind }: { id: string; kind: 'chat' | 'video' }) {
+export function InterviewSession({ id }: { id: string; kind: 'chat' | 'video' }) {
+  const [info,setInfo]=useState<Item|null>(null),[error,setError]=useState('');
+  useEffect(()=>{let mounted=true;setInfo(null);setError('');api(`/api/interviews?id=${id}`).then(value=>{if(mounted)setInfo(value);}).catch(cause=>{if(mounted)setError(cause.message);});return()=>{mounted=false;};},[id]);
+  if(error)return <Alert>{error}</Alert>;
+  if(!info)return <p role="status">면접을 불러오고 있어요.</p>;
+  // Stored session kind is authoritative, including old links with a stale kind query.
+  return info.session.kind==='video'?<LiveInterviewSession key={id} id={id} initialInfo={info}/>:<ChatInterviewSession key={id} id={id} kind="chat"/>;
+}
+export function ChatInterviewSession({ id, kind: initialKind }: { id: string; kind: 'chat' | 'video' }) {
   const { data: appData, refresh, toast, openResource } = useApp(); const router = useRouter(); const [info, setInfo] = useState<Item | null>(null); const [answer, setAnswer] = useState(''); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [feedback, setFeedback] = useState<Item | null>(null); const [permission, setPermission] = useState(false); const [recording, setRecording] = useState(false); const [blob, setBlob] = useState<Blob | null>(null); const [audioBlob, setAudioBlob] = useState<Blob | null>(null); const [preview, setPreview] = useState(''); const [consent, setConsent] = useState(false); const [seconds, setSeconds] = useState(0); const [uploaded, setUploaded] = useState(false); const [speakingId, setSpeakingId] = useState(''); const [speechPending, setSpeechPending] = useState(false);
   const questionAudio = useRef<HTMLAudioElement | null>(null); const audioURL = useRef(''); const playbackGeneration = useRef(0); const speechRequest = useRef<AbortController | null>(null); const stream = useRef<MediaStream | null>(null); const recorder = useRef<MediaRecorder | null>(null); const audioRecorder = useRef<MediaRecorder | null>(null); const video = useRef<HTMLVideoElement>(null); const captureStarted = useRef(0); const captureEnded = useRef(0);
   const speechCapture = useRef<SpeechCapture | null>(null); const speechTelemetry = useRef<SpeechTelemetry | null>(null);

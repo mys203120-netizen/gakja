@@ -37,7 +37,8 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
     api(previewHref).then(r => { if (active) setPreview(r); }).catch(e => { if (active) setPreviewError((e as Error).message); }).finally(() => { if (active) setPreviewLoading(false); });
     return () => { active = false; };
   }, [previewHref]);
-  const profile = (data.schoolProfiles || []).filter((p: Item) => p.target_id === targetId).sort((a: Item, b: Item) => b.revision - a.revision)[0] || catalog?.targets?.find((t: Item) => t.id === targetId)?.profile;
+  const personalPractice=preview?.practiceScope==='personal_record'&&preview?.practiceAllowed!==false;
+  const profile = personalPractice?null:(data.schoolProfiles || []).filter((p: Item) => p.target_id === targetId).sort((a: Item, b: Item) => b.revision - a.revision)[0] || catalog?.targets?.find((t: Item) => t.id === targetId)?.profile;
   const school = profile?.data || profile || {};
   const provenance=profile?.provenance||profile?.source;
   const official = profile?.status === 'official_confirmed' && !profile?.stale && !profile?.is_stale && !profile?.needs_revalidation;
@@ -46,11 +47,11 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
   const panelistCount = range ? Math.max(range.min, Math.min(range.max, params.has('panelists') ? state.panelistCount : range.min)) : state.panelistCount;
   const commonOnly = preview?.sourceKind === 'common' || !data.package;
   const hasSchoolTalent=Boolean(preview?.questions?.some((item:Item)=>item.talent_profile));
-  const unavailableMode=commonOnly && (state.mode==='document' || state.mode==='university' && !hasSchoolTalent);
+  const unavailableMode=personalPractice&&state.mode==='university'||commonOnly && (state.mode==='document' || state.mode==='university' && !hasSchoolTalent);
   const effectiveMode = unavailableMode ? 'basic' : state.mode;
   const question = preview?.question || (!params.get('sourceVersion') || String(params.get('sourceVersion')) === String(data.package?.active_version) ? (data.learning?.questions || []).find((q: Item) => q.id === params.get('questionId')) : null);
   const activity = (preview?.activities || data.learning?.activities || []).find((a: Item) => a.id === params.get('activityId') || question?.activity_ids?.includes(a.id));
-  const ready = interviewSupport?.supported!==false&&!previewLoading && !previewError && Boolean(preview?.questions?.length || preview?.question || catalog?.commonAvailable && !selected);
+  const ready = (preview?.practiceAllowed??interviewSupport?.supported!==false)&&!previewLoading && !previewError && Boolean(preview?.questions?.length || preview?.question || catalog?.commonAvailable && !selected);
   function update(next: Partial<InterviewSetupState> & { targetId?: string }) { router.replace(interviewSetupHref(kind, params, next), { scroll: false }); }
   function selectQuestion(id: string) {
     const next = new URLSearchParams(params.toString()); next.set('questionId', id); next.set('sourceType', 'common'); next.delete('activityId'); next.delete('briefingId'); next.delete('briefingQuestionIndex'); next.delete('sourceVersion'); next.delete('assisted');
@@ -71,7 +72,8 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
     <Breadcrumb items={[{ label: '모의면접', href: '/interview' }, { label: '새 면접' }]} />
     <PageTitle title={params.get('questionId') || params.get('briefingId') ? '이 질문 말하기' : params.get('activityId') ? '이 활동 말하기' : '모의면접 준비'} />
     {error && <Alert>{error}</Alert>}
-    {interviewSupport&&!interviewSupport.supported&&<Alert>{interviewSupport.reason} <Link href="/schools">지원 정보 확인</Link></Alert>}
+    {personalPractice&&<div className="interview-common-note"><strong>{preview?.practiceLabel}</strong><p>{preview?.practiceNotice}</p></div>}
+    {!previewLoading&&!previewError&&interviewSupport&&!interviewSupport.supported&&!personalPractice&&<Alert>{interviewSupport.reason} <Link href="/schools">지원 정보 확인</Link></Alert>}
     <div className="interview-setup-layout">
       <section className="interview-setup-main">
         <div className="interview-format-tabs" aria-label="답변 방식">
@@ -89,15 +91,15 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
         {params.get('experienceCardId') && data.interviews?.some(s=>s.state==='active') && <p className="interview-common-note">진행 중인 면접이 있어요. <Link href="/interview">기존 면접 이어하기</Link> 또는 아래에서 새 연습을 시작하세요.</p>}
         <div className="interview-quick-start">
           {!selected && <h2>{commonOnly ? '내 말로 시작해요.' : '한 번 더, 내 말로.'}</h2>}
-          <p>{state.count}문항 · {kind === 'video' ? '녹음 후 전사를 확인해 제출' : '글로 답변'} · {state.timing === 'turn' ? '질문마다 피드백' : '마친 뒤 피드백'}</p>
-          <ActionButton className="button primary large" disabled={busy || !ready} pending={busy || previewLoading} pendingLabel={busy ? '면접 준비 중' : '질문 불러오는 중'} onClick={start}><Play size={17} fill="currentColor" aria-hidden="true" />{selected ? '이 질문 연습 시작' : '모의면접 시작'}</ActionButton>
+          <p>{state.count}문항 · {kind === 'video' ? '질문 듣기 · 음성 답변 자동 저장' : '글로 답변'} · {state.timing === 'turn' ? '질문마다 피드백' : '마친 뒤 피드백'}</p>
+          <ActionButton className="button primary large" disabled={busy || !ready} pending={busy || previewLoading} pendingLabel={busy ? '면접 준비 중' : '질문 불러오는 중'} onClick={start}><Play size={17} fill="currentColor" aria-hidden="true" />{kind === 'video' ? 'Live 면접 준비' : selected ? '이 질문 연습 시작' : '모의면접 시작'}</ActionButton>
           {!selected && previewError && <Alert>{previewError}</Alert>}
         </div>
         {commonOnly && !data.package && <div className="interview-common-note"><p>내 생기부 질문은 아직 준비 중이에요. {ready?'지금은 공통 질문으로 면접을 연습해 보세요.':data.targets.length?'연습할 수 있는 공통 질문을 확인해 주세요.':'먼저 지원 학교를 등록해 주세요.'}</p>{!data.targets.length&&<Link className="text-link" href="/schools/new">학교 등록<ArrowRight size={14} /></Link>}</div>}
         {!selected && commonOnly && catalog?.commonQuestions?.length > 0 && <section className="interview-common-questions" aria-label="공통 질문 골라 연습"><h3>한 질문만 연습하기</h3>{(catalog?.commonQuestions || []).slice(0, 3).map((q: Item) => <button type="button" key={q.id} onClick={() => selectQuestion(q.id)}>{q.prompt}<ArrowRight size={16} /></button>)}</section>}
         <div className="interview-school-note">
-          <h3>{target ? targetName(target) : '학교 면접 안내'}</h3>
-          <p>{!profile ? '학교 정보 확인 전 · 일반 면접 연습' : !supported ? '이 학교의 면접 형식은 전용 연습 준비 중이에요.' : official ? `${school.admission_year || ''} ${school.admission_type || ''} ${school.interview_stage || ''}` : '공식 운영 정보 확인 전 · 일반 면접 연습'}</p>
+          <h3>{personalPractice?'일반 경험 면접':target ? targetName(target) : '학교 면접 안내'}</h3>
+          <p>{personalPractice?'내 자료의 질문과 이전 답변을 연결해 연습해요. 지원 전형의 실제 면접과는 구분해 기록해요.':!profile ? '학교 정보 확인 전 · 일반 면접 연습' : !supported ? '이 학교의 면접 형식은 전용 연습 준비 중이에요.' : official ? `${school.admission_year || ''} ${school.admission_type || ''} ${school.interview_stage || ''}` : '공식 운영 정보 확인 전 · 일반 면접 연습'}</p>
           <Link className="text-link" href={targetId ? `/schools/${encodeURIComponent(targetId)}` : '/schools'}>면접 개요 보기<ArrowRight size={14} /></Link>
           {provenance?.source_url && <a href={provenance.source_url} target="_blank" rel="noreferrer">학교 원문 확인 <ArrowRight size={13} /></a>}
         </div>
@@ -108,7 +110,7 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
         <button type="button" className="interview-advanced-toggle" aria-expanded={state.advanced} aria-controls="interview-advanced" onClick={() => update({ advanced: !state.advanced })}>상세 설정{state.advanced ? <Minus size={17} aria-hidden="true" /> : <Plus size={17} aria-hidden="true" />}</button>
         {state.advanced && <div id="interview-advanced" className="interview-advanced">
           <h2>연습 유형</h2>
-          <div className="interview-preset-list" role="radiogroup" aria-label="연습 유형">{modes.map(m => <label key={m.id} className={effectiveMode === m.id ? 'selected' : ''}><strong>{m.name}</strong><span>{m.copy}</span><input type="radio" name="interview-mode" value={m.id} checked={effectiveMode === m.id} disabled={commonOnly && (m.id==='document' || m.id==='university' && !hasSchoolTalent)} onChange={() => update({ mode: m.id })} /></label>)}</div>
+          <div className="interview-preset-list" role="radiogroup" aria-label="연습 유형">{modes.map(m => <label key={m.id} className={effectiveMode === m.id ? 'selected' : ''}><strong>{m.name}</strong><span>{m.copy}</span><input type="radio" name="interview-mode" value={m.id} checked={effectiveMode === m.id} disabled={personalPractice&&m.id==='university'||commonOnly && (m.id==='document' || m.id==='university' && !hasSchoolTalent)} onChange={() => update({ mode: m.id })} /></label>)}</div>
           <label>본 질문<select value={state.count} onChange={e => update({ count: Number(e.target.value) })}>{Array.from({ length: 8 }, (_, i) => i + 1).map(n => <option value={n} key={n}>{n}개</option>)}</select></label>
           <label>면접관<select value={panelistCount} onChange={e => update({ panelistCount: Number(e.target.value) })}>{Array.from({ length: range ? range.max - range.min + 1 : 5 }, (_, i) => range ? range.min + i : i + 1).map(n => <option value={n} key={n}>{n}명{!range ? ' · 연습 설정' : ''}</option>)}</select></label>
           <label>질문 깊이<select value={state.difficulty} onChange={e => update({ difficulty: e.target.value as 'standard' | 'deep' })}><option value="standard">기본</option><option value="deep">심화</option></select></label>

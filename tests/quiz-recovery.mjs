@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import {buildSpeechTelemetry} from '../apps/web/src/lib/speech-telemetry.ts';
+import {validateSpeechTelemetry} from '../apps/web/src/lib/speech-analysis.ts';
 
 const load=(path,require=()=>{throw new Error('Unexpected import');})=>{const module={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL(path,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,require,Set});return module.exports;};
 const view=load('../apps/web/src/lib/quiz-session-view.ts');
@@ -10,11 +12,20 @@ const target={id:'target',university:'서울시립대학교',campus:'본교',dep
 const savedTarget={...target,interview_stage:undefined};
 const item={id:'m1',question_id:'q1',prompt:'본인 역할은 무엇인가요?',activity_ids:['a1'],source_kind:'personal',target_id:'target',target_snapshot:savedTarget};
 const info={serverTime:new Date().toISOString(),session:{id:'session',student_id:'student',state:'active',mode:'answer',current_index:0,content_version:6,items:[item],metadata:{targetId:'target',targetSnapshot:savedTarget,drafts:{0:{response:'서버에 저장한 초안'}}}},responses:[],recordings:[],learning:{questions:[{id:'q1',prompt:item.prompt}],support_targets:[savedTarget],memory_items:[]}};
-const state={values:[],refs:[],hook:0,refHook:0,effects:[],calls:[],toasts:[],listener:null,adapter:null,apiAdapter:null,storage:new Map(),local:new Map()};
+const state={values:[],refs:[],hook:0,refHook:0,effects:[],calls:[],toasts:[],listener:null,adapter:null,apiAdapter:null,storage:new Map(),local:new Map(),now:0,capture:null,uploads:[],finishCount:0,tracksStopped:0,captureAvailable:true,timers:new Map(),confirm:false};
+let timerId=0;
+class FakeRecorder {
+  static isTypeSupported(){return true;}
+  state='inactive';mimeType='audio/webm';
+  constructor(){state.capture=this;}
+  start(){this.state='recording';this.onstart?.();}
+  stop(){this.state='inactive';}
+  async deliverStop(){this.ondataavailable?.({data:new Blob(['fake-recorded-audio'],{type:this.mimeType})});await this.onstop?.();}
+}
 let uuid=0;
 const module={exports:{}};
 const actionButton=({pending=false,pendingLabel,disabled,children,type='button',...props})=>({type:'button',props:{...props,type,disabled:disabled||pending,'aria-busy':pending||undefined,children:pending?[{type:'LoaderCircle',props:{size:16,'aria-hidden':true}},pendingLabel??children]:children}});
-vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/quiz-v3.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,console,Date,Set,JSON,Blob,URL,URLSearchParams,performance,crypto:{randomUUID:()=>`request-${++uuid}`},setTimeout,clearTimeout,setInterval,clearInterval,HTMLElement:class {},document:{activeElement:null,addEventListener(){},removeEventListener(){}},navigator:{},localStorage:{getItem:key=>state.local.get(key)??null,setItem:(key,value)=>state.local.set(key,value),removeItem:key=>state.local.delete(key)},sessionStorage:{getItem:key=>state.storage.get(key)??null,setItem:(key,value)=>state.storage.set(key,value),removeItem:key=>state.storage.delete(key)},window:{addEventListener:(name,listener)=>{if(name==='gakja:open-on')state.listener=listener;},removeEventListener(){}},require(name){
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/quiz-v3.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,console,Date,Set,JSON,Blob,FormData,URL,URLSearchParams,performance:{now:()=>state.now},crypto:{randomUUID:()=>`request-${++uuid}`},setTimeout:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearTimeout:id=>state.timers.delete(id),setInterval:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearInterval:id=>state.timers.delete(id),HTMLElement:class {},document:{activeElement:null,addEventListener(){},removeEventListener(){}},navigator:{mediaDevices:{getUserMedia:async()=>({getTracks:()=>[{stop(){state.tracksStopped++;}}]})}},MediaRecorder:FakeRecorder,localStorage:{getItem:key=>state.local.get(key)??null,setItem:(key,value)=>state.local.set(key,value),removeItem:key=>state.local.delete(key)},sessionStorage:{getItem:key=>state.storage.get(key)??null,setItem:(key,value)=>state.storage.set(key,value),removeItem:key=>state.storage.delete(key)},window:{MediaRecorder:FakeRecorder,confirm:()=>state.confirm,addEventListener:(name,listener)=>{if(name==='gakja:open-on')state.listener=listener;},removeEventListener(){}},require(name){
   if(name==='react')return{useState(initial){const index=state.hook++;if(!(index in state.values))state.values[index]=typeof initial==='function'?initial():initial;return[state.values[index],value=>{state.values[index]=typeof value==='function'?value(state.values[index]):value;}];},useRef(initial){const index=state.refHook++;if(!(index in state.refs))state.refs[index]={current:initial};return state.refs[index];},useEffect(callback){state.effects.push(callback);},useCallback:callback=>callback};
   if(name==='react/jsx-runtime')return{jsx:(type,props)=>type===actionButton?actionButton(props):({type,props}),jsxs:(type,props)=>type===actionButton?actionButton(props):({type,props}),Fragment:'Fragment'};
   if(name==='next/link')return{__esModule:true,default:'Link'};
@@ -25,14 +36,15 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   if(name==='./learning-help')return{LearningHelp:'LearningHelp'};
   if(name==='./audio-level-dot')return{AudioLevelDot:'AudioLevelDot'};
   if(name==='./playful-flow')return{animateStudyReceipt(){}};
-  if(name==='@/lib/client/speech-recorder')return{startSpeechCapture(){throw new Error('No hardware access');}};
+  if(name==='@/lib/client/speech-recorder')return{startSpeechCapture(){if(!state.captureAvailable)return null;const started=state.now;return{elapsedMs:()=>state.now-started,dispose(){},pause(){},resume(){},finish(){state.finishCount++;const elapsed=state.now-started;return buildSpeechTelemetry([{atMs:0,rms:0},{atMs:elapsed-.1,rms:.04}],elapsed);}};}};
+  if(name==='@/lib/recording-upload-client')return{uploadRecording:async(url,form)=>{const durationMs=Number(form.get('durationMs')),telemetry=form.get('speechTelemetry')?JSON.parse(form.get('speechTelemetry')):null;assert.ok(!telemetry||validateSpeechTelemetry(telemetry));assert.ok(!telemetry||Math.abs(telemetry.durationMs-durationMs)<=500);state.uploads.push({durationMs,telemetry,blob:form.get('recording')});return{recording:{id:'new-recording',session_id:'session',item_index:0,url:'/owned-recording'}};}};
   if(name==='@gakja/content-contracts/workflows')return contracts;
   if(name==='@/lib/quiz-session-view')return view;
   if(name==='./quiz-session-ui.module.css')return{__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
   throw new Error(name);
 }});
 const render=()=>{state.hook=0;state.refHook=0;state.effects=[];return module.exports.QuizSession({id:'session'});};
-const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();};
+const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.timers.clear();state.confirm=false;};
 const nodes=tree=>Array.isArray(tree)?tree.flatMap(nodes):tree&&typeof tree==='object'?[tree,...nodes(tree.props?.children),...nodes(tree.props?.aside)]:[];
 const text=value=>Array.isArray(value)?value.map(text).join(''):value&&typeof value==='object'?text(value.props?.children):typeof value==='string'?value:'';
 const saveButton=tree=>nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='답변 저장');
@@ -58,4 +70,21 @@ const oralInfo={...info,session:{...info.session,mode:'oral',metadata:{...info.s
 reset(oralInfo);tree=render();state.effects.find(effect=>effect.toString().includes('metadata?.drafts'))();check(state.values[4]==='저는 관찰했습니다.','restored oral draft uses finished display rather than raw STT');
 reset({...oralInfo,recordings:[{...oralRecording,display_transcript:null,transcript_cleanup:{status:'failed'}}]});tree=render();state.effects.find(effect=>effect.toString().includes('metadata?.drafts'))();check(state.values[4]==='','failed formatting does not restore raw STT into the main answer');
 reset(oralInfo);state.values[9]={...oralRecording,display_transcript:null,transcript_cleanup:{status:'failed'}};tree=render();state.adapter=async(url,payload)=>({transcript:'저는 관찰했습니다.',rawTranscript:oralRecording.raw_transcript,cleanupStatus:'completed',transcriptionStatus:'completed'});const retry=nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='문장 정리 다시 시도');await retry.props.onClick();check(state.calls[0].url==='/api/reports'&&state.calls[0].payload.recordingId===oralRecording.id,'oral retry formats the same stored owned recording');check(state.values[4]==='내 역할은 채취 조건 설계였습니다.','formatted oral retry preserves a manually typed draft');check(state.values[9].display_transcript==='저는 관찰했습니다.'&&state.values[9].raw_transcript===oralRecording.raw_transcript,'finished oral display and raw source remain separately available');
+for(const evidence of [true,false]){
+  reset();state.values[10]=true;state.captureAvailable=evidence;state.adapter=async()=>({rawTranscript:'합성 전사',transcript:'합성 전사.',cleanupStatus:'completed',transcriptionStatus:'completed'});
+  tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
+  state.now=999.7;tree=render();nodes(tree).find(node=>node.type==='button'&&text(node.props.children).startsWith('녹음 완료')).props.onClick();
+  state.now=3500;await state.capture.deliverStop();
+  check(state.uploads[0].durationMs===1000,'duration freezes at stop request before delayed final audio delivery');
+  check(state.finishCount===(evidence?1:0),'microphone telemetry finishes once, including onstop fallback');
+  check(!evidence||state.uploads[0].telemetry.speechSegments.length===0,'fractional final frame does not invalidate upload timing');
+  check(state.calls.some(call=>call.payload?.action==='transcribe'&&call.payload.recordingId==='new-recording'),'successful owned upload reaches transcription');
+  check(state.values[4]==='내 역할은 채취 조건 설계였습니다.','automatic transcription preserves the typed draft');
+  check(state.values[17]===null&&state.tracksStopped===1,'successful recording clears pending audio and releases the device');
+}
+reset();state.values[10]=true;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();tree=render();const stopTimers=state.effects.find(effect=>effect.toString().includes('179_750'))();
+state.now=181000;state.timers.values().next().value.callback();state.now=184000;await state.capture.deliverStop();stopTimers();tree=render();
+check(state.uploads.length===0&&state.values[17].durationMs===181000,'background-delayed stop preserves the actual over-limit duration without uploading false metadata');
+check(text(tree).includes('원본 내려받기')&&!text(tree).includes('녹음 다시 저장'),'over-limit recovery exposes the original file and avoids an impossible upload retry');
+const discard=()=>nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='저장 안 된 녹음 지우기');discard().props.onClick();check(!!state.values[17],'declining discard preserves the unsaved file');state.confirm=true;discard().props.onClick();check(state.values[17]===null,'explicit discard unblocks a fresh recording');
 console.log(`Quiz recovery: ${checks} handler/render checks passed; no DB, provider or device calls.`);

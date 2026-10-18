@@ -17,6 +17,6 @@ export function PracticeHome(){
   <Link href={'/interview'+suffix}><Mic size={25} strokeWidth={1.5}/><div><h2>모의면접</h2><p>질문을 듣고 내 경험으로 답하기</p><span>Chat · Live</span></div><ArrowUpRight size={20}/></Link>
  </div>
  <FocusTraining key={targetId} targetId={targetId}/><div className={styles.practiceLinks}><Link href="/quiz/assignments"><ListChecks size={17}/>받은 과제<ArrowUpRight size={14}/></Link><Link href="/quiz/memory">복습할 질문<ArrowUpRight size={14}/></Link><Link href="/on"><MessagesSquare size={17}/>AI 비서에게 물어보기<ArrowUpRight size={14}/></Link></div>
- <div className={styles.openPaths}><Link href="/knowledge">답의 재료 찾아보기<ArrowUpRight size={15}/></Link><Link href="/records/comparisons">이전 답변과 비교하기<ArrowUpRight size={15}/></Link></div>
+ <div className={styles.openPaths}><Link href="/armory">무기고에서 내 경험 정리하기<ArrowUpRight size={15}/></Link><Link href="/knowledge">답에 더할 자료 찾기<ArrowUpRight size={15}/></Link><Link href="/records/comparisons">이전 답변과 비교하기<ArrowUpRight size={15}/></Link></div>
  </div>;
 }

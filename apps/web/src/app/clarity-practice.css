@@ -57,7 +57,7 @@
 .app-shell .quiz-v3 .quiz-today h2 { font-weight:500; line-height:1.5; }
 .app-shell .quiz-v3 .quiz-progress i { background:var(--clarity-line); }
 .app-shell .quiz-v3 .quiz-progress i.answered { background:var(--clarity-green); }
-.app-shell .quiz-v3 .quiz-progress i.current { background:#00ee77; }
+.app-shell .quiz-v3 .quiz-progress i.current { background:var(--clarity-action); }
 .app-shell .quiz-v3 .quiz-prompt { color:var(--clarity-ink); font-weight:500; letter-spacing:-.025em; }
 .app-shell .quiz-v3.quiz-session .quiz-options button {
   background:var(--clarity-surface);
@@ -71,7 +71,7 @@
 .app-shell .quiz-v3.quiz-session .quiz-options button>span { color:var(--clarity-muted); }
 .app-shell .quiz-v3.quiz-session .quiz-options button:not(:disabled):hover {
   background:var(--clarity-soft);
-  border-color:#9bbca7;
+  border-color:var(--clarity-muted);
 }
 .app-shell .quiz-v3.quiz-session .quiz-options button.selected {
   background:var(--clarity-mint);
@@ -82,14 +82,16 @@
 .app-shell .quiz-v3.quiz-session .quiz-options button.selected>span { color:var(--clarity-green); }
 .app-shell .quiz-v3.quiz-session .quiz-options button[data-outcome="correct"] {
   color:var(--clarity-green);
-  border-color:#89b89a;
-  background:#e6f6eb;
+  border-color:var(--clarity-green);
+  background:var(--clarity-mint);
 }
 .app-shell .quiz-v3.quiz-session .quiz-options button[data-outcome="incorrect"] {
   color:var(--clarity-danger);
-  border-color:#d7ada2;
-  background:#fcf0eb;
+  border-color:var(--clarity-danger);
+  background:color-mix(in srgb, var(--clarity-danger) 12%, var(--clarity-bg));
 }
+.app-shell .quiz-v3.quiz-session .quiz-options button[data-outcome="correct"]>span { color:var(--clarity-green); }
+.app-shell .quiz-v3.quiz-session .quiz-options button[data-outcome="incorrect"]>span { color:var(--clarity-danger); }
 .app-shell .quiz-v3 .quiz-clock { color:var(--clarity-ink); }
 .app-shell .quiz-v3 .quiz-clock circle { stroke:var(--clarity-line); }
 .app-shell .quiz-v3 .quiz-clock .quiz-clock-line { stroke:currentColor; }
@@ -195,4 +197,10 @@
   .app-shell .interview-v2 .interview-common-questions button { transition:none; }
   .app-shell .quiz-v3.quiz-session .quiz-options button.selected,
   .app-shell .quiz-v3 .quiz-hint .quiz-hint-first { animation:none; }
+}
+
+@media (min-width: 768px) {
+  .app-shell .quiz-v3 .quiz-mode-row h2 { font-size: 18px; }
+  .app-shell .quiz-v3 :is(.quiz-paths a, .quiz-mode-row p, .quiz-hint p, .quiz-answer-workspace textarea) { font-size: 14px; }
+  .app-shell .interview-v2 :is(.interview-message p, .interview-common-note p, .interview-common-questions button) { font-size: 14px; }
 }

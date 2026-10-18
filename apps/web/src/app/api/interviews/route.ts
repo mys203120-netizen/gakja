@@ -11,14 +11,14 @@ import { ownedInterviewHelpScope, recordInterviewHelp } from '@/lib/interview-as
 import { getSchoolProfile } from '@/lib/learning-workflows';
 import { referenceSchoolProfile } from '@/lib/school-learning';
 import { neutralReaction, type InterviewerReaction } from '@/lib/interviewer-reaction';
-import {interviewSupportForTarget,isStudentRecordQuestion} from '@/lib/school-interview-scope';
+import {interviewPracticeForContext,isStudentRecordQuestion} from '@/lib/school-interview-scope';
 import { aiEnabled, assertPublishedAccess, coach, entityText, FeatureError, featureError, getLearningContext, interviewQuestions, normalizeMode, planRootQuestions, PROMPT_VERSION, requireStudent, selfCheckReport, type LearningContext } from '@/lib/ai';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 const inputSchema = z.object({
-  action: z.enum(['start', 'answer', 'finish', 'cancel', 'transcript', 'use_transcript', 'pause', 'resume', 'draft', 'settings', 'help', 'heartbeat', 'suspend']), sessionId: z.string().uuid().optional(),
+  action: z.enum(['start', 'answer', 'answer_recording', 'finish', 'cancel', 'transcript', 'use_transcript', 'pause', 'resume', 'draft', 'settings', 'help', 'heartbeat', 'suspend']), sessionId: z.string().uuid().optional(),
   kind: z.enum(['chat', 'video']).default('chat'), mode: z.string().max(40).default('basic'), targetId: z.string().max(160).nullish(), questionId: z.string().max(160).nullish(),
   briefingId: z.string().uuid().nullish(), briefingQuestionIndex: z.number().int().min(0).max(10).optional(),
   experienceCardId:z.string().uuid().optional(), experienceRevision:z.coerce.number().int().positive().optional(),
@@ -30,6 +30,7 @@ const inputSchema = z.object({
   feedbackTiming: z.enum(['turn', 'end', 'each']).default('end'), answer: z.string().trim().max(12000).optional(),
   transcript: z.string().trim().max(12000).optional(), turnId: z.string().uuid().optional(), mediaId:z.string().uuid().optional(),requestId: z.string().min(8).max(100).optional(),
   questionCount: z.number().int().min(1).max(8).optional(),
+  generation:z.number().int().nonnegative().optional(),
 });
 function json(value: unknown, status = 200) { return Response.json(value, { status, headers: { 'Cache-Control': 'private, no-store' } }); }
 function turnView(turn: Record<string, any>) { return { ...turn, ...turn.data, question_id: turn.question_id }; }
@@ -40,7 +41,7 @@ function sessionView(session: Record<string, any>) {
   // identity, selection history, and AI processing context stay on the server.
   const resources=context ? {sourceKind:context.sourceKind||'personal',contentVersion:context.contentVersion,targetSnapshotStale:Boolean(context.targetSnapshotStale),targetId:context.targetId,activityId:context.activityId,questionId:context.questionId,briefingId:context.briefingId||null,
     questions:context.questions||[],activities:context.activities||[],sources:context.sources||[],answerScripts:context.answerScripts||[],briefing:context.briefing||null} : null;
-  return { ...session, supportTarget: context?.target || null, sourceKind:context?.sourceKind || 'personal', practiceLabel:context?.sourceKind === 'common' ? '일반 연습' : data.schoolPracticeOnly ? '연습 설정' : null, data:{...data,context:resources} };
+  return { ...session, supportTarget: context?.target || null, sourceKind:context?.sourceKind || 'personal', practiceLabel:data.practiceScope==='personal_record'?'일반 경험 면접':context?.sourceKind === 'common' ? '일반 연습' : data.schoolPracticeOnly ? '연습 설정' : null, data:{...data,context:resources} };
 }
 function reportView(report: Record<string, any>) { return report ? { ...report, ...report.data } : null; }
 const stoppedTimer = stoppedInterviewTimer;
@@ -80,6 +81,7 @@ export async function GET(request: Request) {
     if (url.searchParams.get('preview') === '1') {
       const sourceType = url.searchParams.get('sourceType') ? z.enum(['personal','common']).parse(url.searchParams.get('sourceType')) : undefined;
       const context = await getLearningContext(user.id,{targetId:url.searchParams.get('targetId'),activityId:url.searchParams.get('activityId'),questionId:url.searchParams.get('questionId'),briefingId:url.searchParams.get('briefingId'),sourceVersion:url.searchParams.get('sourceVersion'),sourceType,allowCommon:true});
+      const practice=interviewPracticeForContext({...context,sourceKind:sourceType==='common'?'common':context.sourceKind});
       let question = context.questions.find(q => q.id === context.questionId) || null;
       if(context.briefing) {
         const raw = context.briefing.questions || context.briefing.discussion_questions || context.briefing.interview_questions || [context.briefing.discussion_question];
@@ -89,7 +91,7 @@ export async function GET(request: Request) {
         question = {id:`briefing_${context.briefing.id}_${index}`,prompt:prompts[index],briefing_id:context.briefing.id};
       }
       const experienceCard = await ownedExperience(user.id,url.searchParams.get('experienceCardId'),url.searchParams.get('experienceRevision'));
-      return json({experienceCard,question,questions:context.questions,activities:context.activities,sources:context.sources,contentVersion:context.contentVersion,sourceKind:context.sourceKind || 'personal',targetSnapshotStale:Boolean(context.targetSnapshotStale),supportTarget:context.target});
+      return json({experienceCard,question,questions:practice.questions,activities:context.activities,sources:context.sources,contentVersion:context.contentVersion,sourceKind:practice.scope==='personal_record'?'personal':context.sourceKind || 'personal',practiceAllowed:practice.allowed&&!(practice.scope==='personal_record'&&sourceType==='common'),practiceScope:practice.scope,practiceLabel:practice.label,practiceNotice:practice.notice,targetSnapshotStale:Boolean(context.targetSnapshotStale),supportTarget:context.target});
     }
     const sessionId = url.searchParams.get('id');
     if (!sessionId) return json({ sessions: (await query('select * from interview_sessions where student_id=$1 order by created_at desc limit 80', [user.id])).map(sessionView) });
@@ -115,9 +117,13 @@ export async function POST(request: Request) {
     const input = inputSchema.parse(await request.json());
     if (input.action === 'start') {
       if (input.interviewerReactions && !['turn', 'each'].includes(input.feedbackTiming)) throw new FeatureError(400, '면접관 반응은 질문마다 피드백과 함께 켤 수 있어요.', 'REACTION_FEEDBACK_REQUIRED');
-      const mode = normalizeMode(input.mode);
       const context = await getLearningContext(user.id, { ...input, allowCommon:true });
-      if(context.target){const support=interviewSupportForTarget(context.target);if(!support.supported)throw new FeatureError(409,support.reason,'INTERVIEW_OUT_OF_SCOPE');}
+      const practice=interviewPracticeForContext({...context,sourceKind:input.sourceType==='common'?'common':context.sourceKind});
+      if(!practice.allowed||practice.scope==='personal_record'&&input.sourceType==='common')throw new FeatureError(409,practice.notice||'지원 전형의 면접 방식을 확인해 주세요.','INTERVIEW_OUT_OF_SCOPE');
+      const personalPractice=practice.scope==='personal_record';
+      const requestedMode=normalizeMode(input.mode);
+      const mode=personalPractice&&requestedMode==='university'?'basic':requestedMode;
+      if(personalPractice)Object.assign(context,{questions:practice.questions,sourceKind:'personal',schoolTalent:null,majorContext:null,practiceScope:practice.scope,practiceNotice:practice.notice});
       const experienceCard = await ownedExperience(user.id,input.experienceCardId,input.experienceRevision);
       if(experienceCard) context.studentContext={...context.studentContext,student_reported_experience:{...experienceCard.data,notice:'학생이 직접 작성하고 확인한 진술. 승인된 학생부 사실이 아니며, 현재 답변과 충돌하면 확인할 것.'}};
       let candidates = context.briefing && !context.questions.length ? [] : interviewQuestions(context, mode, input.questionId || undefined).filter((q) => !q.parent_question_id && !q.parent_answer_id&&isStudentRecordQuestion(q));
@@ -130,7 +136,7 @@ export async function POST(request: Request) {
         candidates = [{ id: `briefing_${context.briefing.id}_${input.briefingQuestionIndex || 0}`, prompt: selectedPrompt, question_types: ['current_affairs'], grounding_types: ['published_briefing'], source_ref_ids: [context.briefing.id], support_target_ids: context.targetId ? [context.targetId] : [], briefing_id: context.briefing.id, allocation_bucket: 'current_affairs' }, ...candidates];
       }
       if (!candidates.length) throw new FeatureError(409, '연습할 본 질문이 아직 없어요.', 'NO_ROOT_QUESTIONS');
-      const profile = context.targetSnapshotStale ? null : await schoolProfile(user.id, context.targetId);
+      const profile = personalPractice||context.targetSnapshotStale ? null : await schoolProfile(user.id, context.targetId);
       const distribution = profile?.data?.question_distribution;
       const approvedDistribution = distribution?.basis === 'official' && profile?.status !== 'official_confirmed' ? null : distribution || null;
       const selection = planRootQuestions(candidates, input.questionCount || (input.questionId || context.briefing ? 1 : 5), approvedDistribution, context.briefing ? candidates[0].id : input.questionId || undefined);
@@ -141,7 +147,7 @@ export async function POST(request: Request) {
       const range = formalRange?.min <= 5 ? { min: formalRange.min, max: Math.min(formalRange.max, 5) } : null;
       const requestedCount = input.panelistCount || range?.min || profile?.data?.training_panelist_count || 2;
       const count = range ? Math.max(range.min, Math.min(range.max, requestedCount)) : requestedCount;
-      const sessionData = { context, experienceCard, assisted:input.assisted ?? false, briefingId: context.briefingId || null, activityId: context.activityId, questionQueue: questions, questionPlan: selection.plan, followups: input.followups ?? mode === 'followup', pressure: input.pressure ?? mode === 'pressure', interviewerReactions: input.interviewerReactions ?? false, maxFollowups: 2, panelists: panelists(Math.max(1, Math.min(5, count))), schoolProfile: profile, schoolPracticeOnly: !verified || !supported || Boolean(formalRange && !range) || profile?.data?.interview_conducted === false, difficulty: input.difficulty || 'standard', feedbackTiming: input.feedbackTiming === 'each' ? 'turn' : input.feedbackTiming, promptVersion: PROMPT_VERSION, aiAvailable: aiEnabled(), index: 0, generation: 0, paused: false, elapsedMs: 0, activeSince: Date.now(), timerLeaseUntil: Date.now() + INTERVIEW_LEASE_MS, settingsHistory: [] };
+      const sessionData = { context, experienceCard, practiceScope:practice.scope, practiceNotice:practice.notice, assisted:input.assisted ?? false, briefingId: context.briefingId || null, activityId: context.activityId, questionQueue: questions, questionPlan: selection.plan, followups: input.followups ?? mode === 'followup', pressure: input.pressure ?? mode === 'pressure', interviewerReactions: input.interviewerReactions ?? false, maxFollowups: 2, panelists: panelists(Math.max(1, Math.min(5, count))), schoolProfile: profile, schoolPracticeOnly: !verified || !supported || Boolean(formalRange && !range) || profile?.data?.interview_conducted === false, difficulty: input.difficulty || 'standard', feedbackTiming: input.feedbackTiming === 'each' ? 'turn' : input.feedbackTiming, promptVersion: PROMPT_VERSION, aiAvailable: aiEnabled(), index: 0, generation: 0, paused: input.kind==='video', elapsedMs: 0, activeSince: input.kind==='video'?null:Date.now(), timerLeaseUntil: input.kind==='video'?null:Date.now()+INTERVIEW_LEASE_MS, settingsHistory: [] };
       const started = await transaction(async (client) => {
         const requestId = input.requestId || randomUUID();
         await client.query('select pg_advisory_xact_lock(hashtext($1))', [`start:${user.id}:${requestId}`]);
@@ -186,6 +192,9 @@ export async function POST(request: Request) {
         let current = currentRows.rows[0];
         if (input.turnId && current?.id !== input.turnId) throw new FeatureError(409, '현재 질문에서 이어가 주세요.', 'STALE_TURN');
         const data = { ...locked.data, ...settledInterviewTimer(locked.data) };
+        // Live suspend only stops the clock. Resuming that same capture must not
+        // invalidate a recording already saved for the unchanged question.
+        const resumeLiveTimer=input.action==='resume'&&locked.kind==='video'&&data.paused;
         if(input.action==='use_transcript') {
           if(!input.turnId||!input.mediaId||!current)throw new FeatureError(400,'현재 질문의 정리된 전사를 선택해 주세요.','TRANSCRIPT_MEDIA_REQUIRED');
           if(locked.data.paused)throw new FeatureError(409,'면접을 재개한 뒤 전사를 선택해 주세요.','SESSION_PAUSED');
@@ -221,7 +230,7 @@ export async function POST(request: Request) {
           if (input.draft !== undefined&&input.action!=='use_transcript') current.data.draft = input.draft;
           await client.query('update interview_turns set data=$3 where id=$1 and student_id=$2', [current.id, user.id, JSON.stringify(current.data)]);
         }
-        if (!['draft','use_transcript'].includes(input.action)) data.generation = Number(data.generation || 0) + 1;
+        if (!['draft','use_transcript'].includes(input.action)&&!resumeLiveTimer) data.generation = Number(data.generation || 0) + 1;
         const saved = await client.query('update interview_sessions set data=$3,updated_at=now() where id=$1 and student_id=$2 returning *', [session.id, user.id, JSON.stringify(data)]);
         return { session: sessionView(saved.rows[0]), question: questionView(current), turn: current ? turnView(current) : null };
       }));
@@ -263,13 +272,24 @@ export async function POST(request: Request) {
       return json({ session: sessionView(session), turn: turnView(revised) });
     }
     if (input.action === 'finish') return json(await finishSession(user.id, session));
-    if (session.state !== 'active') throw new FeatureError(409, '종료된 면접이에요. 새 면접에서 이어가 주세요.', 'SESSION_ENDED');
-    if (!input.answer?.trim()) throw new FeatureError(400, '답변을 입력해 주세요.', 'ANSWER_REQUIRED');
+    const automaticRecording=input.action==='answer_recording';
+    if(automaticRecording&&(!input.turnId||!input.mediaId||input.generation===undefined||!input.requestId))throw new FeatureError(400,'제출할 녹음과 현재 질문 정보를 확인해 주세요.','RECORDING_ANSWER_SCOPE_REQUIRED');
+    if(automaticRecording&&input.answer!==undefined)throw new FeatureError(400,'녹음 자동 제출에는 답변 글 대신 녹음만 선택해 주세요.','RECORDING_ANSWER_TEXT_FORBIDDEN');
+    if (!automaticRecording&&session.state !== 'active') throw new FeatureError(409, '종료된 면접이에요. 새 면접에서 이어가 주세요.', 'SESSION_ENDED');
+    if (!automaticRecording&&!input.answer?.trim()) throw new FeatureError(400, '답변을 입력해 주세요.', 'ANSWER_REQUIRED');
     const requestId = input.requestId || randomUUID();
     const processId = randomUUID();
     const submitted = await transaction(async (client) => {
       const selected = await client.query('select * from interview_sessions where id=$1 and student_id=$2 for update', [session.id, user.id]);
       const locked = selected.rows[0];
+      // A lost response may be retried after pause or completion. Return its durable
+      // receipt without submitting again or resuming the session.
+      if(automaticRecording&&locked.data.lastRequestId===requestId){
+        const turns=await client.query('select * from interview_turns where session_id=$1 and student_id=$2 order by created_at,id',[session.id,user.id]);
+        const previous=turns.rows.find(turn=>turn.id===locked.data.lastTurnId);
+        if(previous?.id!==input.turnId||previous?.data.submittedMediaId!==input.mediaId)throw new FeatureError(409,'이미 사용한 요청 정보예요. 제출한 녹음 기록을 확인해 주세요.','REQUEST_CONFLICT');
+        return {duplicate:true,session:locked,previous,next:turns.rows.find(turn=>!turn.data.answer&&!turn.data.invalidated)};
+      }
       if (locked.state !== 'active') throw new FeatureError(409, '종료된 면접이에요.', 'SESSION_ENDED');
       if (settledInterviewTimer(locked.data).paused) throw new FeatureError(409, '면접으로 돌아온 후 답변을 제출해 주세요.', 'SESSION_PAUSED');
       if (locked.data.lastRequestId === requestId) {
@@ -281,15 +301,26 @@ export async function POST(request: Request) {
       const current = [...turns.rows].reverse().find((turn) => !turn.data.answer && !turn.data.invalidated);
       if (!current) throw new FeatureError(409, '준비된 질문에 모두 답했어요. 면접을 종료해 주세요.', 'NO_OPEN_QUESTION');
       if (input.turnId && input.turnId !== current.id) throw new FeatureError(409, '이미 제출한 답변이에요. 현재 질문에서 이어가 주세요.', 'STALE_TURN');
+      let answer=input.answer!;
+      if(automaticRecording){
+        if(locked.kind!=='video')throw new FeatureError(409,'Live 면접의 녹음 답변을 선택해 주세요.','TRANSCRIPT_MODE_REQUIRED');
+        if(input.generation!==Number(locked.data.generation||0))throw new FeatureError(409,'녹음 이후 질문 상태가 바뀌었어요. 현재 질문에서 이어가 주세요.','STALE_GENERATION');
+        const recording=await ownedInterviewTranscriptSelection(client,user.id,session.id,current.id,input.mediaId!,{generation:input.generation!});
+        const draft=String(current.data.draft||'').trim();
+        if(draft&&!(current.data.autoTranscriptApplied===true&&current.data.mediaId===input.mediaId&&draft===recording.displayTranscript.trim()))throw new FeatureError(409,'직접 수정한 초안이 있어요. 내용을 확인하고 답변을 보내 주세요.','ANSWER_DRAFT_CHANGED');
+        if(recording.displayTranscript.length>12000)throw new FeatureError(409,'전사가 너무 길어요. 답변을 확인하고 나누어 보내 주세요.','ANSWER_TOO_LONG');
+        Object.assign(current.data,recording);
+        answer=recording.displayTranscript;
+      }
       const speechSource = locked.kind==='video'&&current.data.autoTranscriptApplied===true&&current.data.mediaId===current.data.rawTranscriptMediaId
-        ?snapshotSpeechAnswer(current.data.rawTranscript,current.data.displayTranscript,current.data.transcriptCleanup,input.answer!,current.data.mediaId):null;
-      const answerData = { ...current.data, answer: input.answer, originalAnswer: input.answer, ...(speechSource?{speechSource}:{}), answerRevisions: [{ revision: 1, text: input.answer, kind: 'submitted_answer', at: new Date().toISOString() }], draft: '', answeredAt: new Date().toISOString(), requestId, answerFinalized: true };
-      if (locked.kind === 'video' && current.data.transcript && current.data.transcript !== input.answer) {
-        answerData.transcript = input.answer;
-        answerData.transcriptRevisions = [...(current.data.transcriptRevisions || []), { revision: (current.data.transcriptRevisions || []).length + 1, transcript: input.answer, correctedBy: 'student', at: new Date().toISOString() }];
+        ?snapshotSpeechAnswer(current.data.rawTranscript,current.data.displayTranscript,current.data.transcriptCleanup,answer,current.data.mediaId):null;
+      const answerData = { ...current.data, answer, originalAnswer:answer, ...(automaticRecording?{submissionSource:'recording',submittedMediaId:input.mediaId,submittedGeneration:input.generation}:{}), ...(speechSource?{speechSource}:{}), answerRevisions: [{ revision: 1, text:answer, kind: 'submitted_answer', at: new Date().toISOString() }], draft: '', answeredAt: new Date().toISOString(), requestId, answerFinalized: true };
+      if (locked.kind === 'video' && current.data.transcript && current.data.transcript !== answer) {
+        answerData.transcript = answer;
+        answerData.transcriptRevisions = [...(current.data.transcriptRevisions || []), { revision: (current.data.transcriptRevisions || []).length + 1, transcript:answer, correctedBy: 'student', at: new Date().toISOString() }];
       }
       const answered = await client.query('update interview_turns set data=$2 where id=$1 and student_id=$3 returning *', [current.id, JSON.stringify(answerData), user.id]);
-      await recordStudyEvent(client,user.id,{kind:'interview_answer',sourceId:current.id,data:{sessionId:session.id,kind:locked.kind,questionId:current.question_id,question:current.data.question,answer:input.answer,...assistanceEvidence(current.data),hintUsed:assistanceEvidence(current.data).hint_used,contentVersion:locked.data.context.contentVersion,targetId:locked.data.context.targetId||null,targetSnapshot:locked.data.context.target||null,sourceKind:locked.data.context.sourceKind || 'personal',sourceType:current.data.sourceType || 'personal',commonRevision:current.data.commonRevision || null}});
+      await recordStudyEvent(client,user.id,{kind:'interview_answer',sourceId:current.id,data:{sessionId:session.id,kind:locked.kind,questionId:current.question_id,question:current.data.question,answer,...assistanceEvidence(current.data),hintUsed:assistanceEvidence(current.data).hint_used,contentVersion:locked.data.context.contentVersion,targetId:locked.data.context.targetId||null,targetSnapshot:locked.data.context.target||null,sourceKind:locked.data.context.sourceKind || 'personal',sourceType:current.data.sourceType || 'personal',commonRevision:current.data.commonRevision || null}});
       const rootIndex = Number(current.data.rootIndex ?? locked.data.index ?? 0);
       const nextIndex = rootIndex + 1;
       const nextQuestion = locked.data.questionQueue[nextIndex];
@@ -303,23 +334,24 @@ export async function POST(request: Request) {
       return { duplicate: false, session: result.rows[0], previous: answered.rows[0], next };
     });
     session = submitted.session;
-    if (submitted.duplicate) return json({ session: sessionView(session), turn: turnView(submitted.previous), nextQuestion: questionView(submitted.next), feedback: submitted.previous?.data.feedback || null });
+    if (submitted.duplicate) return json({ session: sessionView(session), turn: turnView(submitted.previous), nextQuestion: session.state==='active'&&!session.data.processing?questionView(submitted.next):null, feedback: submitted.previous?.data.feedback || null });
+    const submittedAnswer=String(submitted.previous.data.answer);
     let feedback = null;
     let reaction: InterviewerReaction | null = session.data.interviewerReactions ? neutralReaction('unavailable') : null;
     let reactionModel: string | null = null;
-    const reactionInput = session.data.interviewerReactions ? { question: submitted.previous.data.question, answer: input.answer!, transcriptUncertain: Boolean(submitted.previous.data.derivedFromCorrectedTranscript) } : undefined;
+    const reactionInput = session.data.interviewerReactions ? { question: submitted.previous.data.question, answer: submittedAnswer, transcriptUncertain: Boolean(submitted.previous.data.derivedFromCorrectedTranscript) } : undefined;
     let aiError: string | null = null;
     let next = submitted.next;
     try {
       if (aiEnabled() && session.data.feedbackTiming === 'turn') {
-        feedback = await coach(user.id, { ...context, questionId: submitted.previous.question_id }, `면접 모드 ${session.mode}, 질문 깊이 ${session.data.difficulty}. 학생 답변의 질문 대응·실제 역할·근거를 짧게 피드백한다. 강점과 확인할 부분을 학생의 실제 문장 인용으로 구분하고 점수는 만들지 않는다. 학생 진술과 승인 원문을 구분하며, 미확인 경험을 넣은 완성형 답변을 대신 쓰지 않는다. 다음 확인 질문은 직전 질문에서 명시한 요구를 우선한다.`, [{ role: 'user', content: `질문: ${submitted.previous.data.question}\n학생 답변: ${input.answer}` }], 'interview', session.id, reactionInput);
+        feedback = await coach(user.id, { ...context, questionId: submitted.previous.question_id }, `면접 모드 ${session.mode}, 질문 깊이 ${session.data.difficulty}. 학생 답변의 질문 대응·실제 역할·근거를 짧게 피드백한다. 강점과 확인할 부분을 학생의 실제 문장 인용으로 구분하고 점수는 만들지 않는다. 학생 진술과 승인 원문을 구분하며, 미확인 경험을 넣은 완성형 답변을 대신 쓰지 않는다. 다음 확인 질문은 직전 질문에서 명시한 요구를 우선한다.`, [{ role: 'user', content: `질문: ${submitted.previous.data.question}\n학생 답변: ${submittedAnswer}` }], 'interview', session.id, reactionInput);
         if (feedback.reaction) { reaction = feedback.reaction; reactionModel = feedback.model; }
       }
       // Each dynamic follow-up is based on the just-recorded answer; static fallbacks remain recoverable.
       if (aiEnabled() && session.data.followups && Number(submitted.previous.data.followupDepth || 0) < Number(session.data.maxFollowups || 2)) {
         const rootIndex = Number(submitted.previous.data.rootIndex ?? Math.max(0, session.data.index - 1));
         const root = session.data.questionQueue[rootIndex];
-        const dynamic = await coach(user.id, { ...context, questionId: root?.id || submitted.previous.question_id }, `질문 깊이 ${session.data.difficulty}. 직전 학생 답변의 구체적 행동·이유·근거·한계를 확인하는 면접 꼬리질문 한 문장만 content에 출력한다. ${session.data.pressure ? '근거·모순·반대 사례·한계 검증을 우선한다.' : ''} 공격적 호칭·모욕·인격 평가는 금지한다.`, [{ role: 'user', content: `직전 질문: ${submitted.previous.data.question}\n학생 답변: ${input.answer}` }], 'interview', session.id, feedback ? undefined : reactionInput);
+        const dynamic = await coach(user.id, { ...context, questionId: root?.id || submitted.previous.question_id }, `질문 깊이 ${session.data.difficulty}. 직전 학생 답변의 구체적 행동·이유·근거·한계를 확인하는 면접 꼬리질문 한 문장만 content에 출력한다. ${session.data.pressure ? '근거·모순·반대 사례·한계 검증을 우선한다.' : ''} 공격적 호칭·모욕·인격 평가는 금지한다.`, [{ role: 'user', content: `직전 질문: ${submitted.previous.data.question}\n학생 답변: ${submittedAnswer}` }], 'interview', session.id, feedback ? undefined : reactionInput);
         if (dynamic.reaction) { reaction = dynamic.reaction; reactionModel = dynamic.model; }
         next = { ...(next || { id: randomUUID(), session_id: session.id, student_id: user.id }), question_id: `followup_${randomUUID()}`, data: { question: dynamic.content, rootQuestionId: root?.id, answer: null, feedback: null, draft: '', questionKind: 'generated', rootIndex, followupDepth: Number(submitted.previous.data.followupDepth || 0) + 1, speakerId: submitted.previous.data.speakerId || 'A', parentTurnId: submitted.previous.id, parentQuestionId: submitted.previous.question_id, sources: dynamic.sources, model: dynamic.model, promptVersion: dynamic.promptVersion, assisted: false, assistance_recorded:true, helpKinds:[] } };
       }
@@ -355,7 +387,7 @@ async function finishSession(studentId: string, session: Record<string, any>) {
     const previous = existing.rows[0]?.data;
     const previousSnapshot = previous ? { ...previous, revisions: undefined } : null;
     const timer = stoppedTimer(locked.data);
-    const reportPayload = { ...reportData, experienceCard:locked.data.experienceCard?{id:locked.data.experienceCard.id,revision:locked.data.experienceCard.revision}:null, feedbackKind: 'self_check', mode: locked.mode, kind: locked.kind, targetId: locked.target_id, durationSeconds: Math.floor(timer.elapsedMs / 1000), schoolProfile: locked.data.schoolProfile, questionPlan: locked.data.questionPlan, settings: { followups: locked.data.followups, pressure: locked.data.pressure, feedbackTiming: locked.data.feedbackTiming, interviewerReactions: !!locked.data.interviewerReactions, panelists: locked.data.panelists }, settingsHistory: locked.data.settingsHistory || [], assisted: turns.rows.some(turn => turn.data.answer&&!turn.data.invalidated&&assistanceEvidence(turn.data).assisted), assistance_recorded: turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).every(turn=>assistanceEvidence(turn.data).assistance_recorded), helpKinds:[...new Set(turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).flatMap(turn=>assistanceEvidence(turn.data).helpKinds))], actualRootQuestions: turns.rows.filter(turn => turn.data.answer && !turn.data.followupDepth).length, actualFollowups: turns.rows.filter(turn => turn.data.answer && turn.data.followupDepth > 0).length, promptVersion: PROMPT_VERSION, transcriptRevision: turns.rows.reduce((sum, turn) => sum + (turn.data.transcriptRevisions?.length || 0), 0), reportRevision: previous ? Number(previous.reportRevision || 1) + 1 : 1, revisions: previous ? [...(previous.revisions || []), previousSnapshot] : [] };
+    const reportPayload = { ...reportData, experienceCard:locked.data.experienceCard?{id:locked.data.experienceCard.id,revision:locked.data.experienceCard.revision}:null, feedbackKind: 'self_check', practiceScope:locked.data.practiceScope||'school', practiceLabel:locked.data.practiceScope==='personal_record'?'일반 경험 면접':null, practiceNotice:locked.data.practiceNotice||null, mode: locked.mode, kind: locked.kind, targetId: locked.target_id, durationSeconds: Math.floor(timer.elapsedMs / 1000), schoolProfile: locked.data.schoolProfile, questionPlan: locked.data.questionPlan, settings: { followups: locked.data.followups, pressure: locked.data.pressure, feedbackTiming: locked.data.feedbackTiming, interviewerReactions: !!locked.data.interviewerReactions, panelists: locked.data.panelists }, settingsHistory: locked.data.settingsHistory || [], assisted: turns.rows.some(turn => turn.data.answer&&!turn.data.invalidated&&assistanceEvidence(turn.data).assisted), assistance_recorded: turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).every(turn=>assistanceEvidence(turn.data).assistance_recorded), helpKinds:[...new Set(turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).flatMap(turn=>assistanceEvidence(turn.data).helpKinds))], actualRootQuestions: turns.rows.filter(turn => turn.data.answer && !turn.data.followupDepth).length, actualFollowups: turns.rows.filter(turn => turn.data.answer && turn.data.followupDepth > 0).length, promptVersion: PROMPT_VERSION, transcriptRevision: turns.rows.reduce((sum, turn) => sum + (turn.data.transcriptRevisions?.length || 0), 0), reportRevision: previous ? Number(previous.reportRevision || 1) + 1 : 1, revisions: previous ? [...(previous.revisions || []), previousSnapshot] : [] };
     const inserted = existing.rows.length
       ? await client.query('update interview_reports set data=$3 where session_id=$1 and student_id=$2 returning *', [session.id, studentId, JSON.stringify(reportPayload)])
       : await client.query('insert into interview_reports(student_id,session_id,data) values($1,$2,$3) returning *', [studentId, session.id, JSON.stringify(reportPayload)]);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {schoolDirectory,schoolDirectoryEntry,normalizeSchoolSelection} from '../apps/web/src/lib/school-directory';
-import {interviewSupportForTarget,schoolHasDocumentInterview,isStudentRecordQuestion} from '../apps/web/src/lib/school-interview-scope';
+import {interviewSupportForTarget,schoolHasDocumentInterview,isStudentRecordQuestion,interviewPracticeForContext} from '../apps/web/src/lib/school-interview-scope';
 import {departmentLearningContext,departmentPracticeQuestions,departmentQuestionMatchesTarget} from '../apps/web/src/lib/department-learning';
 import {knowledgeTarget,schoolKnowledgeReadings,addCommonKnowledgeConnections} from '../apps/web/src/lib/knowledge-target-model';
 import {matchKnowledgeVideos} from '../apps/web/src/lib/knowledge-bites-catalog';
@@ -37,6 +37,22 @@ test('standalone passage questions are rejected while actual student-record ques
   assert.equal(isStudentRecordQuestion({prompt:'제시문을 읽고 공통점을 설명하세요.'}),false);
   assert.equal(isStudentRecordQuestion({prompt:'질문',grounding_types:['passage_based']}),false);
   assert.equal(isStudentRecordQuestion({prompt:'실험의 그래프를 해석했던 과정을 설명해 주세요.',grounding_types:['document_based']}),true);
+});
+test('an old unsupported target permits owned published record practice, including unselected Chat entry',()=>{
+  const target={id:'historical-target',university:'고려대학교',department:'경영학과',admission_type:'고른기회',admission_year:2027};
+  const personal={id:'own-question',prompt:'활동에서 맡은 역할과 배운 점을 말해 주세요.',grounding_types:['document_based']};
+  const context={target,packageId:'owned-published-package',sourceKind:'mixed',questions:[personal,{id:'public-question',prompt:'지원 동기를 말해 주세요.',common_revision:1},{id:'passage',prompt:'제시문을 읽고 답하세요.'}]};
+  for(const questionId of [undefined,personal.id]){
+    const practice=interviewPracticeForContext({...context,questionId});
+    assert.equal(practice.allowed,true);assert.equal(practice.scope,'personal_record');assert.equal(practice.label,'일반 경험 면접');assert.match(practice.notice!,/실제 면접 방식/);assert.deepEqual(practice.questions,[personal]);
+  }
+  assert.equal(context.target,target);assert.equal(context.questions.length,3,'selection does not rewrite the published snapshot');
+  for(const override of [{questionId:'public-question'},{questionId:'passage'},{sourceKind:'common'},{packageId:'common-bank'},{briefingId:'public-briefing'},{questions:[]}])assert.equal(interviewPracticeForContext({...context,...override}).allowed,false);
+});
+test('a compatible school stays in its normal scope and a forged Korea track cannot override its major',()=>{
+  assert.equal(interviewPracticeForContext({target:{university:'서울시립대학교',department:'환경공학부'},questions:[]}).scope,'school');
+  assert.equal(interviewSupportForTarget({university:'고려대학교',department:'경영학과',admission_type:'사이버국방전형'}).supported,false);
+  assert.throws(()=>normalizeSchoolSelection({university:'고려대학교',major:'경영학과'}),/학생부형 학과/);
 });
 test('display-only link enrichment cannot change an acknowledged interview classification',()=>{
   const target={university:'서울시립대학교',department:'환경공학부',admission_type:'학생부종합전형Ⅰ(면접형)',admission_year:2027};

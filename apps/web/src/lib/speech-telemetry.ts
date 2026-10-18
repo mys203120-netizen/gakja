@@ -33,6 +33,7 @@ function joinIntervals(intervals: SpeechInterval[], toleranceMs = 0): SpeechInte
 export function buildSpeechTelemetry(raw: readonly RmsSample[], durationMs: number, truncated = false): SpeechTelemetry | null {
   if (!Number.isFinite(durationMs) || durationMs <= 0) return null;
   const duration = Math.min(MAX_SPEECH_CAPTURE_MS, rounded(durationMs));
+  if (!duration) return null;
   const samples = raw.filter(sample => Number.isFinite(sample.atMs) && sample.atMs >= 0 && sample.atMs < duration && Number.isFinite(sample.rms) && sample.rms >= 0 && sample.rms <= 1)
     .slice(0, MAX_SPEECH_SAMPLES).sort((a, b) => a.atMs - b.atMs)
     .filter((sample, index, all) => !index || sample.atMs > all[index - 1].atMs);
@@ -52,11 +53,15 @@ export function buildSpeechTelemetry(raw: readonly RmsSample[], durationMs: numb
     const gap = index ? sample.atMs - samples[index - 1].atMs : sample.atMs;
     if (gap > SPEECH_SAMPLE_INTERVAL_MS * 2) speaking = false;
     const interval = { startMs: rounded(sample.atMs), endMs: rounded(end) };
+    // performance.now() has sub-ms precision. A final or near-coincident frame
+    // can round to zero width; it is neither observed nor spoken time.
+    if (interval.endMs <= interval.startMs) continue;
     observed.push(interval);
     speaking = sample.rms >= (speaking ? threshold * .7 : threshold);
     if (speaking) voice.push(interval);
   }
   const observedSegments = joinIntervals(observed, 2);
+  if (!observedSegments.length) return null;
   // Merge one low amplitude sample between spoken syllables; do not erase a 0.7s pause.
   const speechSegments: SpeechInterval[] = [];
   let observedIndex = 0, previousObservedIndex = -1;

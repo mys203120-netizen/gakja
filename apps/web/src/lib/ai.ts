@@ -23,6 +23,8 @@ export type LearningContext = {
   sourceKind?: 'common' | 'mixed' | 'personal';
   learningHistory?: { answers: Record<string, any>[]; attempts: Record<string, any>[] };
   targetSnapshotStale?: boolean;
+  practiceScope?: 'personal_record';
+  practiceNotice?: string;
   schoolTalent?: Record<string, any> | null;
   majorContext?: Record<string, any> | null;
   packageId: string;
@@ -226,7 +228,7 @@ export function compactContext(context: LearningContext) {
   const sourceIds = new Set([...activities, ...questions].flatMap((item) => ids(item.source_ref_ids)));
   const sources = sourceIds.size ? context.sources.filter((item) => sourceIds.has(item.id)) : context.sources.slice(0, 16);
   return {
-    version: context.contentVersion, source_kind:context.sourceKind || 'personal', support_target_status:context.targetSnapshotStale ? '이전 발행본의 지원처. 현재 지원 정보와 달라 공식 맞춤 기준으로 쓰지 않는다.' : '선택한 지원처', practice_basis:context.sourceKind === 'common' ? '일반 연습. 개인 경험이나 공식 학교별 출제 비율을 만들지 않는다.' : '개인 승인 자료와 별도로 표시한 일반 연습', support_target: context.target, student_context: context.studentContext,
+    version: context.contentVersion, source_kind:context.sourceKind || 'personal', support_target_status:context.practiceScope==='personal_record'?'기록 연결용 지원처. 이 연습은 일반 경험 면접이며 학교별 전형·출제 기준·합격 가능성을 판단하지 않는다.':context.targetSnapshotStale ? '이전 발행본의 지원처. 현재 지원 정보와 달라 공식 맞춤 기준으로 쓰지 않는다.' : '선택한 지원처', practice_basis:context.practiceNotice|| (context.sourceKind === 'common' ? '일반 연습. 개인 경험이나 공식 학교별 출제 비율을 만들지 않는다.' : '개인 승인 자료와 별도로 표시한 일반 연습'), support_target: context.target, student_context: context.studentContext,
     activities, questions, approved_answer_scripts: context.answerScripts.filter((item) => questions.some((q) => q.id === item.question_id)), sources,
     approved_briefing: context.briefing || null,
     school_talent: questions.filter(item=>item.talent_profile).map(item=>({...(item.talent_profile as Record<string,unknown>),source:item.source_snapshot,question_basis:'training',official_past_question:false})),

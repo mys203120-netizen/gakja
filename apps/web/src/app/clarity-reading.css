@@ -21,10 +21,10 @@
   box-shadow: none;
 }
 .app-shell .records-view :is(.records-history-section, .report-section, .report-feedback-section) { margin-block: 30px; }
-.app-shell .records-view :is(.records-history-section > h2, .report-section > h2, .report-feedback-section > h2, .speech-growth-section h2) { font-size: 20px; margin-bottom: 18px; }
+.app-shell .records-view :is(.records-history-section > h2, .report-section > h2, .report-feedback-section > h2, .speech-growth-section h2) { font-size: var(--clarity-section-size); font-weight: 600; line-height: 1.45; margin-bottom: 16px; }
 .app-shell .records-view .records-report-list { display: grid; gap: 4px; }
 .app-shell .records-view .records-report-row { padding: 18px 0; border: 0; background: transparent; box-shadow: none; }
-.app-shell .records-view .records-report-row h2 { font-size: 18px; margin: 0 0 5px; }
+.app-shell .records-view .records-report-row h2 { font-size: 16px; font-weight: 550; line-height: 1.5; margin: 0 0 5px; }
 .app-shell .records-view .records-report-row p { font-size: 14px; color: var(--clarity-muted); }
 .app-shell .records-view .records-row-icon { color: var(--clarity-muted); background: var(--clarity-soft); }
 .app-shell .records-view .study-answer { padding: 22px 0; }
@@ -77,7 +77,7 @@
 .app-shell .answer-comparisons .comparison-view-switch button[aria-pressed="true"] { color: var(--clarity-ink); background: var(--clarity-surface); box-shadow: none; }
 .app-shell .answer-comparisons .comparison-wipe-before { background: var(--clarity-bg); }
 .app-shell .answer-comparisons .comparison-wipe-after { background: var(--clarity-soft); }
-.app-shell .answer-comparisons .comparison-wipe-after mark { color: var(--clarity-ink); background: #ceeeda; }
+.app-shell .answer-comparisons .comparison-wipe-after mark { color: var(--clarity-ink); background: var(--clarity-mint); }
 .app-shell .answer-comparisons .comparison-wipe-divider > span { box-shadow: none; }
 .app-shell .answer-comparisons .comparison-wipe-controls input[type="range"] { accent-color: var(--clarity-green); }
 
@@ -107,7 +107,7 @@
 .app-shell .knowledge-page .knowledge-check-prompt { font-size: 16px; font-weight: 450; line-height: 1.85; max-width: 70ch; }
 .app-shell .knowledge-page :is(.knowledge-history-row p, .knowledge-note textarea, .knowledge-understanding textarea) { font-size: 16px; line-height: 1.85; }
 .app-shell .knowledge-page :is(.knowledge-note textarea, .knowledge-understanding textarea) { padding: 14px 16px; background: var(--clarity-bg); border: 1px solid var(--clarity-line); border-radius: 8px; color: var(--clarity-ink); box-shadow: none; }
-.app-shell .knowledge-page .knowledge-self-check button[aria-pressed="true"] { color: var(--clarity-green); border-color: #a5cfb3; background: var(--clarity-mint); }
+.app-shell .knowledge-page .knowledge-self-check button[aria-pressed="true"] { color: var(--clarity-green); border-color: var(--clarity-green); background: var(--clarity-mint); }
 
 /* Source documents retain their provenance; only app-native reading is restyled. */
 .app-shell .reader-article { background: var(--clarity-surface); border: 0; border-radius: 0; box-shadow: none; }
@@ -175,8 +175,8 @@
 .app-shell :is(.assistant-page, .records-view) .markdown-content li { margin-block: 7px; }
 .app-shell :is(.assistant-page, .records-view) .markdown-content a { color: var(--clarity-green); text-underline-offset: 3px; }
 .app-shell :is(.assistant-page, .records-view) .markdown-content a:hover { color: var(--clarity-green-hover); }
-.app-shell :is(.assistant-page, .records-view) .markdown-content blockquote { max-width: 70ch; border-color: #b7d8c1; color: var(--clarity-muted); padding-inline-start: 15px; }
-.app-shell :is(.assistant-page, .records-view) .markdown-content :is(code, pre) { color: #33503f; background: var(--clarity-soft); }
+.app-shell :is(.assistant-page, .records-view) .markdown-content blockquote { max-width: 70ch; border-color: var(--clarity-line); color: var(--clarity-muted); padding-inline-start: 15px; }
+.app-shell :is(.assistant-page, .records-view) .markdown-content :is(code, pre) { color: var(--clarity-ink); background: var(--clarity-soft); }
 .app-shell :is(.assistant-page, .records-view) .markdown-content pre { border-radius: 8px; line-height: 1.7; }
 .app-shell :is(.assistant-page, .records-view) .markdown-content pre code { background: transparent; }
 .app-shell :is(.assistant-page, .records-view) .markdown-table { width: 100%; max-width: 100%; }
@@ -220,4 +220,18 @@
 
 @media (prefers-reduced-motion: reduce) {
   .app-shell :is(.records-view, .answer-comparisons, .knowledge-page, .school-learning, .department-news-full, .briefing-detail, .reader-article, .assistant-page) :is(a, button, textarea, input, select) { transition: none; }
+}
+
+@media (min-width: 768px) {
+  .app-shell .records-view :is(.records-history-section > h2, .report-section > h2, .report-feedback-section > h2, .speech-growth-section h2),
+  .app-shell .knowledge-page :is(.knowledge-row h2, .knowledge-first h2, .knowledge-context h2, .knowledge-note h2, .knowledge-understanding h2, .knowledge-watch-copy h2),
+  .app-shell :is(.activity-row h2, .department-news-detail section h2, .briefing-detail .briefing-reading-section > h2) { font-size: var(--clarity-section-size); }
+  .app-shell .records-view .speech-metrics strong { font-size: 28px; }
+  .app-shell .records-view :is(.study-answer > p, .report-answer > p, .speech-display-transcript p, .transcript-raw p, .content-growth-evidence blockquote, .content-growth-originals p, .content-growth-added p, .markdown-content),
+  .app-shell .answer-comparisons :is(.comparison-answer, .comparison-wipe-transcripts p, .comparison-wipe-layer),
+  .app-shell .knowledge-page :is(.knowledge-reason, .knowledge-stretch, .knowledge-original-title, .knowledge-official-reading > p, .knowledge-check-prompt, .knowledge-history-row p, .knowledge-note textarea, .knowledge-understanding textarea),
+  .app-shell .reader-article :is(.body-copy, blockquote, p),
+  .app-shell :is(.activity-row-content > p, .department-news-full article p, .department-news-detail > p, .department-news-detail label, .department-news-detail textarea),
+  .app-shell .briefing-detail :is(.briefing-lead, .body-copy, .briefing-facts p, .briefing-concept p, .briefing-thought textarea),
+  .app-shell .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { font-size: 14px; line-height: 1.75; }
 }

@@ -27,21 +27,21 @@
 .markdown li :is(ul,ol) { margin: 5px 0 8px; }
 .markdown strong { font-weight: 600; }
 .markdown em { font-style: italic; }
-.markdown a { color: #3865a0; text-decoration: underline; text-underline-offset: 3px; }
-.markdown a:hover { color: #244b82; }
+.markdown a { color: var(--clarity-action); text-decoration: underline; text-underline-offset: 3px; }
+.markdown a:hover { color: var(--clarity-action-hover); }
 .markdown blockquote {
   margin: 16px 0;
   padding: 3px 0 3px 15px;
-  border-left: 3px solid #c9d6e8;
-  color: #5d6876;
+  border-left: 3px solid var(--clarity-line);
+  color: var(--clarity-muted);
 }
 .markdown blockquote p:last-child { margin-bottom: 0; }
 .markdown code {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: .87em;
   white-space: break-spaces;
-  background: #f0f3f7;
-  color: #35495e;
+  background: var(--clarity-soft);
+  color: var(--clarity-ink);
   border-radius: 4px;
   padding: 2px 5px;
 }
@@ -53,20 +53,20 @@
   padding: 15px 17px;
   border: 0;
   border-radius: 8px;
-  background: #f4f6f9;
-  color: #35495e;
+  background: var(--clarity-soft);
+  color: var(--clarity-ink);
   line-height: 1.65;
   scrollbar-width: thin;
 }
 .markdown pre code { background: transparent; padding: 0; white-space: pre; }
-.markdown hr { margin: 24px 0; border: 0; height: 1px; background: #e8edf2; }
+.markdown hr { margin: 24px 0; border: 0; height: 1px; background: var(--clarity-line); }
 .tableScroll { max-width: 100%; overflow-x: auto; margin: 16px 0; scrollbar-width: thin; }
 .tableScroll table { width: 100%; min-width: 340px; border-collapse: collapse; font-size: .93em; }
-.tableScroll :is(th,td) { padding: 10px 12px; border: 0; border-bottom: 1px solid #e8edf2; text-align: left; vertical-align: top; }
-.tableScroll th { background: #f2f5f9; font-weight: 550; }
-.markdown input[type="checkbox"] { width: 14px; height: 14px; margin-right: 6px; accent-color: #3c8a6a; }
+.tableScroll :is(th,td) { padding: 10px 12px; border: 0; border-bottom: 1px solid var(--clarity-line); text-align: left; vertical-align: top; }
+.tableScroll th { background: var(--clarity-soft); font-weight: 550; }
+.markdown input[type="checkbox"] { width: 14px; height: 14px; margin-right: 6px; accent-color: var(--clarity-action); }
 .markdown :global(.contains-task-list) { list-style: none; padding-left: 0; }
-.imageAlt { color: #687487; }
+.imageAlt { color: var(--clarity-muted); }
 
 @media (max-width: 700px) {
   .markdown { line-height: 1.7; }

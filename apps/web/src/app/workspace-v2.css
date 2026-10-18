@@ -44,7 +44,7 @@
 .resource-body h2 { font-size: 27px; line-height: 1.4; letter-spacing: -.035em; word-break: keep-all; margin: 0 0 28px; }
 .resource-body h3 { font-size: 17px; margin: 30px 0 14px; }
 .resource-body p,.resource-body li { font-size: 15px; line-height: 1.85; }
-.resource-body blockquote { margin: 22px 0; border-left: 2px solid #00ee77; padding-left: 18px; }
+.resource-body blockquote { margin: 22px 0; border-left: 2px solid var(--clarity-line); padding-left: 18px; }
 .resource-body blockquote cite { color: var(--muted); font-size: 12px; font-style: normal; }
 .resource-link { display: flex; align-items: center; justify-content: space-between; gap: 15px; width: 100%; padding: 16px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; line-height: 1.6; font-size: 14px; }
 .resource-link svg { flex-shrink: 0; }

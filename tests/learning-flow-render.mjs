@@ -21,14 +21,18 @@ function load(relative,mocks={}) {
   if(name==='react/jsx-runtime')return runtime;
   if(name==='lucide-react')return icons;
   if(name==='react')return React;
-  if(name==='@/lib/learning-target-scope')return targetScope;
+  if(name==='@/lib/learning-target-scope'||name==='./learning-target-scope')return targetScope;
   if(name==='@gakja/content-contracts/workflows')return workflow;
-  if(name==='@/lib/learning-growth'||name==='./learning-growth')return load('../apps/web/src/lib/learning-growth.ts');
-  if(name==='./transcript-provenance')return load('../apps/web/src/lib/transcript-provenance.ts');
-  if(name==='@/lib/learning-flow-view')return load('../apps/web/src/lib/learning-flow-view.ts');
-  if(name==='@/lib/today-learning-stage')return load('../apps/web/src/lib/today-learning-stage.ts');
-  if(name==='@/lib/today-review-plan')return load('../apps/web/src/lib/today-review-plan.ts');
-  if(name==='@/lib/learning-journey')return load('../apps/web/src/lib/learning-journey.ts');
+  // Follow real library dependencies relative to their importer. Components keep
+  // their explicit UI/network adapters, while new pure helper imports need no stubs.
+  const libraryRoot=new URL('../apps/web/src/lib/',import.meta.url);
+  const dependency=name.startsWith('@/lib/')?new URL(name.slice('@/lib/'.length),libraryRoot):name.startsWith('.')&&url.href.startsWith(libraryRoot.href)?new URL(name,url):null;
+  if(dependency?.href.startsWith(libraryRoot.href)){
+   for(const suffix of ['', '.ts', '.tsx']){
+    const candidate=new URL(dependency.href+suffix);
+    if(fs.existsSync(candidate)&&fs.statSync(candidate).isFile())return load(candidate);
+   }
+  }
   throw new Error(name);
  }});
  if(!Object.keys(mocks).length)modules.set(key,module.exports);return module.exports;
@@ -173,8 +177,27 @@ assert.ok(home.includes('내 기록에서, 내 말로.')&&home.includes('이 답
 assert.ok(home.includes('sourceVersion=7')&&home.includes('sourceType=personal'));
 assert.ok(!home.includes('progressbar')&&!home.includes('준비 완료')&&!home.includes('자료 읽기 완료'));
 assert.ok(home.includes('학교 면접 일정'));
+const homeSections=['id="dashboard-next-title"','id="dashboard-agenda-title"','id="dashboard-answer-title"','id="dashboard-reading-title"','학교 면접 일정'];
+for(const section of homeSections)assert.ok(home.includes(section),'the current question, work, answer, reading and calendar remain present');
+for(let index=1;index<homeSections.length;index++)assert.ok(home.indexOf(homeSections[index-1])<home.indexOf(homeSections[index]),'mobile and assistive reading order prioritizes the current question, work and answer before supplemental reading and the full calendar');
+const focusActionsOf=markup=>markup.match(/<div class="focusActions">([\s\S]*?)<\/div>/)?.[1]||'';
+assert.match(focusActionsOf(home),/<a(?=[^>]*href="\/schools\/target")(?=[^>]*class="text-link")/,'school guidance remains available beside a different primary learning action');
+for(const selectedTarget of [target,undefined]){
+ const schoolApp={...bootstrap,targets:selectedTarget?[selectedTarget]:[],interviews:[]};
+ const component=load('../apps/web/src/components/dashboard.tsx',{...mocks,
+  './app-shell':{useApp:()=>({data:schoolApp,target:selectedTarget,targetId:selectedTarget?.id||'',toast(){}})},
+  react:hooks([{answerRevisions:[],assignments:[]},null,[],[],{recommendation:{count:0,items:[]},sessions:[]},{commonQuestions:[]},'',true,true,true,'briefing',[],undefined]),
+  './dashboard-planner':{DashboardPlanner:()=>null},'./department-news':{DepartmentNews:()=>null},
+ }).Dashboard;
+ const actions=focusActionsOf(renderToStaticMarkup(React.createElement(component)));
+ const href=selectedTarget?'/schools/target':'/schools/new';
+ assert.equal((actions.match(new RegExp(`href="${href}"`,'g'))||[]).length,1,'school guidance or registration has only one CTA when it is the next action');
+ assert.match(actions,new RegExp(`<a(?=[^>]*href="${href}")(?=[^>]*class="button primary")`),'the school destination keeps the primary action');
+ assert.ok(!actions.includes('class="text-link"'),'no secondary link duplicates the primary school destination');
+}
+console.log('Dashboard school CTA render: one primary guidance/registration link, distinct secondary guidance preserved.');
 bootstrap.interviews=[{id:'other',state:'active',kind:'chat',target_id:'other',data:{context:{target:{...target,id:'other',university:'이전대학교'}},questionQueue:[{...originalQuestion,prompt:'다른 학교의 미완료 질문'}]}}];
-const scopedDashboard=()=>load('../apps/web/src/components/dashboard.tsx',{...mocks,react:hooks([{answerRevisions:[],assignments:[]},null,[{id:'other-plan',date:'2026-10-14',title:'다른 학교의 계획',target_id:'other'},{id:'personal',date:'2026-10-14',title:'나의 공통 계획'}],[],{sessions:[{id:'foreign-quiz',state:'active',current_index:1,total:3,metadata:{targetId:'other'}}],recommendation:{count:1,items:[{question_id:'q1'}]}},{commonQuestions:[]},'',true,true,true,'briefing',[],undefined]),'./dashboard-planner':{DashboardPlanner:()=>null},'./department-news':{DepartmentNews:()=>null}}).Dashboard;
+const scopedDashboard=()=>load('../apps/web/src/components/dashboard.tsx',{...mocks,react:hooks([{answerRevisions:[],assignments:[]},null,[{id:'other-plan',date:'2026-10-14',title:'다른 학교의 계획',target:{targetId:'other'}},{id:'personal',date:'2026-10-14',title:'나의 공통 계획'}],[],{sessions:[{id:'foreign-quiz',state:'active',current_index:1,total:3,metadata:{targetId:'other'}}],recommendation:{count:1,items:[{question_id:'q1'}]}},{commonQuestions:[]},'',true,true,true,'briefing',[],undefined]),'./dashboard-planner':{DashboardPlanner:()=>null},'./department-news':{DepartmentNews:()=>null}}).Dashboard;
 const scopedHome=renderToStaticMarkup(React.createElement(scopedDashboard()));
 assert.ok(!scopedHome.includes('다른 학교의 미완료 질문')&&!scopedHome.includes('/interview/other?'));
 assert.ok(!scopedHome.includes('/quiz/session/foreign-quiz'));
@@ -196,7 +219,7 @@ const practicedHome=renderDashboardPlans(practicePlans);
 assert.match(practicedHome,/남은 계획 1개/);assert.ok(!practicedHome.includes('남은 계획 2개'));
 assert.match(practicedHome,/실제 수행한 복습 · 실제 연습 기록 있음/);
 assert.match(practicedHome,/href="\/quiz\?questionId=q1&amp;targetId=target&amp;sourceType=personal&amp;sourceVersion=6"[^>]*>다시 연습/);
-assert.ok(practicedHome.indexOf('아직 연습하지 않은 복습')<practicedHome.indexOf('실제 수행한 복습')&&practicedHome.indexOf('실제 수행한 복습')<practicedHome.indexOf('직접 체크한 계획'));
+assert.ok(practicedHome.indexOf('아직 연습하지 않은 복습')<practicedHome.indexOf('실제 수행한 복습')&&practicedHome.indexOf('아직 연습하지 않은 복습')<practicedHome.indexOf('직접 체크한 계획'),'unfinished work precedes both observed practice and manually completed plans');
 assert.ok(!practicedHome.includes('숙달 완료')&&!practicedHome.includes('실력 향상'));
 assert.equal(practicePlans[0].completed,false,'observed practice never toggles the manual checkbox');
 assert.equal(practicePlans[1].performedAt,null,'a manual check never fabricates saved practice');

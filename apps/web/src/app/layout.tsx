@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import './editorial.css';
 import './marketing-polish.css';
@@ -27,7 +27,6 @@ import './brand-qa-refinement.css';
 import './assistant-workspace.css';
 import './speech-growth.css';
 import './plain-ui.css';
-import './centered-auth.css';
 import './school-axis.css';
 import './brand-clarity.css';
 import './clarity-chrome.css';
@@ -36,6 +35,8 @@ import './clarity-reading.css';
 import './light-workspace.css';
 import './light-conversations.css';
 import './light-learning.css';
+import './centered-auth.css';
 import './mobile-polish.css';
 export const metadata: Metadata = { title: { default: '각자ON · 각자의답', template: '%s · 각자ON' }, description: '물음 너머에는 각자의 답이 있습니다.', icons: { icon: '/brand-logo.svg' }, robots: { index: false, follow: false } };
+export const viewport: Viewport = { width:'device-width', initialScale:1, viewportFit:'cover', interactiveWidget:'resizes-content', themeColor:'#FFFFFF' };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="ko"><body>{children}</body></html>; }

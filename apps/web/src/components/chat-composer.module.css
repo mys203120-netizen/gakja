@@ -3,7 +3,7 @@
   min-width: 0;
   margin-top: auto;
   padding: 20px 0 max(10px, env(safe-area-inset-bottom));
-  background: linear-gradient(to top, #ffffff, #ffffffed 70%, transparent);
+  background: transparent;
 }
 
 .shell {
@@ -15,14 +15,14 @@
   margin: 0 auto;
   padding: 6px;
   border: 0;
-  border-radius: 22px;
-  background: #f8fafd;
-  box-shadow: 0 0 0 1px #dce4f0;
+  border-radius: 16px;
+  background: var(--clarity-surface);
+  box-shadow: 0 0 0 1px var(--clarity-line);
   backface-visibility: hidden;
   -webkit-tap-highlight-color: transparent;
 }
 
-.shell:focus-within { box-shadow: 0 0 0 2px #1967d2; }
+.shell:focus-within { box-shadow: 0 0 0 2px var(--clarity-action); }
 
 .shell .input {
   position: relative;
@@ -35,10 +35,10 @@
   padding: 8px 12px;
   border: 0;
   border-radius: 20px;
-  background: #ffffff1a;
-  color: #1d1d1f;
+  background: transparent;
+  color: var(--clarity-ink);
   font: inherit;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 24px;
   resize: none;
   overflow-y: auto;
@@ -48,13 +48,13 @@
   backdrop-filter: none;
 }
 
-.shell .input:focus, .shell .input:focus-visible {
+.composer .shell textarea.input:focus, .composer .shell textarea.input:focus-visible {
   border: 0;
   box-shadow: none;
   outline: none;
 }
 
-.shell .input::placeholder { color: #65717f; }
+.shell .input::placeholder { color: var(--clarity-muted); }
 .shell .input:disabled { opacity: .62; cursor: default; }
 
 .shell .send {
@@ -67,7 +67,7 @@
   border: 0;
   border-radius: 50%;
   background: var(--clarity-action);
-  color: #fff;
+  color: var(--clarity-on-action);
   box-shadow: none;
   transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
   cursor: pointer;
@@ -75,22 +75,37 @@
 
 .shell .send:hover:not(:disabled) { transform: translateY(-1px); background: var(--clarity-action-hover); box-shadow: none; }
 .shell .send:active:not(:disabled) { transform: translateY(0) scale(.97); }
-.shell .send:disabled { background: #e6edf8; color: #8293ac; box-shadow: none; cursor: default; opacity: 1; }
-.shell .send[aria-busy="true"] { background: #e8f0fe; color: #185abc; }
-.shell .send:focus-visible { outline: 2px solid #0066cc; outline-offset: 3px; }
+.shell .send:disabled { background: var(--clarity-soft); color: var(--clarity-muted); box-shadow: none; cursor: default; opacity: .5; }
+.shell .send[aria-busy="true"] { background: var(--clarity-soft); color: var(--clarity-action); opacity: 1; }
+.shell .send:focus-visible { outline: 2px solid var(--clarity-action); outline-offset: 3px; }
 .tools { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1120px; margin: 8px auto 0; padding: 0 10px; }
 .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }
-.helper { display: flex; align-items: center; gap: 12px; margin-left: auto; color: #69737c; font-size: 12px; white-space: nowrap; }
+.helper { display: flex; align-items: center; gap: 12px; margin-left: auto; color: var(--clarity-muted); font-size: 12px; white-space: nowrap; }
+
+/* The conversation input sits in the same canvas as the messages. Its actions
+   belong to the input, so there is no separate toolbar across the page bottom. */
+.conversation { padding: 12px 0 max(14px, env(safe-area-inset-bottom)); }
+.conversation .shell { display: grid; grid-template-columns: minmax(0, 1fr) 40px; align-items: end; gap: 4px 8px; max-width: 820px; padding: 10px; border: 1px solid var(--clarity-line); border-radius: 16px; background:var(--clarity-soft); box-shadow: none; }
+.conversation .shell:focus-within { border-color: var(--clarity-green); box-shadow: 0 0 0 1px var(--clarity-green); }
+.conversation .input { grid-column: 1 / -1; padding: 6px 8px 10px; border-radius: 0; background: transparent; }
+.inlineActions { display: flex; align-items: center; flex-wrap: wrap; min-width: 0; gap: 4px 8px; }
+.conversation .inlineActions :global(.button) { min-height: 40px; padding: 8px 10px; border: 0; border-radius: 12px; background: transparent; color: var(--clarity-muted); box-shadow: none; font-size: 13px; }
+.conversation .inlineActions :global(.button):hover:not(:disabled) { background: var(--clarity-soft); color: var(--clarity-ink); transform: none; }
+.count { color: var(--clarity-muted); font-size: 12px; }
 
 @media (max-width: 700px) {
   .composer { padding-top: 12px; }
   .tools { flex-wrap: wrap; gap: 8px; }
   .actions { gap: 8px; }
   .shell .send { flex-basis:44px; width:44px; height:44px; }
-  .shell .input { padding-inline:10px; }
+  .shell .input { padding-inline:10px; font-size:16px; }
   .tools { margin-top:6px; padding-inline:2px; }
   .helper:has(.keyboard:only-child) { display:none; }
   .helper { font-size: 12px; }
   .keyboard { display: none; }
+  .conversation { padding: 10px 0 max(12px, env(safe-area-inset-bottom)); }
+  .conversation .shell { grid-template-columns: minmax(0, 1fr) 44px; padding: 7px; border-radius: 20px; }
+  .conversation .input { padding: 7px 7px 9px; }
+  .conversation .inlineActions :global(.button) { min-height: 44px; padding-inline: 9px; }
 }
 @media (prefers-reduced-motion: reduce) { .shell .send { transition: none; } .shell .send:hover:not(:disabled), .shell .send:active:not(:disabled) { transform: none; } }

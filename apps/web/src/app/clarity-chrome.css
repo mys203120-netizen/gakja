@@ -1,6 +1,6 @@
-/* Shared chrome: quiet surfaces and readable green accents, without glass. */
+/* Shared chrome: quiet surfaces and restrained blue accents, without glass. */
 .app-shell .sidebar {
-  background: #f8fafb;
+  background: var(--clarity-bg);
   border-right: 0;
 }
 .app-shell :is(.topbar, .mobile-nav, .mobile-tools) {
@@ -25,32 +25,32 @@
   background: var(--clarity-mint);
 }
 .app-shell .main-nav > a.active {
-  color: var(--clarity-action);
-  background: var(--clarity-mint);
+  color: var(--clarity-on-action);
+  background: var(--clarity-action);
   font-weight: 450;
 }
 .app-shell .sidebar-selection {
-  background: var(--clarity-mint);
+  background: var(--clarity-action);
   border-radius: 10px;
 }
 .app-shell .sidebar-navigation[data-motion-ready=true] .main-nav > a.active {
   background: transparent;
 }
 .app-shell:not(.admin-shell) .sidebar .main-nav > a > span {
-  background: var(--clarity-ink);
-  color: #fff;
+  background: var(--clarity-surface);
+  color: var(--clarity-ink);
   border-radius: 8px;
-  box-shadow: 0 3px 10px #25332b0d;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--clarity-bg) 50%, transparent);
   font-weight: 450;
 }
 .app-shell .sidebar-navigation {
   scrollbar-color: transparent transparent;
 }
 .app-shell .sidebar-navigation:is(:hover, :focus-within) {
-  scrollbar-color: #b4c6b9 transparent;
+  scrollbar-color: var(--clarity-muted) transparent;
 }
 .app-shell .sidebar-navigation:is(:hover, :focus-within)::-webkit-scrollbar-thumb {
-  background: #b4c6b9;
+  background: var(--clarity-muted);
 }
 .app-shell :is(.topbar .icon-button, .account-trigger) {
   color: var(--clarity-muted);
@@ -61,7 +61,7 @@
   color: var(--clarity-green);
 }
 .app-shell .account-trigger .avatar {
-  background: #edf1ef;
+  background: var(--clarity-soft);
   color: var(--clarity-ink);
   font-weight: 450;
 }
@@ -89,7 +89,7 @@
 }
 .app-shell select:hover:not(:disabled) {
   background: var(--clarity-soft);
-  border-color: #b7ccbc;
+  border-color: var(--clarity-muted);
 }
 .app-shell .topbar-context .target-select select {
   background: var(--clarity-soft);
@@ -108,7 +108,7 @@
     border-color: var(--clarity-line);
     border-radius: 10px;
     color: var(--clarity-ink);
-    box-shadow: 0 6px 22px #25332b12;
+    box-shadow: 0 6px 22px color-mix(in srgb, var(--clarity-ink) 12%, transparent);
   }
   .app-shell select::picker-icon { color: var(--clarity-muted); }
   .app-shell select option {
@@ -128,7 +128,7 @@
   .app-shell select:not([multiple]):not([size]) {
     appearance: none;
     padding-inline-end: 40px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236c776f'%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='19' cy='12' r='2'/%3E%3C/svg%3E") !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23696E78'%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='19' cy='12' r='2'/%3E%3C/svg%3E") !important;
     background-position: right 12px center !important;
     background-size: 18px 18px !important;
     background-repeat: no-repeat !important;
@@ -139,7 +139,7 @@
   background: var(--clarity-surface);
   border-color: var(--clarity-line);
   border-radius: 10px;
-  box-shadow: 0 6px 22px #25332b12;
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--clarity-ink) 12%, transparent);
 }
 .account-popover > :is(a, button) { color: var(--clarity-ink); font-weight: 450; }
 .account-popover > :is(a, button):hover { background: var(--clarity-soft); }
@@ -153,7 +153,7 @@
 .account-popover > button:last-child svg { color: var(--clarity-danger); }
 .modal-backdrop,
 .logout-dialog::backdrop {
-  background: #25332b4d;
+  background: color-mix(in srgb, var(--clarity-ink) 42%, transparent);
   backdrop-filter: none;
 }
 .native-modal::backdrop { background: transparent; backdrop-filter: none; }
@@ -163,7 +163,7 @@
   color: var(--clarity-ink);
   border: 1px solid var(--clarity-line);
   border-radius: 10px;
-  box-shadow: 0 8px 28px #25332b14;
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--clarity-ink) 12%, transparent);
 }
 .native-modal .modal { padding: 28px; }
 .native-modal .modal .section-heading h2,
@@ -178,8 +178,8 @@
 .logout-symbol { color: var(--clarity-muted); }
 .logout-actions .button { border-radius: 8px; font-weight: 450; }
 .logout-actions .button.ghost { background: var(--clarity-soft); color: var(--clarity-ink); }
-.logout-actions .button.primary { background: var(--clarity-danger); border-color: var(--clarity-danger); color: #fff; }
-.logout-actions .button.primary:hover:not(:disabled) { background: #963c30; border-color: #963c30; }
+.logout-actions .button.primary { background: var(--clarity-danger); border-color: var(--clarity-danger); color: var(--clarity-on-action); }
+.logout-actions .button.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--clarity-danger) 85%, var(--clarity-ink)); border-color: color-mix(in srgb, var(--clarity-danger) 85%, var(--clarity-ink)); }
 .native-modal .modal .search-field {
   background: var(--clarity-soft);
   border-color: var(--clarity-line);
@@ -239,7 +239,7 @@
 .auth-page.auth-centered .auth-submit {
   background: var(--clarity-action);
   border-color: var(--clarity-action);
-  color: #fff;
+  color: var(--clarity-on-action);
   border-radius: 9px;
   font-weight: 500;
   box-shadow: none;
@@ -253,7 +253,7 @@
 .auth-page.auth-centered .auth-center-mark .auth-motion-toggle { color: var(--clarity-muted); }
 .auth-page.auth-centered .auth-center-mark .auth-motion-toggle:hover { background: var(--clarity-soft); color: var(--clarity-green); }
 .auth-page.auth-centered .auth-privacy-cue { background: var(--clarity-mint); color: var(--clarity-green); box-shadow: none; }
-.auth-page.auth-centered .alert { color: var(--clarity-danger); background: #fbf0ec; border-radius: 8px; }
+.auth-page.auth-centered .alert { color: var(--clarity-danger); background: color-mix(in srgb, var(--clarity-danger) 12%, var(--clarity-bg)); border-radius: 8px; }
 .auth-page.auth-centered .success-message { color: var(--clarity-green); background: var(--clarity-mint); border-radius: 8px; }
 
 /* Registration: alignment and distinct states carry the hierarchy. */

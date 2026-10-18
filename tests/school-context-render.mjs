@@ -5,6 +5,7 @@ import ts from 'typescript';
 import { tsImport } from 'tsx/esm/api';
 
 const scope = await tsImport('../apps/web/src/lib/learning-target-scope.ts', import.meta.url);
+const interviewScope = await tsImport('../apps/web/src/lib/school-interview-scope.ts', import.meta.url);
 const planner = await tsImport('../apps/web/src/lib/planner-model.ts', import.meta.url);
 const schedule = await tsImport('../apps/web/src/lib/schedule.ts', import.meta.url);
 const calendarPresentation = await tsImport('../apps/web/src/lib/calendar-presentation.ts', import.meta.url);
@@ -27,6 +28,7 @@ function load(file) {
       if (name === './app-shell') return { useApp: () => app };
       if (name === './shared') return shared;
       if (name === '@/lib/learning-target-scope') return scope;
+      if (name === '@/lib/school-interview-scope') return interviewScope;
       if (name === '@/lib/planner-model') return planner;
       if (name === '@/lib/schedule') return schedule;
       if (name === '@/lib/calendar-presentation') return calendarPresentation;
@@ -34,6 +36,7 @@ function load(file) {
       if (name === '@/lib/interview-flow') return { interviewSetupHref: (kind, _params, updates) => `/interview/${kind}?targetId=${updates.targetId}` };
       if (name === './interview') return { InterviewSetup: 'InterviewSetup', InterviewSession: 'InterviewSession' };
       if (name === './school-registration') return { SchoolRegistration: 'SchoolRegistration' };
+      if (name === './automatic-practice-plan') return { AutomaticPracticePlan: 'AutomaticPracticePlan' };
       if (name === './school-logo') return { SchoolLogo: 'SchoolLogo' };
       if (name.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
       if (name.endsWith('.css')) return {};

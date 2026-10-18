@@ -1,21 +1,13 @@
 .app-shell {
-  --accent-sky: #52779c;
-  --accent-violet: #81709c;
-  --accent-apricot: #a77749;
-  --wash-sky: #f0f5fb;
-  --wash-violet: #f5f2fa;
-  --wash-apricot: #fcf4eb;
+  --accent-sky: var(--clarity-muted);
+  --accent-violet: var(--clarity-muted);
+  --accent-apricot: var(--clarity-muted);
+  --wash-sky: var(--clarity-soft);
+  --wash-violet: var(--clarity-soft);
+  --wash-apricot: var(--clarity-soft);
 }
 
-/* Small, stable color cues identify learning destinations without extra labels. */
-.app-shell .main-nav a[href="/quiz"] > svg { color: #a77749; }
-.app-shell .main-nav a[href="/interview"] > svg { color: #52779c; }
-.app-shell .main-nav a[href="/records"] > svg { color: #81709c; }
-.app-shell .main-nav a[href="/knowledge"] > svg { color: #65856c; }
-.app-shell .sidebar-tools a[href="/on"] > svg { color: #52779c; }
-.app-shell .sidebar-tools a[href="/materials"] > svg { color: #81709c; }
-.app-shell .sidebar-selection { background: #edf1ee; }
-
-.app-shell .quiz-home .quiz-mode-row:nth-child(1) > svg { color: #a77749; }
-.app-shell .quiz-home .quiz-mode-row:nth-child(2) > svg { color: #52779c; }
-.app-shell .quiz-home .quiz-mode-row:nth-child(3) > svg { color: #81709c; }
+/* Destination icons follow their label; green indicates the current action. */
+.app-shell .main-nav a > svg,.app-shell .sidebar-tools a > svg { color:inherit; }
+.app-shell .sidebar-selection { background:var(--clarity-mint); }
+.app-shell .quiz-home .quiz-mode-row > svg { color:var(--clarity-muted); }
