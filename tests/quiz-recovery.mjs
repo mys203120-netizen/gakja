@@ -12,7 +12,7 @@ const target={id:'target',university:'서울시립대학교',campus:'본교',dep
 const savedTarget={...target,interview_stage:undefined};
 const item={id:'m1',question_id:'q1',prompt:'본인 역할은 무엇인가요?',activity_ids:['a1'],source_kind:'personal',target_id:'target',target_snapshot:savedTarget};
 const info={serverTime:new Date().toISOString(),session:{id:'session',student_id:'student',state:'active',mode:'answer',current_index:0,content_version:6,items:[item],metadata:{targetId:'target',targetSnapshot:savedTarget,drafts:{0:{response:'서버에 저장한 초안'}}}},responses:[],recordings:[],learning:{questions:[{id:'q1',prompt:item.prompt}],support_targets:[savedTarget],memory_items:[]}};
-const state={values:[],refs:[],hook:0,refHook:0,effects:[],calls:[],toasts:[],listener:null,adapter:null,apiAdapter:null,storage:new Map(),local:new Map(),now:0,capture:null,uploads:[],finishCount:0,tracksStopped:0,captureAvailable:true,uploadError:false,deviceRequests:0,timers:new Map(),confirm:false};
+const state={values:[],refs:[],hook:0,refHook:0,effects:[],calls:[],toasts:[],listener:null,adapter:null,apiAdapter:null,storage:new Map(),local:new Map(),now:0,capture:null,uploads:[],finishCount:0,tracksStopped:0,captureAvailable:true,uploadError:false,deviceRequests:0,timers:new Map(),confirm:false,events:new Map(),visibility:'visible',deviceGate:null,reservationGate:null,assertGate:null,cancelledReservations:0};
 let timerId=0;
 class FakeRecorder {
   static isTypeSupported(){return true;}
@@ -27,7 +27,7 @@ const durableAudio=new Map();
 const recoveryRemovals=[];
 const module={exports:{}};
 const actionButton=({pending=false,pendingLabel,disabled,children,type='button',...props})=>({type:'button',props:{...props,type,disabled:disabled||pending,'aria-busy':pending||undefined,children:pending?[{type:'LoaderCircle',props:{size:16,'aria-hidden':true}},pendingLabel??children]:children}});
-vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/quiz-v3.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,console,Date,Set,JSON,Blob,FormData,URL,URLSearchParams,AbortController,requestAnimationFrame:callback=>{callback();return 1;},cancelAnimationFrame(){},performance:{now:()=>state.now},crypto:{randomUUID:()=>`request-${++uuid}`},setTimeout:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearTimeout:id=>state.timers.delete(id),setInterval:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearInterval:id=>state.timers.delete(id),HTMLElement:class {},document:{activeElement:null,addEventListener(){},removeEventListener(){}},navigator:{mediaDevices:{getUserMedia:async()=>{state.deviceRequests++;return{getTracks:()=>[{stop(){state.tracksStopped++;}}]};}}},MediaRecorder:FakeRecorder,localStorage:{getItem:key=>state.local.get(key)??null,setItem:(key,value)=>state.local.set(key,value),removeItem:key=>state.local.delete(key)},sessionStorage:{getItem:key=>state.storage.get(key)??null,setItem:(key,value)=>state.storage.set(key,value),removeItem:key=>state.storage.delete(key)},window:{matchMedia:()=>({matches:true}),MediaRecorder:FakeRecorder,confirm:()=>state.confirm,addEventListener:(name,listener)=>{if(name==='gakja:open-on')state.listener=listener;},removeEventListener(){}},require(name){
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/quiz-v3.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,console,Date,Set,JSON,Blob,FormData,URL,URLSearchParams,AbortController,requestAnimationFrame:callback=>{callback();return 1;},cancelAnimationFrame(){},performance:{now:()=>state.now},crypto:{randomUUID:()=>`request-${++uuid}`},setTimeout:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearTimeout:id=>state.timers.delete(id),setInterval:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearInterval:id=>state.timers.delete(id),HTMLElement:class {},document:{activeElement:null,get visibilityState(){return state.visibility;},addEventListener(name,listener){state.events.set(name,listener);},removeEventListener(name){state.events.delete(name);}},navigator:{sendBeacon:(url,body)=>{state.calls.push({url,beacon:body});return true;},mediaDevices:{getUserMedia:async()=>{state.deviceRequests++;await state.deviceGate;return{getTracks:()=>[{stop(){state.tracksStopped++;}}]};}}},MediaRecorder:FakeRecorder,localStorage:{getItem:key=>state.local.get(key)??null,setItem:(key,value)=>state.local.set(key,value),removeItem:key=>state.local.delete(key)},sessionStorage:{getItem:key=>state.storage.get(key)??null,setItem:(key,value)=>state.storage.set(key,value),removeItem:key=>state.storage.delete(key)},window:{matchMedia:()=>({matches:true}),MediaRecorder:FakeRecorder,confirm:()=>state.confirm,addEventListener:(name,listener)=>{state.events.set(name,listener);if(name==='gakja:open-on')state.listener=listener;},removeEventListener(name){state.events.delete(name);}},require(name){
   if(name==='react')return{useState(initial){const index=state.hook++;if(!(index in state.values))state.values[index]=typeof initial==='function'?initial():initial;return[state.values[index],value=>{state.values[index]=typeof value==='function'?value(state.values[index]):value;}];},useRef(initial){const index=state.refHook++;if(!(index in state.refs))state.refs[index]={current:initial};return state.refs[index];},useEffect(callback){state.effects.push(callback);},useCallback:callback=>callback};
   if(name==='react/jsx-runtime')return{jsx:(type,props)=>type===actionButton?actionButton(props):({type,props}),jsxs:(type,props)=>type===actionButton?actionButton(props):({type,props}),Fragment:'Fragment'};
   if(name==='next/link')return{__esModule:true,default:'Link'};
@@ -40,7 +40,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   if(name==='./audio-level-dot')return{AudioLevelDot:'AudioLevelDot'};
   if(name==='./playful-flow')return{animateStudyReceipt(){}};
   if(name==='@/lib/client/speech-recorder')return{startSpeechCapture(){if(!state.captureAvailable)return null;const started=state.now;return{elapsedMs:()=>state.now-started,dispose(){},pause(){},resume(){},finish(){state.finishCount++;const elapsed=state.now-started;return buildSpeechTelemetry([{atMs:0,rms:0},{atMs:elapsed-.1,rms:.04}],elapsed);}};}};
-  if(name==='@/lib/client/recording-recovery')return{installRecordingExitGuard:()=>()=>{},readRecordingRecovery:async scope=>durableAudio.get(JSON.stringify(scope))||null,removeRecordingRecovery:async key=>{recoveryRemovals.push(key);durableAudio.delete(key);},beginRecordingRecovery:async(scope,mimeType)=>{const key=JSON.stringify(scope),chunks=[];let closed=false;return{key,assertActive:async()=>{if(closed)throw Error('closed');},assertFresh:()=>{if(closed)throw Error('closed');},cancel:async()=>{if(chunks.length)throw Error('pending audio');closed=true;durableAudio.delete(key);},append:async blob=>{if(closed)throw Error("closed");chunks.push(blob);durableAudio.set(key,{...scope,key,blob:new Blob(chunks,{type:mimeType||blob.type}),durationMs:1,complete:false});},finish:async measurement=>{if(closed)throw Error("closed");const saved={...scope,key,blob:new Blob(chunks,{type:mimeType||chunks[0]?.type}),...measurement,complete:true};durableAudio.set(key,saved);return saved;},flush:async()=>{}};}};
+  if(name==='@/lib/client/recording-recovery')return{installRecordingExitGuard:()=>()=>{},readRecordingRecovery:async scope=>durableAudio.get(JSON.stringify(scope))||null,removeRecordingRecovery:async key=>{recoveryRemovals.push(key);durableAudio.delete(key);},beginRecordingRecovery:async(scope,mimeType)=>{await state.reservationGate;const key=JSON.stringify(scope),chunks=[];let closed=false;return{key,assertActive:async()=>{await state.assertGate;if(closed)throw Error('closed');},assertFresh:()=>{if(closed)throw Error('closed');},cancel:async()=>{if(chunks.length)throw Error('pending audio');closed=true;state.cancelledReservations++;durableAudio.delete(key);},append:async blob=>{if(closed)throw Error("closed");chunks.push(blob);durableAudio.set(key,{...scope,key,blob:new Blob(chunks,{type:mimeType||blob.type}),durationMs:1,complete:false});},finish:async measurement=>{if(closed)throw Error("closed");const saved={...scope,key,blob:new Blob(chunks,{type:mimeType||chunks[0]?.type}),...measurement,complete:true};durableAudio.set(key,saved);return saved;},flush:async()=>{}};}};
   if(name==='@/lib/recording-upload-client')return{uploadRecording:async(url,form)=>{const durationMs=Number(form.get('durationMs')),telemetry=form.get('speechTelemetry')?JSON.parse(form.get('speechTelemetry')):null;assert.ok(!telemetry||validateSpeechTelemetry(telemetry));assert.ok(!telemetry||Math.abs(telemetry.durationMs-durationMs)<=500);state.uploads.push({durationMs,telemetry,blob:form.get('recording')});if(state.uploadError)throw new Error('synthetic upload failed');return{recording:{id:'new-recording',session_id:'session',item_index:0,url:'/owned-recording'}};}};
   if(name==='@gakja/content-contracts/workflows')return contracts;
   if(name==='@/lib/quiz-session-view')return view;
@@ -48,7 +48,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   throw new Error(name);
 }});
 const render=()=>{state.hook=0;state.refHook=0;state.effects=[];return module.exports.QuizSession({id:'session'});};
-const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.values[23]=true;durableAudio.clear();recoveryRemovals.length=0;state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.uploadError=false;state.deviceRequests=0;state.timers.clear();state.confirm=false;};
+const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.values[23]=true;durableAudio.clear();recoveryRemovals.length=0;state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.uploadError=false;state.deviceRequests=0;state.timers.clear();state.confirm=false;state.events.clear();state.visibility='visible';state.deviceGate=null;state.reservationGate=null;state.assertGate=null;state.cancelledReservations=0;};
 const nodes=tree=>Array.isArray(tree)?tree.flatMap(nodes):tree&&typeof tree==='object'?[tree,...nodes(tree.props?.children),...nodes(tree.props?.aside)]:[];
 const text=value=>Array.isArray(value)?value.map(text).join(''):value&&typeof value==='object'?text(value.props?.children):typeof value==='string'?value:'';
 const saveButton=tree=>nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='답변 저장');
@@ -136,6 +136,77 @@ nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='지금
 check(state.deviceRequests===1&&state.capture?.state==='recording','skip reuses the checked device and opens exactly one recorder');
 reset();state.values[10]=true;state.values[23]=false;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='취소').props.onClick();
 check(state.values[22]===null&&state.capture===null&&state.tracksStopped===1,'cancel microphone check releases the device without recording an answer');
+
+const pauseButton=()=>nodes(render()).find(node=>node.props?.['aria-label']==='일시정지');
+const installVisibility=()=>state.effects.find(effect=>effect.toString().includes('visibilitychange'))();
+const deferred=()=>{let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});return{promise,resolve,reject};};
+const prepareCountdown=async()=>{
+  state.values[10]=true;state.values[23]=false;
+  await nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
+  nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='준비됐어요 · 3초 뒤 시작').props.onClick();
+  render();state.effects.find(effect=>effect.toString().includes('preparation > 1'))();
+  return [...state.timers.values()].find(timer=>timer.ms===1000).callback;
+};
+const pauseResponse=async(url,payload)=>({...info,session:{...info.session,state:payload.action==='start'?'active':'paused'}});
+const installPreparationTick=()=>{render();state.effects.find(effect=>effect.toString().includes('preparation > 1'))();return [...state.timers.values()].find(timer=>timer.ms===1000).callback;};
+reset();await prepareCountdown();
+for(let second=3;second>=1;second--){const tick=[...state.timers.entries()].find(([,timer])=>timer.ms===1000);state.timers.delete(tick[0]);await tick[1].callback();await settle();if(second>1)installPreparationTick();}
+check(state.capture?.state==='recording'&&state.deviceRequests===1,'an uninterrupted explicit readiness countdown starts exactly one recorder');
+
+for(const exit of ['pause','hidden','pagehide']){
+  reset();state.adapter=pauseResponse;await prepareCountdown();state.timers.clear();state.values[22]=1;const staleTick=installPreparationTick();installVisibility();
+  if(exit==='pause')await pauseButton().props.onClick();
+  else{if(exit==='hidden')state.visibility='hidden';state.events.get(exit==='hidden'?'visibilitychange':'pagehide')();await settle();}
+  check(state.values[22]===null&&state.timers.size===0,`${exit} clears the readiness countdown immediately`);
+  await staleTick();await settle();
+  check(state.capture===null&&state.tracksStopped===1&&state.cancelledReservations===1,`${exit} cannot start a recorder from a stale countdown and releases its device and reservation`);
+  check(state.values[0].session.state==='paused',`${exit} pauses the session as well as readiness`);
+  state.visibility='visible';state.events.get('visibilitychange')();render();await settle();
+  check(state.capture===null&&state.values[22]===null,`${exit} requires an explicit restart after returning`);
+}
+
+reset();state.adapter=pauseResponse;render();
+const cleanupPreparation=state.effects.find(effect=>effect.toString().includes('mounted.current = true'))();
+await settle();state.values[0]=info;const unmountTick=await prepareCountdown();const cleanupVisibility=installVisibility();cleanupPreparation();cleanupVisibility();await settle();await unmountTick();
+const exitPayload=JSON.parse(await state.calls.find(call=>call.beacon).beacon.text());
+check(exitPayload.action==='pause'&&exitPayload.sessionId==='session'&&exitPayload.itemIndex===0&&state.capture===null,'route unmount pauses the exact server question before losing preparation ownership and never starts a recorder');
+check(state.tracksStopped===1&&state.cancelledReservations===1,'route unmount releases the prepared device and exact reservation');
+
+reset();const staleSaveTick=await prepareCountdown(),draftGate=deferred();state.adapter=async()=>draftGate.promise;
+const pendingPause=pauseButton().props.onClick();await settle();
+check(state.values[22]===null&&state.values[0].session.state==='paused'&&state.tracksStopped===1,'pause cancels readiness and releases the microphone before a draft save responds');
+draftGate.reject(new Error('synthetic draft failure'));await pendingPause;await staleSaveTick();await settle();
+check(state.capture===null&&state.values[0].session.state==='paused','failed draft saving cannot revive a cancelled recording countdown');
+
+for(const pending of ['reservation','permission','assert']){
+  reset();state.adapter=pauseResponse;state.values[10]=true;state.values[23]=pending!=='assert';const gate=deferred();
+  if(pending==='reservation')state.reservationGate=gate.promise;
+  if(pending==='permission')state.deviceGate=gate.promise;
+  const request=nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
+  await settle();
+  if(pending==='assert'){
+    await request;state.assertGate=gate.promise;
+    nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='지금 시작').props.onClick();await settle();
+  }
+  render();installVisibility();state.visibility='hidden';state.events.get('visibilitychange')();await settle();gate.resolve();await request;await settle();
+  check(state.capture===null&&state.values[0].session.state==='paused',`hiding during ${pending} cancels the pending recording start`);
+  check(state.deviceRequests===(pending==='reservation'?0:1)&&state.tracksStopped===(pending==='reservation'?0:1),`late ${pending} response releases only the owned device`);
+}
+
+for(const lateResult of ['permission','permission-error','assert']){
+  reset();state.adapter=pauseResponse;state.values[10]=true;state.values[23]=lateResult!=='assert';const gate=deferred();
+  if(lateResult.startsWith('permission'))state.deviceGate=gate.promise;
+  const oldRequest=nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();await settle();
+  if(lateResult==='assert'){await oldRequest;state.assertGate=gate.promise;nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='지금 시작').props.onClick();await settle();}
+  render();installVisibility();state.visibility='hidden';state.events.get('visibilitychange')();await settle();
+  // The student explicitly resumes and starts again before the old browser/IDB response arrives.
+  state.visibility='visible';state.values[0]=info;state.values[23]=true;state.deviceGate=null;state.assertGate=null;
+  await nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();const newCapture=state.capture;
+  if(lateResult==='permission-error')gate.reject(new Error('old permission request failed'));else gate.resolve();await oldRequest;await settle();
+  check(state.capture===newCapture&&newCapture.state==='recording'&&state.values[11]==='recording',`late ${lateResult} cannot stop or reset a newer explicit recording`);
+  state.now=1200;nodes(render()).find(node=>node.type==='button'&&text(node.props.children).startsWith('녹음 완료')).props.onClick();await newCapture.deliverStop();
+  check(state.uploads.length===1&&state.values[17]===null,`new recording remains saveable after late ${lateResult}`);
+}
 reset();state.values[4]='';state.values[17]={blob:new Blob(['private-audio']),index:0,durationMs:1200};tree=render();const autosave=state.effects.find(effect=>effect.toString().includes('450'));autosave();autosave();
 check(JSON.parse(state.local.get('gakja-quiz-activity:student:session')).hasRecording===true,'blank text autosave retains first-question audio-only resume evidence');
 
