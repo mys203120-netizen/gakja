@@ -84,9 +84,28 @@
 :global(.app-shell) :global(.main-content):has(.page),.page { background:var(--clarity-bg); }
 .page.page .workspace { gap:24px; }
 .page.page .workspace > :global(.chat-history) { border:0; padding-right:18px; }
-.page.page .workspace :global(.message.user .message-content) { border:0; border-radius:22px 22px 8px 22px; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.page.page .workspace :global(.chat-messages) { padding:24px max(12px,calc((100% - 820px) / 2)) 24px; }
+.page.page .workspace :global(.message) { margin-bottom:28px; }
+/* Role labels sit above full-width bubbles, so the avatar never indents a reply. */
+.page.page .workspace :global(.message.assistant) { position:relative; display:block; padding:0; }
+.page.page .workspace :global(.message.assistant .message-avatar) { position:absolute; top:0; left:0; width:26px; height:26px; margin:0; }
+.page.page .workspace :global(.message.assistant .message-body) { width:100%; max-width:68ch; font-size:16px; }
+.page.page .workspace :global(.message.assistant .message-author) { display:flex; align-items:center; min-height:26px; padding-left:34px; margin:0 0 9px; color:var(--clarity-ink); font-size:12px; font-weight:600; }
+.page.page .workspace :global(.message.assistant .message-content) { width:100%; padding:22px 24px; border:0; border-radius:24px 24px 24px 8px; background:var(--clarity-surface); color:var(--clarity-ink); box-shadow:var(--soft-shadow-raised); font-size:16px; line-height:1.8; }
+.page.page .workspace :global(.message.user) { padding:0; gap:0; }
+.page.page .workspace :global(.message.user .message-body) { max-width:min(90%,68ch); font-size:16px; }
+.page.page .workspace :global(.message.user .message-author) { display:block; margin:0 0 9px; color:var(--soft-accent-ink); font-size:12px; font-weight:600; text-align:right; }
+.page.page .workspace :global(.message.user .message-content) { padding:18px 22px; border:0; border-radius:24px 24px 8px 24px; background:var(--clarity-mint); color:var(--clarity-ink); box-shadow:var(--soft-shadow-small); font-size:16px; line-height:1.8; }
 .page.page .workspace :global(.message-save),.page.page .workspace :global(.message-sources button),.page :global(.on-reference-tools button) { min-height:44px; border:0; border-radius:var(--soft-control-radius); }
+.page.page .workspace :global(.message-sources) { gap:6px; margin:12px 0 0; }
+.page.page .workspace :global(.message-sources button) { padding:8px 12px; background:var(--clarity-soft); color:var(--soft-accent-ink); }
 .page.page .workspace :global(.message-save:hover),.page.page .workspace :global(.message-sources button:hover),.page :global(.on-reference-tools button:hover) { background:var(--clarity-soft); color:var(--soft-accent-ink); }
+.page.page .workspace :global(.on-welcome) { max-width:68ch; margin-inline:auto; }
+.page.page .workspace :global(.on-welcome h2) { max-width:34ch; font-size:22px; line-height:1.55; }
+.page.page .workspace :global(.on-starter-list) { gap:12px; border:0; }
+.page.page .workspace :global(.on-starter-list button) { min-height:56px; padding:16px 18px; border:0; border-radius:20px; background:var(--clarity-surface); color:var(--clarity-ink); box-shadow:var(--soft-shadow-small); font-size:16px; line-height:1.7; }
+.page.page .workspace :global(.on-starter-list button:hover:enabled) { background:var(--clarity-mint); }
+.page.page .workspace :global(.on-starter-list button:focus-visible) { outline:2px solid var(--clarity-action); outline-offset:3px; }
 .page.page .workspace :global(.on-activity-list a) { min-height:48px; border-radius:var(--soft-control-radius); }
 .page.page .workspace :global(.on-activity-list .search-field) { border:0; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 .page.page .workspace :global(.chat-mobile-history[open]) { border:0; border-radius:0; background:transparent; box-shadow:none; }
@@ -95,7 +114,16 @@
  .page.page .workspace > :global(.chat-mobile-history)>summary { display:flex; align-items:center; width:fit-content; min-height:44px; max-width:100%; gap:12px; padding:10px 14px; border-radius:var(--soft-control-radius); background:var(--clarity-surface); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-small); list-style:none; }
  .page.page .workspace > :global(.chat-mobile-history)>summary::-webkit-details-marker { display:none; }
  .page.page .workspace > :global(.chat-mobile-history)>summary::after { content:''; flex:0 0 7px; width:7px; height:7px; margin-top:-4px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(45deg); }
- .page.page .workspace > :global(.chat-mobile-history[open])>summary { background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+ .page.page .workspace > :global(.chat-mobile-history[open])>summary { background:var(--clarity-mint); box-shadow:var(--soft-shadow-small); }
  .page.page .workspace > :global(.chat-mobile-history[open])>summary::after { margin-top:3px; transform:rotate(225deg); }
 }
-@media(max-width:700px) { .page.page .workspace > :global(.chat-mobile-history[open]) { padding:0 0 8px; } }
+@media(max-width:700px) {
+ .page.page .workspace > :global(.chat-mobile-history[open]) { padding:0 0 8px; }
+ .page.page .workspace :global(.chat-messages) { padding:16px 4px 22px; }
+ .page.page .workspace :global(.message) { margin-bottom:26px; }
+ .page.page .workspace :global(.message.assistant .message-content) { padding:18px 16px; }
+ .page.page .workspace :global(.message.user .message-body) { max-width:calc(100% - 18px); }
+ .page.page .workspace :global(.message.user .message-content) { padding:16px 18px; }
+ .page.page .workspace :global(.on-welcome h2) { font-size:20px; }
+ .page.page .workspace :global(.on-starter-list button) { padding:14px 16px; }
+}

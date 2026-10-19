@@ -24,6 +24,7 @@ function load(name,context,environment={}){
   if(name==='@/lib/learning-target-scope')return scope;
   if(name==='./app-shell')return {useApp:()=>context};
   if(name==='./focus-training')return {FocusTraining:({targetId})=>React.createElement('section',{'aria-label':'약점 집중 훈련','data-target-id':targetId})};
+  if(name==='./shared')return {PageTitle:({title})=>React.createElement('h1',null,title)};
   if(name.endsWith('.module.css'))return {__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
   throw Error(name);
  }});return module.exports;

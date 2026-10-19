@@ -116,6 +116,7 @@
 .practiceChoices>a { border:0; border-radius:var(--soft-radius); background:var(--clarity-surface); box-shadow:var(--soft-shadow-raised); }
 .practiceChoices>a>svg:first-child { background:var(--clarity-soft); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-inset); }
 .experienceEntry { border:0; padding-block:16px; }
+.practiceLinks,.openPaths { padding-inline:0; }
 .resume { border:0; border-radius:var(--soft-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 @media(max-width:700px) {
  .sectionNavigation { gap:4px; }

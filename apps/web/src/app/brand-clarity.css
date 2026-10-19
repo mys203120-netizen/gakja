@@ -1,33 +1,33 @@
 /* Shared brand values; feature styles below consume the same semantic palette. */
 :root {
   color-scheme: light;
-  --ui-card: #f8fcf8;
-  --ui-peach: #e3f4dd;
+  --ui-card: #ffffff;
+  --ui-peach: #e7fbdc;
   --ui-shadow: var(--soft-shadow-raised);
   --clarity-brand: #00ee77;
-  --clarity-bg: #edf9ed;
-  --clarity-surface: #f8fcf8;
-  --clarity-soft: #e8f3e7;
-  --clarity-mint: #dff2e8;
-  --clarity-ink: #303849;
-  --clarity-muted: #5b6d63;
-  --clarity-action: #397f68;
-  --clarity-action-hover: #2f6e59;
+  --clarity-bg: #f1fff7;
+  --clarity-surface: #ffffff;
+  --clarity-soft: #f1f8f3;
+  --clarity-mint: #d9fbe8;
+  --clarity-ink: #23352d;
+  --clarity-muted: #526d60;
+  --clarity-action: #087a48;
+  --clarity-action-hover: #05643a;
   --clarity-on-action: #ffffff;
-  --clarity-green: #397f68;
-  --clarity-green-hover: #2f6e59;
-  --clarity-banner: #e3f4dd;
-  --clarity-line: #d8e6d9;
-  --clarity-blue: #397f68;
-  --soft-mint: #65bda5;
-  --soft-leaf: #76bc66;
-  --soft-accent-ink: #194533;
+  --clarity-green: #087a48;
+  --clarity-green-hover: #05643a;
+  --clarity-banner: #e7fbdc;
+  --clarity-line: #d9eade;
+  --clarity-blue: #087a48;
+  --soft-mint: #69d4ad;
+  --soft-leaf: #8ada80;
+  --soft-accent-ink: #174b32;
   /* Darker action fills keep white labels readable; pastel fills use dark ink. */
-  --soft-gradient: linear-gradient(135deg, #397f68, #4b8058);
-  --soft-accent-gradient: linear-gradient(135deg, #65bda5, #76bc66);
-  --soft-shadow-raised: 9px 9px 24px #bdcec042, -7px -7px 20px #ffffffb3;
-  --soft-shadow-small: 4px 5px 12px #bccfc04a, -4px -4px 10px #ffffff99;
-  --soft-shadow-inset: inset 2px 2px 6px #b6cbbd4d, inset -2px -2px 6px #ffffffc9;
+  --soft-gradient: linear-gradient(135deg, #087a48, #11834c);
+  --soft-accent-gradient: linear-gradient(135deg, #69d4ad, #8ada80);
+  --soft-shadow-raised: 0 14px 32px rgb(46 116 76 / 15%), 0 4px 10px rgb(46 116 76 / 7%), -8px -8px 20px rgb(255 255 255 / 95%);
+  --soft-shadow-small: 0 7px 16px rgb(46 116 76 / 13%), 0 2px 5px rgb(46 116 76 / 5%), -4px -4px 12px rgb(255 255 255 / 90%);
+  --soft-shadow-inset: inset 2px 3px 6px rgb(46 116 76 / 9%), inset -2px -2px 6px rgb(255 255 255 / 90%);
   --soft-radius: 26px;
   --soft-control-radius: 18px;
   --soft-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6d63' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -55,7 +55,7 @@
 }
 
 body {
-  background: radial-gradient(ellipse at 12% 0%, #e3f4dd 0, transparent 48%), radial-gradient(ellipse at 90% 65%, #dff3e9 0, transparent 55%), var(--clarity-bg);
+  background: radial-gradient(ellipse at 6% 0%, #e7fbdc 0, transparent 42%), radial-gradient(ellipse at 96% 58%, #d9fbea 0, transparent 52%), var(--clarity-bg);
   color: var(--clarity-ink);
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 400;
@@ -64,7 +64,7 @@ body {
   letter-spacing: -.02em;
 }
 
-::selection { background: #d7ecdf; color: var(--clarity-ink); }
+::selection { background: #baf5d5; color: var(--clarity-ink); }
 
 .brand-on-image { display:block; width:48px; height:28px; object-fit:contain; flex-shrink:0; }
 

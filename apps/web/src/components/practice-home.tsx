@@ -5,12 +5,13 @@ import {useApp} from './app-shell';
 import {splitInterviewsByLearningTarget} from '@/lib/learning-target-scope';
 import styles from './navigation-rail.module.css';
 import {FocusTraining} from './focus-training';
+import {PageTitle} from './shared';
 
 export function PracticeHome(){
  const {data,target,targetId}=useApp(),suffix=targetId?'?targetId='+encodeURIComponent(targetId):'';
  const sessions=splitInterviewsByLearningTarget(data.interviews||[],target).current.filter(row=>row.state==='active');
  const active=sessions[0];
- return <div className={'practice-home '+styles.practiceHome}><header><p>{[target?.university,target?.department||target?.major].filter(Boolean).join(' · ')||'나의 면접 준비'}</p><h1>연습</h1></header>
+ return <div className={'practice-home '+styles.practiceHome}><PageTitle title="연습"/>
  {active&&<div className={styles.resume}><span>하던 면접이 있어요</span><Link href={`/interview/${active.id}?kind=${active.kind}`}>저장한 답에서 이어가기<ArrowUpRight size={16}/></Link></div>}
  <div className={styles.practiceChoices}>
   <Link href={'/quiz'+suffix}><Sparkles size={25} strokeWidth={1.5}/><div><h2>퀴즈</h2><p>선택하고, 떠올리고, 소리 내어 답하기</p><span>10초 퀴즈 · Q&amp;A · 답변 녹음</span></div><ArrowUpRight size={20}/></Link>

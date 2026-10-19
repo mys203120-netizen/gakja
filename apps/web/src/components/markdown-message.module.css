@@ -2,7 +2,7 @@
   min-width: 0;
   color: inherit;
   font: inherit;
-  line-height: 1.75;
+  line-height: 1.8;
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: keep-all;
@@ -21,8 +21,8 @@
 }
 .markdown h1 { font-size: 1.24em; }
 .markdown h2 { font-size: 1.15em; }
-.markdown :is(ul,ol) { padding-left: 1.5em; margin: 10px 0 18px; }
-.markdown li { padding-left: 3px; margin: 7px 0; }
+.markdown :is(ul,ol) { padding-left: 1.25em; margin: 10px 0 18px; }
+.markdown li { padding-left: 1px; margin: 7px 0; }
 .markdown li > p { margin: 0 0 7px; }
 .markdown li :is(ul,ol) { margin: 5px 0 8px; }
 .markdown strong { font-weight: 600; }
@@ -69,14 +69,14 @@
 .imageAlt { color: var(--clarity-muted); }
 
 @media (max-width: 700px) {
-  .markdown { line-height: 1.7; }
+  .markdown { line-height: 1.8; }
   .markdown p { margin-bottom: 12px; }
   .markdown :is(ul,ol) { margin-bottom: 15px; }
   .markdown pre { padding: 12px 13px; }
 }
 
-.markdown blockquote { border:0; padding:14px 18px; border-radius:18px; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.markdown blockquote { border:0; padding:14px 16px; border-radius:18px; background:var(--clarity-soft); box-shadow:none; }
 .markdown code { border-radius:7px; }
-.markdown pre { border-radius:20px; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.markdown pre { border-radius:20px; background:var(--clarity-soft); box-shadow:none; }
 .markdown hr { margin-block:28px; background:color-mix(in srgb,var(--clarity-action) 16%,transparent); }
 .tableScroll th { background:var(--clarity-soft); }

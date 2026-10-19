@@ -22,7 +22,7 @@ vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,AbortCo
     if(name==='./school-picker')return {SchoolPicker:'SchoolPicker'};
     if(name==='@/lib/client/speech-recorder')return {decodeRecordingTelemetry:()=>{throw new Error('No private file decoding in a render test.');}};
     if(name==='@/lib/study-record-links')return studyLinks;
-    if(name==='./shared')return {Alert:'Alert',Spinner:'Spinner',dateLabel:value=>String(value),api:(url,options)=>new Promise(resolve=>pending.push({url,options,resolve})),post:async(url,body)=>{posts.push({url,body});return {cleanupStatus:'completed'};}};
+    if(name==='./shared')return {InfoTip:'InfoTip',Alert:'Alert',Spinner:'Spinner',dateLabel:value=>String(value),api:(url,options)=>new Promise(resolve=>pending.push({url,options,resolve})),post:async(url,body)=>{posts.push({url,body});return {cleanupStatus:'completed'};}};
     throw new Error('Unexpected import '+name);
   }});
 function render(props={},state){if(state){hooks.states=state;hooks.refs=[];}hooks.stateIndex=0;hooks.refIndex=0;hooks.effects=[];return module.exports.SpeechGrowth(props);}

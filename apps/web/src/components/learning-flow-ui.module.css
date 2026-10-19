@@ -289,7 +289,8 @@
 .agenda>.indented,.recordMaterial>.indented,.answerRecord>.indented,.previousAnswer>.indented,.reading>.indented { padding:24px; border:0; border-radius:var(--soft-radius); background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); }
 .agendaItems :global(.linked-row) { border:0; padding-block:14px; }
 .todayPlan { padding-block:12px; border:0; }
-.reviewPlan { padding:24px; border:0; border-radius:var(--soft-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.reviewPlan { padding:24px; border:0; border-radius:var(--soft-radius); background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); }
+.deadlineCount { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:7px 16px; border-radius:999px; background:var(--soft-accent-gradient); box-shadow:var(--soft-shadow-small); color:var(--soft-accent-ink); }
 .reviewPlan input,.moveDate input,.activityPicker select { min-height:48px; padding:12px 16px; font-size:16px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 .readingSwitch { gap:8px; padding:5px; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 .readingSwitch>button,.readingSwitch>button[aria-pressed=true] { min-height:44px; padding:10px 16px; border:0; border-radius:14px; text-decoration:none; }

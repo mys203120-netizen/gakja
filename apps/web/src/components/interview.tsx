@@ -18,7 +18,7 @@ import type { SpeechTelemetry } from '@/lib/speech-telemetry';
 import styles from './interview-session.module.css';
 import { stoppedInterviewTimer } from '@/lib/interview-timer';
 import { LiveInterviewSession } from './live-interview-session';
-function Switch({ label, value, disabled, onChange }: { label: string; value: boolean; disabled?: boolean; onChange: () => void }) { return <label className="toggle-row"><span>{label}</span><button type="button" role="switch" aria-label={label} aria-checked={value} disabled={disabled} className={`toggle ${value ? 'on' : ''}`} onClick={onChange}><i /></button></label>; }
+function Switch({ label, value, disabled, onChange }: { label: string; value: boolean; disabled?: boolean; onChange: () => void }) { return <label className="toggle-row"><span>{label}</span><button type="button" role="switch" aria-label={label} aria-checked={value} disabled={disabled} className="motion-toggle-button" onClick={onChange}><span className="motion-toggle-track" aria-hidden="true"><span className="motion-toggle-thumb"/></span></button></label>; }
 export { InterviewSetup } from './interview-setup';
 export function InterviewSession({ id }: { id: string; kind: 'chat' | 'video' }) {
   const [info,setInfo]=useState<Item|null>(null),[error,setError]=useState('');

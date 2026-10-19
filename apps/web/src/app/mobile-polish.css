@@ -111,8 +111,6 @@
  .app-shell nav.mobile-nav > a[aria-current=page] > svg { color:var(--clarity-on-action); background:transparent; outline:0; border-radius:0; }
  .app-shell nav.mobile-nav .brand { display:flex; align-items:center; justify-content:center; }
  .app-shell nav.mobile-nav .brand img { width:25px; height:25px; }
- .app-shell:not(.admin-shell) .main-content :is(.panel,.detail-section,.reader-article,.reader-toc,.quiz-today,.quiz-mode-row,.quiz-resume-list,.interview-setup-settings,.interview-quick-start,.interview-device-note,.school-first-practice,.knowledge-understanding,.speech-empty,.speech-next,.speech-trend,.speech-timeline,.speech-measurement-empty,.content-growth-evidence-row,.content-growth-added,.study-answer,.records-report-row,.account-profile,.settings-row,.learning-row) { border:0; border-radius:0; box-shadow:none; background:transparent; padding-inline:0; }
- .app-shell:not(.admin-shell) .main-content :is(.panel,.detail-section,.reader-article) { padding-block:0; }
  .app-shell .records-view :is(.records-overview,.speech-metrics) > div { border:0; border-radius:0; background:transparent; padding:12px 0; }
  .app-shell .records-view .records-overview { gap:20px; margin-block:26px 40px; }
  .app-shell .records-view .speech-growth-view { gap:44px; }
@@ -121,7 +119,6 @@
  .app-shell .records-view .speech-next { padding-block:16px; }
  .app-shell .records-view :is(.records-report-row,.study-answer) { padding-block:20px; }
  .app-shell .records-view .records-row-icon { background:transparent; }
- .app-shell:not(.admin-shell) .main-content :is(.alert,.inline-notice,.interview-common-note,.knowledge-reading-art) { background:transparent; border:0; border-radius:0; box-shadow:none; padding-inline:0; }
  .app-shell .interview-entry-choices > a { border:0; border-radius:0; background:transparent; padding:22px 0; box-shadow:none; }
  .app-shell .interview-setup-main .interview-quick-start { background:transparent; padding:12px 0 28px; }
  .app-shell .quiz-v3 .quiz-mode-row { padding-block:24px; background:transparent; }

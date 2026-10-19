@@ -13,7 +13,7 @@ const calendarSourcePresentation = await tsImport('../apps/web/src/lib/calendar-
 const hooks = { values: [], index: 0 };
 let app;
 const actionButton=({pending=false,pendingLabel,disabled,children,type='button',...props})=>({type:'button',props:{...props,type,disabled:disabled||pending,'aria-busy':pending||undefined,children:pending?[{type:'LoaderCircle',props:{size:16,'aria-hidden':true}},pendingLabel??children]:children}});
-const shared = { ActionButton:actionButton, api: async () => { throw new Error('No API calls in component regression.'); }, post: async () => ({}), Breadcrumb: 'Breadcrumb', PageTitle: 'PageTitle', Alert: 'Alert', Spinner: 'Spinner', Empty: 'Empty', Modal: 'Modal', LinkedRow: 'LinkedRow', targetName: target => target?.university || '지원처 미등록', targetMajor: target => target?.department || target?.major || '', dateLabel: value => String(value) };
+const shared = { InfoTip:'InfoTip',ActionButton:actionButton, api: async () => { throw new Error('No API calls in component regression.'); }, post: async () => ({}), Breadcrumb: 'Breadcrumb', PageTitle: 'PageTitle', Alert: 'Alert', Spinner: 'Spinner', Empty: 'Empty', Modal: 'Modal', LinkedRow: 'LinkedRow', targetName: target => target?.university || '지원처 미등록', targetMajor: target => target?.department || target?.major || '', dateLabel: value => String(value) };
 function load(file) {
   const module = { exports: {} };
   const source = fs.readFileSync(new URL(`../apps/web/src/components/${file}`, import.meta.url), 'utf8');

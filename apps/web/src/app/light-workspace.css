@@ -66,11 +66,6 @@ body .native-modal::backdrop { background: #303f3859; backdrop-filter: none; }
 .app-shell .settings-list .settings-row { gap: 20px; padding-block: 14px; background: transparent; border-radius: 0; box-shadow: none; }
 .app-shell .preparation-note textarea { padding: 16px; border: 0; border-radius: var(--soft-control-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-inset); line-height: 1.7; }
 .app-shell .learning-preferences-row { min-height: 72px; border: 0; }
-.app-shell .learning-preferences-row input[type=checkbox] { appearance: none; position: relative; flex: 0 0 50px; width: 50px; height: 30px; margin: 0; border: 0; border-radius: 999px; background: var(--clarity-muted); box-shadow: var(--soft-shadow-inset); cursor: pointer; transition: background-color var(--clarity-motion) ease; }
-.app-shell .learning-preferences-row input[type=checkbox]::before { content: ''; position: absolute; left: 4px; top: 4px; width: 22px; height: 22px; border-radius: 50%; background: var(--clarity-surface); box-shadow: 1px 2px 4px #425d4933; transition: transform var(--clarity-motion) ease; }
-.app-shell .learning-preferences-row input[type=checkbox]:checked { background: var(--soft-gradient); }
-.app-shell .learning-preferences-row input[type=checkbox]:checked::before { transform: translateX(20px); }
-.app-shell .learning-preferences-row input[type=checkbox]:disabled { cursor: progress; }
 .admin-shell :is(.admin-form,.filter-bar) :is(input:where(:not([type=checkbox]):not([type=radio]):not([type=file])),textarea,select) { border: 0; border-radius: var(--soft-control-radius); background-color: var(--clarity-surface); color: var(--clarity-ink); box-shadow: var(--soft-shadow-inset); min-height: 44px; }
 .admin-shell :is(.admin-form,.filter-bar) .search-field input { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .admin-shell :is(.admin-tabs,.admin-calendar-tabs) { display: flex; flex-wrap: wrap; gap: 6px; border: 0; padding: 6px; border-radius: 24px; background: var(--clarity-soft); }
@@ -99,11 +94,6 @@ body .native-modal::backdrop { background: #303f3859; backdrop-filter: none; }
 .app-shell .mobile-nav > a[aria-current=page] { color: var(--soft-accent-ink); }
 .app-shell .mobile-nav > a[aria-current=page] > svg { background: var(--clarity-mint); border-radius: 10px; outline: 5px solid var(--clarity-mint); }
 @media(max-width:1000px) { .app-shell .interview-setup-columns { grid-template-columns: minmax(0,1fr); } }
-@media(prefers-reduced-motion:reduce) { .app-shell .learning-preferences-row input[type=checkbox]::before { transition: none; } }
-@media(forced-colors:active) {
-  .app-shell .learning-preferences-row input[type=checkbox] { appearance: auto; background: Canvas; box-shadow: none; }
-  .app-shell .learning-preferences-row input[type=checkbox]::before { content: none; }
-}
 @media(max-width:700px) {
   .app-shell .topbar { min-height: 64px; }
   .app-shell .page-title { flex-wrap: wrap; }

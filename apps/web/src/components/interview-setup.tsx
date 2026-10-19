@@ -13,7 +13,7 @@ import {interviewSupportForTarget} from '@/lib/school-interview-scope';
 
 const modes = [{ id: 'basic', name: '기본', copy: '한 질문씩 차근차근' }, { id: 'document', name: '서류 집중', copy: '내 역할과 활동 과정' }, { id: 'major', name: '전공 심화', copy: '개념과 탐구의 깊이' }, { id: 'university', name: '대학 맞춤', copy: '지원처에 연결한 경험' }] as const;
 function Switch({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
-  return <label className="toggle-row"><span>{label}</span><button type="button" role="switch" aria-label={label} aria-checked={value} className={`toggle ${value ? 'on' : ''}`} onClick={onChange}><i /></button></label>;
+  return <label className="toggle-row"><span>{label}</span><button type="button" role="switch" aria-label={label} aria-checked={value} className="motion-toggle-button" onClick={onChange}><span className="motion-toggle-track" aria-hidden="true"><span className="motion-toggle-thumb"/></span></button></label>;
 }
 
 export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {

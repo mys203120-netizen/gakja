@@ -53,7 +53,7 @@ function harness({unsupported=false,cardId='',legacyDraft=null,durableDrafts=[],
   if(name==='@/lib/school-interview-scope')return support;
   if(name==='./armory-assist')return {ArmoryAssist:()=>null};
   if(name==='./experience-text-classifier')return {ExperienceTextClassifier:()=>null};
-  if(name==='./shared')return {PageTitle:({title,children})=>React.createElement('header',null,React.createElement('h1',null,title),children),Alert:({children})=>React.createElement('div',{role:'alert'},children),api:async(url,options)=>{
+  if(name==='./shared')return {InfoTip:({children})=>React.createElement('span',null,children),PageTitle:({title,children})=>React.createElement('header',null,React.createElement('h1',null,title),children),Alert:({children})=>React.createElement('div',{role:'alert'},children),api:async(url,options)=>{
    requests.push(url);
    if(url==='/api/armory'&&!options)return {cards:structuredClone(cards),sessions:[]};
    if(url==='/api/armory/drafts'&&!options)return {drafts:[...serverDrafts.values()]};

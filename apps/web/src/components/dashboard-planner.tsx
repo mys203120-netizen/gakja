@@ -3,13 +3,12 @@ import {useEffect,useState,type CSSProperties} from 'react';
 import {ChevronLeft,ChevronRight,Plus,Check,CalendarDays} from 'lucide-react';
 import {AutomaticPracticePlan} from './automatic-practice-plan';
 import {useApp} from './app-shell';
-import {api,post,Modal,Alert,type Item,targetName} from './shared';
+import {api,post,Modal,Alert,InfoTip,type Item,targetName} from './shared';
 import {koreaToday,monthDays,planWeek,shiftPlanDay,validPlanDay,type PlanTargetOption} from '@/lib/planner-model';
 import {personalDate,scheduleDetails,scheduleDateLabel} from '@/lib/schedule';
 import {calendarSchoolTones,calendarInterviewTime} from '@/lib/calendar-presentation';
 import {visibleCalendarSourceLabel,visibleCalendarSourceText,visibleCalendarSourceUrl} from '@/lib/calendar-source-presentation';
 import {SchoolLogo} from './school-logo';
-import styles from './school-context.module.css';
 export type InterviewScheduleItem={id:string;schoolReferenceId:string;university:string;targetId:string;admissionYear:number;campus:string;trackLabel:string;departmentLabel?:string;matchedDepartment?:string;departmentCount?:number|null;startDate:string;endDate:string;rawDate?:string;note?:string;format?:'video_submission';sourceUrl:string;sourceLabel:string;checkedAt:string;applicability:'track_match'|'school_reference';schoolHref:string};
 type OfficialScheduleDecision={trackLabel:string;departments:string[];status:'no_interview'|'date_pending'|'unpublished'|'unverified';reason:string;sourceUrl:string;sourceLabel?:string;checkedAt?:string};
 type ScheduleCoverageStatus='available'|'needs_review'|'not_listed'|'source_missing'|'no_interview'|'date_pending'|'unpublished'|'unverified'|'year_mismatch'|'campus_mismatch';
@@ -90,10 +89,8 @@ export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],inte
     </div>;
   }
   return <section className="dashboard-planner dashboard-calendar-panel" id="dashboard-planner" tabIndex={-1} aria-labelledby="dashboard-calendar-title">
-    <div className="section-heading"><h2 id="dashboard-calendar-title">계획과 면접 일정</h2><button className="text-link" onClick={()=>setAdding(true)}><Plus size={15}/>계획 추가</button></div>
+    <div className="section-heading"><h2 id="dashboard-calendar-title">계획과 면접 일정{(data.targets.length>0||interviewScheduleCoverage?.source)&&<InfoTip label="일정 범위와 확인 시점">{data.targets.length>0&&<p>지원 학교 전체 · {registeredSchools}개 학교{data.targets.length>registeredSchools?` · ${data.targets.length}개 지원처`:''}</p>}{interviewScheduleCoverage?.source&&<p>{interviewScheduleCoverage.source.admissionYear}학년도 수시{hasOfficialSource&&interviewScheduleCoverage.officialCheckedAt?<> · 입학처 · <time dateTime={interviewScheduleCoverage.officialCheckedAt}>{scheduleDateLabel(interviewScheduleCoverage.officialCheckedAt)}</time> 확인</>:interviewScheduleCoverage.source.checkedAt&&<> · <time dateTime={interviewScheduleCoverage.source.checkedAt}>{scheduleDateLabel(interviewScheduleCoverage.source.checkedAt)}</time> 확인</>}{hasManagedSource&&' · 관리자 설정'}</p>}</InfoTip>}</h2><button className="text-link" onClick={()=>setAdding(true)}><Plus size={15}/>계획 추가</button></div>
     <AutomaticPracticePlan plans={plans} onPlans={onPlans} configuration={automaticPractice} onConfiguration={onAutomaticPractice}/>
-    {data.targets.length>0&&<div className={styles.calendarScope}><p>지원 학교 전체<span>{registeredSchools}개 학교{data.targets.length>registeredSchools?` · ${data.targets.length}개 지원처`:''}</span></p></div>}
-    {interviewScheduleCoverage?.source&&<p className="calendar-source-summary"><span>{interviewScheduleCoverage.source.admissionYear}학년도 수시</span>{hasOfficialSource&&interviewScheduleCoverage.officialCheckedAt?<span>입학처 · <time dateTime={interviewScheduleCoverage.officialCheckedAt}>{scheduleDateLabel(interviewScheduleCoverage.officialCheckedAt)}</time> 확인</span>:interviewScheduleCoverage.source.checkedAt&&<span><time dateTime={interviewScheduleCoverage.source.checkedAt}>{scheduleDateLabel(interviewScheduleCoverage.source.checkedAt)}</time> 확인</span>}{hasManagedSource&&<span>관리자 설정</span>}</p>}
     {interviewScheduleCoverage?.stale&&<p className="calendar-status" role="status">{interviewScheduleCoverage.lastRefreshFailed?'최신 일정 연결이 지연되어 마지막 확인 자료를 보여드려요.':'마지막 확인 자료를 표시하고 있어요.'}{visibleCalendarSourceUrl(interviewScheduleCoverage.source.url)&&<> <a href={visibleCalendarSourceUrl(interviewScheduleCoverage.source.url)} target="_blank" rel="noreferrer">일정 원문 확인</a></>}</p>}
     {nonDatedTargets.length>0&&<ul className="calendar-coverage-statuses" aria-label="지원 전형의 면접 상태">{nonDatedTargets.map(item=>{
       const target=data.targets.find(target=>target.id===item.targetId);

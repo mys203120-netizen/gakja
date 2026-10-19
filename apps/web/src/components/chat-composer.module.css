@@ -110,9 +110,9 @@
 }
 @media (prefers-reduced-motion: reduce) { .shell .send { transition: none; } .shell .send:hover:not(:disabled), .shell .send:active:not(:disabled) { transform: none; } }
 
-.shell,.conversation .shell { border:0; border-radius:var(--soft-radius); background:var(--clarity-surface); box-shadow:var(--soft-shadow-inset); }
-.composer .shell textarea.input { min-height:44px; border:0; background:transparent; box-shadow:none; font-size:var(--clarity-body-size); }
-.shell:focus-within,.conversation .shell:focus-within { border:0; box-shadow:var(--soft-shadow-inset); outline:2px solid var(--clarity-action); outline-offset:3px; }
+.shell,.conversation .shell { border:0; border-radius:var(--soft-radius); background:var(--clarity-surface); box-shadow:var(--soft-shadow-raised); }
+.composer .shell textarea.input { min-height:44px; border:0; background:transparent; box-shadow:none; font-size:16px; line-height:1.65; }
+.shell:focus-within,.conversation .shell:focus-within { border:0; box-shadow:var(--soft-shadow-raised); outline:2px solid var(--clarity-action); outline-offset:3px; }
 .shell .send { flex-basis:44px; width:44px; height:44px; color:var(--soft-accent-ink); background:var(--soft-accent-gradient); box-shadow:var(--soft-shadow-small); }
 .shell .send:hover:not(:disabled) { background:var(--soft-accent-gradient); box-shadow:var(--soft-shadow-small); }
 .shell .send:active:not(:disabled) { box-shadow:var(--soft-shadow-inset); }
