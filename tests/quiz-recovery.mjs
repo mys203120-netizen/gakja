@@ -71,6 +71,17 @@ reset();state.adapter=async()=>{throw new Error('response lost after commit');};
 reset({...info,session:{...info.session,state:'completed',current_index:1},responses:[{id:'r',item_index:0,response:'저장된 답변',outcome:null,rating:'hard',data:{recall_state:'unchecked',helpKinds:['evidence'],assistance_recorded:true}}]});tree=render();const flat=nodes(tree);check(flat.some(node=>node.type==='Link'&&node.props.href?.startsWith('/interview/chat?')),'omitted old stage still exposes the same-question interview path');check(!text(tree).includes('지원 정보가 바뀌었어요'),'unknown old stage does not claim the support target changed');check(text(tree).includes('근거 확인')&&!text(tree).includes('AI 도움'),'source help is not labelled AI assistance');check(text(tree).includes('다시 볼 답변'),'unchecked answer is included in review');
 const oralRecording={id:'owned-oral-recording',item_index:0,url:'/api/quiz?recordingId=owned-oral-recording',raw_transcript:'음 저는 관찰 했습니다',display_transcript:'저는 관찰했습니다.',transcript_cleanup:{status:'completed'}};
 const oralInfo={...info,session:{...info.session,mode:'oral',metadata:{...info.session.metadata,drafts:{}}},recordings:[oralRecording]};
+reset({...oralInfo,recordings:[]});state.values[4]='';tree=render();
+const oralNodes=nodes(tree),firstRecord=oralNodes.findIndex(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음'),firstEditor=oralNodes.findIndex(node=>node.type==='textarea'&&node.props['aria-label']==='내 답변');
+check(firstRecord>=0&&firstRecord<firstEditor,'oral practice puts the recording action before the editor and writing help');
+check(oralNodes.some(node=>node.type==='details'&&node.props.className==='answerEditor'&&!node.props.open),'a fresh oral question keeps the optional memo closed');
+check(oralNodes.some(node=>node.type==='details'&&node.props.className==='practiceTools'&&!node.props.open)&&oralNodes.some(node=>node.type==='details'&&node.props.className==='selfReview'&&!node.props.open),'help and self reflection stay available without preceding the first recording action');
+check(oralNodes.some(node=>node.type==='button'&&text(node.props.children)==='말로 답하기'&&node.props['aria-pressed']===true),'voice is the explicit selected response mode for oral practice');
+nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='글로 답하기').props.onClick();tree=render();
+check(!nodes(tree).some(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음')&&nodes(tree).some(node=>node.type==='textarea'&&node.props['aria-label']==='내 답변'),'switching to writing exposes the same answer editor without requesting a microphone');
+check(state.deviceRequests===0&&state.values[4]==='','response mode selection preserves the draft without opening a microphone');
+reset(oralInfo);state.values[9]=oralRecording;tree=render();
+check(nodes(tree).some(node=>node.type==='details'&&node.props.className==='answerEditor'&&node.props.open),'a restored recording opens its transcript editor after the recording controls');
 reset(oralInfo);tree=render();state.effects.find(effect=>effect.toString().includes('metadata?.drafts'))();check(state.values[4]==='저는 관찰했습니다.','restored oral draft uses finished display rather than raw STT');
 reset({...oralInfo,recordings:[{...oralRecording,display_transcript:null,transcript_cleanup:{status:'failed'}}]});tree=render();state.effects.find(effect=>effect.toString().includes('metadata?.drafts'))();check(state.values[4]==='','failed formatting does not restore raw STT into the main answer');
 reset(oralInfo);state.values[9]={...oralRecording,display_transcript:null,transcript_cleanup:{status:'failed'}};tree=render();state.adapter=async(url,payload)=>({transcript:'저는 관찰했습니다.',rawTranscript:oralRecording.raw_transcript,cleanupStatus:'completed',transcriptionStatus:'completed'});const retry=nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='문장 정리 다시 시도');await retry.props.onClick();check(state.calls[0].url==='/api/reports'&&state.calls[0].payload.recordingId===oralRecording.id,'oral retry formats the same stored owned recording');check(state.values[4]==='내 역할은 채취 조건 설계였습니다.','formatted oral retry preserves a manually typed draft');check(state.values[9].display_transcript==='저는 관찰했습니다.'&&state.values[9].raw_transcript===oralRecording.raw_transcript,'finished oral display and raw source remain separately available');
@@ -123,7 +134,7 @@ check(await [...durableAudio.values()][0].blob.text()==='fake-recorded-audio','t
 
 reset({...info,session:{...info.session,mode:'oral'}});tree=render();
 check(saveButton(tree).props.disabled,'oral save still requires recording unless the learner explicitly changes response mode');
-nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='이 질문은 글로 답하기').props.onClick();tree=render();
+nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='글로 답하기').props.onClick();tree=render();
 check(!saveButton(tree).props.disabled,'same oral question supports explicit text alternative without a microphone');
 await saveButton(tree).props.onClick();const textRequest=state.calls.find(call=>call.payload?.action==='answer').payload;
 check(textRequest.responseMode==='text'&&!textRequest.recordingId&&textRequest.itemIndex===0,'text fallback submits the original question without voice media or invented voice metrics');

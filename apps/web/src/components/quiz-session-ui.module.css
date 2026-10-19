@@ -39,13 +39,38 @@
 .answerMode { display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin-bottom:12px; }
 .answerMode p { flex:1 1 230px;margin:0;color:var(--clarity-muted);font-size:13px;line-height:1.7; }
 .answerMode button { min-height:44px; }
+.answerMode { justify-content:flex-start;gap:8px;margin:0 0 16px; }
+.answerMode>button { display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:9px 15px;border:1px solid var(--clarity-line);border-radius:var(--clarity-control-radius);background:var(--clarity-soft);color:var(--clarity-muted);font:inherit;font-size:14px;cursor:pointer; }
+.answerMode>button[aria-pressed="true"] { background:var(--clarity-green);border-color:var(--clarity-green);color:white;font-weight:600; }
+.answerMode>button:focus-visible { outline:2px solid var(--clarity-green);outline-offset:3px; }
+.answerMode>button:disabled { cursor:default;opacity:.55; }
+.answerMode>p { flex-basis:100%;margin-top:2px;line-height:1.65; }
+.recordingAction { margin-top:0; }
+.recordStart { min-height:48px;padding-inline:22px; }
+.answerEditor,.practiceTools,.selfReview { border-top:1px solid var(--clarity-line);padding-block:14px;margin-top:8px; }
+.answerEditor>summary,.practiceTools>summary,.selfReview>summary { display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;cursor:pointer;list-style:none;font-size:14px;font-weight:500;line-height:1.6; }
+.answerEditor>summary::after,.practiceTools>summary::after,.selfReview>summary::after { content:'+';color:var(--clarity-muted);font-size:20px;font-weight:400; }
+.answerEditor[open]>summary::after,.practiceTools[open]>summary::after,.selfReview[open]>summary::after { content:'−'; }
+.answerEditor>summary::-webkit-details-marker,.practiceTools>summary::-webkit-details-marker,.selfReview>summary::-webkit-details-marker { display:none; }
+.answerEditorBody { display:grid;gap:8px;margin-top:12px; }
+.answerEditorBody>label { color:var(--clarity-muted);font-size:13px;line-height:1.65; }
+.practiceTools :global(.quiz-hint) { margin:12px 0;padding:14px 0;border-bottom:0; }
+.selfReview .recallState { margin-top:8px; }
+@media(max-width:700px) {
+ .sessionWorkspace:global(.quiz-session[data-quiz-mode="oral"]) :global(.quiz-prompt) { margin:12px 0 16px;font-size:22px;line-height:1.55;text-align:left;justify-content:flex-start; }
+ .recordingAction :global(.quiz-record-controls) { gap:12px;margin:14px 0; }
+ .recordStart { width:100%;justify-content:center; }
+ .recordingPreparation>div { flex-wrap:wrap;gap:10px; }
+ .answerEditor,.practiceTools,.selfReview { padding-block:8px; }
+ .answerMode { margin-bottom:12px; }
+}
 .recordingPreparation { display:grid;gap:12px;margin:14px 0;padding:18px;background:var(--clarity-soft);border-radius:var(--clarity-control-radius); }
 .recordingPreparation p { margin:0;color:var(--clarity-muted);font-size:14px;line-height:1.7; }
 .recordingPreparation>div { display:flex;gap:16px;align-items:center; }
 .recordingPreparation label { display:flex;align-items:center;gap:8px;min-height:44px;font-size:13px; }
 .recordingPreparation input { width:16px;height:16px;margin:0; }
 .sessionWorkspace :global(.quiz-prompt),.reviewHeading h2 { scroll-margin-top:104px; }
-.sessionWorkspace :global(.quiz-prompt:focus),.reviewHeading h2:focus,:global(#quiz-result-title:focus) { outline:2px solid var(--clarity-green);outline-offset:6px;border-radius:4px; }
+.sessionWorkspace :global(.quiz-prompt:focus),.reviewHeading h2:focus,.resultTitle:focus { outline:2px solid var(--clarity-green);outline-offset:6px;border-radius:4px; }
 @media (max-width: 600px) { .recallOptions { flex-direction: column; gap: 7px; } }
 
 /* Keep the complete question, four choices and controls in one readable workspace. */

@@ -91,6 +91,8 @@ assert.match(personalView.markup(),/선택한 전형의 실제 면접을 재현�
 const directDraft=harness({cardId:'draft-card'});await directDraft.flush();equal(directDraft.tab('내 이야기').props['aria-pressed'],true);
 directDraft.tab('면접에 활용').props.onClick();await directDraft.flush();equal(directDraft.tab('면접에 활용').props['aria-pressed'],true);equal(directDraft.links().length,0);
 directDraft.tab('내 이야기').props.onClick();await directDraft.flush();directDraft.button('이야기 보완하기').props.onClick();await directDraft.flush();
+equal(elements(directDraft.tree,node=>node.type==='h2').map(text),['어떤 일이 있었나요?']);equal(elements(directDraft.tree,node=>node.type==='h1').length,0);
+const entryMarkup=directDraft.markup(),tools=elements(directDraft.tree,node=>node.type==='details'&&node.props.className==='editorTools')[0];equal(Boolean(tools.props.open),false);assert.ok(entryMarkup.indexOf('<textarea')<entryMarkup.indexOf('>다음'));assert.ok(entryMarkup.indexOf('>다음')<entryMarkup.indexOf('제목·유형 및 작성 도구'));checks++;
 directDraft.button('다음').props.onClick();await directDraft.flush();assert.match(directDraft.markup(),/어떤 상황이었는지 한 문장만 적어주세요/);checks++;
 elements(directDraft.tree,node=>node.type==='textarea')[0].props.onChange({target:{value:'팀의 기록 형식이 달랐다'}});await directDraft.flush();directDraft.button('다음').props.onClick();await directDraft.flush();
 elements(directDraft.tree,node=>node.type==='textarea')[0].props.onChange({target:{value:'공통 양식을 제안했다'}});await directDraft.flush();directDraft.button('다음').props.onClick();await directDraft.flush();directDraft.button('나중에 보완하고 확인').props.onClick();await directDraft.flush();directDraft.button('내 경험 확인하고 저장').props.onClick();await directDraft.flush();
@@ -98,8 +100,8 @@ equal(directDraft.saved.map(input=>[input.id,input.revision,input.data.confirmed
 equal(directDraft.tab('면접에 활용').props['aria-pressed'],true);
 
 const recovery=harness({legacyDraft:{draft:{...draft.data,title:'',situation:'복구 전에도 남아야 하는 원문'},draftId:'legacy-card',revision:0,step:0}});await recovery.flush();assert.equal(recovery.storage.has('armory-draft:student'),false);checks++;
-recovery.button('주제 없이 직접 적기').props.onClick();await recovery.flush();elements(recovery.tree,node=>node.type==='textarea')[0].props.onChange({target:{value:'새 카드에만 쓴 상황'}});await recovery.flush();await recovery.runTimers();
-assert.match(recovery.markup(),/서버에 초안 저장됨/);checks++;recovery.button('초안 보관하고 목록으로').props.onClick();await recovery.flush();assert.match(recovery.markup(),/복구 전에도 남아야 하는 원문/);checks++;assert.match(recovery.markup(),/새 카드에만 쓴 상황/);checks++;
+recovery.button('주제 없이 직접 적기').props.onClick();await recovery.flush();elements(recovery.tree,node=>node.type==='textarea')[0].props.onChange({target:{value:'새 카드에만 쓴 상황'}});await recovery.flush();assert.doesNotMatch(recovery.markup(),/자동 저장됨/);checks++;await recovery.runTimers();
+assert.match(recovery.markup(),/자동 저장됨 · \d{2}:\d{2}/);checks++;recovery.button('초안 보관하고 목록으로').props.onClick();await recovery.flush();assert.match(recovery.markup(),/복구 전에도 남아야 하는 원문/);checks++;assert.match(recovery.markup(),/새 카드에만 쓴 상황/);checks++;
 equal([...recovery.durableStorage.keys()].filter(key=>key.startsWith('armory-drafts:v2:student:')).length,2);equal(recovery.serverDrafts.size,1);
 const untitled=JSON.parse([...recovery.durableStorage.entries()].find(([key,value])=>key.startsWith('armory-drafts:v2:student:')&&JSON.parse(value).draft.situation==='새 카드에만 쓴 상황')[1]);
 const reloaded=harness({durableDrafts:[untitled],remoteDrafts:[...recovery.serverDrafts.values()]});await reloaded.flush();assert.match(reloaded.markup(),/새 카드에만 쓴 상황/);checks++;

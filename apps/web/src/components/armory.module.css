@@ -70,28 +70,37 @@
 .notice { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 16px; margin:0 0 18px; padding:12px 16px; border:0; border-radius:12px; background:var(--clarity-soft); font-size:13px; }
 .page p.notice { margin:0 0 18px; }
 
-/* Editing keeps the original four-step save and confirmation flow. */
+/* The current sentence comes first; optional tools stay below its action. */
 .editor { width:100%; max-width:780px; margin:0; padding:0; border:0; background:transparent; }
 .editorFields { min-width:0; margin:0; padding:0; border:0; }
 .editor h2 { scroll-margin-top:100px; }
 .editor h2:focus { outline:none; }
-.stepCount { color:var(--clarity-muted); font-size:13px; white-space:nowrap; }
-.steps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:18px 0 24px; padding:0 0 16px; border-bottom:1px solid var(--clarity-line); list-style:none; }
-.steps li { display:flex; align-items:center; gap:7px; color:var(--clarity-muted); font-size:12px; }
-.steps li>span { display:grid; place-items:center; flex-shrink:0; width:23px; height:23px; border-radius:50%; background:var(--clarity-soft); font-size:11px; }
-.steps [aria-current=step] { color:var(--clarity-action); font-weight:600; }
-.steps [aria-current=step]>span { background:var(--clarity-action); color:var(--clarity-on-action,#fff); }
+.editor .editorQuestion { margin-bottom:12px; }
 .page label { display:block; margin:16px 0; font-size:13px; font-weight:500; }
 .page input,.page textarea { display:block; box-sizing:border-box; width:100%; margin-top:7px; padding:10px 12px; border:1px solid var(--clarity-line); border-radius:10px; background:var(--clarity-surface); color:inherit; }
 .page textarea { resize:vertical; line-height:1.7; }
 .chips { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 24px; }
 .chips button { min-width:64px; min-height:34px; padding:6px 14px; border:1px solid transparent; border-radius:9px; background:var(--clarity-soft); color:var(--clarity-muted); font-size:13px; }
 .chips button[aria-pressed=true] { border-color:var(--clarity-action); color:var(--clarity-action); }
-.writingStep>label { margin-top:12px; }
+.writingStep>label { margin:12px 0 0; }
+.writingStep textarea { min-height:160px; }
 .validation { color:var(--clarity-danger); font-size:13px; }
 .validation:empty { margin:0; }
-.editorActions { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-top:24px; padding-top:18px; border-top:1px solid var(--clarity-line); }
-.editorActions>div { display:flex; align-items:center; gap:8px; }
+.editorActions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.editorActions>button:first-child:not(:last-child) { margin-right:auto; }
+.page .startHint { margin:12px 0 0; color:var(--clarity-muted); font-size:12px; }
+.editorTools { margin-top:24px; padding:12px 0; border-block:1px solid var(--clarity-line); }
+.editorTools>summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:32px; cursor:pointer; list-style:none; color:var(--clarity-muted); font-size:13px; }
+.editorTools>summary::-webkit-details-marker { display:none; }
+.editorTools>summary>svg { flex-shrink:0; transition:transform .18s ease; }
+.editorTools[open]>summary>svg { transform:rotate(180deg); }
+.editorTools label>.hint { display:block; margin-top:6px; font-size:12px; }
+.editorTools .chips { margin-bottom:12px; }
+.editorTools .pasteTool { margin-bottom:0; padding-bottom:0; border-bottom:0; }
+.editorFooter { margin-top:12px; }
+.editorFooter>div { display:flex; align-items:center; flex-wrap:wrap; gap:8px 20px; }
+.editorFooter .backLink { margin:0; }
+.editorFooter :global(.text-link),.editorFooter .backLink { font-size:12px; }
 
 /* The story stays visible while choosing an interview question. */
 .backLink { margin:0 0 12px; color:var(--clarity-muted); }
@@ -202,16 +211,16 @@
   .empty p { font-size:13px; }
   .notice { margin-bottom:18px; padding-bottom:12px; border-bottom:1px solid var(--clarity-line); }
   .page p.notice { padding-bottom:12px; }
-  .steps { gap:7px; margin:18px 0 22px; }
-  .steps li { gap:5px; align-items:flex-start; font-size:11px; }
-  .steps li>span { width:19px; height:19px; font-size:10px; }
   .page input,.page textarea { font-size:16px; }
   .chips { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-bottom:22px; }
   .chips button { min-width:0; min-height:44px; padding:9px 6px; }
-  .editorActions { align-items:stretch; flex-direction:column-reverse; gap:8px; margin-top:20px; padding-top:16px; }
-  .editorActions>div { display:flex; }
-  .editorActions>div :global(.button) { flex:1; }
-  .editorActions>button { width:100%; }
+  .editorActions { align-items:stretch; gap:8px; margin-top:16px; }
+  .editorActions>button { flex:1; }
+  .editorActions>button:first-child:not(:last-child) { margin-right:0; }
+  .editorActions>button:global(.primary) { flex-basis:100%; }
+  .editorTools { margin-top:20px; padding:8px 0; }
+  .editorTools>summary { min-height:44px; }
+  .editorFooter>div { gap:4px 16px; }
   .detail>.sectionHeading { flex-wrap:wrap; gap:12px; padding-bottom:16px; }
   .tabs { gap:22px; margin-bottom:18px; }
   .tabs button { min-height:44px; font-size:13px; }
