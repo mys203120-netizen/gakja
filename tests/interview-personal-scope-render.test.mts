@@ -18,10 +18,11 @@ vm.runInNewContext(ts.transpileModule(readFileSync('apps/web/src/components/inte
     if(name==='react')return {useState(initial:any){const index=hook++;return [index in values?values[index]:initial,(value:any)=>values[index]=value];},useEffect(){}};
     if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props}),Fragment:'Fragment'};
     if(name==='next/link')return {__esModule:true,default:'Link'};
-    if(name==='next/navigation')return {useSearchParams:()=>params,useRouter:()=>({replace(){},push:(href:string)=>calls.push({href})})};
+    if(name==='next/navigation')return {useSearchParams:()=>params,useRouter:()=>({replace:(href:string)=>calls.push({replace:href}),push:(href:string)=>calls.push({href})})};
     if(name==='lucide-react')return new Proxy({},{get:(_,key)=>String(key)});
     if(name==='./app-shell')return {useApp:()=>app};
     if(name==='./learning-help')return {LearningHelp:'LearningHelp'};
+    if(name==='./question-experience-picker')return {QuestionExperiencePicker:'QuestionExperiencePicker'};
     if(name==='./shared')return {api:async(url:string,options:any)=>{calls.push({url,body:JSON.parse(options.body)});return {session:{id:'new-session'}};},ActionButton:'ActionButton',PageTitle:'PageTitle',Breadcrumb:'Breadcrumb',Alert:'Alert',targetName:(value:any)=>value.university};
     if(name==='@/lib/interview-flow')return flow;
     if(name==='@/lib/school-interview-scope')return scope;
@@ -57,4 +58,11 @@ test('an unsupported-target warning waits until the published question scope has
   const tree=mod.exports.InterviewSetup({kind:'chat'});
   assert.ok(!nodes(tree).some(node=>node.type==='Alert'));
   assert.equal(nodes(tree).find(node=>node.type==='ActionButton').props.disabled,true);
+});
+test('question experience selection preserves question, source version and school and applies only the selected revision',()=>{
+  const tree=render({...preview,question,contentVersion:1},'questionId=own-question&sourceType=personal&sourceVersion=1&targetId=old-target');
+  const picker=nodes(tree).find(node=>node.type==='QuestionExperiencePicker');assert.ok(picker);assert.equal(calls.length,0);
+  picker.props.onSelect({id:'owned-experience',revision:4,data:{title:'내 경험'}});
+  const selected=new URL(calls[0].replace,'http://fixture.test');assert.equal(selected.searchParams.get('questionId'),question.id);assert.equal(selected.searchParams.get('sourceVersion'),'1');assert.equal(selected.searchParams.get('sourceType'),'personal');assert.equal(selected.searchParams.get('targetId'),target.id);assert.equal(selected.searchParams.get('experienceCardId'),'owned-experience');assert.equal(selected.searchParams.get('experienceRevision'),'4');
+  picker.props.onSelect(null);const cleared=new URL(calls[1].replace,'http://fixture.test');assert.equal(cleared.searchParams.has('experienceCardId'),false);assert.equal(cleared.searchParams.get('questionId'),question.id);
 });

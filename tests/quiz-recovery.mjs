@@ -12,7 +12,7 @@ const target={id:'target',university:'서울시립대학교',campus:'본교',dep
 const savedTarget={...target,interview_stage:undefined};
 const item={id:'m1',question_id:'q1',prompt:'본인 역할은 무엇인가요?',activity_ids:['a1'],source_kind:'personal',target_id:'target',target_snapshot:savedTarget};
 const info={serverTime:new Date().toISOString(),session:{id:'session',student_id:'student',state:'active',mode:'answer',current_index:0,content_version:6,items:[item],metadata:{targetId:'target',targetSnapshot:savedTarget,drafts:{0:{response:'서버에 저장한 초안'}}}},responses:[],recordings:[],learning:{questions:[{id:'q1',prompt:item.prompt}],support_targets:[savedTarget],memory_items:[]}};
-const state={values:[],refs:[],hook:0,refHook:0,effects:[],calls:[],toasts:[],listener:null,adapter:null,apiAdapter:null,storage:new Map(),local:new Map(),now:0,capture:null,uploads:[],finishCount:0,tracksStopped:0,captureAvailable:true,timers:new Map(),confirm:false};
+const state={values:[],refs:[],hook:0,refHook:0,effects:[],calls:[],toasts:[],listener:null,adapter:null,apiAdapter:null,storage:new Map(),local:new Map(),now:0,capture:null,uploads:[],finishCount:0,tracksStopped:0,captureAvailable:true,uploadError:false,deviceRequests:0,timers:new Map(),confirm:false};
 let timerId=0;
 class FakeRecorder {
   static isTypeSupported(){return true;}
@@ -23,9 +23,11 @@ class FakeRecorder {
   async deliverStop(){this.ondataavailable?.({data:new Blob(['fake-recorded-audio'],{type:this.mimeType})});await this.onstop?.();}
 }
 let uuid=0;
+const durableAudio=new Map();
+const recoveryRemovals=[];
 const module={exports:{}};
 const actionButton=({pending=false,pendingLabel,disabled,children,type='button',...props})=>({type:'button',props:{...props,type,disabled:disabled||pending,'aria-busy':pending||undefined,children:pending?[{type:'LoaderCircle',props:{size:16,'aria-hidden':true}},pendingLabel??children]:children}});
-vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/quiz-v3.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,console,Date,Set,JSON,Blob,FormData,URL,URLSearchParams,performance:{now:()=>state.now},crypto:{randomUUID:()=>`request-${++uuid}`},setTimeout:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearTimeout:id=>state.timers.delete(id),setInterval:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearInterval:id=>state.timers.delete(id),HTMLElement:class {},document:{activeElement:null,addEventListener(){},removeEventListener(){}},navigator:{mediaDevices:{getUserMedia:async()=>({getTracks:()=>[{stop(){state.tracksStopped++;}}]})}},MediaRecorder:FakeRecorder,localStorage:{getItem:key=>state.local.get(key)??null,setItem:(key,value)=>state.local.set(key,value),removeItem:key=>state.local.delete(key)},sessionStorage:{getItem:key=>state.storage.get(key)??null,setItem:(key,value)=>state.storage.set(key,value),removeItem:key=>state.storage.delete(key)},window:{MediaRecorder:FakeRecorder,confirm:()=>state.confirm,addEventListener:(name,listener)=>{if(name==='gakja:open-on')state.listener=listener;},removeEventListener(){}},require(name){
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/quiz-v3.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,console,Date,Set,JSON,Blob,FormData,URL,URLSearchParams,AbortController,requestAnimationFrame:callback=>{callback();return 1;},cancelAnimationFrame(){},performance:{now:()=>state.now},crypto:{randomUUID:()=>`request-${++uuid}`},setTimeout:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearTimeout:id=>state.timers.delete(id),setInterval:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearInterval:id=>state.timers.delete(id),HTMLElement:class {},document:{activeElement:null,addEventListener(){},removeEventListener(){}},navigator:{mediaDevices:{getUserMedia:async()=>{state.deviceRequests++;return{getTracks:()=>[{stop(){state.tracksStopped++;}}]};}}},MediaRecorder:FakeRecorder,localStorage:{getItem:key=>state.local.get(key)??null,setItem:(key,value)=>state.local.set(key,value),removeItem:key=>state.local.delete(key)},sessionStorage:{getItem:key=>state.storage.get(key)??null,setItem:(key,value)=>state.storage.set(key,value),removeItem:key=>state.storage.delete(key)},window:{matchMedia:()=>({matches:true}),MediaRecorder:FakeRecorder,confirm:()=>state.confirm,addEventListener:(name,listener)=>{if(name==='gakja:open-on')state.listener=listener;},removeEventListener(){}},require(name){
   if(name==='react')return{useState(initial){const index=state.hook++;if(!(index in state.values))state.values[index]=typeof initial==='function'?initial():initial;return[state.values[index],value=>{state.values[index]=typeof value==='function'?value(state.values[index]):value;}];},useRef(initial){const index=state.refHook++;if(!(index in state.refs))state.refs[index]={current:initial};return state.refs[index];},useEffect(callback){state.effects.push(callback);},useCallback:callback=>callback};
   if(name==='react/jsx-runtime')return{jsx:(type,props)=>type===actionButton?actionButton(props):({type,props}),jsxs:(type,props)=>type===actionButton?actionButton(props):({type,props}),Fragment:'Fragment'};
   if(name==='next/link')return{__esModule:true,default:'Link'};
@@ -33,18 +35,20 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   if(name==='lucide-react')return new Proxy({},{get:(_,key)=>String(key)});
   if(name==='./app-shell')return{useApp:()=>({data:{user:{id:'student'},targets:[target]},refresh:async()=>{},toast:text=>state.toasts.push(text),openResource(){}})};
   if(name==='./shared')return{ActionButton:actionButton,post:async(url,payload)=>{state.calls.push({url,payload});return state.adapter?state.adapter(url,payload):info;},api:async url=>{state.calls.push({url,method:'GET'});return state.apiAdapter?state.apiAdapter(url):info;},PageTitle:'PageTitle',Breadcrumb:'Breadcrumb',Alert:'Alert',Empty:'Empty',Spinner:'Spinner'};
+  if(name==='./practice-writing-help')return{PracticeWritingHelp:'PracticeWritingHelp'};
   if(name==='./learning-help')return{LearningHelp:'LearningHelp'};
   if(name==='./audio-level-dot')return{AudioLevelDot:'AudioLevelDot'};
   if(name==='./playful-flow')return{animateStudyReceipt(){}};
   if(name==='@/lib/client/speech-recorder')return{startSpeechCapture(){if(!state.captureAvailable)return null;const started=state.now;return{elapsedMs:()=>state.now-started,dispose(){},pause(){},resume(){},finish(){state.finishCount++;const elapsed=state.now-started;return buildSpeechTelemetry([{atMs:0,rms:0},{atMs:elapsed-.1,rms:.04}],elapsed);}};}};
-  if(name==='@/lib/recording-upload-client')return{uploadRecording:async(url,form)=>{const durationMs=Number(form.get('durationMs')),telemetry=form.get('speechTelemetry')?JSON.parse(form.get('speechTelemetry')):null;assert.ok(!telemetry||validateSpeechTelemetry(telemetry));assert.ok(!telemetry||Math.abs(telemetry.durationMs-durationMs)<=500);state.uploads.push({durationMs,telemetry,blob:form.get('recording')});return{recording:{id:'new-recording',session_id:'session',item_index:0,url:'/owned-recording'}};}};
+  if(name==='@/lib/client/recording-recovery')return{installRecordingExitGuard:()=>()=>{},readRecordingRecovery:async scope=>durableAudio.get(JSON.stringify(scope))||null,removeRecordingRecovery:async key=>{recoveryRemovals.push(key);durableAudio.delete(key);},beginRecordingRecovery:async(scope,mimeType)=>{const key=JSON.stringify(scope),chunks=[];return{key,append:async blob=>{chunks.push(blob);durableAudio.set(key,{...scope,key,blob:new Blob(chunks,{type:mimeType||blob.type}),durationMs:1,complete:false});},finish:async measurement=>{const saved={...scope,key,blob:new Blob(chunks,{type:mimeType||chunks[0]?.type}),...measurement,complete:true};durableAudio.set(key,saved);return saved;},flush:async()=>{}};}};
+  if(name==='@/lib/recording-upload-client')return{uploadRecording:async(url,form)=>{const durationMs=Number(form.get('durationMs')),telemetry=form.get('speechTelemetry')?JSON.parse(form.get('speechTelemetry')):null;assert.ok(!telemetry||validateSpeechTelemetry(telemetry));assert.ok(!telemetry||Math.abs(telemetry.durationMs-durationMs)<=500);state.uploads.push({durationMs,telemetry,blob:form.get('recording')});if(state.uploadError)throw new Error('synthetic upload failed');return{recording:{id:'new-recording',session_id:'session',item_index:0,url:'/owned-recording'}};}};
   if(name==='@gakja/content-contracts/workflows')return contracts;
   if(name==='@/lib/quiz-session-view')return view;
   if(name==='./quiz-session-ui.module.css')return{__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
   throw new Error(name);
 }});
 const render=()=>{state.hook=0;state.refHook=0;state.effects=[];return module.exports.QuizSession({id:'session'});};
-const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.timers.clear();state.confirm=false;};
+const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.values[23]=true;durableAudio.clear();recoveryRemovals.length=0;state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.uploadError=false;state.deviceRequests=0;state.timers.clear();state.confirm=false;};
 const nodes=tree=>Array.isArray(tree)?tree.flatMap(nodes):tree&&typeof tree==='object'?[tree,...nodes(tree.props?.children),...nodes(tree.props?.aside)]:[];
 const text=value=>Array.isArray(value)?value.map(text).join(''):value&&typeof value==='object'?text(value.props?.children):typeof value==='string'?value:'';
 const saveButton=tree=>nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='답변 저장');
@@ -86,5 +90,46 @@ reset();state.values[10]=true;tree=render();await nodes(tree).find(node=>node.ty
 state.now=181000;state.timers.values().next().value.callback();state.now=184000;await state.capture.deliverStop();stopTimers();tree=render();
 check(state.uploads.length===0&&state.values[17].durationMs===181000,'background-delayed stop preserves the actual over-limit duration without uploading false metadata');
 check(text(tree).includes('원본 내려받기')&&!text(tree).includes('녹음 다시 저장'),'over-limit recovery exposes the original file and avoids an impossible upload retry');
-const discard=()=>nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='저장 안 된 녹음 지우기');discard().props.onClick();check(!!state.values[17],'declining discard preserves the unsaved file');state.confirm=true;discard().props.onClick();check(state.values[17]===null,'explicit discard unblocks a fresh recording');
+const discard=()=>nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='저장 안 된 녹음 지우기');await discard().props.onClick();check(!!state.values[17],'declining discard preserves the unsaved file');state.confirm=true;await discard().props.onClick();check(state.values[17]===null,'explicit discard unblocks a fresh recording');
+reset({...info,session:{...info.session,mode:'oral'}});state.values[10]=true;state.uploadError=true;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();state.now=1200;tree=render();nodes(tree).find(node=>node.type==='button'&&text(node.props.children).startsWith('녹음 완료')).props.onClick();await state.capture.deliverStop();
+check(state.values[17]?.blob.size>0&&durableAudio.size===1&&recoveryRemovals.length===0,'upload failure retains both original in memory and durable media without a false receipt');
+// A mount cleanup must keep the final MediaRecorder events alive until durable finish.
+reset({...info,session:{...info.session,mode:'oral'}});state.values[10]=true;
+tree=render();const mountedCleanup=state.effects.find(effect=>effect.toString().includes('mounted.current = true'))();
+await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
+state.now=2200;mountedCleanup();state.now=4000;await state.capture.deliverStop();
+check(state.uploads.length===0,'unmounted recorder does not start an unreviewed server upload');
+const recoveredLocal=[...durableAudio.values()][0];
+check(recoveredLocal?.blob.size>0&&await recoveredLocal.blob.text()==='fake-recorded-audio','final chunk survives unmount in device storage');
+check(recoveredLocal.durationMs===2200,'unmount freezes honest duration before delayed final data event');
+check(JSON.parse(state.local.get('gakja-quiz-activity:student:session')).hasRecording===true,'even a first-question recording without text remains discoverable from the dashboard');
+reset({...info,session:{...info.session,mode:'oral'}});durableAudio.set(recoveredLocal.key,recoveredLocal);tree=render();
+state.effects.find(effect=>effect.toString().includes('readRecordingRecovery'))();await settle();tree=render();
+check(text(tree).includes('아직 저장되지 않았어요.')&&text(tree).includes('원본 내려받기'),'same owned question restores explicit retry/download recovery controls');
+check(state.uploads.length===0,'restoring audio never uploads it automatically');
+await nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='녹음 다시 저장').props.onClick();
+check(recoveryRemovals.includes(recoveredLocal.key)&&!durableAudio.has(recoveredLocal.key),'only a confirmed server recording receipt removes the local original');
+
+reset({...info,session:{...info.session,mode:'oral'}});tree=render();
+check(saveButton(tree).props.disabled,'oral save still requires recording unless the learner explicitly changes response mode');
+nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='이 질문은 글로 답하기').props.onClick();tree=render();
+check(!saveButton(tree).props.disabled,'same oral question supports explicit text alternative without a microphone');
+await saveButton(tree).props.onClick();const textRequest=state.calls.find(call=>call.payload?.action==='answer').payload;
+check(textRequest.responseMode==='text'&&!textRequest.recordingId&&textRequest.itemIndex===0,'text fallback submits the original question without voice media or invented voice metrics');
+
+reset();state.values[10]=true;state.values[23]=false;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();tree=render();
+check(state.capture===null&&state.values[22]===0&&state.deviceRequests===1,'microphone permission and level check happen before the readiness countdown');
+nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='준비됐어요 · 3초 뒤 시작').props.onClick();tree=render();
+check(state.values[22]===3&&state.capture===null,'learner explicitly starts the real three-second readiness countdown after the microphone check');
+nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='지금 시작').props.onClick();
+check(state.deviceRequests===1&&state.capture?.state==='recording','skip reuses the checked device and opens exactly one recorder');
+reset();state.values[10]=true;state.values[23]=false;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='취소').props.onClick();
+check(state.values[22]===null&&state.capture===null&&state.tracksStopped===1,'cancel microphone check releases the device without recording an answer');
+reset();state.values[4]='';state.values[17]={blob:new Blob(['private-audio']),index:0,durationMs:1200};tree=render();const autosave=state.effects.find(effect=>effect.toString().includes('450'));autosave();autosave();
+check(JSON.parse(state.local.get('gakja-quiz-activity:student:session')).hasRecording===true,'blank text autosave retains first-question audio-only resume evidence');
+
+reset();tree=render();const heading=nodes(tree).find(node=>node.type==='h2'&&node.props.className==='quiz-prompt');let focusOptions,scrollOptions;
+heading.props.ref.current={focus:options=>{focusOptions=options;},scrollIntoView:options=>{scrollOptions=options;}};
+state.effects.find(effect=>effect.toString().includes('questionHeading.current'))();
+check(focusOptions?.preventScroll===true&&scrollOptions?.block==='start'&&scrollOptions?.behavior==='instant','new question gets logical focus and scroll while respecting reduced motion');
 console.log(`Quiz recovery: ${checks} handler/render checks passed; no DB, provider or device calls.`);

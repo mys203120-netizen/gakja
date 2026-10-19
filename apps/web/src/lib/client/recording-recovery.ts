@@ -1,0 +1,91 @@
+/** Private, device-local recording recovery. No audio leaves the browser here. */
+export type RecordingRecoveryScope = {studentId:string;sessionId:string;itemIndex:number;kind:'quiz'|'interview'};
+type Measurement = {durationMs:number;telemetry?:Record<string,unknown>;analysisAudio?:Blob};
+type StoredRecording = RecordingRecoveryScope & {key:string;mimeType:string;chunkCount:number;analysisCount:number;durationMs:number;telemetry?:Record<string,unknown>;updatedAt:number;expiresAt:number;complete:boolean};
+type StoredChunk={id:string;recordingKey:string;lane:'primary'|'analysis';position:number;blob:Blob};
+export type RecoveredRecording = RecordingRecoveryScope & {key:string;blob:Blob;analysisAudio?:Blob;durationMs:number;telemetry?:Record<string,unknown>;updatedAt:number;expiresAt:number;complete:boolean};
+export const RECORDING_RECOVERY_TTL_MS = 7*24*60*60*1000;
+const DB='gakja-private-recordings',STORE='pending',PARTS='chunks';
+export const recordingRecoveryKey=(scope:RecordingRecoveryScope)=>JSON.stringify([scope.studentId,scope.kind,scope.sessionId,scope.itemIndex]);
+const unavailable=()=>new Error('이 기기에 녹음을 임시 보관할 수 없어요. 브라우저 저장 공간을 허용하거나 글로 답해 주세요.');
+function database():Promise<IDBDatabase> {
+  if(typeof indexedDB==='undefined')return Promise.reject(unavailable());
+  return new Promise((resolve,reject)=>{
+    const request=indexedDB.open(DB,1);
+    request.onupgradeneeded=()=>{
+      if(!request.result.objectStoreNames.contains(STORE))request.result.createObjectStore(STORE,{keyPath:'key'});
+      if(!request.result.objectStoreNames.contains(PARTS)){const parts=request.result.createObjectStore(PARTS,{keyPath:'id'});parts.createIndex('recordingKey','recordingKey');}
+    };
+    request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(unavailable());request.onblocked=()=>reject(unavailable());
+  });
+}
+async function operation<T>(mode:IDBTransactionMode,work:(store:IDBObjectStore,done:(value:T)=>void,parts:IDBObjectStore)=>void):Promise<T> {
+  const db=await database();
+  return new Promise<T>((resolve,reject)=>{
+    const tx=db.transaction([STORE,PARTS],mode);let value:T;
+    tx.oncomplete=()=>{db.close();resolve(value);};tx.onerror=tx.onabort=()=>{db.close();reject(unavailable());};
+    try{work(tx.objectStore(STORE),result=>{value=result;},tx.objectStore(PARTS));}catch(error){tx.abort();db.close();reject(error);}
+  });
+}
+function deleteParts(parts:IDBObjectStore,key:string){const request=parts.index('recordingKey').openKeyCursor(IDBKeyRange.only(key));request.onsuccess=()=>{const cursor=request.result;if(cursor){parts.delete(cursor.primaryKey);cursor.continue();}};}
+function hydrate(row:StoredRecording,parts:StoredChunk[]):RecoveredRecording {
+  const {chunkCount,analysisCount,mimeType,...rest}=row;
+  const primary=parts.filter(part=>part.lane==='primary').sort((a,b)=>a.position-b.position).map(part=>part.blob);
+  const audio=parts.filter(part=>part.lane==='analysis').sort((a,b)=>a.position-b.position).map(part=>part.blob);
+  return {...rest,blob:new Blob(primary,{type:mimeType||primary[0]?.type||'audio/webm'}),...(audio.length?{analysisAudio:new Blob(audio,{type:audio[0].type||'audio/webm'})}:{})};
+}
+function readParts(parts:IDBObjectStore,row:StoredRecording,done:(result:RecoveredRecording)=>void){const request=parts.index('recordingKey').getAll(IDBKeyRange.only(row.key));request.onsuccess=()=>done(hydrate(row,request.result));}
+export async function removeRecordingRecovery(key:string):Promise<void> {await operation<void>('readwrite',(store,done,parts)=>{store.delete(key);deleteParts(parts,key);done();});}
+export async function listRecordingRecovery(scope:Pick<RecordingRecoveryScope,'studentId'|'sessionId'|'kind'>):Promise<RecoveredRecording[]> {
+  return operation<RecoveredRecording[]>('readwrite',(store,done,parts)=>{
+    const request=store.getAll();request.onsuccess=()=>{
+      const rows:StoredRecording[]=request.result,now=Date.now();
+      for(const row of rows)if(row.expiresAt<=now){store.delete(row.key);deleteParts(parts,row.key);}
+      const selected=rows.filter(row=>row.expiresAt>now&&row.studentId===scope.studentId&&row.sessionId===scope.sessionId&&row.kind===scope.kind&&row.chunkCount>0);
+      if(!selected.length){done([]);return;}const result:RecoveredRecording[]=[];
+      for(const row of selected)readParts(parts,row,value=>{result.push(value);if(result.length===selected.length)done(result.sort((a,b)=>b.updatedAt-a.updatedAt));});
+    };
+  });
+}
+export async function readRecordingRecovery(scope:RecordingRecoveryScope):Promise<RecoveredRecording|null> {
+  return operation<RecoveredRecording|null>('readwrite',(store,done,parts)=>{
+    const request=store.get(recordingRecoveryKey(scope));request.onsuccess=()=>{
+      const row=request.result as StoredRecording|undefined;
+      if(!row){done(null);return;}if(row.expiresAt<=Date.now()){store.delete(row.key);deleteParts(parts,row.key);done(null);return;}
+      if(!row.chunkCount){done(null);return;}readParts(parts,row,done);
+    };
+  });
+}
+/** Start before opening the recorder. Each chunk has its own row: no growing Blob rewrite. */
+export async function beginRecordingRecovery(scope:RecordingRecoveryScope,mimeType:string) {
+  const now=Date.now(),key=recordingRecoveryKey(scope);
+  let row:StoredRecording={...scope,key,mimeType,chunkCount:0,analysisCount:0,durationMs:0,updatedAt:now,expiresAt:now+RECORDING_RECOVERY_TTL_MS,complete:false};
+  await operation<void>('readwrite',(store,done,parts)=>{const request=store.get(key);request.onsuccess=()=>{const prior=request.result as StoredRecording|undefined;if(prior&&prior.expiresAt>Date.now()&&prior.chunkCount){store.transaction.abort();return;}deleteParts(parts,key);store.put(row);done();};});
+  let queue=Promise.resolve();
+  const write=(update:(parts:IDBObjectStore)=>void)=>{queue=queue.then(()=>operation<void>('readwrite',(store,done,parts)=>{update(parts);row={...row,updatedAt:Date.now(),expiresAt:Date.now()+RECORDING_RECOVERY_TTL_MS};store.put(row);done();}));return queue;};
+  const add=(parts:IDBObjectStore,blob:Blob,lane:StoredChunk['lane'])=>{const position=lane==='primary'?row.chunkCount++:row.analysisCount++;parts.put({id:JSON.stringify([key,lane,position]),recordingKey:key,lane,position,blob} satisfies StoredChunk);if(lane==='primary'&&!row.mimeType)row.mimeType=blob.type;};
+  return {
+    key,
+    append(blob:Blob,durationMs?:number){if(!blob.size)return queue;return write(parts=>{add(parts,blob,'primary');if(typeof durationMs==='number'&&Number.isFinite(durationMs)&&durationMs>0)row.durationMs=Math.round(durationMs);});},
+    appendAnalysis(blob:Blob){if(!blob.size)return queue;return write(parts=>add(parts,blob,'analysis'));},
+    async finish(measurement:Measurement):Promise<RecoveredRecording>{await write(parts=>{row.durationMs=Math.max(1,Math.round(measurement.durationMs));row.telemetry=measurement.telemetry;row.complete=true;if(measurement.analysisAudio&&!row.analysisCount)add(parts,measurement.analysisAudio,'analysis');});const saved=await readRecordingRecovery(scope);if(!saved)throw unavailable();return saved;},
+    async flush(){await queue;},
+  };
+}
+export type RecordingRecoveryWriter=Awaited<ReturnType<typeof beginRecordingRecovery>>;
+
+/** Guard route links and reload/close while media still needs a server receipt. */
+export function installRecordingExitGuard(options:{hasPending:()=>boolean;save:()=>Promise<void>;navigate:(href:string)=>void;message?:string}) {
+  let leaving=false;
+  const currentHref=window.location.href,currentState=window.history.state;
+  const message=options.message||'보내지 않은 녹음이 있어요. 이 기기에 보관하고 이동할까요?';
+  const beforeUnload=(event:BeforeUnloadEvent)=>{if(options.hasPending()&&!leaving){event.preventDefault();event.returnValue='';}};
+  const click=(event:MouseEvent)=>{if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.altKey||event.shiftKey||!options.hasPending()||leaving)return;const element=event.target instanceof Element?event.target.closest<HTMLAnchorElement>('a[href]'):null;if(!element||element.target==='_blank'||element.hasAttribute('download'))return;const destination=new URL(element.href,window.location.href);if(destination.href===window.location.href||destination.hash&&destination.pathname===window.location.pathname&&destination.search===window.location.search)return;event.preventDefault();event.stopImmediatePropagation();if(!window.confirm(message))return;void options.save().then(()=>{leaving=true;options.navigate(destination.href);}).catch(()=>{/* A failed local save must keep the current screen and source. */});};
+  const popState=(event:PopStateEvent)=>{if(!options.hasPending()||leaving)return;const destination=window.location.href;event.stopImmediatePropagation();window.history.pushState(currentState,'',currentHref);if(!window.confirm(message))return;void options.save().then(()=>{leaving=true;options.navigate(destination);}).catch(()=>{});};
+  const pageHide=()=>{if(options.hasPending())void options.save().catch(()=>{});};
+  window.addEventListener('beforeunload',beforeUnload);
+  window.addEventListener('popstate',popState,true);
+  window.addEventListener('pagehide',pageHide);
+  document.addEventListener('click',click,true);
+  return()=>{window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('popstate',popState,true);window.removeEventListener('pagehide',pageHide);document.removeEventListener('click',click,true);};
+}

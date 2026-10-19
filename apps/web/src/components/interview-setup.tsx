@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MessagesSquare, Camera, Play, ArrowRight, Plus, Minus, BookOpen } from 'lucide-react';
 import { useApp } from './app-shell';
 import { LearningHelp } from './learning-help';
+import {QuestionExperiencePicker} from './question-experience-picker';
 import { api, ActionButton, PageTitle, Breadcrumb, Alert, targetName, type Item } from './shared';
 import { hasInterviewSelection, interviewPreviewHref, interviewSetupHref, interviewSetupState, sourceVersionInput, type InterviewSetupState } from '@/lib/interview-flow';
 import { learningScopeIdentity } from '@/lib/learning-target-scope';
@@ -87,6 +88,7 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
           {question?.talent_profile && question?.source_snapshot?.url && <a className="text-link" href={question.source_snapshot.url} target="_blank" rel="noreferrer">{question.source_snapshot.title}<ArrowRight size={14}/></a>}
           {!previewLoading && !previewError && (params.get('briefingId') ? <button className="text-link" type="button" onClick={() => openResource({ kind: 'briefing', id: params.get('briefingId') || undefined })}><BookOpen size={15} />브리핑과 근거</button> : (question || activity) && <LearningHelp questionId={question?.id} activityId={activity?.id} targetId={targetId} sourceVersion={commonOnly ? undefined : sourceVersionInput(params)} onAssisted={markPreparedHelp} snapshot={{ learning: { answer_scripts: [], memory_items: [], questions: preview?.questions || data.learning?.questions || [], activities: preview?.activities || data.learning?.activities || [], source_refs: preview?.sources || data.learning?.source_refs || [] }, documents: [] }} />)}
         </section>}
+        {question&&!previewLoading&&!previewError&&<QuestionExperiencePicker key={[question.id,params.get('sourceVersion'),targetId].join(':')} question={{id:question.id,prompt:question.prompt}} targetId={targetId} value={preview?.experienceCard||null} onSelect={card=>{const next=new URLSearchParams(params.toString());if(card){next.set('experienceCardId',card.id);next.set('experienceRevision',String(card.revision));}else{next.delete('experienceCardId');next.delete('experienceRevision');}router.replace(interviewSetupHref(kind,next),{scroll:false});}}/>}
         {preview?.experienceCard && <section className="detail-section"><span className="muted small">나의 무기고 · 학생이 확인한 경험</span><h3>{preview.experienceCard.data.title}</h3><p>이 경험을 떠올려 선택한 질문에 답해보세요.</p><Link className="text-link" href={'/armory?card='+preview.experienceCard.id}>경험 카드 확인하기</Link></section>}
         {params.get('experienceCardId') && data.interviews?.some(s=>s.state==='active') && <p className="interview-common-note">진행 중인 면접이 있어요. <Link href="/interview">기존 면접 이어하기</Link> 또는 아래에서 새 연습을 시작하세요.</p>}
         <div className="interview-quick-start">

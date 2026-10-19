@@ -23,6 +23,9 @@ type Options = LiveTurnEndpointOptions & {
   onProgress?:(progress:LiveCaptureProgress)=>void;
   onLevel?:(level:number)=>void;
   maxDurationMs?:number;
+  onChunk?:(blob:Blob,kind:'primary'|'analysis',durationMs:number)=>void;
+  onComplete?:(recording:LiveAnswerRecording)=>Promise<void>|void;
+  autoStop?:()=>boolean;
 };
 type RecorderPart = {recorder:MediaRecorder;chunks:Blob[];ended:boolean;failed:boolean};
 const MAX_LIVE_ANSWER_MS = 180_000;
@@ -83,7 +86,10 @@ export function createLiveAnswerCapture(stream:MediaStream, options:Options = {}
     const result=blob?.size?{blob,...(analysisBlob?.size&&primaryBlob.size?{analysisAudio:analysisBlob}:{}),durationMs,telemetry:telemetry||undefined,reason:stopReason,partial,
       issue:issue||(timedOut?'녹음 종료가 지연되어 받은 부분까지만 보관했어요.':partial&&stopReason!=='limit'?'연결이 끊겨 녹음한 부분까지만 보관했어요.':undefined),speechStarted:endpoint.speechStarted,measurementAvailable:samples.length>0}:null;
     samples.length=0;clearRecorders();
-    if(result)resolve(result);else reject(new Error('녹음 파일을 받지 못했어요. 마이크를 확인하고 다시 말해 주세요.'));
+    if(result){
+      // Persistence belongs to the capture, so its final event survives a view unmount.
+      Promise.resolve().then(()=>options.onComplete?.(result)).then(()=>resolve(result),()=>resolve({...result,partial:true,issue:'기기 임시 저장을 확인하지 못했어요. 이 화면에서 녹음을 내려받거나 서버에 저장해 주세요.'}));
+    }else reject(new Error('녹음 파일을 받지 못했어요. 마이크를 확인하고 다시 말해 주세요.'));
   };
   const stop = (reason:LiveAnswerStopReason='manual')=>{
     if(stopping || settled)return finished;
@@ -105,13 +111,13 @@ export function createLiveAnswerCapture(stream:MediaStream, options:Options = {}
     if(analyser && buffer && context?.state==='running'){
       try{analyser.getFloatTimeDomainData(buffer);}catch{issue='마이크 측정이 중단되어 말한 부분까지만 보관했어요.';void stop('interrupted');return;}
       let squares=0;for(const value of buffer)squares+=value*value;rms=Math.sqrt(squares/buffer.length);
-      if(Number.isFinite(rms)&&rms<=1){if(samples.length<MAX_SPEECH_SAMPLES)samples.push({atMs,rms});endpoint=observeLiveTurn(endpoint,atMs,rms,options);}
+      if(Number.isFinite(rms)&&rms<=1){if(samples.length<MAX_SPEECH_SAMPLES)samples.push({atMs,rms});endpoint=observeLiveTurn(endpoint,atMs,rms,options);if(options.autoStop?.()===false)endpoint={...endpoint,silenceMs:0,endingSoon:false,shouldStop:false};}
     }
     notify(rms);
     if(endpoint.shouldStop)void stop('silence');
   };
   for(const part of parts){
-    part.recorder.ondataavailable=event=>{if(!settled&&!discarded&&event.data.size)part.chunks.push(event.data);};
+    part.recorder.ondataavailable=event=>{if(!settled&&!discarded&&event.data.size){part.chunks.push(event.data);try{options.onChunk?.(event.data,part===primary?'primary':'analysis',Math.round(stopping?durationMs:elapsedMs()));}catch{/* Complete retains the in-memory source even if persistence fails. */}}};
     part.recorder.onstop=()=>{part.ended=true;if(!stopping){issue='녹음 연결이 끊겨 말한 부분까지만 보관했어요.';void stop('interrupted');}else complete();};
     part.recorder.onerror=()=>{part.failed=true;issue='녹음 장치 오류로 말한 부분까지만 보관했어요.';void stop('interrupted');};
   }

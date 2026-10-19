@@ -72,6 +72,7 @@
 
 /* Editing keeps the original four-step save and confirmation flow. */
 .editor { width:100%; max-width:780px; margin:0; padding:0; border:0; background:transparent; }
+.editorFields { min-width:0; margin:0; padding:0; border:0; }
 .editor h2 { scroll-margin-top:100px; }
 .editor h2:focus { outline:none; }
 .stepCount { color:var(--clarity-muted); font-size:13px; white-space:nowrap; }
@@ -138,6 +139,19 @@
 .confirmPrompt p { margin:0 0 12px; font-size:13px; }
 .practiceActions .hint { margin-top:10px; }
 .page .selectionHint { margin-top:16px; color:var(--clarity-muted); font-size:13px; }
+.draftList { margin:0 0 28px; }
+.draftList>h2 { font-size:17px; }
+.draftList small { color:var(--clarity-muted); font-size:12px; }
+.pasteTool { margin:16px 0 20px; padding:14px 0; border-block:1px solid var(--clarity-line); }
+.pasteTool summary { cursor:pointer; color:var(--clarity-action); font-size:13px; font-weight:600; }
+.matchReason { display:block; margin-top:6px; color:var(--clarity-muted); font-size:12px; font-weight:400; line-height:1.6; }
+.experiencePicker { margin:16px 0; min-width:0; }
+.experiencePicker>div { padding:12px 0; }
+.experiencePicker .questionList { max-height:360px; }
+.experiencePicker label { display:flex; align-items:flex-start; gap:10px; padding:12px 0; border-bottom:1px solid var(--clarity-line); cursor:pointer; }
+.experiencePicker input { margin-top:4px; accent-color:var(--clarity-action); }
+.experiencePicker label>span { min-width:0; }
+.experiencePicker strong { overflow-wrap:anywhere; }
 
 @media(max-width:1000px) {
   .workspace { grid-template-columns:230px minmax(0,1fr); gap:24px; }

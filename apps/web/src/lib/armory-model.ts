@@ -4,6 +4,7 @@ export const experienceSchema = z.object({
  situation:z.string().trim().max(2000), action:z.string().trim().max(2000), result:z.string().trim().max(2000),
  confirmed:z.boolean(), pinned:z.boolean().default(false),
  sourceNote:z.string().trim().max(400).default('학생이 직접 작성한 경험'),
+ originalText:z.string().max(6000).optional(),
 }).refine(v=>!v.confirmed || Boolean(v.situation && v.action),{message:'상황과 직접 한 행동을 작성해 주세요.'});
 export type Experience = z.infer<typeof experienceSchema>;
 export type ExperienceCard = {id:string;data:Experience;revision:number;updated_at:string};

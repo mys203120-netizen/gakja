@@ -137,7 +137,7 @@ function harness(initial = fixture(), storage = new Map()) {
   let uuid = 0;
   const module = { exports: {} };
   vm.runInNewContext(componentSource, { module, exports: module.exports, console, Date, Set, JSON, Blob, FormData, URL, URLSearchParams, AbortController,
-    Element: FakeElement, HTMLElement: FakeElement, document, performance: { now: () => state.now },
+    requestAnimationFrame:callback=>{callback();return 1;},cancelAnimationFrame(){},Element: FakeElement, HTMLElement: FakeElement, document, performance: { now: () => state.now },
     crypto: { randomUUID: () => `choice-request-${++uuid}` },
     setTimeout: (callback, ms) => timer(callback, ms, false), clearTimeout: id => state.timers.delete(id),
     setInterval: (callback, ms) => timer(callback, ms, true), clearInterval: id => state.timers.delete(id),
@@ -152,6 +152,8 @@ function harness(initial = fixture(), storage = new Map()) {
       if (name === 'lucide-react') return new Proxy({}, { get: (_, key) => String(key) });
       if (name === './app-shell') return { useApp: () => app };
       if (name === './shared') return { ActionButton: actionButton, api, post, PageTitle: 'PageTitle', Breadcrumb: 'Breadcrumb', Alert: 'Alert', Empty: 'Empty', Spinner: 'Spinner' };
+      if (name === './practice-writing-help') return {PracticeWritingHelp:'PracticeWritingHelp'};
+      if (name === '@/lib/client/recording-recovery') return {readRecordingRecovery:async()=>null,installRecordingExitGuard:()=>()=>{}};
       if (name === './learning-help') return { LearningHelp: 'LearningHelp' };
       if (name === './audio-level-dot') return { AudioLevelDot: 'AudioLevelDot' };
       if (name === './playful-flow') return { animateStudyReceipt() {} };

@@ -18,6 +18,7 @@ function harness(count=1){
     async suspend(){log('suspend');await state.overrides.suspend?.();info.session.data.paused=true;},
     async resume(){log('resume');await state.overrides.resume?.();info.session.data.paused=false;},
     async speak(question,generation,signal){log('speak',question.turnId,generation,signal);await state.overrides.speak?.(question,generation,signal);},
+    async beforeCapture(question,generation,signal){log('beforeCapture',question,generation,signal);await state.overrides.beforeCapture?.(question,generation,signal);},
     capture(progress){log('capture');const done=deferred<LiveAnswerRecording>();void done.promise.catch(()=>{});const capture={finished:done.promise,pauseCalls:0,resumeCalls:0,disposeCalls:0,stopCalls:[] as any[],resolve:done.resolve,pause(){this.pauseCalls++;},resume(){this.resumeCalls++;},stop(reason='manual'){this.stopCalls.push(reason);done.resolve(recording({reason:reason as any}));return done.promise;},dispose(){this.disposeCalls++;done.reject(new DOMException('disposed','AbortError'));}};state.captures.push(capture);return capture;},
     async upload(value,question,generation){log('upload',value,question.turnId,generation);return state.overrides.upload?state.overrides.upload(value,question,generation):`media-${question.turnId}`;},
     async transcribe(mediaId){log('transcribe',mediaId);await state.overrides.transcribe?.(mediaId);},
@@ -40,6 +41,22 @@ test('one start runs spoken questions, silence capture, saved-media answers and 
   assert.deepEqual(h.state.calls.filter(c=>['speak','capture','upload','transcribe','answer','finish'].includes(c.name)).map(c=>c.name),['speak','capture','upload','transcribe','answer','speak','capture','upload','transcribe','answer','finish']);
   assert.deepEqual(h.calls('answer').map(c=>[c.args[0],c.args[1].turnId,c.args[2]]),[['media-t1','t1',7],['media-t2','t2',7]]);
   assert.equal(h.calls('finish').length,1);assert.equal(h.calls('release').length,1);h.controller.dispose();
+});
+test('unmount requests a preserving stop and never submits the late final recording',async()=>{
+  const h=harness();await h.controller.start();await h.until(()=>h.state.captures.length===1);
+  const capture=h.state.captures[0];h.controller.dispose();await tick();
+  assert.deepEqual(capture.stopCalls,['interrupted']);assert.equal(capture.disposeCalls,0);assert.equal(h.calls('upload').length,0);assert.equal(h.calls('answer').length,0);
+});
+test('a recovered device recording is bound to the exact turn and generation before explicit save',async()=>{
+  const h=harness(),saved=recording({partial:true,reason:'interrupted'});
+  assert.equal(h.controller.restoreRecording(saved,{...h.state.questions[0],turnId:'other-turn'},7),false);
+  assert.equal(h.controller.restoreRecording(saved,h.state.questions[0],8),false);
+  assert.equal(h.controller.restoreRecording(saved,h.state.questions[0],7),true);assert.equal(h.calls('upload').length,0);
+  await h.controller.start();await h.until(()=>h.controller.state.phase==='complete');assert.equal(h.calls('speak').length,0);assert.equal(h.calls('upload').length,1);assert.equal(h.calls('upload')[0].args[0],saved);h.controller.dispose();
+});
+test('pausing during the preparation countdown cannot start a recorder',async()=>{
+  const h=harness();h.state.overrides.beforeCapture=async(_q,_g,signal)=>new Promise<void>((_,reject)=>signal.addEventListener('abort',()=>reject(new DOMException('paused','AbortError')),{once:true}));
+  await h.controller.start();await h.until(()=>h.calls('beforeCapture').length===1);h.controller.pause();await tick();assert.equal(h.state.captures.length,0);assert.equal(h.controller.state.phase,'paused');h.controller.dispose();
 });
 test('pause mid-answer resumes the same capture without replay or another recorder',async()=>{
   const h=harness();await h.controller.start();await h.until(()=>h.state.captures.length===1);const capture=h.state.captures[0];

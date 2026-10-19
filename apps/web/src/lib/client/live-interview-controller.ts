@@ -11,7 +11,8 @@ export type LiveInterviewServices = {
   suspend():Promise<void>;
   resume():Promise<void>;
   speak(question:LiveInfo,generation:number,signal:AbortSignal):Promise<void>;
-  capture(onProgress:(value:LiveCaptureProgress)=>void):LiveAnswerCapture;
+  beforeCapture?(question:LiveInfo,generation:number,signal:AbortSignal):Promise<void>;
+  capture(onProgress:(value:LiveCaptureProgress)=>void,question:LiveInfo,generation:number):LiveAnswerCapture;
   upload(recording:LiveAnswerRecording,question:LiveInfo,generation:number):Promise<string>;
   transcribe(mediaId:string):Promise<void>;
   answer(mediaId:string,question:LiveInfo,generation:number):Promise<unknown>;
@@ -37,11 +38,24 @@ export class LiveInterviewController {
   private intent=0;
   private disposed=false;
   private ending=false;
+  private devicePrepared=false;
   private wake?:()=>void;
   constructor(info:LiveInfo,private services:LiveInterviewServices,private changed:(value:LiveSnapshot)=>void){
     this.snapshot={phase:info.session.state==='completed'?'complete':'idle',info,error:''};
   }
   get state(){return this.snapshot;}
+  restoreRecording(recording:LiveAnswerRecording,question:LiveInfo,generation:number){
+    if(this.disposed||this.running||this.capture||this.pending||this.snapshot.info.question?.turnId!==question.turnId||Number(this.snapshot.info.session.data.generation||0)!==generation)return false;
+    this.pending={question,generation,recording};this.emit({recording});return true;
+  }
+  /** Stop safely before an explicit switch to typing; final chunks still reach persistence. */
+  async preserveAnswer(){this.pause();if(this.capture){const recording=await this.capture.stop('interrupted');return recording;}return this.pending?.recording;}
+  async acceptTypedAnswer(info:LiveInfo){
+    this.pause();this.runRevision++;this.wake?.();this.wake=undefined;await this.running;
+    this.pending=undefined;this.capture=undefined;this.ending=false;
+    if(info.session.state==='completed')this.services.release();
+    this.emit({info,phase:info.session.state==='completed'?'complete':'paused',recording:undefined,progress:undefined,error:''});
+  }
   private emit(patch:Partial<LiveSnapshot>){if(this.disposed)return;this.snapshot={...this.snapshot,...patch};this.changed(this.snapshot);}
   private phase(phase:LivePhase){if(!this.paused)this.emit({phase});}
   private async checkpoint(revision=this.runRevision){while(this.paused&&!this.disposed&&revision===this.runRevision)await new Promise<void>(resolve=>{this.wake=resolve;});if(this.disposed||revision!==this.runRevision)throw new DOMException('진행을 중단했어요.','AbortError');}
@@ -73,7 +87,8 @@ export class LiveInterviewController {
         const changed=()=>this.disposed||!this.requested||this.intent!==intent;
         this.emit({phase:'preparing',error:''});
         await this.suspension.catch(()=>{});if(changed())continue;
-        if(!this.ending)await this.services.prepare();
+        this.rememberSavedMedia(this.snapshot.info);
+        if(!this.ending&&!this.pending){await this.services.prepare();this.devicePrepared=true;}
         if(this.disposed){this.services.release();return;}
         if(changed()){this.services.mute(true);continue;}
         let info=await this.load();if(changed())continue;
@@ -184,13 +199,14 @@ export class LiveInterviewController {
           this.phase('saving');await this.services.finish();if(this.disposed||revision!==this.runRevision)return;await this.load();this.requested=false;this.emit({phase:'complete'});this.services.release();return;
         }
         const question=info.question,generation=Number(info.session.data.generation||0);
+        if(!this.devicePrepared){await this.services.prepare();this.devicePrepared=true;await this.checkpoint(revision);}
         this.phase('speaking');const speech=new AbortController();this.speech=speech;
-        try{await this.services.speak(question,generation,speech.signal);}catch(error){if(speech.signal.aborted||this.paused||this.ending)continue;throw error;}finally{if(this.speech===speech)this.speech=undefined;}
+        try{await this.services.speak(question,generation,speech.signal);if(!speech.signal.aborted&&!this.paused&&!this.ending)await this.services.beforeCapture?.(question,generation,speech.signal);}catch(error){if(speech.signal.aborted||this.paused||this.ending)continue;throw error;}finally{if(this.speech===speech)this.speech=undefined;}
         if(speech.signal.aborted)continue;
         await this.checkpoint(revision);
         if(this.ending)continue;
         this.emit({phase:'listening',progress:undefined,recording:undefined});
-        this.capture=this.services.capture(progress=>{this.emit({progress});this.phase('listening');});
+        this.capture=this.services.capture(progress=>{this.emit({progress});this.phase('listening');},question,generation);
         let recording:LiveAnswerRecording;
         try{recording=await this.capture.finished;}finally{this.capture=undefined;}
         if(this.disposed||revision!==this.runRevision)return;
@@ -204,5 +220,5 @@ export class LiveInterviewController {
       }
     }catch(error){if(revision===this.runRevision)await this.fail(error);}
   }
-  dispose(){if(this.disposed)return;this.disposed=true;this.requested=false;this.intent++;this.speech?.abort();this.capture?.dispose();this.wake?.();this.wake=undefined;this.services.release();}
+  dispose(){if(this.disposed)return;this.disposed=true;this.requested=false;this.intent++;this.speech?.abort();if(this.capture)void this.capture.stop('interrupted').catch(()=>{});this.wake?.();this.wake=undefined;this.services.release();}
 }

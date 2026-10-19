@@ -266,3 +266,16 @@
 }
 @media(min-width:768px) { .dashboard .focusActions :global(.text-link) {min-height:28px;} }
 @media(max-width:360px) { .dashboard .focusActions {grid-template-columns:1fr;} .dashboard .focusActions :global(.text-link) {justify-content:flex-start;} }
+
+.remainingDeadlines>summary,.agendaDisclosure>summary {display:flex;align-items:center;min-height:44px;gap:8px;cursor:pointer;color:var(--flow-green);font-size:13px;line-height:1.6;}
+.remainingDeadlines>summary::after,.agendaDisclosure>summary::after {content:'+';margin-left:auto;font-size:18px;}
+.remainingDeadlines[open]>summary::after,.agendaDisclosure[open]>summary::after {content:'−';}
+.remainingDeadlines>summary::-webkit-details-marker,.agendaDisclosure>summary::-webkit-details-marker {display:none;}
+.agendaDisclosure {margin-top:12px;border-top:1px solid var(--clarity-line);padding-top:6px;}
+.todayPlan>span>small {display:block;color:var(--flow-muted);font-size:12px;}
+.planActions {display:flex;gap:12px;align-items:center;margin-left:auto;flex-wrap:wrap;justify-content:flex-end;}
+.planActions :global(.text-link) {min-height:44px;}
+.moveDate {display:grid;gap:8px;margin:18px 0;font-size:14px;}
+.moveDate input {min-height:44px;font-size:16px;}
+.moveConfirmation {display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.7;}
+.moveConfirmation input {width:18px;height:18px;flex-shrink:0;margin-top:3px;}

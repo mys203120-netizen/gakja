@@ -41,5 +41,5 @@ export function automaticPracticeDays(today:string,interviewDate:string,minutes:
 /** Manual overdue work remains visible; superseded automatic work stays in history. */
 export function todayPlanAgenda<T extends Record<string,any>>(plans:T[],today:string,targetId?:string|null){
   return plans.filter(plan=>plan.date<=today&&(!plan.target?.targetId||plan.target.targetId===targetId)&&plan.target?.automaticPractice?.status!=='superseded'&&(plan.date===today||!plan.target?.automaticPractice&&!plan.completed&&!plan.performedAt))
-    .map(plan=>({...plan,overdue:plan.date<today})).sort((a,b)=>Number(Boolean(a.completed||a.performedAt))-Number(Boolean(b.completed||b.performedAt))||a.date.localeCompare(b.date)||String(a.id).localeCompare(String(b.id)));
+    .map(plan=>({...plan,overdue:plan.date<today})).sort((a,b)=>Number(a.overdue)-Number(b.overdue)||Number(Boolean(a.completed||a.performedAt))-Number(Boolean(b.completed||b.performedAt))||a.date.localeCompare(b.date)||String(a.id).localeCompare(String(b.id)));
 }

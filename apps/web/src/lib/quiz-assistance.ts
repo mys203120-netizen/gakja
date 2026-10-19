@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { ApiError, query, transaction } from './db';
 
-export type QuizHelpKind = 'evidence' | 'ai' | 'hint' | 'video';
+export type QuizHelpKind = 'evidence' | 'ai' | 'hint' | 'video' | 'writing';
 export type QuizHelpReceipt = { sessionId: string; itemIndex: number; helpKind: QuizHelpKind; requestId?: string; threadId?: string; status?: 'partial' | 'completed' | 'interrupted' };
 
 function ownedItem(session: any, itemIndex: number) {

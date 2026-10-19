@@ -124,14 +124,15 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
     <div className={styles.completeSchedule}><CalendarDays size={22}/><div><span>{registered.university} · {currentCalendar?.statusLabel}</span>
       <p>{currentCalendar?.matched.length?currentCalendar.matched.map(dateRange).join(' · '):currentCalendar?.status==='no_interview'?'선택한 전형은 면접 미실시예요.':'일정 확인 상태를 저장했어요.'}</p>
       <small>{admissionYear}학년도{currentCalendar?.matched.length?' · 개인 응시 시간은 별도 발표':''}</small></div></div>
-    <p className={styles.completeNote}>{editing?'변경한 지원 정보와 일정 확인 상태를 저장했어요.':'지원하는 학교가 더 있다면 이어서 추가해 주세요.'}</p>
-    <div className={styles.completeActions}><Link className="button primary" href={editing?'/schools':'/my'}>{editing?'지원 학교 관리':'등록 마치고 시작'}<ArrowRight size={17}/></Link>{editing?<Link className="button" href="/schools/new"><Plus size={17}/>학교 추가</Link>:<button type="button" className="button" onClick={addAnotherSchool}><Plus size={17}/>학교 추가</button>}</div>
-    <div className={styles.completeLinks}><Link href={'/my/today?'+new URLSearchParams({questionId:'common_motivation',targetId:registered.id,sourceType:'common'}).toString()}><BookOpen size={15}/>첫 질문 준비<ArrowUpRight size={15}/></Link><Link href="/my#dashboard-planner"><CalendarDays size={15}/>캘린더 확인<ArrowUpRight size={15}/></Link><Link href={`/schools/${encodeURIComponent(registered.id)}`}>학교 면접 안내<ArrowUpRight size={15}/></Link>{!editing&&<Link href="/schools">지원 학교 관리<ArrowUpRight size={15}/></Link>}</div>
+    <p className={styles.completeNote}>{editing?'변경한 지원 정보와 일정 확인 상태를 저장했어요.':'이제 공통 질문 한 개에 답해봐요. 다른 학교와 개인 자료는 나중에 연결해도 돼요.'}</p>
+    <div className={styles.completeActions}><Link className="button primary" href={editing?'/schools':'/start?targetId='+encodeURIComponent(registered.id)}>{editing?'지원 학교 관리':'첫 질문 1개 답해보기'}<ArrowRight size={17}/></Link>{editing?<Link className="button" href="/schools/new"><Plus size={17}/>학교 추가</Link>:<button type="button" className="text-link" onClick={addAnotherSchool}><Plus size={17}/>학교 추가 (선택)</button>}</div>
+    <div className={styles.completeLinks}><Link href="/my#dashboard-planner"><CalendarDays size={15}/>캘린더 확인<ArrowUpRight size={15}/></Link><Link href={`/schools/${encodeURIComponent(registered.id)}`}>학교 면접 안내<ArrowUpRight size={15}/></Link>{!editing&&<Link href="/schools">지원 학교 관리<ArrowUpRight size={15}/></Link>}</div>
   </div>;
 
   return <div className={styles.page}>
     {!onboarding&&<Breadcrumb items={[{label:'내 계정',href:'/account'},{label:'지원 학교',href:'/schools'},{label:editing?'지원 정보 변경':'학교 등록'}]}/>}
     <header className={styles.header}><p className={styles.eyebrow}>{editing?'지원 정보 변경':onboarding?'각자ON 시작하기':'지원 학교 추가'}</p><h1>{editing?'변경할 지원 정보를 확인해 주세요.':'지원 학교부터, 나의 면접까지.'}</h1><p>{editing?'학교·학과·전형을 수정하고 면접 일정을 다시 확인해요.':`학생부형 면접을 준비할 학교와 학과를 고르면, 해당 전형과 ${admissionYear}학년도 공개 일정을 연결해요.`}</p></header>
+    {onboarding&&!editing&&<p className={styles.completeNote}><Link className="text-link" href="/start">학교 등록 전에 공통 질문 한 개 답해보기<ArrowUpRight size={15}/></Link></p>}
     {!editing&&savedTargets.length>0&&<RegisteredSchoolList targets={savedTargets} finish={onboarding}/>}
     <ol className={styles.steps} aria-label="지원 학교 등록 단계">{stepLabels.map((label,index)=><li key={label} data-state={index<step?'done':index===step?'current':'next'}><button type="button" onClick={()=>goTo(index)} disabled={index>=step||busy} aria-current={index===step?'step':undefined}><span className={styles.stepNumber}>{index<step?<Check size={14}/>:index+1}</span><span>{label}</span></button>{index<2&&<ChevronRight size={17} aria-hidden="true"/>}</li>)}</ol>
     {error&&<Alert>{error}</Alert>}

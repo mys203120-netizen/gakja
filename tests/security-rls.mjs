@@ -37,6 +37,10 @@ try {
   const path=own+'/uploads/'+upload+'/recording';
   await db.query("insert into profiles(id,email,name) values($1,'own@example.test','Own'),($2,'other@example.test','Other')",[own,other]);
   await db.query("insert into support_targets(id,student_id,data) values('own',$1,'{}'),('other',$2,'{}')",[own,other]);
+  await db.query("insert into experience_card_drafts(id,student_id,data) values('00000000-0000-4000-8000-000000000011',$1,'{\"title\":\"Own draft\"}'),('00000000-0000-4000-8000-000000000012',$2,'{\"title\":\"Other draft\"}')",[own,other]);
+  // Production intentionally revokes direct client writes. Grant them only in
+  // this disposable database to exercise USING and WITH CHECK as a second fence.
+  await db.query('grant insert,update,delete on experience_card_drafts to authenticated');
   await db.query("insert into recording_uploads(id,student_id,kind,fields,files) values($1,$2,'quiz','{}',$3)",[upload,own,JSON.stringify([{field:'recording',path,bucket:'student-media'}])]);
   await db.query("insert into storage.objects(bucket_id,name) values('student-chat-files',$1),('student-media',$2)",[own+'/note.txt',other+'/old.webm']);
   await db.query("insert into storage.objects(bucket_id,name) values('document-originals',$1)",[own+'/book.html']);
@@ -54,6 +58,10 @@ try {
     assert.equal(await count('profiles'),1); checks++;
     assert.equal(await count('support_targets'),1); checks++;
     assert.equal(await count('recording_uploads'),1); checks++;
+    assert.equal(await count('experience_card_drafts'),1);checks++;
+    await assert.rejects(db.query("update experience_card_drafts set student_id=$1 where student_id=$2",[other,own]),/row-level security/);checks++;
+    await assert.rejects(db.query("insert into experience_card_drafts(id,student_id,data) values('00000000-0000-4000-8000-000000000013',$1,'{}')",[other]),/row-level security/);checks++;
+    assert.equal((await db.query("delete from experience_card_drafts where student_id=$1",[other])).rowCount,0);checks++;
     assert.equal(await count('storage.objects'),1); checks++;
     await db.query("insert into storage.objects(bucket_id,name) values('student-media',$1)",[path]); checks++;
     await assert.rejects(db.query("insert into storage.objects(bucket_id,name) values('student-media',$1)",[own+'/arbitrary.webm']), /row-level security/); checks++;
@@ -75,7 +83,8 @@ try {
   // Keep exactly the same simulated JWT; only the live profile changes.
   await db.query('update profiles set active=false where id=$1',[own]);
   await asUser(own,async()=>{
-    for (const table of ['profiles','support_targets','recording_uploads','storage.objects']) {assert.equal(await count(table),0);checks++;}
+    for (const table of ['profiles','support_targets','recording_uploads','experience_card_drafts','storage.objects']) {assert.equal(await count(table),0);checks++;}
+    await assert.rejects(db.query("insert into experience_card_drafts(id,student_id,data) values('00000000-0000-4000-8000-000000000014',$1,'{}')",[own]),/row-level security/);checks++;
     await assert.rejects(db.query("insert into storage.objects(bucket_id,name) values('student-chat-files',$1)",[own+'/blocked.txt']),/row-level security/); checks++;
     assert.equal((await db.query("delete from storage.objects where bucket_id='student-chat-files'")).rowCount,0); checks++;
   });

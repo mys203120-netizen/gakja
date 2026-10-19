@@ -21,6 +21,8 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture()){
     emit(patch:any){this.state={...this.state,...patch};this.changed(this.state);}
     async start(){calls.push({controller:'start'});this.emit({phase:'preparing'});}
     async rerecord(){calls.push({controller:'rerecord'});this.emit({phase:'preparing'});}
+    async preserveAnswer(){calls.push({controller:'preserveAnswer'});this.pause();}
+    async acceptTypedAnswer(info:any){calls.push({controller:'acceptTypedAnswer'});this.emit({info,phase:'paused'});}
     pause(){calls.push({controller:'pause'});this.emit({phase:'paused'});}
     finishAnswer(){calls.push({controller:'finishAnswer'});}
     async finish(){calls.push({controller:'finish'});}
@@ -30,7 +32,7 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture()){
   const mod={exports:{} as any};
   vm.runInNewContext(ts.transpileModule(readFileSync('apps/web/src/components/'+file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,{
     module:mod,exports:mod.exports,Date,URL:class extends URL{static createObjectURL(){return 'blob:synthetic-recording';}static revokeObjectURL(){}},Blob,DOMException,AbortController,FormData,
-    document,location,window:{...events('window:'),navigation:events('navigation:')},
+    document,location,window:{...events('window:'),navigation:events('navigation:'),confirm:()=>true},
     navigator:{mediaDevices:{getUserMedia:async()=>{if(!faults.allowDevice)throw Error('Unexpected microphone access in render regression');calls.push({mockDevice:true});return {getTracks:()=>[],getAudioTracks:()=>[]};}}},
     Audio:class {src='';async play(){calls.push({audio:'unlock'});}pause(){}},
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
@@ -44,6 +46,7 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture()){
       if(name==='./shared')return {api:async()=>structuredClone(initialInfo),post:async(url:string,body:any)=>{calls.push({url,body});if(body.action==='suspend')await faults.suspend;return {};},Breadcrumb:'Breadcrumb',Modal:'Modal',Alert:'Alert',targetName:(target:any)=>target?.university||'지원처 미등록'};
       if(name==='@/lib/client/live-interview-controller')return {LiveInterviewController:Controller};
       if(name==='@/lib/client/live-interview-recorder')return {createLiveAnswerCapture:()=>{throw Error('Unexpected recorder access');}};
+      if(name==='@/lib/client/recording-recovery')return {readRecordingRecovery:async()=>null,recordingRecoveryKey:()=> 'owned-recording',removeRecordingRecovery:async()=>calls.push({recovery:'removed'}),beginRecordingRecovery:async()=>({append:async()=>{},appendAnalysis:async()=>{},finish:async()=>{}})};
       if(name==='./live-interviewer-stage')return {LiveInterviewerStage:'LiveInterviewerStage'};
       if(name==='./live-interview-session')return {LiveInterviewSession:'LiveInterviewSession'};
       if(name.endsWith('.module.css'))return {__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
@@ -66,12 +69,21 @@ test('the Live room is silent before consent and has no editable answer composer
   consent(tree).props.onChange({target:{checked:true}});tree=h.render();assert.equal(button(tree,'면접 시작').props.disabled,false);button(tree,'면접 시작').props.onClick();
   assert.equal(h.calls.filter(call=>call.controller==='start').length,1);assert.ok(h.calls.some(call=>call.audio==='unlock'));h.cleanup();
 });
-test('active Live controls are limited to pausing, ending and ending the current answer',()=>{
+test('voice mode stays handsfree with explicit thinking and same-question text alternatives',()=>{
   const h=harness();h.render();const tree=emit(h,{phase:'listening',progress:{durationMs:3200,measurementAvailable:true,endingSoon:false}});
-  assert.deepEqual(nodes(tree).filter(node=>node.type==='button').map(text).sort(),['답변 마침','면접 종료','일시정지'].sort());
+  assert.deepEqual(nodes(tree).filter(node=>node.type==='button').map(text).sort(),['답변 마침','면접 종료','일시정지','잠깐 생각할게요','이번 질문은 글로 답하기'].sort());
   button(tree,'답변 마침').props.onClick();assert.ok(h.calls.some(call=>call.controller==='finishAnswer'));
   button(tree,'일시정지').props.onClick();assert.equal(h.controllers[0].state.phase,'paused');
   const paused=h.render();assert.ok(button(paused,'계속하기'));assert.ok(!nodes(paused).some(node=>node.type==='button'&&text(node)==='답변 마침'));h.cleanup();
+});
+test('text alternative opens only on explicit selection and preserves the active question without a microphone',async()=>{
+  const h=harness();let tree=h.render();assert.equal(nodes(tree).some(node=>node.type==='ChatComposer'),false);
+  button(tree,'이번 질문은 글로 답하기').props.onClick();await h.flush();tree=h.render();
+  const composer=nodes(tree).find(node=>node.type==='ChatComposer');assert.ok(composer);
+  assert.equal(nodes(tree).find(node=>node.type==='LiveInterviewerStage').props.question,'맡은 역할은 무엇인가요?');assert.ok(text(tree).includes('고려대학교'));
+  composer.props.onChange('팀원의 자료 형식을 하나로 정리했습니다.');tree=h.render();
+  assert.equal(nodes(tree).find(node=>node.type==='ChatComposer').props.value,'팀원의 자료 형식을 하나로 정리했습니다.');
+  assert.equal(h.calls.some(call=>call.mockDevice||call.audio),false);assert.ok(h.calls.some(call=>call.controller==='preserveAnswer'));h.cleanup();
 });
 test('actual server target and question fields remain visible in read-only history',()=>{
   const info=fixture();info.turns=[{id:'answered',question:'갈등을 해결한 과정을 말해 주세요.',answer:'팀원 의견을 정리하고 역할을 나눴습니다.'},{id:'invalid',question:'폐기 질문',answer:'폐기 답변',invalidated:true}];
@@ -82,11 +94,11 @@ test('permission recovery still requires consent if the student withdraws it',()
   const h=harness();let tree=h.render();consent(tree).props.onChange({target:{checked:true}});tree=emit(h,{phase:'error',error:'마이크 권한을 확인해 주세요.'});
   consent(tree).props.onChange({target:{checked:false}});tree=h.render();assert.equal(button(tree,'계속하기').props.disabled,true);button(tree,'계속하기').props.onClick();assert.equal(h.calls.some(call=>call.controller==='start'),false);h.cleanup();
 });
-test('recording recovery offers a distinct same-question rerecord action gated by consent',()=>{
+test('recording recovery offers a distinct same-question rerecord action gated by consent',async()=>{
   const h=harness();let tree=h.render();consent(tree).props.onChange({target:{checked:true}});
   tree=emit(h,{phase:'error',error:'음성 전사를 다시 시도해 주세요.',recording:{blob:new Blob(['synthetic audio'],{type:'audio/webm'}),measurementAvailable:true,speechStarted:true,durationMs:2000}});
   assert.ok(button(tree,'보관한 답변 저장하고 계속'));assert.equal(button(tree,'같은 질문 다시 녹음').props.disabled,false);
-  button(tree,'같은 질문 다시 녹음').props.onClick();assert.equal(h.calls.filter(call=>call.controller==='rerecord').length,1);assert.equal(h.calls.some(call=>call.controller==='start'),false);
+  button(tree,'같은 질문 다시 녹음').props.onClick();await h.flush();assert.equal(h.calls.filter(call=>call.controller==='rerecord').length,1);assert.equal(h.calls.some(call=>call.controller==='start'),false);
   tree=emit(h,{phase:'error'});consent(tree).props.onChange({target:{checked:false}});tree=h.render();assert.equal(button(tree,'같은 질문 다시 녹음').props.disabled,true);button(tree,'같은 질문 다시 녹음').props.onClick();assert.equal(h.calls.filter(call=>call.controller==='rerecord').length,1);h.cleanup();
 });
 test('the completed room links to its report and cannot restart recording',()=>{

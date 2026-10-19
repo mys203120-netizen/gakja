@@ -13,7 +13,7 @@ export function quizResponseNeedsReview(response: Record<string, any>): boolean 
 
 export function quizAssistanceLabel(response: Record<string, any>): string {
   const facts = response.data || {};
-  const names: Record<string, string> = { evidence: '근거 확인', ai: 'AI 도움', ai_partial: 'AI 도움 일부 확인', hint: '힌트 사용', video: '영상 확인' };
+  const names: Record<string, string> = { evidence: '근거 확인', ai: 'AI 도움', ai_partial: 'AI 도움 일부 확인', hint: '힌트 사용', video: '영상 확인', writing:'작성 도움' };
   const kinds = Array.isArray(facts.helpKinds) ? facts.helpKinds : Array.isArray(facts.help_kinds) ? facts.help_kinds : [];
   const labels = [...new Set<string>(kinds.map((kind: string) => names[kind]).filter(Boolean))];
   if (response.hint_used && !labels.includes(names.hint)) labels.push(names.hint);

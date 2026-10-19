@@ -52,6 +52,22 @@ test('one stop promise waits for both final recorders and freezes fractional dur
     assert.equal(saved.reason,'manual');assert.equal(saved.partial,false);assert.ok(state.recorders.every((r:any)=>r.stopCalls===1));assert.equal(state.timers.size,0);assert.equal(state.connections.length,1);
   },{video:true});
 });
+test('preserving stop delivers both late final chunks and waits for durable completion',async()=>{
+  await fakeCapture(async state=>{
+    const chunks:{kind:string;text:Promise<string>}[]=[];let persist!:()=>void;
+    const persisted=new Promise<void>(resolve=>{persist=resolve;});
+    const capture=createLiveAnswerCapture(state.stream,{onChunk:(blob,kind)=>{chunks.push({kind,text:blob.text()});},onComplete:async saved=>{assert.equal(await saved.blob.text(),'beforefinal');assert.equal(await saved.analysisAudio!.text(),'audio');await persisted;}});
+    state.recorders[0].chunk('before');state.run(1200,.04);const result=capture.stop('interrupted');
+    state.recorders[0].finish('final');state.recorders[1].finish('audio');let settled=false;void result.then(()=>{settled=true;});await Promise.resolve();assert.equal(settled,false);
+    persist();const saved=await result;assert.equal(saved.partial,true);assert.deepEqual(await Promise.all(chunks.map(async chunk=>[chunk.kind,await chunk.text])),[['primary','before'],['primary','final'],['analysis','audio']]);
+  },{video:true});
+});
+test('thinking grace delays silence completion and then starts a new observed silence window',async()=>{
+  await fakeCapture(async state=>{
+    let allowed=false;const capture=createLiveAnswerCapture(state.stream,{autoStop:()=>allowed});await Promise.resolve();state.run(700,.04);state.run(10000,0);assert.equal(state.recorders[0].stopCalls,0);
+    allowed=true;state.run(4900,0);assert.equal(state.recorders[0].stopCalls,0);state.run(100,0);assert.equal(state.recorders[0].stopCalls,1);state.recorders[0].finish();assert.equal((await capture.finished).reason,'silence');
+  });
+});
 test('silence auto-finishes only after speech and a visible warning',async()=>{
   await fakeCapture(async state=>{
     const capture=createLiveAnswerCapture(state.stream,{onProgress:p=>state.progress.push(p)});await Promise.resolve();

@@ -49,7 +49,9 @@ vm.runInNewContext(output, {
     if (name === '@gakja/content-contracts/workflows') return {learningTargetIdentityMatches};
     if (name === '@/lib/quiz-session-view') return quizView;
     if (name.endsWith('.module.css')) return {__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
-    if (name === './learning-help') return { LearningHelp: 'LearningHelp' };
+    if (name === './practice-writing-help') return {PracticeWritingHelp:'PracticeWritingHelp'};
+      if (name === '@/lib/client/recording-recovery') return {readRecordingRecovery:async()=>null,installRecordingExitGuard:()=>()=>{}};
+      if (name === './learning-help') return { LearningHelp: 'LearningHelp' };
     if (name === './audio-level-dot') return { AudioLevelDot: 'AudioLevelDot' };
     if (name === './playful-flow') return { animateStudyReceipt: () => { throw new Error('Render must not play a completion animation'); } };
     if (name === '@/lib/client/speech-recorder') return { startSpeechCapture: () => { throw new Error('Render must not start microphone capture'); } };

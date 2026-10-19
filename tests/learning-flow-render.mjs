@@ -190,10 +190,10 @@ for(const selectedTarget of [target,undefined]){
   './dashboard-planner':{DashboardPlanner:()=>null},'./department-news':{DepartmentNews:()=>null},
  }).Dashboard;
  const actions=focusActionsOf(renderToStaticMarkup(React.createElement(component)));
- const href=selectedTarget?'/schools/target':'/schools/new';
+ const href=selectedTarget?'/schools/target':'/start';
  assert.equal((actions.match(new RegExp(`href="${href}"`,'g'))||[]).length,1,'school guidance or registration has only one CTA when it is the next action');
  assert.match(actions,new RegExp(`<a(?=[^>]*href="${href}")(?=[^>]*class="button primary")`),'the school destination keeps the primary action');
- assert.ok(!actions.includes('class="text-link"'),'no secondary link duplicates the primary school destination');
+ assert.ok(selectedTarget?!actions.includes('class="text-link"'):actions.includes('href="/schools/new"'),'first question may offer optional school registration beside it');
 }
 console.log('Dashboard school CTA render: one primary guidance/registration link, distinct secondary guidance preserved.');
 const deadlineTargets=[
@@ -224,7 +224,8 @@ for(const id of ['period','reference']){
  assert.ok(row.includes('면접일 등록')&&!row.includes('>D-'),'periods and unmatched school references cannot become individual countdowns');
 }
 assert.ok(deadlineList.includes('학교 공개일, 개별 일정 확인 필요'));
-assert.ok(deadlineHome.indexOf('id="dashboard-deadlines-title"')<deadlineHome.indexOf('id="dashboard-next-title"'),'all school deadlines are visible before the smaller resume area');
+assert.ok(deadlineHome.indexOf('id="dashboard-next-title"')<deadlineHome.indexOf('id="dashboard-deadlines-title"'),'primary learning action precedes deadlines even with many schools');
+assert.ok(deadlineList.includes('<details class="remainingDeadlines"><summary>다른 지원처 일정 6개</summary>'),'additional targets remain in a closed disclosure without merging duplicates');
 console.log('Dashboard deadline rows: all targets, duplicate university/date, KST today, past date, matched public day, and unconfirmed-date registration passed.');
 bootstrap.interviews=[{id:'other',state:'active',kind:'chat',target_id:'other',data:{context:{target:{...target,id:'other',university:'이전대학교'}},questionQueue:[{...originalQuestion,prompt:'다른 학교의 미완료 질문'}]}}];
 const scopedDashboard=()=>load('../apps/web/src/components/dashboard.tsx',{...mocks,react:hooks([{answerRevisions:[],assignments:[]},null,[{id:'other-plan',date:'2026-10-14',title:'다른 학교의 계획',target:{targetId:'other'}},{id:'personal',date:'2026-10-14',title:'나의 공통 계획'}],[],{sessions:[{id:'foreign-quiz',state:'active',current_index:1,total:3,metadata:{targetId:'other'}}],recommendation:{count:1,items:[{question_id:'q1'}]}},{commonQuestions:[]},'',true,true,true,'briefing',[],undefined]),'./dashboard-planner':{DashboardPlanner:()=>null},'./department-news':{DepartmentNews:()=>null}}).Dashboard;

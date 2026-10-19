@@ -12,6 +12,8 @@ import {tsImport} from 'tsx/esm/api';
 const model=await tsImport('../apps/web/src/lib/armory-model.ts',import.meta.url);
 const flow=await tsImport('../apps/web/src/lib/interview-flow.ts',import.meta.url);
 const support=await tsImport('../apps/web/src/lib/school-interview-scope.ts',import.meta.url);
+const draftsModel=await tsImport('../apps/web/src/lib/armory-drafts.ts',import.meta.url);
+const recommendations=await tsImport('../apps/web/src/lib/armory-recommendations.ts',import.meta.url);
 const source=ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/armory.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
 const confirmed={id:'confirmed-card',revision:4,updated_at:'2026-10-18',data:{title:'내가 정리한 자료',category:'협업',situation:'형식이 달랐다',action:'공통 양식을 만들었다',result:'팀이 함께 사용했다',confirmed:true,pinned:true,sourceNote:'직접 작성'}};
 const draft={id:'draft-card',revision:2,updated_at:'2026-10-18',data:{...confirmed.data,title:'작성 중인 경험',situation:'',action:'',result:'',confirmed:false,pinned:false}};
@@ -22,18 +24,19 @@ const equal=(actual,expected)=>{assert.deepEqual(actual,expected);checks++;};
 const text=node=>node==null||typeof node==='boolean'?'':typeof node==='string'||typeof node==='number'?String(node):React.Children.toArray(node.props?.children).map(text).join('');
 function elements(node,condition){if(!React.isValidElement(node))return [];return [...(condition(node)?[node]:[]),...React.Children.toArray(node.props.children).flatMap(child=>elements(child,condition))];}
 
-function harness({unsupported=false,cardId=''}={}){
+function harness({unsupported=false,cardId='',legacyDraft=null}={}){
  const target={id:'target',university:unsupported?'고려대학교':'서울시립대학교',department:unsupported?'경영학과':'환경공학부',admission_year:2027,admission_type:unsupported?'고른기회':'면접형'};
  const app={targetId:target.id,data:{user:{id:'student'},targets:[target],package:{active_version:7},learning:{activities:[]},interviews:[]}};
  let cards=structuredClone([confirmed,draft]),params=new URLSearchParams(cardId?{card:cardId}:{}),cursor=0,dirty=true,tree;
- const hooks=[],pending=[],requests=[],saved=[],storage=new Map();
+ const hooks=[],pending=[],requests=[],saved=[],storage=new Map(),durableStorage=new Map(),serverDrafts=new Map(),timers=new Map();let timerId=0;
+ if(legacyDraft)storage.set('armory-draft:student',JSON.stringify(legacyDraft));
  const react={...React,
   useState(initial){const index=cursor++;if(!(index in hooks))hooks[index]=typeof initial==='function'?initial():initial;return [hooks[index],value=>{const next=typeof value==='function'?value(hooks[index]):value;if(!Object.is(next,hooks[index])){hooks[index]=next;dirty=true;}}];},
   useRef(initial){const index=cursor++;return hooks[index]??=( {current:initial} );},
   useEffect(effect,deps){const index=cursor++,previous=hooks[index];if(!previous||deps.some((value,i)=>!Object.is(value,previous.deps[i]))){hooks[index]={deps,cleanup:previous?.cleanup};pending.push(()=>{hooks[index].cleanup?.();hooks[index].cleanup=effect();});}},
  };
  const module={exports:{}};
- vm.runInNewContext(source,{module,exports:module.exports,URLSearchParams,crypto:{randomUUID},window:{addEventListener(){},removeEventListener(){}},sessionStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},require(name){
+ vm.runInNewContext(source,{module,exports:module.exports,URLSearchParams,crypto:{randomUUID},setTimeout:callback=>{timers.set(++timerId,callback);return timerId;},clearTimeout:id=>timers.delete(id),window:{addEventListener(){},removeEventListener(){}},localStorage:{getItem:key=>durableStorage.get(key)||null,setItem:(key,value)=>durableStorage.set(key,value),removeItem:key=>durableStorage.delete(key)},sessionStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},require(name){
   if(name==='react/jsx-runtime')return jsx;
   if(name==='react')return react;
   if(name==='next/link')return {__esModule:true,default:({href,children,...props})=>React.createElement('a',{href,...props},children)};
@@ -41,12 +44,17 @@ function harness({unsupported=false,cardId=''}={}){
   if(name==='lucide-react')return icons;
   if(name==='./app-shell')return {useApp:()=>app};
   if(name==='@/lib/armory-model')return model;
+  if(name==='@/lib/armory-drafts')return draftsModel;
+  if(name==='@/lib/armory-recommendations')return recommendations;
   if(name==='@/lib/interview-flow')return flow;
   if(name==='@/lib/school-interview-scope')return support;
   if(name==='./armory-assist')return {ArmoryAssist:()=>null};
+  if(name==='./experience-text-classifier')return {ExperienceTextClassifier:()=>null};
   if(name==='./shared')return {PageTitle:({title,children})=>React.createElement('header',null,React.createElement('h1',null,title),children),Alert:({children})=>React.createElement('div',{role:'alert'},children),api:async(url,options)=>{
    requests.push(url);
    if(url==='/api/armory'&&!options)return {cards:structuredClone(cards),sessions:[]};
+   if(url==='/api/armory/drafts'&&!options)return {drafts:[...serverDrafts.values()]};
+   if(url==='/api/armory/drafts'&&options?.method==='PUT'){const input=JSON.parse(options.body),previous=serverDrafts.get(input.id);assert.equal(input.serverRevision,previous?.serverRevision||0);const result={...input,serverRevision:input.serverRevision+1};serverDrafts.set(input.id,result);return {draft:result};}
    if(url==='/api/armory'&&options?.method==='POST'){const input=JSON.parse(options.body);saved.push(input);const card={...input,revision:input.revision+1,updated_at:'2026-10-18'};cards=[card,...cards.filter(item=>item.id!==card.id)];return {card};}
    if(url.startsWith('/api/interviews?'))return {sourceKind:unsupported?'personal':'common',contentVersion:7,practiceScope:unsupported?'personal_record':'school',questions:unsupported?[personal,common]:[common]};
    throw Error('Unexpected request: '+url);
@@ -60,7 +68,7 @@ function harness({unsupported=false,cardId=''}={}){
  function tab(label){return elements(tree,node=>node.type==='button'&&node.props['aria-pressed']!==undefined&&text(node)===label)[0];}
  function question(){return elements(tree,node=>node.type==='input'&&node.props.name==='armory-question')[0];}
  function links(){return elements(tree,node=>typeof node.props.href==='string'&&node.props.href.startsWith('/interview/new?')).map(node=>new URL(node.props.href,'http://local'));}
- return {flush,button,card,tab,question,links,requests,saved,markup:()=>renderToStaticMarkup(tree),get tree(){return tree;}};
+ return {flush,button,card,tab,question,links,requests,saved,storage,durableStorage,serverDrafts,async runTimers(){const callbacks=[...timers.values()];timers.clear();callbacks.forEach(callback=>callback());await new Promise(resolve=>setImmediate(resolve));return flush();},markup:()=>renderToStaticMarkup(tree),get tree(){return tree;}};
 }
 
 const commonView=harness();await commonView.flush();
@@ -82,8 +90,13 @@ directDraft.tab('면접에 활용').props.onClick();await directDraft.flush();eq
 directDraft.tab('내 이야기').props.onClick();await directDraft.flush();directDraft.button('이야기 보완하기').props.onClick();await directDraft.flush();
 directDraft.button('다음').props.onClick();await directDraft.flush();assert.match(directDraft.markup(),/어떤 상황이었는지 한 문장만 적어주세요/);checks++;
 elements(directDraft.tree,node=>node.type==='textarea')[0].props.onChange({target:{value:'팀의 기록 형식이 달랐다'}});await directDraft.flush();directDraft.button('다음').props.onClick();await directDraft.flush();
-elements(directDraft.tree,node=>node.type==='textarea')[0].props.onChange({target:{value:'공통 양식을 제안했다'}});await directDraft.flush();directDraft.button('다음').props.onClick();await directDraft.flush();directDraft.button('확인하기').props.onClick();await directDraft.flush();directDraft.button('내 경험 확인하고 저장').props.onClick();await directDraft.flush();
+elements(directDraft.tree,node=>node.type==='textarea')[0].props.onChange({target:{value:'공통 양식을 제안했다'}});await directDraft.flush();directDraft.button('다음').props.onClick();await directDraft.flush();directDraft.button('나중에 보완하고 확인').props.onClick();await directDraft.flush();directDraft.button('내 경험 확인하고 저장').props.onClick();await directDraft.flush();
 equal(directDraft.saved.map(input=>[input.id,input.revision,input.data.confirmed,input.data.situation,input.data.action]),[['draft-card',2,true,'팀의 기록 형식이 달랐다','공통 양식을 제안했다']]);
 equal(directDraft.tab('면접에 활용').props['aria-pressed'],true);
+
+const recovery=harness({legacyDraft:{draft:{...draft.data,situation:'복구 전에도 남아야 하는 원문'},draftId:'legacy-card',revision:0,step:0}});await recovery.flush();assert.equal(recovery.storage.has('armory-draft:student'),false);checks++;
+recovery.button('주제 없이 직접 적기').props.onClick();await recovery.flush();elements(recovery.tree,node=>node.type==='textarea')[0].props.onChange({target:{value:'새 카드에만 쓴 상황'}});await recovery.flush();await recovery.runTimers();
+assert.match(recovery.markup(),/서버에 초안 저장됨/);checks++;recovery.button('초안 보관하고 목록으로').props.onClick();await recovery.flush();assert.match(recovery.markup(),/복구 전에도 남아야 하는 원문/);checks++;assert.match(recovery.markup(),/새 카드에만 쓴 상황/);checks++;
+equal([...recovery.durableStorage.keys()].filter(key=>key.startsWith('armory-drafts:v2:student:')).length,2);equal(recovery.serverDrafts.size,1);
 equal([...commonView.requests,...personalView.requests,...directDraft.requests].some(url=>url.includes('/assist')),false);
 console.log(`Armory render: ${checks} interaction checks passed (draft deep link, confirmation, owned card revision, actual question source/version, personal-only fallback, no automatic AI request).`);
