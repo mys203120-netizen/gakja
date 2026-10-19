@@ -92,22 +92,27 @@ export function QuizSession({id}:{id:string}) {
   const speechCapture=useRef<SpeechCapture|null>(null);
   const stoppedRecording=useRef<{durationMs:number;telemetry:Item|undefined}|null>(null);
   const recoveryWriter=useRef<RecordingRecoveryWriter|null>(null),recordingFinished=useRef<Promise<void>>(Promise.resolve()),resolveRecordingFinished=useRef<(()=>void)|null>(null),pendingAudioRef=useRef(pendingAudio),questionHeading=useRef<HTMLHeadingElement|null>(null),captureGeneration=useRef(0);
-  const preparationAttempt=useRef<RecordingPreparation|null>(null),preparationTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const preparationAttempt=useRef<RecordingPreparation|null>(null),preparationTimer=useRef<ReturnType<typeof setTimeout>|null>(null),sessionUpdateVersion=useRef(0);
   pendingAudioRef.current=pendingAudio;
   latest.current=dto;
   latestAnswer.current=answer;
   latestRecording.current=recording;
   recordingPhase.current=recordingState;
-  const apply=useCallback((value:Item)=>{offset.current=new Date(value.serverTime).getTime()-Date.now();latest.current=value;setDto(value);},[]);
+  const apply=useCallback((value:Item)=>{sessionUpdateVersion.current++;offset.current=new Date(value.serverTime).getTime()-Date.now();latest.current=value;setDto(value);},[]);
   const pauseOnExit=useCallback((beacon=true)=>{
     const value=latest.current,current=value?.session,preparing=!!preparationAttempt.current;
     if(preparing)void cancelPreparation();
     if(current?.state!=='active'||sending.current||!preparing&&recordingPhase.current!=='idle')return;
+    const requestVersion=++sessionUpdateVersion.current;
     const payload={action:'pause',sessionId:id,itemIndex:current.current_index};
     latest.current={...value,session:{...current,state:'paused'}};
     if(mounted.current)setDto(latest.current);
     if(beacon)navigator.sendBeacon('/api/quiz',new Blob([JSON.stringify(payload)],{type:'application/json'}));
-    else post('/api/quiz',payload).then(value=>{if(mounted.current)apply(value);}).catch(error=>{if(mounted.current)setError(error.message);});
+    else {
+      // A processed pause may arrive after the student has already resumed.
+      const isCurrentResponse=()=>mounted.current&&sessionUpdateVersion.current===requestVersion&&latest.current?.session.id===id&&latest.current.session.current_index===current.current_index;
+      post('/api/quiz',payload).then(value=>{if(isCurrentResponse())apply(value);}).catch(error=>{if(isCurrentResponse())setError(error.message);});
+    }
   },[id,apply]);
   const applySavedChoice=useCallback((value:Item,receipt?:Item)=>{
     apply(value);
@@ -116,7 +121,7 @@ export function QuizSession({id}:{id:string}) {
     let reviewed=false;try{reviewed=Boolean(saved)&&sessionStorage.getItem('gakja-quiz:'+id+':reviewed')===String(saved.id??saved.item_index);}catch{}
     setChoiceReview(current.mode==='choice'&&current.timed===false&&['ready','completed'].includes(current.state)&&saved&&!reviewed?saved:null);
   },[id,apply]);
-  useEffect(()=>{mounted.current=true;captureGeneration.current++;const controller=new AbortController();api<Item>('/api/quiz?sessionId='+id,{signal:controller.signal}).then(async value=>{if(value.session.state==='active')value=await post('/api/quiz',{action:'pause',sessionId:id,itemIndex:value.session.current_index});if(mounted.current)applySavedChoice(value);}).catch(e=>{if(!controller.signal.aborted)setError(e.message);});return()=>{mounted.current=false;captureGeneration.current++;controller.abort();if(preparationAttempt.current){pauseOnExit();return;}if(recorder.current?.state==='recording'||recorder.current?.state==='paused'){finishRecordingMeasurement();recorder.current.stop();}else{speechCapture.current?.dispose();speechCapture.current=null;if(!resolveRecordingFinished.current)void recoveryWriter.current?.cancel().catch(()=>{});}stream.current?.getTracks().forEach(t=>t.stop());};},[id,applySavedChoice,pauseOnExit]);
+  useEffect(()=>{mounted.current=true;sessionUpdateVersion.current++;captureGeneration.current++;const controller=new AbortController();api<Item>('/api/quiz?sessionId='+id,{signal:controller.signal}).then(async value=>{if(value.session.state==='active')value=await post('/api/quiz',{action:'pause',sessionId:id,itemIndex:value.session.current_index});if(mounted.current)applySavedChoice(value);}).catch(e=>{if(!controller.signal.aborted)setError(e.message);});return()=>{mounted.current=false;sessionUpdateVersion.current++;captureGeneration.current++;controller.abort();if(preparationAttempt.current){pauseOnExit();return;}if(recorder.current?.state==='recording'||recorder.current?.state==='paused'){finishRecordingMeasurement();recorder.current.stop();}else{speechCapture.current?.dispose();speechCapture.current=null;if(!resolveRecordingFinished.current)void recoveryWriter.current?.cancel().catch(()=>{});}stream.current?.getTracks().forEach(t=>t.stop());};},[id,applySavedChoice,pauseOnExit]);
   const session=dto?.session,item=session?.items?.[session.current_index],done=session&&['completed','ended'].includes(session.state);
   const sessionName=session?.mode==='choice'&&session?.timed===false?'선택형 연습':modeNames[session?.mode];
   const nextItem=session?.items?.[(dto?.responses?.find(quizResponseNeedsReview)||dto?.responses?.at(-1))?.item_index];
@@ -158,8 +163,8 @@ export function QuizSession({id}:{id:string}) {
   },[id]);
   useEffect(()=>{if(!draftKey||session?.mode==='choice'||done||busy)return;if(loadedDraft.current!==draftKey){loadedDraft.current=draftKey;return;}try{localStorage.setItem(draftKey,answer);sessionStorage.setItem(draftKey,answer);const hasRecording=!!pendingAudioRef.current||!!latestRecording.current||recordingPhase.current==='recording';localStorage.setItem(activityKey,JSON.stringify({itemIndex:session.current_index,updatedAt:new Date().toISOString(),hasDraft:!!answer.trim()||hasRecording,hasRecording}));}catch{}if(savedDraft.current.key===draftKey&&savedDraft.current.response===answer)return;setDraftStatus('saving');const timer=setTimeout(()=>{void saveDraft(answer,session.current_index,draftKey).catch(()=>{});},450);return()=>clearTimeout(timer);},[answer,draftKey,session?.mode,session?.current_index,done,busy,saveDraft,activityKey]);
   useEffect(()=>{const openAssistant=(event:Event)=>{const value=latest.current?.session;if(!value||['completed','ended'].includes(value.state))return;event.preventDefault();if(value.mode==='choice'){toast('답변 저장 후 AI 비서에서 확인해 주세요.');return;}if(recordingPhase.current!=='idle'||pendingAudio){toast('녹음을 마치고 저장한 뒤 이동해 주세요.');return;}if(sending.current||busy)return;setBusy(true);setError('');void(async()=>{try{const currentItem=value.items[value.current_index];await cancelPreparation();await saveDraft(latestAnswer.current,value.current_index,draftKey);apply(await post('/api/quiz',{action:'pause',sessionId:id,itemIndex:value.current_index}));router.push('/on?'+new URLSearchParams({quizSessionId:id,quizItemIndex:String(value.current_index),questionId:currentItem.question_id||'',...(currentItem.target_id||value.metadata?.targetId?{targetId:currentItem.target_id||value.metadata.targetId}:{}),sourceType:currentItem.source_kind==='common'?'common':'personal',sourceVersion:String(currentItem.source_kind==='common'?currentItem.common_revision||1:value.content_version||'')}).toString());}catch(e){setError('초안 저장을 확인하지 못했어요. 다시 저장한 뒤 이동해 주세요.');setDraftStatus('failed');}finally{setBusy(false);}})();};window.addEventListener('gakja:open-on',openAssistant);return()=>window.removeEventListener('gakja:open-on',openAssistant);},[id,draftKey,saveDraft,apply,pendingAudio,busy,router,toast]);
-  async function transition(action:string,extra:Item={}) {setError('');return post('/api/quiz',{action,sessionId:id,itemIndex:latest.current?.session.current_index,...extra});}
-  async function start() {if(sending.current)return;setCountdown(3);}
+  async function transition(action:string,extra:Item={}) {sessionUpdateVersion.current++;setError('');return post('/api/quiz',{action,sessionId:id,itemIndex:latest.current?.session.current_index,...extra});}
+  async function start() {if(sending.current)return;sessionUpdateVersion.current++;setCountdown(3);}
   useEffect(()=>{if(countdown===null)return;const timer=setTimeout(async()=>{if(countdown>1)setCountdown(countdown-1);else{setCountdown(null);setBusy(true);try{apply(await transition('start'));}catch(e){setError((e as Error).message);}finally{setBusy(false);}}},400);return()=>clearTimeout(timer);},[countdown]);
   const submit=useCallback(async(selectedOptionId:string|null,timedOut=false,rating?:string,recallOverride?:RecallStatus)=>{
     if(sending.current||choiceReview||!latest.current||latest.current.session.state!=='active'||recordingPhase.current!=='idle'||pendingAudio||preparation!==null)return;const current=latest.current.session,receiptOrigin=document.activeElement instanceof HTMLElement?document.activeElement.getBoundingClientRect():undefined;
@@ -207,6 +212,7 @@ export function QuizSession({id}:{id:string}) {
   async function pause() {
     const value=latest.current,current=value?.session;
     if(!current||(recordingPhase.current!=='idle'&&!preparationAttempt.current)||sending.current)return;
+    sessionUpdateVersion.current++;
     setBusy(true);const cancelled=cancelPreparation();
     latest.current={...value,session:{...current,state:'paused'}};setDto(latest.current);
     try{await cancelled;if(current.mode!=='choice')await saveDraft(latestAnswer.current,current.current_index,draftKey);apply(await transition('pause'));}

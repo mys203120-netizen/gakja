@@ -140,6 +140,41 @@ check(state.values[22]===null&&state.capture===null&&state.tracksStopped===1,'ca
 const pauseButton=()=>nodes(render()).find(node=>node.props?.['aria-label']==='일시정지');
 const installVisibility=()=>state.effects.find(effect=>effect.toString().includes('visibilitychange'))();
 const deferred=()=>{let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});return{promise,resolve,reject};};
+const finishResumeCountdown=async()=>{
+  for(let second=3;second>=1;second--){
+    render();state.effects.find(effect=>effect.toString().includes('countdown === null'))();
+    const timer=[...state.timers.entries()].find(([,value])=>value.ms===400);state.timers.delete(timer[0]);await timer[1].callback();
+  }
+};
+for(const arrival of ['countdown','recording','rejected']){
+  reset();const oldPause=deferred();state.adapter=async(url,payload)=>payload.action==='pause'?oldPause.promise:info;
+  render();installVisibility();state.visibility='hidden';state.events.get('visibilitychange')();await settle();
+  check(state.values[0].session.state==='paused','hiding still pauses the screen immediately while the response is pending');
+  state.visibility='visible';nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='이어서 풀기').props.onClick();
+  if(arrival==='countdown'){oldPause.resolve({...info,session:{...info.session,state:'paused'},pauseReceipt:'old'});await settle();check(state.values[0].pauseReceipt!=='old'&&state.values[7]===3,'resume intent rejects an old pause before the start request is sent');}
+  await finishResumeCountdown();state.values[10]=true;state.values[23]=true;
+  await nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
+  if(arrival==='recording')oldPause.resolve({...info,session:{...info.session,state:'paused'},pauseReceipt:'old'});
+  if(arrival==='rejected')oldPause.reject(new Error('old pause response failed'));
+  await settle();tree=render();
+  check(state.values[0].session.state==='active'&&state.capture?.state==='recording',`late pause ${arrival} cannot replace the resumed session`);
+  check(state.values[0].pauseReceipt!=='old'&&state.values[1]==='',`late pause ${arrival} cannot apply stale data or errors`);
+  const finish=nodes(tree).find(node=>node.type==='button'&&text(node.props.children).startsWith('녹음 완료'));
+  check(!!finish,`the recording stop control remains visible after late pause ${arrival}`);
+  state.now=1200;finish.props.onClick();await state.capture.deliverStop();
+  check(state.uploads.length===1&&state.values[17]===null,`recording still saves after late pause ${arrival}`);
+}
+reset();const currentPause=deferred();state.adapter=async()=>currentPause.promise;render();installVisibility();state.visibility='hidden';state.events.get('visibilitychange')();
+currentPause.resolve({...info,session:{...info.session,state:'paused'},pauseReceipt:'current'});await settle();
+check(state.values[0].pauseReceipt==='current','the current pause response still applies when no newer action has started');
+reset();const firstPause=deferred(),secondPause=deferred();let pauseCount=0;
+state.adapter=async(url,payload)=>payload.action==='pause'?(++pauseCount===1?firstPause.promise:secondPause.promise):info;
+render();installVisibility();state.visibility='hidden';state.events.get('visibilitychange')();state.visibility='visible';nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='이어서 풀기').props.onClick();await finishResumeCountdown();
+render();state.visibility='hidden';state.events.get('visibilitychange')();secondPause.resolve({...info,session:{...info.session,state:'paused'},pauseReceipt:'second'});await settle();
+firstPause.resolve({...info,session:{...info.session,state:'paused'},pauseReceipt:'first'});await settle();
+check(state.values[0].pauseReceipt==='second','an earlier pause cannot replace the latest pause even when both responses have paused state');
+reset();const failedCurrentPause=deferred();state.adapter=async()=>failedCurrentPause.promise;render();installVisibility();state.visibility='hidden';state.events.get('visibilitychange')();failedCurrentPause.reject(new Error('current pause failed'));await settle();
+check(state.values[1]==='current pause failed','a current pause error remains visible instead of suppressing all pause errors');
 const prepareCountdown=async()=>{
   state.values[10]=true;state.values[23]=false;
   await nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
