@@ -1,11 +1,16 @@
 import { z } from 'zod';
-export const experienceSchema = z.object({
- title:z.string().trim().min(1).max(120), category:z.enum(['협업','실패','강점','탐구']),
+const experienceFields = z.object({
+ title:z.string().trim().max(120), category:z.enum(['협업','실패','강점','탐구']),
  situation:z.string().trim().max(2000), action:z.string().trim().max(2000), result:z.string().trim().max(2000),
  confirmed:z.boolean(), pinned:z.boolean().default(false),
  sourceNote:z.string().trim().max(400).default('학생이 직접 작성한 경험'),
  originalText:z.string().max(6000).optional(),
-}).refine(v=>!v.confirmed || Boolean(v.situation && v.action),{message:'상황과 직접 한 행동을 작성해 주세요.'});
+});
+/** A draft can be incomplete, including its optional title and confirmation fields. */
+export const experienceDraftSchema = experienceFields.extend({title:z.string().trim().max(120).default('')}).transform(value=>({...value,confirmed:false}));
+export const experienceSchema = experienceFields.extend({title:z.string().trim().min(1).max(120)}).refine(v=>!v.confirmed || Boolean(v.situation && v.action),{message:'상황과 직접 한 행동을 작성해 주세요.'});
+/** A card receives its display title only at the explicit save boundary. */
+export const experienceSaveSchema = experienceFields.transform(value=>({...value,title:value.title||`${value.category} 경험`})).refine(v=>!v.confirmed||Boolean(v.situation&&v.action),{message:'상황과 직접 한 행동을 작성해 주세요.'});
 export type Experience = z.infer<typeof experienceSchema>;
 export type ExperienceCard = {id:string;data:Experience;revision:number;updated_at:string};
 export const experienceSteps = [

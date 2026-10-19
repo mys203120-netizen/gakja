@@ -9,7 +9,7 @@ import {LiveInterviewerStage} from './live-interviewer-stage';
 import {LiveInterviewController, type LiveSnapshot} from '@/lib/client/live-interview-controller';
 import {createLiveAnswerCapture} from '@/lib/client/live-interview-recorder';
 import {uploadRecording} from '@/lib/recording-upload-client';
-import {beginRecordingRecovery, readRecordingRecovery, removeRecordingRecovery, recordingRecoveryKey, type RecordingRecoveryWriter} from '@/lib/client/recording-recovery';
+import {beginRecordingRecovery, readRecordingRecovery, removeRecordingRecovery, type RecordingRecoveryWriter} from '@/lib/client/recording-recovery';
 import type {LiveAnswerRecording} from '@/lib/client/live-interview-recorder';
 import {ChatComposer} from './chat-composer';
 import styles from './live-interview-session.module.css';
@@ -25,7 +25,7 @@ export function LiveInterviewSession({id,initialInfo}:{id:string;initialInfo:Ite
   const cameraChoice=useRef(camera),leaving=useRef(false),destination=useRef<string|null>(null);cameraChoice.current=camera;
   const studentId=appData?.user?.id||initialInfo.session.student_id;
   const [recoveryChecked,setRecoveryChecked]=useState(false),[localStatus,setLocalStatus]=useState(''),[countdown,setCountdown]=useState(0),[textMode,setTextMode]=useState(false),[textAnswer,setTextAnswer]=useState(''),[textTurn,setTextTurn]=useState(''),[textBusy,setTextBusy]=useState(false),[textStatus,setTextStatus]=useState('');
-  const writer=useRef<RecordingRecoveryWriter|null>(null),readyOnce=useRef(false),skipReady=useRef<(()=>void)|null>(null),thinkingUntil=useRef(0),textRef=useRef(''),textRequest=useRef<{turnId:string;answer:string;requestId:string}|null>(null);
+  const writer=useRef<RecordingRecoveryWriter|null>(null),preparationAbort=useRef<(()=>void)|null>(null),readyOnce=useRef(false),skipReady=useRef<(()=>void)|null>(null),thinkingUntil=useRef(0),textRef=useRef(''),textRequest=useRef<{turnId:string;answer:string;requestId:string}|null>(null);
   textRef.current=textAnswer;
   const recoveryScope=(current:Item,generation:number)=>({studentId,sessionId:`${id}:${current.turnId}:${generation}`,itemIndex:0,kind:'interview' as const});
   const {phase,info,error,progress}=state;const settings=info.session.data||{},question=info.question;
@@ -38,7 +38,7 @@ export function LiveInterviewSession({id,initialInfo}:{id:string;initialInfo:Ite
     let mounted=true;
     const roomSuspension=initialInfo.session.state==='active'?post('/api/interviews',{action:'suspend',sessionId:id}):Promise.resolve();
     void roomSuspension.catch(()=>{});
-    const release=()=>{stream.current?.getTracks().forEach(track=>track.stop());stream.current=null;audio.current?.pause();};
+    const release=()=>{stream.current?.getTracks().forEach(track=>track.stop());stream.current=null;audio.current?.pause();const pending=writer.current;writer.current=null;void pending?.cancel().catch(()=>{});};
     const instance=new LiveInterviewController(initialInfo,{
       load:()=>api(`/api/interviews?id=${id}`),
       async prepare(){
@@ -53,7 +53,7 @@ export function LiveInterviewSession({id,initialInfo}:{id:string;initialInfo:Ite
           stream.current=next;if(video.current)video.current.srcObject=next;
         }catch{throw new Error(cameraChoice.current?'마이크·카메라 권한을 확인해 주세요. 카메라가 없으면 카메라 사용을 끄고 음성으로 시작할 수 있어요.':'마이크 사용 권한과 연결을 확인한 뒤 다시 시작해 주세요.');}
       },
-      mute(paused){stream.current?.getTracks().forEach(track=>{track.enabled=!paused;});},
+      mute(paused){stream.current?.getTracks().forEach(track=>{track.enabled=!paused;});if(paused){const pending=writer.current;writer.current=null;void pending?.cancel().catch(()=>{});}},
       async suspend(){await post('/api/interviews',{action:'suspend',sessionId:id});},
       async resume(){await post('/api/interviews',{action:'resume',sessionId:id});},
       async speak(current,generation,signal){
@@ -72,7 +72,10 @@ export function LiveInterviewSession({id,initialInfo}:{id:string;initialInfo:Ite
         });
       },
       async beforeCapture(current,generation,signal){
-        writer.current=await beginRecordingRecovery(recoveryScope(current,generation),'');
+        const pending=await beginRecordingRecovery(recoveryScope(current,generation),'');writer.current=pending;
+        const cancel=()=>{void pending.cancel().catch(()=>{});if(writer.current===pending)writer.current=null;};
+        signal.addEventListener('abort',cancel,{once:true});preparationAbort.current=()=>signal.removeEventListener('abort',cancel);
+        try{
         if(signal.aborted)throw new DOMException('일시정지','AbortError');
         if(!readyOnce.current){
           await new Promise<void>((resolve,reject)=>{
@@ -83,14 +86,19 @@ export function LiveInterviewSession({id,initialInfo}:{id:string;initialInfo:Ite
             let timer=setTimeout(tick,1000);skipReady.current=finish;signal.addEventListener('abort',abort,{once:true});
           });readyOnce.current=true;
         }
+        await pending.assertActive();if(signal.aborted)throw new DOMException('일시정지','AbortError');
+        }catch(cause){signal.removeEventListener('abort',cancel);preparationAbort.current=null;await pending.cancel().catch(()=>{});if(writer.current===pending)writer.current=null;throw cause;}
       },
       capture(onProgress){
         if(!stream.current||!writer.current)throw new Error('마이크와 기기 임시 저장을 확인해 주세요.');
         const recovery=writer.current;
-        return createLiveAnswerCapture(stream.current,{onProgress,autoStop:()=>Date.now()>=thinkingUntil.current,
+        recovery.assertFresh();
+        preparationAbort.current?.();preparationAbort.current=null;
+        let capture;try{capture=createLiveAnswerCapture(stream.current,{onProgress,autoStop:()=>Date.now()>=thinkingUntil.current,
           onChunk:(blob,kind,durationMs)=>{void (kind==='primary'?recovery.append(blob,durationMs):recovery.appendAnalysis(blob)).catch(()=>{if(mounted)setLocalStatus('기기 저장을 확인하지 못했어요. 화면을 닫기 전에 답변을 저장해 주세요.');});},
-          async onComplete(recording){await recovery.finish({durationMs:recording.durationMs,telemetry:recording.telemetry,analysisAudio:recording.analysisAudio});if(mounted)setLocalStatus('기기에 보관됨 · 서버 저장 확인 전까지 유지해요.');},
-        });
+          async onComplete(recording){recording.recoveryKey=recovery.key;await recovery.finish({durationMs:recording.durationMs,telemetry:recording.telemetry,analysisAudio:recording.analysisAudio});if(mounted)setLocalStatus('기기에 보관됨 · 서버 저장 확인 전까지 유지해요.');},
+        });}catch(cause){void recovery.cancel().catch(()=>{});throw cause;}finally{writer.current=null;}
+        return capture;
       },
       async upload(recording,current,generation){
         const form=new FormData(),extension=recording.blob.type.includes('mp4')?'mp4':'webm';
@@ -100,7 +108,7 @@ export function LiveInterviewSession({id,initialInfo}:{id:string;initialInfo:Ite
         if(recording.telemetry)form.set('speechTelemetry',JSON.stringify(recording.telemetry));
         const result=await uploadRecording('/api/media',form);
         if(!result.media?.id)throw new Error('녹음 저장을 확인하지 못했어요. 보관한 녹음으로 다시 시도해 주세요.');
-        await removeRecordingRecovery(recordingRecoveryKey(recoveryScope(current,generation))).catch(()=>{});
+        if(recording.recoveryKey)await removeRecordingRecovery(recording.recoveryKey).catch(()=>{});
         if(mounted)setLocalStatus('서버에 저장됨 · 문장 정리 중');
         return result.media.id;
       },
@@ -115,11 +123,11 @@ export function LiveInterviewSession({id,initialInfo}:{id:string;initialInfo:Ite
         const current=initialInfo.question,generation=Number(initialInfo.session.data?.generation||0);
         if(current&&studentId){
           const saved=await readRecordingRecovery(recoveryScope(current,generation));
-          const receipt=(initialInfo.media||[]).find((media:Item)=>media.metadata?.kind==='answer_recording'&&media.metadata.turnId===current.turnId&&Number(media.metadata.generation)===generation);
-          if(saved&&mounted&&!receipt){
-            const restored:LiveAnswerRecording={blob:saved.blob,analysisAudio:saved.analysisAudio,durationMs:saved.durationMs,telemetry:saved.telemetry as LiveAnswerRecording['telemetry'],reason:'interrupted',partial:!saved.complete,speechStarted:true,measurementAvailable:false};
+          if(saved?.inUse){if(mounted)setLocalStatus('다른 탭에서 이 질문을 녹음 중이에요. 그 탭에서 마친 뒤 면접을 다시 열어 주세요.');}
+          else if(saved&&mounted){
+            const restored:LiveAnswerRecording={recoveryKey:saved.key,blob:saved.blob,analysisAudio:saved.analysisAudio,durationMs:saved.durationMs,telemetry:saved.telemetry as LiveAnswerRecording['telemetry'],reason:'interrupted',partial:!saved.complete,speechStarted:true,measurementAvailable:false};
             instance.restoreRecording(restored,current,generation);setLocalStatus('이 기기에서 보관한 답변을 찾았어요. 재생 후 저장하거나 내려받을 수 있어요.');
-          }else if(saved&&receipt)await removeRecordingRecovery(saved.key);
+          }
         }
       }catch{if(mounted)setLocalStatus('기기 임시 저장을 확인하지 못했어요. 글로 답하기를 사용할 수 있어요.');}
       finally{if(mounted)setRecoveryChecked(true);}
@@ -168,7 +176,7 @@ export function LiveInterviewSession({id,initialInfo}:{id:string;initialInfo:Ite
   async function switchToText(){setTextBusy(true);try{await controller.current?.preserveAnswer();setTextMode(true);}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}finally{setTextBusy(false);}}
   async function replaceRecording(){
     if(!consent||!question||!window.confirm('이 기기에 보관한 미제출 녹음을 지우고 같은 질문에 다시 답할까요? 필요한 녹음은 먼저 내려받아 주세요. 서버에 저장한 원본은 유지돼요.'))return;
-    try{await removeRecordingRecovery(recordingRecoveryKey(recoveryScope(question,Number(settings.generation||0))));setLocalStatus('새 녹음을 준비해요.');prepareAudio();await controller.current?.rerecord();}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}
+    try{if(state.recording?.recoveryKey)await removeRecordingRecovery(state.recording.recoveryKey);setLocalStatus('새 녹음을 준비해요.');prepareAudio();await controller.current?.rerecord();}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}
   }
   async function submitTyped(){
     if(!question||!textAnswer.trim()||textBusy)return;

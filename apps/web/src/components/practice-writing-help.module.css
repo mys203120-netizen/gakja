@@ -13,4 +13,6 @@
 .comparison { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-block:16px; }
 .comparison>div { min-width:0; }
 .confirm { margin:16px 0; }
+.panel .length { color:var(--clarity-muted); }
+.panel .limitError { color:var(--danger,#b42318); }
 @media(max-width:767px) { .comparison { grid-template-columns:1fr; gap:12px; } .actions button { min-height:44px; } }

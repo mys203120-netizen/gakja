@@ -242,8 +242,8 @@ const practicePlans=[
  {id:'checked',date:'2026-10-14',title:'직접 체크한 계획',target:{targetId:target.id},completed:true,performedAt:null,href:'/quiz?questionId=q1'},
  {id:'pending',date:'2026-10-14',title:'아직 연습하지 않은 복습',target:{targetId:target.id},completed:false,performedAt:null,href:'/quiz?questionId=q1'},
 ];
-function renderDashboardPlans(plans){
- const component=load('../apps/web/src/components/dashboard.tsx',{...mocks,react:hooks([{answerRevisions:[],assignments:[]},null,plans,[],{recommendation:{count:1,items:[{question_id:'q1'}]}},{commonQuestions:[]},'',true,true,true,'briefing',[],undefined]),'./dashboard-planner':{DashboardPlanner:()=>null},'./department-news':{DepartmentNews:()=>null}}).Dashboard;
+function renderDashboardPlans(plans,assignments=[]){
+ const component=load('../apps/web/src/components/dashboard.tsx',{...mocks,react:hooks([{answerRevisions:[],assignments},null,plans,[],{recommendation:{count:1,items:[{question_id:'q1'}]}},{commonQuestions:[]},'',true,true,true,'briefing',[],undefined]),'./dashboard-planner':{DashboardPlanner:()=>null},'./department-news':{DepartmentNews:()=>null}}).Dashboard;
  return renderToStaticMarkup(React.createElement(component));
 }
 const practicedHome=renderDashboardPlans(practicePlans);
@@ -259,3 +259,15 @@ assert.ok(!onlyPracticed.includes('남은 계획')&&onlyPracticed.includes('실�
 const manuallyCheckedAndPracticed=renderDashboardPlans([{...practicePlans[0],completed:true}]);
 assert.ok(manuallyCheckedAndPracticed.includes('다시 연습')&&!manuallyCheckedAndPracticed.includes('남은 계획'));
 console.log('Dashboard planned-review React render: performed/manual/pending remain distinct; correct pending count, practice evidence, repeat CTA and pending-first order passed.');
+const heavyBacklogHome=renderDashboardPlans([...practicePlans,...Array.from({length:30},(_,i)=>({id:`old-${i}`,date:'2026-10-01',title:`밀린 계획 ${i}`,completed:false}))],[
+ ...Array.from({length:10},(_,i)=>({id:`late-${i}`,title:`밀린 과제 ${i}`,state:'assigned',due_at:'2026-10-13T14:59:00Z'})),
+ {id:'today-task',title:'오늘 마감 과제',state:'assigned',due_at:'2026-10-14T14:59:00Z'},
+ {id:'tomorrow-task',title:'내일 마감 과제',state:'assigned',due_at:'2026-10-14T15:00:00Z'},
+ {id:'submitted-task',title:'이미 제출한 과제',state:'submitted',due_at:'2026-10-13T01:00:00Z'},
+ {id:'done-task',title:'끝낸 과제',state:'completed',due_at:'2026-10-14T01:00:00Z'},
+]);
+assert.match(heavyBacklogHome,/오늘 남은 계획 1개 · 오늘 과제 1개/);assert.ok(!heavyBacklogHome.includes('남은 계획 31개'));
+assert.match(heavyBacklogHome,/<details class="agendaDisclosure"><summary>밀린 계획·과제 40개 · 오늘 할 만큼 고르기/);
+assert.match(heavyBacklogHome,/<details class="agendaDisclosure"><summary>예정된 과제 1개/);assert.match(heavyBacklogHome,/<details class="agendaDisclosure"><summary>제출한 과제 1개 · 검토 중/);
+assert.ok(heavyBacklogHome.includes('내일 마감 과제')&&heavyBacklogHome.includes('이미 제출한 과제')&&!heavyBacklogHome.includes('끝낸 과제'));
+console.log('Dashboard backlog React render: today actionable counts remain distinct from closed overdue, future and submitted rows.');

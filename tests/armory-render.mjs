@@ -24,12 +24,15 @@ const equal=(actual,expected)=>{assert.deepEqual(actual,expected);checks++;};
 const text=node=>node==null||typeof node==='boolean'?'':typeof node==='string'||typeof node==='number'?String(node):React.Children.toArray(node.props?.children).map(text).join('');
 function elements(node,condition){if(!React.isValidElement(node))return [];return [...(condition(node)?[node]:[]),...React.Children.toArray(node.props.children).flatMap(child=>elements(child,condition))];}
 
-function harness({unsupported=false,cardId='',legacyDraft=null}={}){
+function harness({unsupported=false,cardId='',legacyDraft=null,durableDrafts=[],remoteDrafts=[]}={}){
  const target={id:'target',university:unsupported?'고려대학교':'서울시립대학교',department:unsupported?'경영학과':'환경공학부',admission_year:2027,admission_type:unsupported?'고른기회':'면접형'};
  const app={targetId:target.id,data:{user:{id:'student'},targets:[target],package:{active_version:7},learning:{activities:[]},interviews:[]}};
  let cards=structuredClone([confirmed,draft]),params=new URLSearchParams(cardId?{card:cardId}:{}),cursor=0,dirty=true,tree;
  const hooks=[],pending=[],requests=[],saved=[],storage=new Map(),durableStorage=new Map(),serverDrafts=new Map(),timers=new Map();let timerId=0;
  if(legacyDraft)storage.set('armory-draft:student',JSON.stringify(legacyDraft));
+ const durableAdapter={getItem:key=>durableStorage.get(key)||null,setItem:(key,value)=>durableStorage.set(key,value),removeItem:key=>durableStorage.delete(key)};
+ for(const item of durableDrafts)draftsModel.writeExperienceDraft(durableAdapter,'student',item);
+ for(const item of remoteDrafts)serverDrafts.set(item.id,structuredClone(item));
  const react={...React,
   useState(initial){const index=cursor++;if(!(index in hooks))hooks[index]=typeof initial==='function'?initial():initial;return [hooks[index],value=>{const next=typeof value==='function'?value(hooks[index]):value;if(!Object.is(next,hooks[index])){hooks[index]=next;dirty=true;}}];},
   useRef(initial){const index=cursor++;return hooks[index]??=( {current:initial} );},
@@ -54,8 +57,8 @@ function harness({unsupported=false,cardId='',legacyDraft=null}={}){
    requests.push(url);
    if(url==='/api/armory'&&!options)return {cards:structuredClone(cards),sessions:[]};
    if(url==='/api/armory/drafts'&&!options)return {drafts:[...serverDrafts.values()]};
-   if(url==='/api/armory/drafts'&&options?.method==='PUT'){const input=JSON.parse(options.body),previous=serverDrafts.get(input.id);assert.equal(input.serverRevision,previous?.serverRevision||0);const result={...input,serverRevision:input.serverRevision+1};serverDrafts.set(input.id,result);return {draft:result};}
-   if(url==='/api/armory'&&options?.method==='POST'){const input=JSON.parse(options.body);saved.push(input);const card={...input,revision:input.revision+1,updated_at:'2026-10-18'};cards=[card,...cards.filter(item=>item.id!==card.id)];return {card};}
+   if(url==='/api/armory/drafts'&&options?.method==='PUT'){const input=JSON.parse(options.body),previous=serverDrafts.get(input.id);input.draft=model.experienceDraftSchema.parse(input.draft);if(input.serverRevision!==(previous?.serverRevision||0))throw Error('다른 화면에서 초안이 바뀌었어요.');const result={...input,serverRevision:input.serverRevision+1};serverDrafts.set(input.id,result);return {draft:result};}
+   if(url==='/api/armory'&&options?.method==='POST'){const input=JSON.parse(options.body);input.data=model.experienceSaveSchema.parse(input.data);saved.push(input);const card={...input,revision:input.revision+1,updated_at:'2026-10-18'};cards=[card,...cards.filter(item=>item.id!==card.id)];serverDrafts.delete(input.id);return {card};}
    if(url.startsWith('/api/interviews?'))return {sourceKind:unsupported?'personal':'common',contentVersion:7,practiceScope:unsupported?'personal_record':'school',questions:unsupported?[personal,common]:[common]};
    throw Error('Unexpected request: '+url);
   }};
@@ -94,9 +97,20 @@ elements(directDraft.tree,node=>node.type==='textarea')[0].props.onChange({targe
 equal(directDraft.saved.map(input=>[input.id,input.revision,input.data.confirmed,input.data.situation,input.data.action]),[['draft-card',2,true,'팀의 기록 형식이 달랐다','공통 양식을 제안했다']]);
 equal(directDraft.tab('면접에 활용').props['aria-pressed'],true);
 
-const recovery=harness({legacyDraft:{draft:{...draft.data,situation:'복구 전에도 남아야 하는 원문'},draftId:'legacy-card',revision:0,step:0}});await recovery.flush();assert.equal(recovery.storage.has('armory-draft:student'),false);checks++;
+const recovery=harness({legacyDraft:{draft:{...draft.data,title:'',situation:'복구 전에도 남아야 하는 원문'},draftId:'legacy-card',revision:0,step:0}});await recovery.flush();assert.equal(recovery.storage.has('armory-draft:student'),false);checks++;
 recovery.button('주제 없이 직접 적기').props.onClick();await recovery.flush();elements(recovery.tree,node=>node.type==='textarea')[0].props.onChange({target:{value:'새 카드에만 쓴 상황'}});await recovery.flush();await recovery.runTimers();
 assert.match(recovery.markup(),/서버에 초안 저장됨/);checks++;recovery.button('초안 보관하고 목록으로').props.onClick();await recovery.flush();assert.match(recovery.markup(),/복구 전에도 남아야 하는 원문/);checks++;assert.match(recovery.markup(),/새 카드에만 쓴 상황/);checks++;
 equal([...recovery.durableStorage.keys()].filter(key=>key.startsWith('armory-drafts:v2:student:')).length,2);equal(recovery.serverDrafts.size,1);
+const untitled=JSON.parse([...recovery.durableStorage.entries()].find(([key,value])=>key.startsWith('armory-drafts:v2:student:')&&JSON.parse(value).draft.situation==='새 카드에만 쓴 상황')[1]);
+const reloaded=harness({durableDrafts:[untitled],remoteDrafts:[...recovery.serverDrafts.values()]});await reloaded.flush();assert.match(reloaded.markup(),/새 카드에만 쓴 상황/);checks++;
+elements(reloaded.tree,node=>node.type==='button'&&text(node).includes('새 카드에만 쓴 상황'))[0].props.onClick();await reloaded.flush();equal(elements(reloaded.tree,node=>node.type==='input'&&node.props.maxLength===120)[0].props.value,'');reloaded.button('초안 저장 후 나가기').props.onClick();await reloaded.flush();equal(reloaded.saved[0].data.title,'협업 경험');equal(reloaded.saved[0].data.situation,'새 카드에만 쓴 상황');
+
+const localConflict={id:'new-conflict',draft:{...draft.data,title:'',situation:'이 기기의 상황',action:'이 기기의 행동'},revision:0,step:1,serverRevision:1,updatedAt:'2026-10-19T00:00:00.000Z'},remoteConflict={...localConflict,draft:{...localConflict.draft,action:'서버의 최신 행동'},serverRevision:3};
+const conflicting=harness({durableDrafts:[localConflict],remoteDrafts:[remoteConflict]});await conflicting.flush();elements(conflicting.tree,node=>node.type==='button'&&text(node).includes('이 기기의 행동'))[0].props.onClick();await conflicting.flush();await conflicting.runTimers();assert.match(conflicting.markup(),/초안의 버전이 달라요/);checks++;
+equal(elements(conflicting.tree,node=>node.type==='textarea'&&node.props.readOnly).map(node=>node.props.value).some(value=>value.includes('서버의 최신 행동')),true);equal([...conflicting.durableStorage.keys()].filter(key=>key.startsWith('armory-draft-backups:v1:student:')).length,2);
+conflicting.button('이 기기 초안으로 계속').props.onClick();await conflicting.flush();await conflicting.runTimers();equal(conflicting.serverDrafts.get(localConflict.id).serverRevision,4);equal(conflicting.serverDrafts.get(localConflict.id).draft.action,'이 기기의 행동');
+conflicting.button('초안 보관하고 목록으로').props.onClick();await conflicting.flush();assert.match(conflicting.markup(),/비교한 버전 보관함/);checks++;
+
+const staleSource={...localConflict,id:confirmed.id,revision:3},staleRemote={...remoteConflict,id:confirmed.id,revision:3};const sourceConflict=harness({durableDrafts:[staleSource],remoteDrafts:[staleRemote]});await sourceConflict.flush();elements(sourceConflict.tree,node=>node.type==='button'&&text(node).includes('이 기기의 행동'))[0].props.onClick();await sourceConflict.flush();await sourceConflict.runTimers();equal(sourceConflict.button('이 기기 초안으로 계속').props.disabled,true);equal(sourceConflict.button('서버 초안으로 계속').props.disabled,true);sourceConflict.button('이 기기 글을 새 경험으로').props.onClick();await sourceConflict.flush();await sourceConflict.runTimers();const copied=[...sourceConflict.serverDrafts.values()].find(item=>item.id!==confirmed.id);equal(copied.draft.action,'이 기기의 행동');equal(copied.revision,0);equal(sourceConflict.serverDrafts.get(confirmed.id).draft.action,'서버의 최신 행동');
 equal([...commonView.requests,...personalView.requests,...directDraft.requests].some(url=>url.includes('/assist')),false);
 console.log(`Armory render: ${checks} interaction checks passed (draft deep link, confirmation, owned card revision, actual question source/version, personal-only fallback, no automatic AI request).`);

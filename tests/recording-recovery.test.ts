@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test,beforeEach,afterEach} from 'node:test';
 import {IDBFactory,IDBKeyRange,IDBObjectStore} from 'fake-indexeddb';
-import {beginRecordingRecovery,readRecordingRecovery,listRecordingRecovery,removeRecordingRecovery,recordingRecoveryKey,RECORDING_RECOVERY_TTL_MS,installRecordingExitGuard} from '../apps/web/src/lib/client/recording-recovery.ts';
+import {beginRecordingRecovery,readRecordingRecovery,listRecordingRecovery,removeRecordingRecovery,recordingRecoveryKey,RECORDING_RECOVERY_TTL_MS,RECORDING_LEASE_MS,installRecordingExitGuard} from '../apps/web/src/lib/client/recording-recovery.ts';
 
 const scope={studentId:'student-a',sessionId:'session-a',itemIndex:0,kind:'quiz' as const};
 const originalNow=Date.now,originalPut=IDBObjectStore.prototype.put;
@@ -44,6 +44,61 @@ test('starting a replacement cannot overwrite unsent audio',async()=>{
   const writer=await beginRecordingRecovery(scope,'audio/webm');await writer.append(new Blob(['original']),100);
   await assert.rejects(beginRecordingRecovery(scope,'audio/mp4'));
   assert.equal(await (await readRecordingRecovery(scope))!.blob.text(),'original');
+});
+
+test('two tabs preparing before the first chunk atomically reserve one recording attempt',async()=>{
+  const attempts=await Promise.allSettled([beginRecordingRecovery(scope,''),beginRecordingRecovery(scope,'')]);
+  const owners=attempts.flatMap(result=>result.status==='fulfilled'?[result.value]:[]);
+  assert.equal(owners.length,1);assert.equal(attempts.filter(result=>result.status==='rejected').length,1);
+  const owner=owners[0];assert.notEqual(owner.key,recordingRecoveryKey(scope));assert.ok(owner.attemptId);
+  await owner.append(new Blob(['A first'],{type:'audio/webm'}),250);
+  await assert.rejects(beginRecordingRecovery(scope,''),/다른 탭/);
+  await owner.append(new Blob([' A final']),750);const saved=await owner.finish({durationMs:750});
+  assert.equal(saved.key,owner.key);assert.equal(await saved.blob.text(),'A first A final');assert.equal(saved.inUse,false);
+});
+
+test('active captures cannot be discarded by a second tab reading their checkpoint',async()=>{
+  const owner=await beginRecordingRecovery(scope,'audio/webm');await owner.append(new Blob(['still recording']),250);
+  const checkpoint=await readRecordingRecovery(scope);assert.equal(checkpoint?.inUse,true);
+  await assert.rejects(removeRecordingRecovery(checkpoint!.key),/다른 탭/);
+  await owner.append(new Blob([' final']),500);await owner.finish({durationMs:500});
+  await removeRecordingRecovery(owner.key);assert.equal(await readRecordingRecovery(scope),null);
+});
+
+test('expired empty preparation can be replaced without accepting stale chunks or stale deletion',async()=>{
+  const now=Date.now();Date.now=()=>now;const a=await beginRecordingRecovery(scope,'audio/webm');
+  Date.now=()=>now+RECORDING_LEASE_MS+1;const b=await beginRecordingRecovery(scope,'audio/webm');
+  assert.notEqual(a.attemptId,b.attemptId);assert.notEqual(a.key,b.key);
+  assert.throws(()=>a.assertFresh(),/만료/);await assert.rejects(a.assertActive());
+  await b.append(new Blob(['B first']),250);await assert.rejects(a.append(new Blob(['A final']),300));
+  await a.cancel();await removeRecordingRecovery(a.key);
+  const saved=await b.finish({durationMs:500});assert.equal(await saved.blob.text(),'B first');
+  assert.equal(await (await readRecordingRecovery(scope))!.blob.text(),'B first');
+});
+
+test('late receipt and final callbacks only address their own attempt after a newer attempt starts',async()=>{
+  const a=await beginRecordingRecovery(scope,'audio/webm');await a.append(new Blob(['A']),250);await a.finish({durationMs:250});
+  await removeRecordingRecovery(a.key);
+  const b=await beginRecordingRecovery(scope,'audio/webm');await b.append(new Blob(['B']),250);await b.finish({durationMs:250});
+  await removeRecordingRecovery(a.key);await assert.rejects(a.append(new Blob([' A late']),500));
+  assert.equal((await readRecordingRecovery(scope))?.key,b.key);assert.equal(await (await readRecordingRecovery(scope))!.blob.text(),'B');
+});
+
+test('unused preparation cancellation releases only its own reservation',async()=>{
+  const a=await beginRecordingRecovery(scope,'audio/webm');await a.cancel();
+  const b=await beginRecordingRecovery(scope,'audio/webm');await a.cancel();
+  await assert.rejects(beginRecordingRecovery(scope,'audio/webm'),/다른 탭/);
+  await b.append(new Blob(['kept']),250);await b.finish({durationMs:250});
+  assert.equal(await (await readRecordingRecovery(scope))!.blob.text(),'kept');
+});
+
+test('legacy question-keyed recordings remain discoverable and block replacement',async()=>{
+  const seed=await beginRecordingRecovery({...scope,itemIndex:9},'audio/webm');await seed.cancel();
+  const db=await new Promise<IDBDatabase>((resolve,reject)=>{const request=indexedDB.open('gakja-private-recordings',1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+  const key=recordingRecoveryKey(scope),now=Date.now();
+  await new Promise<void>((resolve,reject)=>{const tx=db.transaction(['pending','chunks'],'readwrite');tx.oncomplete=()=>resolve();tx.onabort=()=>reject(tx.error);tx.objectStore('pending').put({...scope,key,mimeType:'audio/webm',chunkCount:1,analysisCount:0,durationMs:250,updatedAt:now,expiresAt:now+RECORDING_RECOVERY_TTL_MS,complete:false});tx.objectStore('chunks').put({id:JSON.stringify([key,'primary',0]),recordingKey:key,lane:'primary',position:0,blob:new Blob(['legacy original'])});});db.close();
+  const saved=await readRecordingRecovery(scope);assert.equal(saved?.key,key);assert.equal(saved?.inUse,false);assert.equal(await saved!.blob.text(),'legacy original');
+  await assert.rejects(beginRecordingRecovery(scope,''));await removeRecordingRecovery(saved!.key);
 });
 
 test('expired recovery is unavailable and purged instead of being revived by a later read',async()=>{

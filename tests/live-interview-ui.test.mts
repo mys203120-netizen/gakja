@@ -7,10 +7,10 @@ import ts from 'typescript';
 const fixture=()=>({session:{id:'live-session',state:'active',kind:'video',supportTarget:{id:'target',university:'고려대학교',department:'경영학과'},practiceLabel:'일반 경험 면접',data:{practiceScope:'personal_record',practiceNotice:'학교별 실제 전형을 재현하지 않는 내 경험 연습이에요.',context:{contentVersion:'7',questions:[],activities:[],sources:[]},generation:0,index:0,paused:true,panelists:[{id:'A',name:'면접관 A',gender:'female'},{id:'B',name:'면접관 B',gender:'male'}]}},
   question:{id:'question',turnId:'turn',prompt:'맡은 역할은 무엇인가요?',speakerId:'A'},turns:[] as any[],report:null as any});
 
-function harness(file='live-interview-session.tsx',initialInfo:any=fixture()){
+function harness(file='live-interview-session.tsx',initialInfo:any=fixture(),recovery:any=null){
   const values:any[]=[],deps:any[]=[],effects:Function[]=[],cleanups:Function[]=[];
   const calls:any[]=[],listeners=new Map<string,Function>(),controllers:any[]=[],destinations:string[]=[];
-  const faults={suspend:undefined as Promise<void>|undefined,allowDevice:false};
+  const faults={suspend:undefined as Promise<void>|undefined,allowDevice:false,recovery,uploadReceipt:{media:{id:'new-server-media'}} as any,recoveryKey:'reserved-writer-attempt',assertActiveError:undefined as Error|undefined,assertFreshError:undefined as Error|undefined};
   let index=0;
   const events=(prefix:string)=>({addEventListener:(name:string,fn:Function)=>listeners.set(prefix+name,fn),removeEventListener:(name:string)=>listeners.delete(prefix+name)});
   const document={...events('document:'),visibilityState:'visible'};
@@ -23,6 +23,7 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture()){
     async rerecord(){calls.push({controller:'rerecord'});this.emit({phase:'preparing'});}
     async preserveAnswer(){calls.push({controller:'preserveAnswer'});this.pause();}
     async acceptTypedAnswer(info:any){calls.push({controller:'acceptTypedAnswer'});this.emit({info,phase:'paused'});}
+    restoreRecording(recording:any,question:any,generation:number){calls.push({controller:'restoreRecording',recording,question,generation});this.emit({recording});return true;}
     pause(){calls.push({controller:'pause'});this.emit({phase:'paused'});}
     finishAnswer(){calls.push({controller:'finishAnswer'});}
     async finish(){calls.push({controller:'finish'});}
@@ -45,8 +46,14 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture()){
       if(name==='./app-shell')return {useApp:()=>({refresh:async()=>calls.push({refresh:true})})};
       if(name==='./shared')return {api:async()=>structuredClone(initialInfo),post:async(url:string,body:any)=>{calls.push({url,body});if(body.action==='suspend')await faults.suspend;return {};},Breadcrumb:'Breadcrumb',Modal:'Modal',Alert:'Alert',targetName:(target:any)=>target?.university||'지원처 미등록'};
       if(name==='@/lib/client/live-interview-controller')return {LiveInterviewController:Controller};
-      if(name==='@/lib/client/live-interview-recorder')return {createLiveAnswerCapture:()=>{throw Error('Unexpected recorder access');}};
-      if(name==='@/lib/client/recording-recovery')return {readRecordingRecovery:async()=>null,recordingRecoveryKey:()=> 'owned-recording',removeRecordingRecovery:async()=>calls.push({recovery:'removed'}),beginRecordingRecovery:async()=>({append:async()=>{},appendAnalysis:async()=>{},finish:async()=>{}})};
+      if(name==='@/lib/client/live-interview-recorder')return {createLiveAnswerCapture:()=>{calls.push({recorder:true});throw Error('Unexpected recorder access');}};
+      if(name==='@/lib/client/recording-recovery')return {
+        readRecordingRecovery:async(scope:any)=>{calls.push({recovery:'read',scope});return faults.recovery;},
+        recordingRecoveryKey:()=> 'legacy-scope-key',
+        removeRecordingRecovery:async(key:string)=>calls.push({recovery:'removed',key}),
+        beginRecordingRecovery:async(scope:any)=>{const key=faults.recoveryKey;calls.push({recovery:'begin',scope,key});return {key,append:async()=>{},appendAnalysis:async()=>{},finish:async()=>{},assertActive:async()=>{calls.push({recovery:'assertActive',key});if(faults.assertActiveError)throw faults.assertActiveError;},assertFresh:()=>{calls.push({recovery:'assertFresh',key});if(faults.assertFreshError)throw faults.assertFreshError;},cancel:async()=>{calls.push({recovery:'cancelled',key});}};},
+      };
+      if(name==='@/lib/recording-upload-client')return {uploadRecording:async(url:string,form:FormData)=>{calls.push({upload:true,url,form});return faults.uploadReceipt;}};
       if(name==='./live-interviewer-stage')return {LiveInterviewerStage:'LiveInterviewerStage'};
       if(name==='./live-interview-session')return {LiveInterviewSession:'LiveInterviewSession'};
       if(name.endsWith('.module.css'))return {__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
@@ -118,4 +125,63 @@ test('device preparation waits for the initial suspension and recording submissi
   const services=h.controllers[0].services,pending=services.prepare();await Promise.resolve();assert.ok(!h.calls.some(call=>call.mockDevice));release();await pending;assert.equal(h.calls.filter(call=>call.mockDevice).length,1);
   await services.answer('saved-media',{id:'question',turnId:'turn'},4);const answer=h.calls.find(call=>call.body?.action==='answer_recording').body;
   assert.deepEqual(JSON.parse(JSON.stringify(answer)),{action:'answer_recording',sessionId:'live-session',turnId:'turn',mediaId:'saved-media',generation:4,requestId:'saved-media'});assert.equal('answer' in answer,false);h.cleanup();
+});
+
+function recoverableInfo(){const info:any=fixture();info.session.student_id='student';info.media=[{id:'older-server-media',metadata:{kind:'answer_recording',turnId:'turn',generation:0,recoveryKey:'older-local-attempt'}}];return info;}
+function localAttempt(fields:any={}){return {key:'same-question:local-attempt-B',attemptId:'attempt-B',inUse:false,blob:new Blob(['local attempt B only'],{type:'audio/webm'}),durationMs:2100,complete:true,...fields};}
+
+test('an older current-turn server media receipt cannot delete a different recoverable local attempt',async()=>{
+  const info=recoverableInfo(),saved=localAttempt(),h=harness(undefined,info,saved);h.render();await h.flush();h.render();
+  const restored=h.calls.find(call=>call.controller==='restoreRecording');assert.ok(restored,'a distinct local attempt remains recoverable');
+  assert.equal(restored.recording.recoveryKey,saved.key);assert.equal(restored.recording.blob,saved.blob);assert.equal(await restored.recording.blob.text(),'local attempt B only');assert.equal(restored.question.turnId,'turn');assert.equal(restored.generation,0);
+  assert.equal(h.calls.some(call=>call.recovery==='removed'||call.recovery==='cancelled'),false);assert.deepEqual(JSON.parse(JSON.stringify(h.calls.find(call=>call.recovery==='read').scope)),{studentId:'student',sessionId:'live-session:turn:0',itemIndex:0,kind:'interview'});h.cleanup();
+});
+
+test('a successful recovered upload acknowledges only the exact restored attempt key',async()=>{
+  const saved=localAttempt({key:'student:interview:turn:attempt-B'}),h=harness(undefined,recoverableInfo(),saved);h.render();await h.flush();h.render();
+  const restored=h.calls.find(call=>call.controller==='restoreRecording');assert.ok(restored);
+  assert.equal(await h.controllers[0].services.upload(restored.recording,restored.question,restored.generation),'new-server-media');
+  const removals=h.calls.filter(call=>call.recovery==='removed');assert.deepEqual(removals.map(call=>call.key),[saved.key]);assert.ok(h.calls.findIndex(call=>call.upload)<h.calls.findIndex(call=>call.recovery==='removed'));
+  const upload=h.calls.find(call=>call.upload);assert.equal(upload.url,'/api/media');assert.equal(upload.form.get('turnId'),'turn');assert.equal(upload.form.get('generation'),'0');assert.equal(await upload.form.get('recording').text(),'local attempt B only');assert.equal(removals.some(call=>call.key==='legacy-scope-key'||call.key==='older-local-attempt'),false);h.cleanup();
+});
+
+test('missing upload receipt preserves the restored recording and its exact recovery key',async()=>{
+  const saved=localAttempt(),h=harness(undefined,recoverableInfo(),saved);h.faults.uploadReceipt={};h.render();await h.flush();h.render();
+  const restored=h.calls.find(call=>call.controller==='restoreRecording');assert.ok(restored);
+  await assert.rejects(()=>h.controllers[0].services.upload(restored.recording,restored.question,restored.generation),/녹음 저장을 확인하지 못했어요/);
+  assert.equal(h.calls.some(call=>call.recovery==='removed'||call.recovery==='cancelled'),false);assert.equal(restored.recording.recoveryKey,saved.key);assert.equal(await restored.recording.blob.text(),'local attempt B only');h.cleanup();
+});
+
+test('a checkpoint still in use by another tab is neither restored nor deleted',async()=>{
+  const saved=localAttempt({inUse:true,complete:false}),h=harness(undefined,recoverableInfo(),saved);h.render();await h.flush();const tree=h.render();
+  assert.match(text(tree),/다른 탭에서 이 질문을 녹음 중/);assert.equal(h.calls.some(call=>call.controller==='restoreRecording'||call.recovery==='removed'||call.recovery==='cancelled'),false);assert.equal(h.calls.some(call=>call.mockDevice||call.upload),false);h.cleanup();
+});
+
+test('aborting the Live preparation countdown cancels only its reserved writer attempt',async()=>{
+  const info=recoverableInfo(),h=harness(undefined,info);h.render();await h.flush();h.render();const abort=new AbortController();h.faults.recoveryKey='new-preparation-attempt-C';
+  const preparing=h.controllers[0].services.beforeCapture(info.question,0,abort.signal);await h.flush();const tree=h.render();assert.match(text(tree),/3초 뒤 답변 녹음을 시작/);abort.abort();await assert.rejects(preparing,{name:'AbortError'});h.render();
+  assert.deepEqual(h.calls.filter(call=>call.recovery==='begin').map(call=>call.key),['new-preparation-attempt-C']);const cancelled=h.calls.filter(call=>call.recovery==='cancelled');assert.ok(cancelled.length>0);assert.deepEqual([...new Set(cancelled.map(call=>call.key))],['new-preparation-attempt-C']);assert.equal(h.calls.some(call=>call.recovery==='removed'||call.upload||call.controller==='restoreRecording'),false);h.cleanup();
+});
+
+test('a signal already aborted after reserving a writer releases that exact reservation without scope deletion',async()=>{
+  const info=recoverableInfo(),h=harness(undefined,info);h.render();await h.flush();h.faults.recoveryKey='pre-aborted-attempt-D';const abort=new AbortController();abort.abort();
+  await assert.rejects(()=>h.controllers[0].services.beforeCapture(info.question,0,abort.signal),{name:'AbortError'});assert.deepEqual(h.calls.filter(call=>call.recovery==='cancelled').map(call=>call.key),['pre-aborted-attempt-D']);assert.equal(h.calls.some(call=>call.recovery==='removed'||call.mockDevice||call.upload),false);h.cleanup();
+});
+
+test('aborting after the preparation countdown and before recorder capture still releases only that reservation',async()=>{
+  const info=recoverableInfo(),h=harness(undefined,info);h.render();await h.flush();h.render();h.faults.recoveryKey='between-countdown-and-capture-attempt-E';const abort=new AbortController();
+  const preparing=h.controllers[0].services.beforeCapture(info.question,0,abort.signal);await h.flush();button(h.render(),'준비 시간 건너뛰기').props.onClick();await preparing;assert.equal(h.calls.some(call=>call.recovery==='cancelled'),false);abort.abort();await h.flush();
+  assert.deepEqual(h.calls.filter(call=>call.recovery==='cancelled').map(call=>call.key),['between-countdown-and-capture-attempt-E']);assert.equal(h.calls.some(call=>call.recovery==='removed'||call.mockDevice||call.upload),false);h.cleanup();
+});
+
+test('a reservation that loses its lease during preparation is cancelled before the recorder opens',async()=>{
+  const info=recoverableInfo(),h=harness(undefined,info);h.render();await h.flush();h.render();h.faults.recoveryKey='expired-during-preparation-attempt-F';h.faults.assertActiveError=Error('녹음 예약이 만료됐어요.');
+  const preparing=h.controllers[0].services.beforeCapture(info.question,0,new AbortController().signal);await h.flush();button(h.render(),'준비 시간 건너뛰기').props.onClick();await assert.rejects(preparing,/예약이 만료/);
+  assert.deepEqual(h.calls.filter(call=>call.recovery==='assertActive').map(call=>call.key),['expired-during-preparation-attempt-F']);assert.deepEqual(h.calls.filter(call=>call.recovery==='cancelled').map(call=>call.key),['expired-during-preparation-attempt-F']);assert.equal(h.calls.some(call=>call.recorder||call.recovery==='removed'),false);h.cleanup();
+});
+
+test('a lease that expires after preparation is checked synchronously before opening the recorder',async()=>{
+  const info=recoverableInfo(),h=harness(undefined,info);h.faults.allowDevice=true;h.render();await h.flush();h.render();const services=h.controllers[0].services;await services.prepare();h.faults.recoveryKey='expired-before-capture-attempt-G';
+  const preparing=services.beforeCapture(info.question,0,new AbortController().signal);await h.flush();button(h.render(),'준비 시간 건너뛰기').props.onClick();await preparing;h.faults.assertFreshError=Error('녹음 예약이 만료됐어요.');assert.throws(()=>services.capture(()=>{}),/예약이 만료/);
+  assert.deepEqual(h.calls.filter(call=>call.recovery==='assertFresh').map(call=>call.key),['expired-before-capture-attempt-G']);assert.equal(h.calls.some(call=>call.recorder||call.recovery==='removed'),false);services.release();await h.flush();assert.deepEqual(h.calls.filter(call=>call.recovery==='cancelled').map(call=>call.key),['expired-before-capture-attempt-G']);h.cleanup();
 });

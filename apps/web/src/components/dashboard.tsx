@@ -8,6 +8,7 @@ import {DashboardPlanner,type InterviewScheduleItem,type InterviewScheduleCovera
 import {koreaToday,validPlanDay} from '@/lib/planner-model';
 import {todayPlanAgenda} from '@/lib/automatic-practice';
 import {dashboardDeadlineRows,primaryDeadlineRow} from '@/lib/dashboard-deadlines';
+import {dashboardAgenda} from '@/lib/dashboard-agenda';
 import {scheduleDateLabel} from '@/lib/schedule';
 import {chooseTodayAction,learningHref,localQuizDraftActivity,type QuizDraftActivity} from '@/lib/learning-journey';
 import {practiceHelpLabel,questionPracticeState,todayQuestionContext} from '@/lib/learning-flow-view';
@@ -64,7 +65,7 @@ export function Dashboard() {
   const calendarTasks:Item[]=(workflows?.assignments||[]).filter((t:Item)=>!['reviewed','completed','cancelled'].includes(t.state));
   const tasks:Item[]=calendarTasks.filter((t:Item)=>!t.target_id||t.target_id===target?.id);
   const readiness=workflows?.readiness?.find((r:Item)=>r.target_id===target?.id);
-  const todayPlans=todayPlanAgenda(plans,today,target?.id),remaining=todayPlans.filter(p=>!p.completed&&!p.performedAt).length;
+  const todayPlans=todayPlanAgenda(plans,today,target?.id),agenda=dashboardAgenda(todayPlans,tasks,today);
   const preparation=automaticPractice.find(item=>item.targetId===target?.id);
   const interviews=splitInterviewsByLearningTarget(data.interviews||[],target).current;
   const active=interviews.find(s=>s.state==='active');
@@ -100,7 +101,7 @@ export function Dashboard() {
     <div className={styles.workspace}>
       <section className={styles.agenda} aria-labelledby="dashboard-agenda-title"><div className={styles.sectionHeading}><h2 id="dashboard-agenda-title"><CalendarDays size={18}/>오늘 할 일</h2><Link className="text-link" href="/quiz/assignments">과제 전체<ArrowUpRight size={14}/></Link></div><div className={styles.indented}>
         {preparation&&<p className={styles.smallNote}><strong>{preparation.daysLeft>0?`D-${preparation.daysLeft}`:preparation.daysLeft===0?'D-day':'면접일 지남'}</strong> · {preparation.status==='paused'?'자동 계획 중지':preparation.daysLeft<0?'다음 면접일을 확인해 주세요':preparation.phaseLabel}<br/>{preparation.dateLabel} · {preparation.date}</p>}
-        {(remaining>0||tasks.length>0)&&<p className={styles.smallNote}>{[remaining>0?`남은 계획 ${remaining}개`:null,tasks.length>0?`과제 ${tasks.length}개`:null].filter(Boolean).join(' · ')}</p>}
+        {(agenda.remainingPlans>0||agenda.currentTasks.length>0)&&<p className={styles.smallNote}>{[agenda.remainingPlans>0?`오늘 남은 계획 ${agenda.remainingPlans}개`:null,agenda.currentTasks.length>0?`오늘 과제 ${agenda.currentTasks.length}개`:null].filter(Boolean).join(' · ')}</p>}
         <DashboardAgenda plans={todayPlans} tasks={tasks} today={today} onPlans={setPlans} loading={loading.learning||loading.planner} available={Boolean(workflows&&plannerLoaded)}/>
         <nav className={styles.quietLinks} aria-label="직접 연습하기">{data.package&&<Link href="/quiz?focus=free">퀴즈 연습<ArrowUpRight size={14}/></Link>}<Link href={active?`/interview/${active.id}?kind=${active.kind}`:'/interview'}>{active?'면접 이어가기':'모의면접'}<ArrowUpRight size={14}/></Link><Link href={'/start'+(target?'?targetId='+encodeURIComponent(target.id):'')}>3분 · 질문 한 개<ArrowUpRight size={14}/></Link></nav>
       </div></section>
@@ -126,9 +127,7 @@ function DeadlineRow({row,loading}:{row:ReturnType<typeof dashboardDeadlineRows>
 
 function DashboardAgenda({plans,tasks,today,onPlans,loading,available}:{plans:Item[];tasks:Item[];today:string;onPlans:React.Dispatch<React.SetStateAction<Item[]>>;loading:boolean;available:boolean}){
   const [moving,setMoving]=useState<Item|null>(null),[date,setDate]=useState(today),[confirmed,setConfirmed]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
-  const current=plans.filter(plan=>!plan.overdue),overdue=plans.filter(plan=>plan.overdue);
-  const pastTasks=tasks.filter(task=>task.due_at&&koreaToday(new Date(task.due_at))<today);
-  const currentTasks=tasks.filter(task=>!pastTasks.includes(task)).sort((a,b)=>String(a.due_at||'9999').localeCompare(String(b.due_at||'9999')));
+  const {current,overdue,currentTasks,pastTasks,upcomingTasks,reviewTasks}=dashboardAgenda(plans,tasks,today);
   const planRow=(plan:Item)=><div key={plan.id} className={`${styles.todayPlan} ${plan.completed?styles.completed:''}`}>{plan.completed?<Check size={15}/>:<Clock3 size={15}/>}<span>{plan.title}{plan.performedAt?' · 실제 연습 기록 있음':''}{plan.overdue&&<small>{plan.date} 계획</small>}</span><div className={styles.planActions}>{plan.href&&(!plan.completed||plan.performedAt)&&<Link className="text-link" href={plan.href}>{plan.performedAt?'다시 연습':'시작'}<ArrowUpRight size={13}/></Link>}{plan.overdue&&<button type="button" className="text-link" onClick={()=>{setMoving(plan);setDate(today);setConfirmed(false);setError('');}}>다른 날로</button>}</div></div>;
   const taskRow=(task:Item)=><LinkedRow key={task.id} href={`/quiz/assignments/${task.id}`} title={task.title||'퀴즈 과제'} subtitle={`${task.items?.length||0}문항${task.due_at?` · ${dateLabel(task.due_at)}까지`:''}`} end={<span className={styles.itemState}>{task.state==='submitted'?'검토 중':'풀기'}{task.state!=='submitted'&&<ArrowUpRight size={14}/>}</span>}/>;
   async function move(){
@@ -141,8 +140,10 @@ function DashboardAgenda({plans,tasks,today,onPlans,loading,available}:{plans:It
   return <div className={styles.agendaItems}>
     {currentTasks.slice(0,2).map(taskRow)}{current.slice(0,3).map(planRow)}
     {!currentTasks.length&&!current.length&&<p className={styles.emptyNote}>{loading?'할 일을 불러오고 있어요.':!available?'할 일을 모두 확인하지 못했어요.':'오늘은 질문 한 개부터 가볍게 시작해요.'}</p>}
-    {(current.length>3||currentTasks.length>2)&&<details className={styles.agendaDisclosure}><summary>오늘 남은 계획·과제 {Math.max(0,current.length-3)+Math.max(0,currentTasks.length-2)}개 더 보기</summary>{currentTasks.slice(2).map(taskRow)}{current.slice(3).map(planRow)}</details>}
+    {(current.length>3||currentTasks.length>2)&&<details className={styles.agendaDisclosure}><summary>오늘 계획·과제 {Math.max(0,current.length-3)+Math.max(0,currentTasks.length-2)}개 더 보기</summary>{currentTasks.slice(2).map(taskRow)}{current.slice(3).map(planRow)}</details>}
     {(overdue.length>0||pastTasks.length>0)&&<details className={styles.agendaDisclosure}><summary>밀린 계획·과제 {overdue.length+pastTasks.length}개 · 오늘 할 만큼 고르기</summary><p className={styles.smallNote}>하나만 골라 시작하거나 다른 날로 옮겨도 돼요. 직접 완료하기 전에는 완료로 바뀌지 않아요.</p>{overdue.map(planRow)}{pastTasks.map(taskRow)}</details>}
+    {upcomingTasks.length>0&&<details className={styles.agendaDisclosure}><summary>예정된 과제 {upcomingTasks.length}개</summary>{upcomingTasks.map(taskRow)}</details>}
+    {reviewTasks.length>0&&<details className={styles.agendaDisclosure}><summary>제출한 과제 {reviewTasks.length}개 · 검토 중</summary>{reviewTasks.map(taskRow)}</details>}
     <a className={styles.recordNext} href="#dashboard-planner">전체 계획 보기<ArrowUpRight size={14}/></a>
     {moving&&<Modal title="이 계획을 다른 날로 옮길까요?" onClose={()=>!busy&&setMoving(null)}><p>{moving.title}</p><label className={styles.moveDate}>옮길 날짜<input type="date" min={today} value={date} onChange={event=>{setDate(event.target.value);setConfirmed(false);}}/></label><label className={styles.moveConfirmation}><input type="checkbox" checked={confirmed} onChange={event=>setConfirmed(event.target.checked)}/>날짜만 옮기고 완료 여부와 기존 연습 기록은 유지할게요.</label>{error&&<Alert>{error}</Alert>}<div className="inline-actions"><button className="button ghost" disabled={busy} onClick={()=>setMoving(null)}>취소</button><ActionButton className="button primary" pending={busy} disabled={!confirmed||!validPlanDay(date)||date<today} onClick={()=>void move()}>확인하고 옮기기</ActionButton></div></Modal>}
   </div>;

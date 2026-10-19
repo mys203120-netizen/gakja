@@ -7,6 +7,8 @@ export type LiveCaptureProgress = {
   level:number; paused:boolean; measurementAvailable:boolean;
 };
 export type LiveAnswerRecording = {
+  /** Exact device-local attempt, carried through upload retries and receipts. */
+  recoveryKey?:string;
   blob:Blob; analysisAudio?:Blob; durationMs:number; telemetry?:SpeechTelemetry;
   reason:LiveAnswerStopReason; partial:boolean; issue?:string;
   speechStarted:boolean; measurementAvailable:boolean;

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {chooseTodayAction,resumableQuizSessions,localQuizDraftActivity} from '../apps/web/src/lib/learning-journey';
 import {dashboardDeadlineRows,primaryDeadlineRow} from '../apps/web/src/lib/dashboard-deadlines';
 import {todayPlanAgenda} from '../apps/web/src/lib/automatic-practice';
+import {dashboardAgenda} from '../apps/web/src/lib/dashboard-agenda';
 
 const target={id:'t',university:'고려대학교',campus:'본교',department:'경영학과',admission_year:2027,admission_type:'학생부종합'};
 const session=(fields:Record<string,unknown>={})=>({id:'s',student_id:'student',mode:'answer',state:'active',current_index:0,total:3,updated_at:'2026-10-19T01:00:00Z',metadata:{targetId:target.id,targetSnapshot:target,drafts:{'0':{response:'내가 직접 한 일',updatedAt:'2026-10-19T01:00:00Z'}}},...fields});
@@ -46,6 +47,26 @@ test('today work is not hidden by many overdue manual plans; practice evidence a
   const result=todayPlanAgenda([...old,performed,oldAuto,superseded,current],'2026-10-19','t');
   assert.equal(result[0].id,'today');assert.equal(result[1].id,'performed');assert.equal(result.length,32);
   assert.equal(performed.completed,false);assert.equal(current.completed,false);assert.equal(result.filter(row=>row.overdue).length,30);
+});
+test('today counts exclude overdue plans, future tasks and work already performed or submitted, preserving every category',()=>{
+ const plans=todayPlanAgenda([
+  ...Array.from({length:30},(_,i)=>({id:`past-${i}`,date:'2026-10-01',completed:false})),
+  {id:'pending',date:'2026-10-19',completed:false},
+  {id:'checked',date:'2026-10-19',completed:true},
+  {id:'performed',date:'2026-10-19',completed:false,performedAt:'2026-10-19T01:00:00Z'},
+ ],'2026-10-19');
+ const tasks=[
+  ...Array.from({length:10},(_,i)=>({id:`late-${i}`,due_at:'2026-10-18T14:59:00Z',state:'assigned'})),
+  {id:'today-end',due_at:'2026-10-19T14:59:00Z',state:'assigned'},
+  {id:'tomorrow-kst',due_at:'2026-10-19T15:00:00Z',state:'assigned'},
+  {id:'no-deadline',due_at:null,state:'assigned'},
+  {id:'submitted',due_at:'2026-10-18T01:00:00Z',state:'submitted'},
+  ...['reviewed','completed','cancelled'].map(state=>({id:state,due_at:'2026-10-19T01:00:00Z',state})),
+ ];
+ const result=dashboardAgenda(plans,tasks,'2026-10-19');
+ assert.equal(result.remainingPlans,1);assert.equal(result.overdue.length,30);assert.equal(result.current.length,3);
+ assert.deepEqual(result.currentTasks.map(task=>task.id),['today-end','no-deadline']);assert.equal(result.pastTasks.length,10);assert.deepEqual(result.upcomingTasks.map(task=>task.id),['tomorrow-kst']);assert.deepEqual(result.reviewTasks.map(task=>task.id),['submitted']);
+ assert.equal(plans.find(plan=>plan.id==='performed')?.completed,false);assert.equal(tasks.find(task=>task.id==='submitted')?.state,'submitted');
 });
 test('an audio-only first-item checkpoint is discoverable without text and remains bound to its exact item',()=>{
   const empty=session({metadata:{targetId:'t',targetSnapshot:target}});

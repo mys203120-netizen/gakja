@@ -40,7 +40,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   if(name==='./audio-level-dot')return{AudioLevelDot:'AudioLevelDot'};
   if(name==='./playful-flow')return{animateStudyReceipt(){}};
   if(name==='@/lib/client/speech-recorder')return{startSpeechCapture(){if(!state.captureAvailable)return null;const started=state.now;return{elapsedMs:()=>state.now-started,dispose(){},pause(){},resume(){},finish(){state.finishCount++;const elapsed=state.now-started;return buildSpeechTelemetry([{atMs:0,rms:0},{atMs:elapsed-.1,rms:.04}],elapsed);}};}};
-  if(name==='@/lib/client/recording-recovery')return{installRecordingExitGuard:()=>()=>{},readRecordingRecovery:async scope=>durableAudio.get(JSON.stringify(scope))||null,removeRecordingRecovery:async key=>{recoveryRemovals.push(key);durableAudio.delete(key);},beginRecordingRecovery:async(scope,mimeType)=>{const key=JSON.stringify(scope),chunks=[];return{key,append:async blob=>{chunks.push(blob);durableAudio.set(key,{...scope,key,blob:new Blob(chunks,{type:mimeType||blob.type}),durationMs:1,complete:false});},finish:async measurement=>{const saved={...scope,key,blob:new Blob(chunks,{type:mimeType||chunks[0]?.type}),...measurement,complete:true};durableAudio.set(key,saved);return saved;},flush:async()=>{}};}};
+  if(name==='@/lib/client/recording-recovery')return{installRecordingExitGuard:()=>()=>{},readRecordingRecovery:async scope=>durableAudio.get(JSON.stringify(scope))||null,removeRecordingRecovery:async key=>{recoveryRemovals.push(key);durableAudio.delete(key);},beginRecordingRecovery:async(scope,mimeType)=>{const key=JSON.stringify(scope),chunks=[];let closed=false;return{key,assertActive:async()=>{if(closed)throw Error('closed');},assertFresh:()=>{if(closed)throw Error('closed');},cancel:async()=>{if(chunks.length)throw Error('pending audio');closed=true;durableAudio.delete(key);},append:async blob=>{if(closed)throw Error("closed");chunks.push(blob);durableAudio.set(key,{...scope,key,blob:new Blob(chunks,{type:mimeType||blob.type}),durationMs:1,complete:false});},finish:async measurement=>{if(closed)throw Error("closed");const saved={...scope,key,blob:new Blob(chunks,{type:mimeType||chunks[0]?.type}),...measurement,complete:true};durableAudio.set(key,saved);return saved;},flush:async()=>{}};}};
   if(name==='@/lib/recording-upload-client')return{uploadRecording:async(url,form)=>{const durationMs=Number(form.get('durationMs')),telemetry=form.get('speechTelemetry')?JSON.parse(form.get('speechTelemetry')):null;assert.ok(!telemetry||validateSpeechTelemetry(telemetry));assert.ok(!telemetry||Math.abs(telemetry.durationMs-durationMs)<=500);state.uploads.push({durationMs,telemetry,blob:form.get('recording')});if(state.uploadError)throw new Error('synthetic upload failed');return{recording:{id:'new-recording',session_id:'session',item_index:0,url:'/owned-recording'}};}};
   if(name==='@gakja/content-contracts/workflows')return contracts;
   if(name==='@/lib/quiz-session-view')return view;
@@ -110,6 +110,17 @@ check(state.uploads.length===0,'restoring audio never uploads it automatically')
 await nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='녹음 다시 저장').props.onClick();
 check(recoveryRemovals.includes(recoveredLocal.key)&&!durableAudio.has(recoveredLocal.key),'only a confirmed server recording receipt removes the local original');
 
+// stop() makes MediaRecorder inactive before its last chunk/onstop are delivered.
+// Leaving in that gap must not cancel what still looks like an empty reservation.
+reset({...info,session:{...info.session,mode:'oral'}});state.values[10]=true;tree=render();
+const stoppedCleanup=state.effects.find(effect=>effect.toString().includes('mounted.current = true'))();
+await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
+state.now=1500;tree=render();nodes(tree).find(node=>node.type==='button'&&text(node.props.children).startsWith('녹음 완료')).props.onClick();
+check(state.capture.state==='inactive'&&durableAudio.size===0,'stop-before-final-event leaves an empty but owned recording reservation');
+stoppedCleanup();state.now=3500;await state.capture.deliverStop();
+check(state.uploads.length===0&&durableAudio.size===1,'leaving after stop preserves final events without an unreviewed upload');
+check(await [...durableAudio.values()][0].blob.text()==='fake-recorded-audio','the stopped recorder final chunk survives even when the reservation was empty at unmount');
+
 reset({...info,session:{...info.session,mode:'oral'}});tree=render();
 check(saveButton(tree).props.disabled,'oral save still requires recording unless the learner explicitly changes response mode');
 nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='이 질문은 글로 답하기').props.onClick();tree=render();
@@ -121,7 +132,7 @@ reset();state.values[10]=true;state.values[23]=false;tree=render();await nodes(t
 check(state.capture===null&&state.values[22]===0&&state.deviceRequests===1,'microphone permission and level check happen before the readiness countdown');
 nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='준비됐어요 · 3초 뒤 시작').props.onClick();tree=render();
 check(state.values[22]===3&&state.capture===null,'learner explicitly starts the real three-second readiness countdown after the microphone check');
-nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='지금 시작').props.onClick();
+nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='지금 시작').props.onClick();await settle();
 check(state.deviceRequests===1&&state.capture?.state==='recording','skip reuses the checked device and opens exactly one recorder');
 reset();state.values[10]=true;state.values[23]=false;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='취소').props.onClick();
 check(state.values[22]===null&&state.capture===null&&state.tracksStopped===1,'cancel microphone check releases the device without recording an answer');

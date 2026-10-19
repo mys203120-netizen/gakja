@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { requireUser, checkOrigin } from '@/lib/auth';
 import { query, transaction } from '@/lib/db';
 import { requireStudent, FeatureError, featureError } from '@/lib/ai';
-import { experienceSchema } from '@/lib/armory-model';
+import { experienceSaveSchema } from '@/lib/armory-model';
 export const runtime='nodejs';
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'private, no-store'}});
 export async function GET(){try{
@@ -13,7 +13,7 @@ export async function GET(){try{
  }catch(e){const r=featureError(e);return json(r,r.status);}}
 export async function POST(request:Request){try{
  checkOrigin(request);const user=await requireUser();requireStudent(user);
- const input=z.object({id:z.string().uuid(),revision:z.number().int().min(0),draftRevision:z.number().int().positive().optional(),data:experienceSchema}).parse(await request.json());
+ const input=z.object({id:z.string().uuid(),revision:z.number().int().min(0),draftRevision:z.number().int().positive().optional(),data:experienceSaveSchema}).parse(await request.json());
  const card=await transaction(async client=>{
   await client.query('select pg_advisory_xact_lock(hashtext($1))',['armory:'+user.id]);
   if(input.draftRevision){const pending=await client.query('select revision from experience_card_drafts where id=$1 and student_id=$2',[input.id,user.id]);if(pending.rows[0]?.revision!==input.draftRevision)throw new FeatureError(409,'초안이 다른 화면에서 바뀌었어요. 지금 쓴 글은 보관했어요. 최신 초안을 확인해 주세요.');}

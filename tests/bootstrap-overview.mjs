@@ -11,6 +11,7 @@ import { tsImport } from 'tsx/esm/api';
 const scope = await tsImport('../apps/web/src/lib/learning-target-scope.ts', import.meta.url);
 const automatic = await tsImport('../apps/web/src/lib/automatic-practice.ts', import.meta.url);
 const deadlines = await tsImport('../apps/web/src/lib/dashboard-deadlines.ts', import.meta.url);
+const agenda = await tsImport('../apps/web/src/lib/dashboard-agenda.ts', import.meta.url);
 const schedule = await tsImport('../apps/web/src/lib/schedule.ts', import.meta.url);
 const journey = await tsImport('../apps/web/src/lib/learning-journey.ts', import.meta.url);
 const flow = await tsImport('../apps/web/src/lib/learning-flow-view.ts', import.meta.url);
@@ -75,6 +76,7 @@ function loadComponent(name) {
     if (id === '@/lib/learning-target-scope') return scope;
     if (id === '@/lib/automatic-practice') return automatic;
     if (id === '@/lib/dashboard-deadlines') return deadlines;
+    if (id === '@/lib/dashboard-agenda') return agenda;
     if (id === '@/lib/schedule') return schedule;
     if (id === '@/lib/learning-journey') return journey;
     if (id === '@/lib/learning-flow-view') return flow;

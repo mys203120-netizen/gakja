@@ -58,6 +58,24 @@ test('pausing during the preparation countdown cannot start a recorder',async()=
   const h=harness();h.state.overrides.beforeCapture=async(_q,_g,signal)=>new Promise<void>((_,reject)=>signal.addEventListener('abort',()=>reject(new DOMException('paused','AbortError')),{once:true}));
   await h.controller.start();await h.until(()=>h.calls('beforeCapture').length===1);h.controller.pause();await tick();assert.equal(h.state.captures.length,0);assert.equal(h.controller.state.phase,'paused');h.controller.dispose();
 });
+
+test('pause after preparation releases its reservation and resume prepares again before capture',async()=>{
+  const h=harness();let reserved=false,pausedInGap=false;
+  h.state.overrides.beforeCapture=async()=>{reserved=true;};
+  h.state.overrides.mute=paused=>{if(paused)reserved=false;};
+  // A visibility/pause event can run in the awaited checkpoint between the
+  // preparation promise settling and capture taking ownership of its writer.
+  const checkpoint=(h.controller as any).checkpoint.bind(h.controller);
+  (h.controller as any).checkpoint=async(...args:any[])=>{
+    if(reserved&&!pausedInGap){pausedInGap=true;h.controller.pause();}
+    await checkpoint(...args);
+  };
+  await h.controller.start();await h.until(()=>pausedInGap);
+  assert.equal(reserved,false);assert.equal(h.state.captures.length,0);
+  await h.controller.start();await h.until(()=>h.state.captures.length===1);
+  assert.equal(reserved,true,'capture must own a newly prepared reservation');
+  assert.equal(h.calls('beforeCapture').length,2);assert.equal(h.controller.state.error,'');h.controller.dispose();
+});
 test('pause mid-answer resumes the same capture without replay or another recorder',async()=>{
   const h=harness();await h.controller.start();await h.until(()=>h.state.captures.length===1);const capture=h.state.captures[0];
   h.controller.pause();await tick();assert.equal(h.controller.state.phase,'paused');assert.equal(capture.pauseCalls,1);

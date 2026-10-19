@@ -12,11 +12,13 @@ import styles from './armory.module.css';
 import {ArmoryAssist} from './armory-assist';
 import {ExperienceTextClassifier} from './experience-text-classifier';
 import {experienceQuestionSuggestions} from '@/lib/armory-recommendations';
-import {createExperienceDraftSync,experienceDraftContent,migrateExperienceDraft,readExperienceDrafts,removeExperienceDraft,writeExperienceDraft,type ExperienceDraft} from '@/lib/armory-drafts';
+import {chooseExperienceDraftVersion,createExperienceDraftSync,draftMatchesSource,experienceDraftContent,migrateExperienceDraft,preserveExperienceDraftVersions,readExperienceDraftBackups,readExperienceDrafts,removeExperienceDraft,writeExperienceDraft,type ExperienceDraft,type ExperienceDraftBackup} from '@/lib/armory-drafts';
 const empty=():Experience=>({title:'',category:'협업',situation:'',action:'',result:'',confirmed:false,pinned:false,sourceNote:'학생이 직접 작성한 경험'});
 const categories=['협업','실패','강점','탐구'] as const;
 const categoryHints:Record<Experience['category'],string>={협업:'함께 문제를 풀었던 일',실패:'뜻대로 되지 않아 바꿔본 일',강점:'내 역할이 도움이 되었던 일',탐구:'궁금한 것을 직접 확인한 일'};
 type ArmoryQuestion=Item&{id:string;prompt:string};
+type DraftConflict={local:ExperienceDraft;remote:ExperienceDraft|null;card:ExperienceCard|null;backedUp:boolean;error:string};
+const versionText=(record:ExperienceDraft)=>[['경험 이름',record.draft.title||'(제목 없음)'],['유형',record.draft.category],['상황',record.draft.situation],['내 행동',record.draft.action],['결과·배운 점',record.draft.result],['붙여넣은 원문',record.draft.originalText||'']].map(([label,value])=>label+'\n'+value).join('\n\n');
 export function Armory(){
  const {data,targetId}=useApp();const params=useSearchParams();const router=useRouter();const editorHeading=useRef<HTMLHeadingElement>(null);const openedCard=useRef('');
  const target=data.targets.find(item=>item.id===targetId);
@@ -29,25 +31,51 @@ export function Armory(){
  function nextStep(){if(step<2&&!draft[experienceSteps[step].key].trim()){setValidation(step===0?'어떤 상황이었는지 한 문장만 적어주세요.':'내가 직접 한 행동을 한 문장만 적어주세요.');return;}setValidation('');setStep(step+1);}
  function selectCard(id:string){setSelected(id);setQuestionId('');setTab(cards.find(c=>c.id===id)?.data.confirmed?'questions':'experience');setSaved('');router.replace(id?'/armory?card='+encodeURIComponent(id):'/armory',{scroll:false});}
  const [localDrafts,setLocalDrafts]=useState<ExperienceDraft[]>([]),[draftStatus,setDraftStatus]=useState(''),[showAllQuestions,setShowAllQuestions]=useState(false);
+ const [conflict,setConflict]=useState<DraftConflict|null>(null),[backups,setBackups]=useState<ExperienceDraftBackup[]>([]),[copyStatus,setCopyStatus]=useState('');
+ const conflictRef=useRef<DraftConflict|null>(null),conflictLoading=useRef(false);
  const draftSnapshot=useRef<ExperienceDraft|null>(null),saveLock=useRef(false),autosaveTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const sync=useRef(createExperienceDraftSync(async record=>(await api('/api/armory/drafts',{method:'PUT',body:JSON.stringify(record)})).draft));
- useEffect(()=>{try{migrateExperienceDraft(localStorage,sessionStorage,data.user.id);setLocalDrafts(readExperienceDrafts(localStorage,data.user.id));}catch{setDraftStatus('이 기기의 저장 공간을 확인해 주세요. 서버 저장 상태를 확인하며 작성해 주세요.');}
+ useEffect(()=>{try{migrateExperienceDraft(localStorage,sessionStorage,data.user.id);setLocalDrafts(readExperienceDrafts(localStorage,data.user.id));setBackups(readExperienceDraftBackups(localStorage,data.user.id));}catch{setDraftStatus('이 기기의 저장 공간을 확인해 주세요. 서버 저장 상태를 확인하며 작성해 주세요.');}
   let active=true;api('/api/armory/drafts').then(result=>{if(!active)return;const remoteDrafts=(result.drafts||[]) as ExperienceDraft[];try{const local=readExperienceDrafts(localStorage,data.user.id);for(const remote of remoteDrafts)if(!local.some(item=>item.id===remote.id))writeExperienceDraft(localStorage,data.user.id,remote);}catch{}setLocalDrafts(previous=>[...previous,...remoteDrafts.filter(remote=>!previous.some(item=>item.id===remote.id))]);}).catch(()=>{if(active)setDraftStatus('서버 초안을 불러오지 못했어요. 이 기기에 보관한 초안은 계속 쓸 수 있어요.');});return()=>{active=false;};},[data.user.id]);
  async function syncRecord(record:ExperienceDraft){
-  const acknowledged=await sync.current.sync(record);
+  let acknowledged:ExperienceDraft;try{acknowledged=await sync.current.sync(record);}catch(reason){if((reason as Error).name!=='DraftSyncCancelled')void inspectDraftVersions(record);throw reason;}
+  if(conflictRef.current?.local.id===record.id)throw Object.assign(Error('버전을 비교하는 동안 이전 초안 저장을 멈췄어요.'),{name:'DraftSyncCancelled'});
   // Persist the acknowledgement even if navigation unmounted the editor meanwhile.
   try{const latest=readExperienceDrafts(localStorage,data.user.id).find(item=>item.id===record.id);if(latest)writeExperienceDraft(localStorage,data.user.id,{...latest,serverRevision:acknowledged.serverRevision});}catch{}
   setLocalDrafts(previous=>previous.map(item=>item.id===record.id?{...item,serverRevision:acknowledged.serverRevision}:item));
   if(draftSnapshot.current?.id===record.id){draftSnapshot.current={...draftSnapshot.current,serverRevision:acknowledged.serverRevision};if(experienceDraftContent(draftSnapshot.current)===experienceDraftContent(record))setDraftStatus('서버에 초안 저장됨');}
   return acknowledged;
  }
- useEffect(()=>{if(!editing||!draftId)return;const record:ExperienceDraft={id:draftId,draft:{...draft,confirmed:false},revision,step,updatedAt:new Date().toISOString(),serverRevision:draftSnapshot.current?.id===draftId?draftSnapshot.current.serverRevision:0};draftSnapshot.current=record;
+ function preserveConflictVersions(value:DraftConflict){
+  const records:ExperienceDraftBackup[]=[{id:crypto.randomUUID(),label:'이 기기의 초안 · 비교 전 원문',record:value.local},...(value.remote?[{id:crypto.randomUUID(),label:'서버 초안 · 비교 전 원문',record:value.remote}]:[]),...(value.card?[{id:crypto.randomUUID(),label:`저장된 경험 v${value.card.revision} · 비교 전 원문`,record:{...value.local,draft:{...value.card.data,confirmed:false},revision:value.card.revision,step:0}}]:[])];
+  preserveExperienceDraftVersions(localStorage,data.user.id,records);setBackups(readExperienceDraftBackups(localStorage,data.user.id));
+ }
+ async function inspectDraftVersions(record=draftSnapshot.current,force=false){
+  if(!record||conflictLoading.current||draftSnapshot.current?.id!==record.id)return;conflictLoading.current=true;
+  try{const [pending,current]=await Promise.all([api('/api/armory/drafts'),api('/api/armory')]);
+   if(draftSnapshot.current?.id!==record.id)return;
+   const local=draftSnapshot.current,remote=(pending.drafts as ExperienceDraft[]).find(item=>item.id===record.id)||null,source=(current.cards as ExperienceCard[]).find(item=>item.id===record.id)||null;
+   const changedSource=!draftMatchesSource(local,source),changedDraft=remote&&remote.serverRevision!==local.serverRevision&&experienceDraftContent(remote)!==experienceDraftContent(local);
+   if(!force&&!changedSource&&!changedDraft)return;
+   if(autosaveTimer.current)clearTimeout(autosaveTimer.current);sync.current.forget(record.id);
+   let value:DraftConflict={local,remote,card:source,backedUp:false,error:''};
+   try{preserveConflictVersions(value);value={...value,backedUp:true};}catch{value={...value,error:'두 버전을 이 기기에 보관하지 못했어요. 아래 글을 복사해 두거나 저장 공간을 확보한 뒤 다시 시도해 주세요.'};}
+   conflictRef.current=value;setConflict(value);setCards(current.cards);setDraftStatus('버전이 달라 자동 저장을 잠시 멈췄어요. 내용을 비교하고 이어 쓸 글을 선택해 주세요.');
+  }catch{if(force)setError('최신 버전을 불러오지 못했어요. 이 기기의 글을 유지하고 있어요. 연결 상태를 확인한 뒤 다시 시도해 주세요.');}finally{conflictLoading.current=false;}
+ }
+ function selectDraftVersion(choice:'local'|'remote'|'card'|'copy'){
+  const value=conflictRef.current;if(!value||!value.backedUp)return;
+  try{const chosen=chooseExperienceDraftVersion(value.local,value.remote,value.card,choice,choice==='copy'?crypto.randomUUID():undefined);writeExperienceDraft(localStorage,data.user.id,chosen);sync.current.forget(value.local.id);conflictRef.current=null;setConflict(null);setCopyStatus('');recover(chosen);setLocalDrafts(readExperienceDrafts(localStorage,data.user.id));setError('');}catch(reason){setConflict({...value,error:(reason as Error).message});}
+ }
+ async function copyVersion(record:ExperienceDraft){try{await navigator.clipboard.writeText(versionText(record));setCopyStatus('선택한 버전을 복사했어요.');}catch{setCopyStatus('자동 복사를 사용할 수 없어요. 아래 글 전체를 선택해 복사해 주세요.');}}
+ useEffect(()=>{if(!editing||!draftId||conflictRef.current)return;const record:ExperienceDraft={id:draftId,draft:{...draft,confirmed:false},revision,step,updatedAt:new Date().toISOString(),serverRevision:draftSnapshot.current?.id===draftId?draftSnapshot.current.serverRevision:0};draftSnapshot.current=record;
   try{writeExperienceDraft(localStorage,data.user.id,record);setDraftStatus('이 기기에 보관됨 · 서버 저장 대기');}catch{setDraftStatus('이 기기에 보관하지 못했어요 · 서버 저장 대기');}
   setLocalDrafts(previous=>[record,...previous.filter(item=>item.id!==record.id)]);
-  autosaveTimer.current=setTimeout(()=>{setDraftStatus('서버에 초안 저장 중…');void syncRecord(record).catch(reason=>setDraftStatus('서버 저장 실패 · '+reason.message));},1000);
+  autosaveTimer.current=setTimeout(()=>{setDraftStatus('서버에 초안 저장 중…');void syncRecord(record).catch(reason=>{if(reason.name!=='DraftSyncCancelled')setDraftStatus('서버 저장 실패 · '+reason.message);});},1000);
   return()=>{if(autosaveTimer.current)clearTimeout(autosaveTimer.current);};
- },[editing,draft,draftId,revision,step,data.user.id]);
- function recover(stored:ExperienceDraft){setDraft(stored.draft);setDraftId(stored.id);setRevision(stored.revision);setStep(stored.step);draftSnapshot.current=stored;setEditing(true);setError('');setSaved('');}
+ },[editing,draft,draftId,revision,step,data.user.id,conflict]);
+ function recover(stored:ExperienceDraft){conflictRef.current=null;setConflict(null);setDraft(stored.draft);setDraftId(stored.id);setRevision(stored.revision);setStep(stored.step);draftSnapshot.current=stored;setEditing(true);setError('');setSaved('');}
+ function recoverBackup(backup:ExperienceDraftBackup){try{const copy=chooseExperienceDraftVersion(backup.record,null,null,'copy',crypto.randomUUID());writeExperienceDraft(localStorage,data.user.id,copy);setLocalDrafts(readExperienceDrafts(localStorage,data.user.id));recover(copy);}catch{setError('보관한 버전을 새 초안으로 저장하지 못했어요. 기기 저장 공간을 확인해 주세요.');}}
  async function load(){setLoading(true);setError('');try{const r=await api('/api/armory');setCards(r.cards);setSessions(r.sessions);}catch(e){setError((e as Error).message);}finally{setLoading(false);}}
  useEffect(()=>{void load();},[]);
  useEffect(()=>{setSelected(params.get('card')||'');},[params]);
@@ -55,14 +83,14 @@ export function Armory(){
  useEffect(()=>{if(!editing)return;const protect=(event:BeforeUnloadEvent)=>{event.preventDefault();};window.addEventListener('beforeunload',protect);return()=>window.removeEventListener('beforeunload',protect);},[editing]);
  const card=cards.find(c=>c.id===selected);const history=sessions.filter(s=>s.card?.id===selected);
  useEffect(()=>{if(!card){openedCard.current='';return;}if(openedCard.current!==card.id){openedCard.current=card.id;setTab(card.data.confirmed?'questions':'experience');}},[card?.id,card?.data.confirmed]);
- function begin(category:Experience['category']='협업',activity?:Item){setDraft({...empty(),category,title:activity?.title||'',sourceNote:activity?`참고한 발행 활동: ${activity.title} · 내용은 학생이 직접 확인`:'학생이 직접 작성한 경험'});setDraftId(crypto.randomUUID());setRevision(0);setStep(0);setValidation('');setEditing(true);setError('');setSaved('');}
+ function begin(category:Experience['category']='협업',activity?:Item){conflictRef.current=null;setConflict(null);setDraft({...empty(),category,title:activity?.title||'',sourceNote:activity?`참고한 발행 활동: ${activity.title} · 내용은 학생이 직접 확인`:'학생이 직접 작성한 경험'});setDraftId(crypto.randomUUID());setRevision(0);setStep(0);setValidation('');setEditing(true);setError('');setSaved('');}
  function edit(){if(!card)return;const pending=localDrafts.find(item=>item.id===card.id);if(pending){recover(pending);return;}setDraft({...card.data,confirmed:false});setDraftId(card.id);setRevision(card.revision);setStep(0);draftSnapshot.current=null;setValidation('');setEditing(true);setSaved('');}
  async function save(confirmed:boolean){
-  if(saveLock.current)return;saveLock.current=true;setBusy(true);setError('');if(autosaveTimer.current)clearTimeout(autosaveTimer.current);
+  if(saveLock.current||conflictRef.current)return;saveLock.current=true;setBusy(true);setError('');if(autosaveTimer.current)clearTimeout(autosaveTimer.current);
   try{const record=draftSnapshot.current;if(!record||record.id!==draftId)throw new Error('초안을 준비하고 있어요. 잠시 후 다시 저장해 주세요.');const acknowledged=await syncRecord(record);
    const r=await api('/api/armory',{method:'POST',body:JSON.stringify({id:draftId,revision,draftRevision:acknowledged.serverRevision,data:{...draft,title:draft.title.trim()||`${draft.category} 경험`,confirmed}})});
    setCards(prev=>[r.card,...prev.filter(c=>c.id!==r.card.id)]);try{removeExperienceDraft(localStorage,data.user.id,draftId);}catch{}setLocalDrafts(previous=>previous.filter(item=>item.id!==draftId));sync.current.forget(draftId);draftSnapshot.current=null;setRevision(r.card.revision);selectCard(r.card.id);setEditing(false);setTab(confirmed?'questions':'experience');setSaved(confirmed?'내 경험 카드가 준비됐어요. 질문을 골라 연습해 보세요.':'초안을 저장했어요. 나중에 이어서 작성할 수 있어요.');
-  }catch(e){let localCopy=false;try{const current=draftSnapshot.current;localCopy=Boolean(current&&readExperienceDrafts(localStorage,data.user.id).some(item=>item.id===draftId&&experienceDraftContent(item)===experienceDraftContent(current)));}catch{}setError((e as Error).message+(localCopy?' 입력한 글은 이 기기의 초안에 보관했어요.':' 입력한 글은 현재 편집 화면에 남아 있어요. 저장이 완료될 때까지 화면을 유지해 주세요.'));}finally{saveLock.current=false;setBusy(false);}
+  }catch(e){void inspectDraftVersions();let localCopy=false;try{const current=draftSnapshot.current;localCopy=Boolean(current&&readExperienceDrafts(localStorage,data.user.id).some(item=>item.id===draftId&&experienceDraftContent(item)===experienceDraftContent(current)));}catch{}setError((e as Error).message+(localCopy?' 입력한 글은 이 기기의 초안에 보관했어요.':' 입력한 글은 현재 편집 화면에 남아 있어요. 저장이 완료될 때까지 화면을 유지해 주세요.'));}finally{saveLock.current=false;setBusy(false);}
  }
  async function pin(){if(!card)return;setBusy(true);try{const r=await api('/api/armory',{method:'POST',body:JSON.stringify({id:card.id,revision:card.revision,data:{...card.data,pinned:!card.data.pinned}})});setCards(prev=>prev.map(c=>c.id===card.id?r.card:c));}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
  function href(kind:'chat'|'video'){const question=questions.find(item=>item.id===questionId)!;return interviewSetupHref(kind,new URLSearchParams({questionId,sourceType:question.armorySourceType,sourceVersion:String(question.armorySourceVersion),experienceCardId:card!.id,experienceRevision:String(card!.revision)}),{targetId,count:1});}
@@ -76,9 +104,15 @@ export function Armory(){
   {error&&<Alert>{error}<button className="text-link" onClick={load}>목록 다시 불러오기</button></Alert>}
   {saved&&<p role="status" className={styles.notice}>{saved}</p>}
   {!editing&&draftStatus.includes('못했')&&<p role="status" className={styles.hint}>{draftStatus}</p>}
-  {editing?<section className={styles.editor} aria-label="경험 카드 만들기"><fieldset className={styles.editorFields} disabled={busy}><legend className="sr-only">경험 카드 편집</legend>
+  {editing&&conflict&&<section className={styles.conflict} aria-labelledby="draft-conflict-title"><h2 id="draft-conflict-title">초안의 버전이 달라요</h2><p>자동 저장을 멈췄어요. 아래 글을 비교하고 이어 쓸 버전을 선택해 주세요. 비교 전 원문은 이 기기의 ‘비교한 버전 보관함’에서 다시 열 수 있어요.</p>
+   {!draftMatchesSource(conflict.local,conflict.card)&&<p className={styles.hint}>저장된 경험도 바뀌었어요. 이 기기 글은 새 경험으로 이어 쓸 수 있어요. 최신 경험을 보완하려면 저장된 경험을 선택해 주세요.</p>}
+   <div className={styles.versionGrid}>{[{label:'이 기기의 초안',record:conflict.local,choice:'local' as const},...(conflict.remote?[{label:`서버 초안 v${conflict.remote.serverRevision}`,record:conflict.remote,choice:'remote' as const}]:[]),...(conflict.card?[{label:`저장된 경험 v${conflict.card.revision}`,record:{...conflict.local,draft:conflict.card.data,revision:conflict.card.revision,step:0},choice:'card' as const}]:[])].map(version=><article key={version.choice}><h3>{version.label}</h3><label><span className="sr-only">{version.label} 원문</span><textarea readOnly rows={11} value={versionText(version.record)}/></label><button type="button" className="button ghost" onClick={()=>void copyVersion(version.record)}>{version.label} 복사</button><button type="button" className="button primary" disabled={!conflict.backedUp||!draftMatchesSource(version.record,conflict.card)} onClick={()=>selectDraftVersion(version.choice)}>{version.choice==='card'?'저장된 경험부터 보완':version.choice==='remote'?'서버 초안으로 계속':'이 기기 초안으로 계속'}</button></article>)}</div>
+   {copyStatus&&<p role="status">{copyStatus}</p>}{conflict.error&&<p role="alert">{conflict.error}</p>}
+   <div className={styles.actions}><button className="button ghost" disabled={!conflict.backedUp} onClick={()=>selectDraftVersion('copy')}>이 기기 글을 새 경험으로</button><button className="button ghost" onClick={()=>void inspectDraftVersions(draftSnapshot.current,true)}>최신 버전 다시 확인</button><button className="button ghost" onClick={()=>{conflictRef.current=null;setConflict(null);setEditing(false);}}>선택은 나중에 · 목록으로</button></div>
+  </section>}
+  {editing?<section className={styles.editor} aria-label="경험 카드 만들기"><fieldset className={styles.editorFields} disabled={busy||Boolean(conflict)}><legend className="sr-only">경험 카드 편집</legend>
    <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>내 이야기 정리</span><h2 ref={editorHeading} tabIndex={-1}>{revision?'경험 보완하기':'작은 경험부터 적어보세요'}</h2><p className={styles.hint}>상황과 내가 한 일, 두 문장이면 시작할 수 있어요. 제목은 자동으로 붙이고 결과는 나중에 보완해도 돼요.</p></div><span className={styles.stepCount}>{step+1} / 4</span></div>
-   <p role="status" className={styles.hint}>{draftStatus}</p><button className={styles.backLink} disabled={busy} onClick={()=>setEditing(false)}>초안 보관하고 목록으로</button>
+   <p role="status" className={styles.hint}>{draftStatus}</p>{draftStatus.includes('실패')&&<button type="button" className="text-link" onClick={()=>void inspectDraftVersions(draftSnapshot.current,true)}>서버 초안 확인·비교</button>}<button className={styles.backLink} disabled={busy} onClick={()=>setEditing(false)}>초안 보관하고 목록으로</button>
    <ol className={styles.steps}>{['상황','내 행동','결과 (선택)','확인'].map((label,index)=><li key={label} aria-current={index===step?'step':undefined}><span>{index+1}</span>{label}</li>)}</ol>
    {step===0&&<><ExperienceTextClassifier onApply={fields=>setDraft({...draft,...fields,confirmed:false})}/><label>경험 이름 (선택)<input disabled={busy} maxLength={120} value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})} placeholder="비워두면 경험 유형으로 붙여드려요"/></label><div className={styles.chips} aria-label="경험 유형">{categories.map(category=><button disabled={busy} type="button" aria-pressed={draft.category===category} key={category} onClick={()=>setDraft({...draft,category})}>{category}</button>)}</div></>}
    {currentStep?<div className={styles.writingStep}>
@@ -120,6 +154,7 @@ export function Armory(){
   </>:<>
    <ol className={styles.journey} aria-label="무기고 이용 순서"><li><span>1</span><div><strong>경험 찾기</strong><small>내가 직접 한 일을 떠올려요</small></div></li><li><span>2</span><div><strong>내 이야기로 정리</strong><small>상황 · 행동 · 배운 점을 적어요</small></div></li><li><span>3</span><div><strong>면접에 활용</strong><small>질문에 연결해 답해봐요</small></div></li></ol>
    {localDrafts.length>0&&<section className={styles.draftList} aria-label="작성 중인 경험 초안"><h2>작성 중인 경험 <span className={styles.count}>{localDrafts.length}</span></h2><p className={styles.hint}>새 경험을 만들어도 이전 초안은 그대로 보관해요. 저장한 카드는 확인·저장할 때까지 바뀌지 않아요.</p>{localDrafts.map(item=><button key={item.id} className={styles.card} onClick={()=>recover(item)}><span className={styles.cardContent}><strong className={styles.cardTitle}>{item.draft.title||`${item.draft.category} 경험 초안`}</strong><span className={styles.cardExcerpt}>{item.draft.action||item.draft.situation||'빈 초안 · 작은 기억부터 이어서 적어보세요.'}</span><small>{item.serverRevision?'서버 저장 이력 있음':'이 기기에 보관 중'} · {new Date(item.updatedAt).toLocaleDateString('ko-KR')}</small></span><span className={styles.cardAction}>초안 이어쓰기<ArrowRight size={16}/></span></button>)}</section>}
+   {backups.length>0&&<details className={styles.draftList}><summary>비교한 버전 보관함 · {backups.length}</summary><p className={styles.hint}>버전을 선택하기 전의 원문이에요. 열면 별도의 새 경험 초안으로 이어 쓸 수 있어요.</p>{backups.map(item=><button key={item.id} className={styles.card} onClick={()=>recoverBackup(item)}><span className={styles.cardContent}><strong className={styles.cardTitle}>{item.record.draft.title||`${item.record.draft.category} 경험 초안`}</strong><span className={styles.cardExcerpt}>{item.record.draft.action||item.record.draft.situation||'빈 초안'}</span><small>{item.label}</small></span><span className={styles.cardAction}>새 초안으로 열기<ArrowRight size={16}/></span></button>)}</details>}
    {activeSession&&<div className={styles.notice}><span>진행 중인 면접이 있어요.</span><Link className="text-link" href={`/interview/${activeSession.id}?kind=${activeSession.kind}`}>이어서 연습하기<ArrowRight size={15}/></Link></div>}
    <div className={styles.workspace}>
     <section className={styles.starter} aria-labelledby="find-experience-title">

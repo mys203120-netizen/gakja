@@ -201,12 +201,19 @@ export class LiveInterviewController {
         const question=info.question,generation=Number(info.session.data.generation||0);
         if(!this.devicePrepared){await this.services.prepare();this.devicePrepared=true;await this.checkpoint(revision);}
         this.phase('speaking');const speech=new AbortController();this.speech=speech;
-        try{await this.services.speak(question,generation,speech.signal);if(!speech.signal.aborted&&!this.paused&&!this.ending)await this.services.beforeCapture?.(question,generation,speech.signal);}catch(error){if(speech.signal.aborted||this.paused||this.ending)continue;throw error;}finally{if(this.speech===speech)this.speech=undefined;}
-        if(speech.signal.aborted)continue;
-        await this.checkpoint(revision);
-        if(this.ending)continue;
-        this.emit({phase:'listening',progress:undefined,recording:undefined});
-        this.capture=this.services.capture(progress=>{this.emit({progress});this.phase('listening');},question,generation);
+        try{
+          await this.services.speak(question,generation,speech.signal);
+          if(speech.signal.aborted||this.paused||this.ending)continue;
+          await this.services.beforeCapture?.(question,generation,speech.signal);
+          await this.checkpoint(revision);
+          // Pausing can release a prepared recording reservation while this await
+          // is pending. Reacquire it before creating a recorder after resume.
+          if(speech.signal.aborted||this.ending)continue;
+          this.emit({phase:'listening',progress:undefined,recording:undefined});
+          if(speech.signal.aborted||this.paused)continue;
+          this.capture=this.services.capture(progress=>{this.emit({progress});this.phase('listening');},question,generation);
+        }catch(error){if(speech.signal.aborted||this.paused||this.ending)continue;throw error;}
+        finally{if(this.speech===speech)this.speech=undefined;}
         let recording:LiveAnswerRecording;
         try{recording=await this.capture.finished;}finally{this.capture=undefined;}
         if(this.disposed||revision!==this.runRevision)return;

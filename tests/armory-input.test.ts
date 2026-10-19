@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createExperienceDraftSync,experienceDraftKey,migrateExperienceDraft,readExperienceDrafts,removeExperienceDraft,writeExperienceDraft,type ExperienceDraft} from '../apps/web/src/lib/armory-drafts';
+import {chooseExperienceDraftVersion,createExperienceDraftSync,experienceDraftKey,migrateExperienceDraft,preserveExperienceDraftVersions,readExperienceDraftBackups,readExperienceDrafts,removeExperienceDraft,writeExperienceDraft,type ExperienceDraft} from '../apps/web/src/lib/armory-drafts';
+import {experienceDraftSchema,experienceSaveSchema,experienceSchema} from '../apps/web/src/lib/armory-model';
 import {classifyExperienceText,experienceQuestionSuggestions,questionExperienceSuggestions} from '../apps/web/src/lib/armory-recommendations';
 const experience={title:'조별 조사',category:'협업' as const,situation:'조별 자료의 형식이 달랐다.',action:'저는 공통 양식을 제안했다.',result:'',confirmed:false,pinned:false,sourceNote:'학생 작성'};
 const record=(id:string):ExperienceDraft=>({id,draft:{...experience},revision:0,step:0,updatedAt:'2026-10-19T00:00:00.000Z',serverRevision:0});
@@ -14,6 +15,31 @@ test('legacy draft migration and a new card preserve separate durable drafts and
 test('failed durable migration never deletes a recoverable legacy source',()=>{
  const durable=memory(),legacy=memory();legacy.setItem('armory-draft:student',JSON.stringify({draft:experience,draftId:'old',revision:0,step:0}));
  assert.throws(()=>migrateExperienceDraft({...durable,setItem(){throw Error('Storage full');}},legacy,'student'));assert.ok(legacy.getItem('armory-draft:student'));assert.equal(durable.getItem(experienceDraftKey('student','old')),null);
+});
+test('untitled and incomplete drafts survive durable reload and legacy migration; only a card save generates the title',()=>{
+ const durable=memory(),legacy=memory(),untitled={...record('untitled'),draft:{...experience,title:'',action:'',confirmed:false}};
+ writeExperienceDraft(durable,'student',untitled);assert.deepEqual(readExperienceDrafts(durable,'student')[0],untitled);
+ legacy.setItem('armory-draft:student',JSON.stringify({...untitled,id:'',draftId:'legacy-untitled'}));migrateExperienceDraft(durable,legacy,'student');assert.equal(readExperienceDrafts(durable,'student').length,2);assert.equal(legacy.getItem('armory-draft:student'),null);
+ assert.equal(experienceDraftSchema.parse({...untitled.draft,confirmed:true}).confirmed,false);assert.equal(experienceDraftSchema.parse(untitled.draft).title,'');assert.equal(experienceSchema.safeParse(untitled.draft).success,false);
+ assert.equal(experienceSaveSchema.parse(untitled.draft).title,'협업 경험');assert.equal(experienceSaveSchema.safeParse({...untitled.draft,confirmed:true}).success,false);assert.equal(experienceSaveSchema.parse({...untitled.draft,action:'직접 제안했다',confirmed:true}).title,'협업 경험');
+});
+test('choosing a conflict version preserves originals and uses exactly the inspected remote revision',()=>{
+ const durable=memory(),local={...record('one'),serverRevision:1},remote={...local,draft:{...experience,action:'서버의 최신 행동'},serverRevision:4};
+ preserveExperienceDraftVersions(durable,'student',[{id:'local-copy',label:'이 기기',record:local},{id:'remote-copy',label:'서버',record:remote}]);
+ assert.equal(readExperienceDraftBackups(durable,'student').length,2);assert.equal(readExperienceDraftBackups(durable,'another').length,0);
+ const keepLocal=chooseExperienceDraftVersion(local,remote,null,'local');assert.equal(keepLocal.draft.action,local.draft.action);assert.equal(keepLocal.serverRevision,4);
+ const useRemote=chooseExperienceDraftVersion(local,remote,null,'remote');assert.equal(useRemote.draft.action,remote.draft.action);assert.equal(useRemote.serverRevision,4);
+ const newSource={id:'one',data:{...experience,confirmed:true},revision:2,updated_at:'2026-10-19'};assert.throws(()=>chooseExperienceDraftVersion(local,remote,newSource,'local'),/버전이 달라/);assert.throws(()=>chooseExperienceDraftVersion(local,remote,newSource,'remote'),/버전이 달라/);
+ const source=chooseExperienceDraftVersion(local,remote,newSource,'card');assert.equal(source.revision,2);assert.equal(source.serverRevision,4);assert.equal(source.draft.confirmed,false);
+ const copy=chooseExperienceDraftVersion(local,remote,newSource,'copy','new-card');assert.equal(copy.id,'new-card');assert.equal(copy.revision,0);assert.equal(copy.serverRevision,0);assert.equal(copy.draft.action,local.draft.action);assert.equal(local.serverRevision,1);assert.equal(remote.serverRevision,4);
+ assert.equal(readExperienceDraftBackups(durable,'student').find(item=>item.id==='local-copy')?.record.serverRevision,1);
+});
+test('resolving a conflict cancels queued old saves and ignores their late acknowledgements',async()=>{
+ const requests:ExperienceDraft[]=[],resolve:Array<(value:ExperienceDraft)=>void>=[];
+ const sync=createExperienceDraftSync(async value=>{requests.push(value);return new Promise<ExperienceDraft>(done=>resolve.push(done));});
+ const first=sync.sync(record('one')),queued=sync.sync({...record('one'),step:1});const settled=Promise.allSettled([first,queued]);
+ sync.forget('one');resolve[0]({...record('one'),serverRevision:2});const cancelled=await settled;assert.ok(cancelled.every(item=>item.status==='rejected'&&item.reason.name==='DraftSyncCancelled'));assert.equal(requests.length,1);
+ const chosen=sync.sync({...record('one'),serverRevision:7});assert.equal(requests[1].serverRevision,7);resolve[1]({...record('one'),serverRevision:8});assert.equal((await chosen).serverRevision,8);
 });
 test('autosaves serialize per card and use acknowledged revisions without overwriting newer content',async()=>{
  const requests:ExperienceDraft[]=[],resolve:Array<(value:ExperienceDraft)=>void>=[];
