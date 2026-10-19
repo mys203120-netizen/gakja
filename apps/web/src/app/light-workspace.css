@@ -39,6 +39,7 @@ body :is(.form-field,.native-modal) :is(input:where(:not([type=checkbox]):not([t
 body :is(.form-field,.native-modal) :is(input:not([type=checkbox]):not([type=radio]),select) { min-height: 46px; }
 body .native-modal .search-field input { min-height: 44px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .app-shell select { min-height: 44px; border-radius: var(--soft-control-radius); }
+.app-shell select:not([multiple]):not([size]) { appearance: none; padding-right: 40px; background-image: var(--soft-select-arrow); background-repeat: no-repeat; background-position: right 14px center; background-size: 16px; }
 body :is(input,textarea)::placeholder { color: var(--clarity-muted); opacity: 1; }
 body :is(input[type=checkbox],input[type=radio]) { accent-color: var(--clarity-action); }
 body .native-modal { border: 0; border-radius: 30px; background: var(--clarity-surface); color: var(--clarity-ink); box-shadow: 12px 16px 52px #596e5d3d, -5px -5px 20px #ffffff80; }
@@ -57,6 +58,25 @@ body .native-modal::backdrop { background: #303f3859; backdrop-filter: none; }
 .app-shell .records-view .records-row-icon { background: var(--clarity-surface); color: var(--clarity-action); box-shadow: var(--soft-shadow-small); border-radius: 18px; }
 .app-shell .records-view .records-overview > div { border: 0; border-radius: var(--soft-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-raised); }
 .app-shell :is(.settings-row,.learning-row,.account-profile) { border: 0; }
+.app-shell .account-grid { align-items: start; gap: 32px; }
+.app-shell .account-profile { padding: 24px; border-radius: var(--soft-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); }
+.app-shell .account-profile h2 { font-weight: 650; }
+.app-shell .account-profile p { overflow-wrap: anywhere; }
+.app-shell .settings-list :is(h2,section>h2) { color: var(--clarity-ink); font-size: var(--clarity-section-size); font-weight: 600; }
+.app-shell .settings-list .settings-row { gap: 20px; padding-block: 14px; background: transparent; border-radius: 0; box-shadow: none; }
+.app-shell .preparation-note textarea { padding: 16px; border: 0; border-radius: var(--soft-control-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-inset); line-height: 1.7; }
+.app-shell .learning-preferences-row { min-height: 72px; border: 0; }
+.app-shell .learning-preferences-row input[type=checkbox] { appearance: none; position: relative; flex: 0 0 50px; width: 50px; height: 30px; margin: 0; border: 0; border-radius: 999px; background: var(--clarity-muted); box-shadow: var(--soft-shadow-inset); cursor: pointer; transition: background-color var(--clarity-motion) ease; }
+.app-shell .learning-preferences-row input[type=checkbox]::before { content: ''; position: absolute; left: 4px; top: 4px; width: 22px; height: 22px; border-radius: 50%; background: var(--clarity-surface); box-shadow: 1px 2px 4px #425d4933; transition: transform var(--clarity-motion) ease; }
+.app-shell .learning-preferences-row input[type=checkbox]:checked { background: var(--soft-gradient); }
+.app-shell .learning-preferences-row input[type=checkbox]:checked::before { transform: translateX(20px); }
+.app-shell .learning-preferences-row input[type=checkbox]:disabled { cursor: progress; }
+.admin-shell :is(.admin-form,.filter-bar) :is(input:where(:not([type=checkbox]):not([type=radio]):not([type=file])),textarea,select) { border: 0; border-radius: var(--soft-control-radius); background-color: var(--clarity-surface); color: var(--clarity-ink); box-shadow: var(--soft-shadow-inset); min-height: 44px; }
+.admin-shell :is(.admin-form,.filter-bar) .search-field input { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.admin-shell :is(.admin-tabs,.admin-calendar-tabs) { display: flex; flex-wrap: wrap; gap: 6px; border: 0; padding: 6px; border-radius: 24px; background: var(--clarity-soft); }
+.admin-shell :is(.admin-tabs,.admin-calendar-tabs)>button { min-height: 44px; padding: 10px 16px; border: 0; border-radius: 999px; background: transparent; }
+.admin-shell :is(.admin-tabs,.admin-calendar-tabs)>button.active { background: var(--soft-accent-gradient); color: var(--soft-accent-ink); box-shadow: var(--soft-shadow-small); }
+.admin-shell :is(.version-strip,.audit-row,.admin-table-row) { border: 0; }
 .app-shell .calendar-heading { margin-block: 20px 16px; }
 .app-shell .calendar-days { gap: 5px; }
 .app-shell .dashboard-calendar-panel .calendar-days > button { min-height: 56px; border: 0; border-radius: 16px; padding: 6px; }
@@ -79,11 +99,21 @@ body .native-modal::backdrop { background: #303f3859; backdrop-filter: none; }
 .app-shell .mobile-nav > a[aria-current=page] { color: var(--soft-accent-ink); }
 .app-shell .mobile-nav > a[aria-current=page] > svg { background: var(--clarity-mint); border-radius: 10px; outline: 5px solid var(--clarity-mint); }
 @media(max-width:1000px) { .app-shell .interview-setup-columns { grid-template-columns: minmax(0,1fr); } }
+@media(prefers-reduced-motion:reduce) { .app-shell .learning-preferences-row input[type=checkbox]::before { transition: none; } }
+@media(forced-colors:active) {
+  .app-shell .learning-preferences-row input[type=checkbox] { appearance: auto; background: Canvas; box-shadow: none; }
+  .app-shell .learning-preferences-row input[type=checkbox]::before { content: none; }
+}
 @media(max-width:700px) {
   .app-shell .topbar { min-height: 64px; }
   .app-shell .page-title { flex-wrap: wrap; }
   .app-shell .text-link { min-height: 44px; }
   body :is(.form-field,.native-modal) :is(input,select,textarea) { font-size: 16px; }
+  .app-shell :is(.preparation-note textarea,.filter-bar input,.filter-bar select,.settings-row select) { font-size: 16px; }
+  .app-shell .account-grid { gap: 20px; }
+  .app-shell:not(.admin-shell) .main-content .account-profile { padding: 20px; border-radius: 24px; background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); }
+  .app-shell:not(.admin-shell) .settings-list .learning-preferences-row { flex-wrap: nowrap; }
+  .app-shell:not(.admin-shell) .settings-list .learning-preferences-row>div { min-width: 0; }
   body .native-modal { border-radius: 24px; }
   .app-shell .detail-section { padding: 20px 0; }
   .app-shell:not(.admin-shell) .main-content :is(.reader-toc,.reader-article,.interview-setup-settings,.interview-quick-start,.interview-device-note) { border: 0; border-radius: 24px; background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); padding: 20px 16px; }

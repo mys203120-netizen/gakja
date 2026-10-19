@@ -22,5 +22,9 @@
 .provider:active { box-shadow:var(--soft-shadow-inset); }
 .google,.kakao { border:0; background:var(--clarity-bg); box-shadow:var(--soft-shadow-small); }
 .divider { gap:12px; }
-.divider::before,.divider::after { background:color-mix(in srgb,var(--clarity-action) 16%,transparent); }
+.divider::before,.divider::after { display:none; }
+.divider { justify-content:center; margin-bottom:22px; font-size:13px; line-height:1.6; }
+.signupFoot { align-items:center; }
+.invite { color:var(--clarity-muted); line-height:1.7; }
+@media(prefers-reduced-motion:reduce) { .provider { transition:none; }.provider:hover,.provider:active { transform:none; } }
 @media(max-width:700px) { .provider { min-height:54px; } }

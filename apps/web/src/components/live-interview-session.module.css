@@ -114,7 +114,7 @@
 }
 
 .page :global(.button) { min-height:44px; border-radius:var(--soft-control-radius); }
-.stageScene { border:0; border-radius:var(--soft-radius); background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-bg)); box-shadow:var(--soft-shadow-raised); }
+.stageScene { border:0; border-radius:var(--soft-radius); background:var(--clarity-surface); box-shadow:var(--soft-shadow-raised); }
 .otherPanelists { border:0; }
 .cameraVideo,.cameraPlaceholder { border-radius:22px; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 .controls,.history,.historyItem { border:0; }

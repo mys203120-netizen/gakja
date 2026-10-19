@@ -43,6 +43,17 @@
 .app-shell .knowledge-page :is(.text-link,.knowledge-watch-link,.knowledge-publisher-link) { min-height: 44px; display: inline-flex; align-items: center; }
 .app-shell .school-learning .school-first-practice { background: var(--clarity-surface); border: 0; border-radius: var(--soft-radius); padding: 24px; box-shadow: var(--soft-shadow-raised); }
 .app-shell .school-learning .school-first-practice strong { font-size: 20px; }
+/* Assignments and fact checking share the same choices and open list rhythm. */
+.app-shell .learning-v2 .learning-tabs { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; gap: 6px; padding: 6px; border: 0; border-radius: 24px; background: var(--clarity-soft); box-shadow: var(--soft-shadow-inset); }
+.app-shell .learning-v2 .learning-tabs>button { min-height: 44px; padding: 10px 16px; border: 0; border-radius: 999px; background: transparent; color: var(--clarity-muted); }
+.app-shell .learning-v2 .learning-tabs>button.active { color: var(--soft-accent-ink); background: var(--soft-accent-gradient); box-shadow: var(--soft-shadow-small); }
+.app-shell .learning-v2 :is(.confirmation-row,.confirmation-history>div,.assignment-row,.assignment-variations>a) { border: 0; }
+.app-shell .learning-v2 .confirmation-row { padding-block: 24px; }
+.app-shell .learning-v2 .confirmation-row h2 { font-size: var(--clarity-section-size); }
+.app-shell .learning-v2 :is(.confirmation-row-actions a,.assignment-variations>a) { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--clarity-action); }
+.app-shell .learning-v2 :is(.confirmation-row-meta>span,.confirmation-row-actions>span,.confirmation-source small,.confirmation-history summary) { color: var(--clarity-muted); }
+.app-shell .learning-v2 :is(.confirmation-source,.confirmation-review-note) { padding: 16px; border: 0; border-radius: var(--soft-control-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-inset); color: var(--clarity-muted); }
+.app-shell .learning-v2 .confirmation-response { color: var(--clarity-ink); font-size: var(--clarity-body-size); }
 @media(max-width:700px) {
   .app-shell .practice-home > header h1 { font-size: var(--clarity-title-mobile-size); }
   .app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a { padding: 22px 18px; }

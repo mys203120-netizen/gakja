@@ -55,7 +55,7 @@
  .page.page .workspace > :global(.chat-history) { display:none; }
  .page.page .workspace > :global(.chat-mobile-history) { display:block; flex-shrink:0; width:100%; margin:0; padding:0; border:0; background:transparent; }
  .page.page .workspace > :global(.chat-mobile-history) > summary { display:list-item; width:fit-content; padding:8px 2px; min-height:44px; border-radius:0; background:transparent; font-size:13px; color:var(--clarity-muted); cursor:pointer; }
- .page.page .workspace > :global(.chat-mobile-history[open]) { max-height:min(220px,30dvh); padding:0 8px 8px; overflow-y:auto; scrollbar-width:thin; }
+ .page.page .workspace > :global(.chat-mobile-history[open]) { max-height:min(320px,38dvh); padding:0 8px 8px; overflow-y:auto; scrollbar-width:thin; }
  .page.page .workspace :global(.chat-main) { flex:1; height:auto; }
 }
 @media(max-width:700px) {
@@ -89,6 +89,13 @@
 .page.page .workspace :global(.message-save:hover),.page.page .workspace :global(.message-sources button:hover),.page :global(.on-reference-tools button:hover) { background:var(--clarity-soft); color:var(--soft-accent-ink); }
 .page.page .workspace :global(.on-activity-list a) { min-height:48px; border-radius:var(--soft-control-radius); }
 .page.page .workspace :global(.on-activity-list .search-field) { border:0; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
-.page.page .workspace :global(.chat-mobile-history[open]) { border:0; border-radius:20px; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.page.page .workspace :global(.chat-mobile-history[open]) { border:0; border-radius:0; background:transparent; box-shadow:none; }
 @media(max-width:1000px) { .page.page .workspace { gap:6px; } }
-@media(max-width:700px) { .page.page .workspace > :global(.chat-mobile-history[open]) { padding:4px 10px 10px; } }
+@media(max-width:1000px) {
+ .page.page .workspace > :global(.chat-mobile-history)>summary { display:flex; align-items:center; width:fit-content; min-height:44px; max-width:100%; gap:12px; padding:10px 14px; border-radius:var(--soft-control-radius); background:var(--clarity-surface); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-small); list-style:none; }
+ .page.page .workspace > :global(.chat-mobile-history)>summary::-webkit-details-marker { display:none; }
+ .page.page .workspace > :global(.chat-mobile-history)>summary::after { content:''; flex:0 0 7px; width:7px; height:7px; margin-top:-4px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(45deg); }
+ .page.page .workspace > :global(.chat-mobile-history[open])>summary { background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+ .page.page .workspace > :global(.chat-mobile-history[open])>summary::after { margin-top:3px; transform:rotate(225deg); }
+}
+@media(max-width:700px) { .page.page .workspace > :global(.chat-mobile-history[open]) { padding:0 0 8px; } }

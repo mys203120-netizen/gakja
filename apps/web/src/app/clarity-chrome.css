@@ -128,7 +128,7 @@
   .app-shell select:not([multiple]):not([size]) {
     appearance: none;
     padding-inline-end: 40px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23696E78'%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='19' cy='12' r='2'/%3E%3C/svg%3E") !important;
+    background-image: var(--soft-select-arrow) !important;
     background-position: right 12px center !important;
     background-size: 18px 18px !important;
     background-repeat: no-repeat !important;
