@@ -1,0 +1,49 @@
+/* Keep scrollbar geometry stable; reveal only the thumb on actual scrolling.
+   These properties intentionally override legacy per-surface/hover scrollbar
+   rules. The document scrollbar and native selection popups remain untouched. */
+:is(.app-shell *, .native-modal, .native-modal *, .modal, .modal *) {
+  scrollbar-width: thin !important;
+  scrollbar-color: transparent transparent !important;
+}
+
+:is(.app-shell *, .native-modal, .native-modal *, .modal, .modal *)::-webkit-scrollbar {
+  display: block !important;
+  width: 6px !important;
+  height: 6px !important;
+}
+
+:is(.app-shell *, .native-modal, .native-modal *, .modal, .modal *)::-webkit-scrollbar-track,
+:is(.app-shell *, .native-modal, .native-modal *, .modal, .modal *)::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+:is(.app-shell *, .native-modal, .native-modal *, .modal, .modal *)::-webkit-scrollbar-thumb {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+}
+
+:is(.app-shell *, .native-modal, .native-modal *, .modal, .modal *)[data-scroll-visible="true"] {
+  scrollbar-color: var(--clarity-muted, #717680) transparent !important;
+}
+
+:is(.app-shell *, .native-modal, .native-modal *, .modal, .modal *)[data-scroll-visible="true"]::-webkit-scrollbar-thumb {
+  background: var(--clarity-muted, #717680) !important;
+}
+
+/* Compact navigation strips already expose every item as a focusable link or
+   button. Preserve their existing bar-free horizontal layout. */
+.app-shell :is([data-scrollbar="hidden"], .training-filters, .quiz-paths, .learning-tabs, .subnav, .admin-calendar-tabs) {
+  scrollbar-width: none !important;
+}
+
+.app-shell :is([data-scrollbar="hidden"], .training-filters, .quiz-paths, .learning-tabs, .subnav, .admin-calendar-tabs)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@media (forced-colors: active) {
+  :is(.app-shell *, .native-modal, .native-modal *, .modal, .modal *) { scrollbar-color: auto !important; }
+  :is(.app-shell *, .native-modal, .native-modal *, .modal, .modal *)::-webkit-scrollbar-thumb { background: CanvasText !important; }
+}

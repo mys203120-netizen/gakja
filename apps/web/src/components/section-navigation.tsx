@@ -19,5 +19,5 @@ export function SectionNavigation(){
   const items=section==='resources'?RESOURCE_SECTIONS:section==='practice'?PRACTICE_SECTIONS:null;
   if(!items)return null;
   const current=section==='resources'?resourceSectionHref(path):practiceSectionHref(path);
-  return <nav ref={navigation} className={styles.sectionNavigation} aria-label={section==='resources'?'자료 탐색':'연습 탐색'}>{items.map(item=><Link key={item.href} href={item.href} aria-current={current===item.href?'page':undefined}>{item.label}</Link>)}{section==='resources'&&<Link className={styles.factLink} href="/account/confirmations" aria-current={path.startsWith('/account/confirmations')?'page':undefined}>사실 확인</Link>}</nav>;
+  return <nav ref={navigation} className={styles.sectionNavigation} data-scrollbar="hidden" aria-label={section==='resources'?'자료 탐색':'연습 탐색'}>{items.map(item=><Link key={item.href} href={item.href} aria-current={current===item.href?'page':undefined}>{item.label}</Link>)}{section==='resources'&&<Link className={styles.factLink} href="/account/confirmations" aria-current={path.startsWith('/account/confirmations')?'page':undefined}>사실 확인</Link>}</nav>;
 }

@@ -1,0 +1,75 @@
+.backdrop:global(.native-modal) {
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+.backdrop:global(.native-modal) .surface:global(.modal) {
+  min-width:0;
+  padding:28px;
+  color:var(--clarity-ink);
+  font-size:var(--clarity-body-size);
+  line-height:1.75;
+}
+.backdrop:global(.native-modal) .surface:global(.modal) .heading {
+  display:flex;
+  align-items:flex-start;
+  gap:16px;
+  margin:0 0 18px;
+}
+.backdrop:global(.native-modal) .surface:global(.modal) .heading h2 {
+  flex:1;
+  min-width:0;
+  margin:5px 0 0;
+  font-size:22px;
+  font-weight:600;
+  line-height:1.45;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+.backdrop:global(.native-modal) .surface:global(.modal) .heading :global(.icon-button) {
+  flex-shrink:0;
+  width:44px;
+  height:44px;
+  padding:0;
+  margin:0;
+}
+.backdrop:global(.native-modal) .surface:global(.modal)>p {
+  margin:0;
+  font-size:var(--clarity-body-size);
+  line-height:1.75;
+  color:var(--clarity-muted);
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+.backdrop:global(.native-modal) .surface:global(.modal)>p+p { margin-top:12px; }
+.backdrop:global(.native-modal) .surface:global(.modal)>:global(.alert) { margin-block:16px; }
+.backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions) {
+  display:flex;
+  align-items:stretch;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:26px;
+}
+.backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions)>:global(.button) {
+  min-height:46px;
+  min-width:132px;
+  padding:11px 18px;
+  border-radius:var(--clarity-control-radius);
+  font-size:14px;
+  font-weight:550;
+  line-height:1.5;
+  white-space:normal;
+}
+.backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions)>:global(.button.ghost) {
+  color:var(--clarity-ink);
+  background:var(--clarity-soft);
+  border:1px solid var(--clarity-line);
+}
+@media(max-width:700px) {
+  .backdrop:global(.native-modal) .surface:global(.modal) { padding:22px 20px; }
+  .backdrop:global(.native-modal) .surface:global(.modal) .heading { gap:10px; margin-bottom:16px; }
+  .backdrop:global(.native-modal) .surface:global(.modal) .heading h2 { font-size:20px; }
+  .backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:24px; }
+  .backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions)>:global(.button) { width:100%; min-width:0; padding-inline:12px; }
+}

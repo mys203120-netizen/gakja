@@ -196,6 +196,36 @@ for(const selectedTarget of [target,undefined]){
  assert.ok(!actions.includes('class="text-link"'),'no secondary link duplicates the primary school destination');
 }
 console.log('Dashboard school CTA render: one primary guidance/registration link, distinct secondary guidance preserved.');
+const deadlineTargets=[
+ {...target,university:'고려대학교',schedule:{personal_date:'2026-10-24'}},
+ {...target,id:'same-day',university:'고려대학교',department:'경영학과',schedule:{personal_date:'2026-10-24'}},
+ {...target,id:'today',university:'오늘대학교',schedule:{personal_at:'2026-10-13T23:30:00-04:00'}},
+ {...target,id:'past',university:'지난대학교',schedule:{personal_date:'2026-10-13'}},
+ {...target,id:'period',university:'기간대학교',schedule:{period_start:'2026-10-24',period_end:'2026-10-26'},interview_date:'2026-10-24'},
+ {...target,id:'public',university:'공개대학교'},
+ {...target,id:'reference',university:'참고대학교'},
+];
+const deadlineApp={...bootstrap,targets:deadlineTargets};
+const deadlineComponent=load('../apps/web/src/components/dashboard.tsx',{...mocks,
+ './app-shell':{useApp:()=>({data:deadlineApp,target,targetId:target.id,toast(){}})},
+ react:hooks([{answerRevisions:[],assignments:[]},null,[],[],{recommendation:{count:1,items:[{question_id:'q1'}]}},{commonQuestions:[]},'',true,true,true,'briefing',[
+  {targetId:'public',startDate:'2026-10-22',endDate:'2026-10-22',applicability:'track_match'},
+  {targetId:'reference',startDate:'2026-10-22',endDate:'2026-10-22',applicability:'school_reference'},
+ ],undefined,[],{scope:JSON.stringify([bootstrap.user.id,target.id,targetScope.learningScopeIdentity(target),bootstrap.package.id,bootstrap.package.active_version]),learning:false,planner:false,study:false,knowledge:false,quiz:false,schools:false}]),
+ './dashboard-planner':{DashboardPlanner:()=>null},'./department-news':{DepartmentNews:()=>null},
+}).Dashboard;
+const deadlineHome=renderToStaticMarkup(React.createElement(deadlineComponent));
+const deadlineList=deadlineHome.match(/<section[^>]*aria-labelledby="dashboard-deadlines-title"[^>]*>([\s\S]*?)<\/section>/)?.[1]||'';
+assert.equal((deadlineList.match(/<li>/g)||[]).length,deadlineTargets.length,'every registered target has its own row, including the same university and day');
+assert.equal((deadlineList.match(/>D-10</g)||[]).length,2,'the same date must not merge two applications');
+assert.match(deadlineList,/>D-day</);assert.match(deadlineList,/>면접일 지남</);assert.match(deadlineList,/>D-8</);
+for(const id of ['period','reference']){
+ const row=[...deadlineList.matchAll(/<li>([\s\S]*?)<\/li>/g)].find(match=>match[1].includes(`href="/schools/${id}"`))?.[1]||'';
+ assert.ok(row.includes('면접일 등록')&&!row.includes('>D-'),'periods and unmatched school references cannot become individual countdowns');
+}
+assert.ok(deadlineList.includes('학교 공개일, 개별 일정 확인 필요'));
+assert.ok(deadlineHome.indexOf('id="dashboard-deadlines-title"')<deadlineHome.indexOf('id="dashboard-next-title"'),'all school deadlines are visible before the smaller resume area');
+console.log('Dashboard deadline rows: all targets, duplicate university/date, KST today, past date, matched public day, and unconfirmed-date registration passed.');
 bootstrap.interviews=[{id:'other',state:'active',kind:'chat',target_id:'other',data:{context:{target:{...target,id:'other',university:'이전대학교'}},questionQueue:[{...originalQuestion,prompt:'다른 학교의 미완료 질문'}]}}];
 const scopedDashboard=()=>load('../apps/web/src/components/dashboard.tsx',{...mocks,react:hooks([{answerRevisions:[],assignments:[]},null,[{id:'other-plan',date:'2026-10-14',title:'다른 학교의 계획',target:{targetId:'other'}},{id:'personal',date:'2026-10-14',title:'나의 공통 계획'}],[],{sessions:[{id:'foreign-quiz',state:'active',current_index:1,total:3,metadata:{targetId:'other'}}],recommendation:{count:1,items:[{question_id:'q1'}]}},{commonQuestions:[]},'',true,true,true,'briefing',[],undefined]),'./dashboard-planner':{DashboardPlanner:()=>null},'./department-news':{DepartmentNews:()=>null}}).Dashboard;
 const scopedHome=renderToStaticMarkup(React.createElement(scopedDashboard()));

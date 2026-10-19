@@ -6,7 +6,8 @@ import {useApp} from './app-shell';
 import {ActionButton,dateLabel,LinkedRow,api,Alert,targetName,type Item} from './shared';
 import {DashboardPlanner,type InterviewScheduleItem,type InterviewScheduleCoverage} from './dashboard-planner';
 import {koreaToday} from '@/lib/planner-model';
-import {todayPlanAgenda} from '@/lib/automatic-practice';
+import {practiceDeadline,practiceDaysLeft,todayPlanAgenda} from '@/lib/automatic-practice';
+import {scheduleDateLabel} from '@/lib/schedule';
 import {chooseTodayAction,learningHref} from '@/lib/learning-journey';
 import {practiceHelpLabel,questionPracticeState,todayQuestionContext} from '@/lib/learning-flow-view';
 import {DepartmentNews} from './department-news';
@@ -53,6 +54,12 @@ export function Dashboard() {
   if(loading.scope!==loadScope)return <div className={styles.dashboard}><header className={styles.pageHeading}><div><p>{data.user.name}님의 각자ON</p><h1>내 기록에서, 내 말로.</h1></div></header><p role="status">선택한 지원처의 학습을 불러오고 있어요.</p></div>;
   const coreLoading=loading.learning||loading.study||loading.quiz;
   const today=koreaToday(),activities:Item[]=data.learning?.activities||[],questions:Item[]=[...(data.learning?.questions||[]),...(schools?.commonQuestions||[])];
+  const deadlineRows=data.targets.map(school=>{
+    const matched=interviewSchedules.filter(item=>item.targetId===school.id&&item.applicability==='track_match'&&item.format!=='video_submission');
+    const publicDay=matched.length&&matched.every(item=>item.startDate===item.endDate&&item.startDate===matched[0].startDate)?matched[0].startDate:undefined;
+    const deadline=practiceDeadline(school)||practiceDeadline({...school,school_interview_date:publicDay});
+    return {school,deadline,days:deadline?practiceDaysLeft(today,deadline.date):null};
+  });
   const calendarTasks:Item[]=(workflows?.assignments||[]).filter((t:Item)=>!['reviewed','completed','cancelled'].includes(t.state));
   const tasks:Item[]=calendarTasks.filter((t:Item)=>!t.target_id||t.target_id===target?.id);
   const readiness=workflows?.readiness?.find((r:Item)=>r.target_id===target?.id);
@@ -79,6 +86,9 @@ export function Dashboard() {
   return <div className={styles.dashboard}>
     <header className={styles.pageHeading}><div><p>{data.user.name}님의 각자ON</p><h1>내 기록에서, 내 말로.</h1></div><time>{new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'long',day:'numeric',weekday:'long'}).format(new Date())}</time></header>
     {error&&<Alert>{error}</Alert>}
+    <section className={styles.deadlines} aria-labelledby="dashboard-deadlines-title"><div className={styles.sectionHeading}><h2 id="dashboard-deadlines-title">지원 대학 면접 일정</h2><Link className="text-link" href="/schools">일정 관리<ArrowUpRight size={14}/></Link></div>
+      {deadlineRows.length?<ul className={styles.deadlineList}>{deadlineRows.map(({school,deadline,days})=><li key={school.id}><Link className={styles.deadlineRow} href={`/schools/${school.id}`}><div><strong>{targetName(school)}</strong><small>{[school.department||school.major,school.admission_type||school.track,deadline&&scheduleDateLabel(deadline.date)].filter(Boolean).join(' · ')}{deadline?.source==='public_day'&&' · 학교 공개일, 개별 일정 확인 필요'}</small></div><span className={days===null?styles.deadlineMissing:styles.deadlineCount}>{days===null?<>{loading.planner?'일정 확인 중':'면접일 등록'}<ArrowUpRight size={16}/></>:days>0?`D-${days}`:days===0?'D-day':'면접일 지남'}</span></Link></li>)}</ul>:<p className={styles.emptyNote}>면접까지 남은 날을 함께 준비해요. <Link className="text-link" href="/schools/new">지원 학교 등록<ArrowUpRight size={14}/></Link></p>}
+    </section>
     <section className={styles.focus} aria-labelledby="dashboard-next-title">
       <div className={styles.focusCopy}><span className={styles.kicker}>{active?'하던 답을 이어서':latest?'이번에 보완할 한 가지':'이번에 꺼내 볼 나의 답'}</span><h2 id="dashboard-next-title">{ready?(question?.prompt||next.title):coreLoading?'오늘의 질문을 불러오고 있어요.':'오늘의 질문을 확인하지 못했어요.'}</h2>{ready&&<p>{active?'저장한 질문과 답변에서 계속해요.':next.reason}</p>}
         {context&&<div className={styles.contextTrail}>{activity&&<Link href={learningHref('/my/today',context)}><BookOpen size={14}/>{activity.title}</Link>}<span>{targetName(focusedTarget)}{focusedTarget?.department||focusedTarget?.major?' · '+(focusedTarget.department||focusedTarget.major):''}</span></div>}

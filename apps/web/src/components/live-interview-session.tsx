@@ -127,6 +127,6 @@ export function LiveInterviewSession({id,initialInfo}:{id:string;initialInfo:Ite
       </aside>
     </div>}
     {turns.length>0&&<details className={styles.history}><summary>저장한 답변 {turns.length}개 보기</summary>{turns.map(turn=><article key={turn.id} className={styles.historyItem}><h3>{turn.question}</h3><p>{turn.answer}</p><small>{turn.submissionSource==='recording'||turn.speechSource?'음성 답변 · 자동 전사':'저장한 답변'}</small></article>)}</details>}
-    {(exitOpen||leaveHref)&&<Modal title="여기까지 면접을 마칠까요?" onClose={()=>{setExitOpen(false);setLeaveHref(null);begin();}}><p>진행 중인 답변과 지금까지의 기록을 저장한 뒤 면접을 마쳐요.</p><div className={styles.actions}><button className="button secondary" onClick={()=>{setExitOpen(false);setLeaveHref(null);begin();}}>면접 계속하기</button><button className="button primary" onClick={finish}>여기까지 저장하고 종료</button></div></Modal>}
+    {(exitOpen||leaveHref)&&<Modal title="여기까지 면접을 마칠까요?" onClose={()=>{setExitOpen(false);setLeaveHref(null);begin();}}><p>진행 중인 답변과 지금까지의 기록을 저장한 뒤 면접을 마쳐요.</p><div className={'inline-actions '+styles.actions}><button className="button secondary" onClick={()=>{setExitOpen(false);setLeaveHref(null);begin();}}>면접 계속하기</button><button className="button primary" onClick={finish}>여기까지 저장하고 종료</button></div></Modal>}
   </div>;
 }

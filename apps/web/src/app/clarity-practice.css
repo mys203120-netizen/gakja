@@ -138,7 +138,6 @@
 .app-shell .interview-v2 .interview-format-tabs { gap:24px; }
 .app-shell .interview-v2 .interview-format-tabs a { min-height:44px; padding:10px 0; border-radius:0; border-bottom:2px solid transparent; color:var(--clarity-muted); font-size:15px; font-weight:450; }
 .app-shell .interview-v2 .interview-format-tabs a.active { color:var(--clarity-ink); background:transparent; border-bottom-color:var(--clarity-green); }
-.app-shell .interview-v2 .interview-setup-settings { border-left:0; }
 .app-shell .interview-v2 .interview-setup-settings :is(label,h2) { font-weight:450; }
 .app-shell .interview-v2 .interview-advanced-toggle { background:var(--clarity-soft); color:var(--clarity-ink); border-radius:8px; }
 .app-shell .interview-v2 .interview-advanced-toggle:hover { background:var(--clarity-mint); }

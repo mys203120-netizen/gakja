@@ -1,24 +1,24 @@
 /* Shared brand values; feature styles below consume the same semantic palette. */
 :root {
   color-scheme: light;
-  --ui-card: #f5f6f7;
-  --ui-peach: #f5f6f7;
+  --ui-card: #f4f7f5;
+  --ui-peach: #f4f7f5;
   --ui-shadow: none;
   --clarity-brand: #00ee77;
   --clarity-bg: #ffffff;
   --clarity-surface: #ffffff;
-  --clarity-soft: #f5f6f7;
-  --clarity-mint: #edf5f0;
+  --clarity-soft: #f4f7f5;
+  --clarity-mint: #e9f8ef;
   --clarity-ink: #262a2a;
   --clarity-muted: #6f7773;
-  --clarity-action: #285f45;
-  --clarity-action-hover: #1d4934;
+  --clarity-action: #087f46;
+  --clarity-action-hover: #066b3a;
   --clarity-on-action: #ffffff;
-  --clarity-green: #237750;
-  --clarity-green-hover: #1d5d3e;
-  --clarity-banner: #eaf3ed;
+  --clarity-green: #087f46;
+  --clarity-green-hover: #066b3a;
+  --clarity-banner: #edf9f2;
   --clarity-line: #e6e8e7;
-  --clarity-blue: #237750;
+  --clarity-blue: #087f46;
   --clarity-warning: #926521;
   --clarity-danger: #bf403e;
   --clarity-motion: 160ms;

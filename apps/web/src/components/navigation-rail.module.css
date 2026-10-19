@@ -25,7 +25,7 @@
 .collapsibleShell[data-sidebar-collapsed=true] :global(.sidebar-brand) { gap:0; }
 .collapsibleShell[data-sidebar-collapsed=true] :global(.sidebar-brand .service-wordmark),.collapsibleShell[data-sidebar-collapsed=true] :global(.sidebar-brand .admin-caption),.collapsibleShell[data-sidebar-collapsed=true] :global(.sidebar-brand .brand strong) { max-width:0; opacity:0; }
 .collapsibleShell[data-sidebar-collapsed=true] .sidebarNote { opacity:0; }
-.collapsibleShell[data-sidebar-collapsed=true] :global(.sidebar .sidebar-navigation .main-nav)>a { gap:0; }
+.collapsibleShell:global(.app-shell)[data-sidebar-collapsed=true] :global(.sidebar .sidebar-navigation .main-nav)>a { justify-content:center; width:44px; height:44px; min-height:44px; margin-inline:auto; padding:0; gap:0; }
 .collapsibleShell:global(.app-shell)[data-sidebar-collapsed=true] :global(.sidebar .sidebar-navigation .main-nav)>a>.navigationLabel { max-width:0; opacity:0; }
 .collapsibleShell[data-sidebar-collapsed=true] .navigationDescription { display:none; }
 .collapsibleShell:global(.app-shell)[data-sidebar-collapsed=true] :global(.sidebar-account .account-trigger) { gap:0; }

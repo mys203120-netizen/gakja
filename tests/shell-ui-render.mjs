@@ -82,6 +82,7 @@ const topbar=student.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1]||
 assert.ok(topbar.includes('<div class="mobileAccount">'),'header account is limited to mobile, where the sidebar is unavailable');
 assert.ok(student.includes('class="sidebar-account"'),'desktop keeps the sidebar account entry');
 assert.ok(!topbar.includes('href="/on"'),'desktop AI primary link replaces the duplicate header shortcut');
+assert.ok(!topbar.includes('locationLabel'),'school context does not repeat the current navigation title');
 assert.ok(!topbar.includes('class="mobile-brand"')&&!topbar.includes('data-logo-size='),'student topbar leaves space for the school context');
 assert.ok(topbar.includes('<span class="target-copy" aria-hidden="true"><strong>서울시립대학교</strong><small>환경공학부</small></span>'),'school and major have separate visible text elements');
 assert.ok(topbar.includes('지원 학교 변경')&&topbar.includes('<select')&&topbar.includes('<option value="uos" selected="">'),'school switcher retains its labelled native select and selected target');
@@ -153,7 +154,7 @@ const toggleOf=tree=>descendants(tree).find(node=>node.type==='button'&&node.pro
 for(const admin of [false,true]){
  const session=interactiveShell({admin});
  let tree=session.render();
- assert.equal(tree.props['data-sidebar-collapsed'],'false','server-equivalent and first client render start expanded');
+ assert.equal(tree.props['data-sidebar-collapsed'],'true','server-equivalent and first client render start collapsed');
  assert.equal(session.reads,0,'storage is not read during rendering');
  session.mount();tree=session.render();
  assert.equal(tree.props['data-sidebar-collapsed'],'true','saved preference is restored after mounting');
@@ -176,7 +177,11 @@ for(const admin of [false,true]){
 }
 const blockedStorage=interactiveShell({blocked:true});blockedStorage.render();assert.doesNotThrow(()=>blockedStorage.mount());
 let blockedTree=blockedStorage.render();assert.doesNotThrow(()=>toggleOf(blockedTree).props.onClick());blockedTree=blockedStorage.render();
-assert.equal(blockedTree.props['data-sidebar-collapsed'],'true','clicking works when localStorage throws');
+assert.equal(blockedTree.props['data-sidebar-collapsed'],'false','clicking works when localStorage throws');
+for(const [persisted,expected] of [[null,'true'],['false','false']]){
+ const preference=interactiveShell({persisted});preference.render();preference.mount();
+ assert.equal(preference.render().props['data-sidebar-collapsed'],expected,'fresh navigation is collapsed while an explicit expansion preference is restored');
+}
 const onboardingShell=interactiveShell({onboarding:true}),onboardingTree=onboardingShell.render();
 assert.equal(descendants(onboardingTree).filter(node=>node.type==='a'&&node.props.href==='/on').length,0,'initial school setup does not expose the AI navigation early');
 console.log('Shell UI passed: desktop/mobile routes, accessible sidebar toggling, preference restoration, blocked storage, onboarding and interview pause guard.');

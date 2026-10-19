@@ -10,6 +10,7 @@ import { tsImport } from 'tsx/esm/api';
 // starts a server, reads credentials, or makes a provider request.
 const scope = await tsImport('../apps/web/src/lib/learning-target-scope.ts', import.meta.url);
 const automatic = await tsImport('../apps/web/src/lib/automatic-practice.ts', import.meta.url);
+const schedule = await tsImport('../apps/web/src/lib/schedule.ts', import.meta.url);
 const journey = await tsImport('../apps/web/src/lib/learning-journey.ts', import.meta.url);
 const flow = await tsImport('../apps/web/src/lib/learning-flow-view.ts', import.meta.url);
 const studyLinks = await tsImport('../apps/web/src/lib/study-record-links.ts', import.meta.url);
@@ -72,6 +73,7 @@ function loadComponent(name) {
     if (id.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
     if (id === '@/lib/learning-target-scope') return scope;
     if (id === '@/lib/automatic-practice') return automatic;
+    if (id === '@/lib/schedule') return schedule;
     if (id === '@/lib/learning-journey') return journey;
     if (id === '@/lib/learning-flow-view') return flow;
     if (id === '@/lib/planner-model') return { koreaToday: () => '2026-10-15' };
