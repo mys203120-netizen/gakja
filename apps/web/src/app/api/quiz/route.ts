@@ -162,7 +162,7 @@ export async function POST(request:Request) {
         const [s]=(await db.query('select * from quiz_sessions where id=$1 and student_id=$2 for update',[sessionId,user.id])).rows;
         if(!s)throw new ApiError(404,'퀴즈 기록을 찾을 수 없어요.');
         if(s.state!=='active'||s.current_index!==itemIndex||s.mode==='choice')throw new ApiError(409,'현재 답변의 녹음을 저장해 주세요.');
-        const [old]=(await db.query("select id from quiz_recordings where session_id=$1 and item_index=$2 and metadata->>'digest'=$3",[sessionId,itemIndex,digest])).rows;
+        const [old]=(await db.query("select id,item_index,mime,duration_ms from quiz_recordings where session_id=$1 and item_index=$2 and metadata->>'digest'=$3",[sessionId,itemIndex,digest])).rows;
         if(old)return old;
         const id=randomUUID(),metadata:any={provider:'postgresql',digest,consentAt:new Date().toISOString(),size:bytes.length,speechTelemetry,speechAnalysis:analyzeSpeech({telemetry:speechTelemetry,transcript:null,durationMs})}; let dbBytes=bytes;
         const uploaded=uploadedFiles.find(file=>file.field==='recording');

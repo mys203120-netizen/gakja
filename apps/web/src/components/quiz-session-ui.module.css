@@ -46,6 +46,7 @@
 .answerMode>button:disabled { cursor:default;opacity:.55; }
 .answerMode>p { flex-basis:100%;margin-top:2px;line-height:1.65; }
 .recordingAction { margin-top:0; }
+.recordingNotice { margin:12px 0; padding:12px 0; border-block:1px solid var(--clarity-line); color:var(--clarity-green); font-size:14px; line-height:1.75; }
 .liveTranscript { margin:16px 0; padding:16px; background:var(--clarity-soft); border-radius:var(--clarity-control-radius); }
 .liveTranscript>div { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; font-size:14px; }
 .liveTranscript>div>span,.liveTranscript>small { color:var(--clarity-muted); font-size:12px; line-height:1.65; }
