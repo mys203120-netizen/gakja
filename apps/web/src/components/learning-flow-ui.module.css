@@ -17,7 +17,7 @@
 .deadlines {margin-bottom:28px;}
 .deadlines .sectionHeading {margin-bottom:4px;}
 .deadlineList {list-style:none;margin:0;padding:0;}
-.deadlineList>li+li {border-top:1px solid var(--clarity-line);}
+.deadlineList>li+li {border-top:0;}
 .deadlineRow {display:flex;align-items:center;justify-content:flex-start;gap:24px;min-height:90px;padding:16px 0;color:var(--flow-ink);text-decoration:none;}
 .deadlineRow>div {min-width:0;}
 .deadlineRow strong {display:block;font-size:24px;font-weight:750;line-height:1.5;letter-spacing:-.03em;word-break:keep-all;overflow-wrap:anywhere;}
@@ -53,14 +53,14 @@
 .sectionHeading :global(.text-link) {font-size:13px;color:var(--flow-muted);white-space:nowrap;gap:5px;min-height:44px;}
 .indented {padding-left:0;min-width:0;}
 .agenda>.indented,.recordMaterial>.indented {padding:20px 24px;border-radius:18px;background:var(--clarity-soft);}
-.answerRecord>.indented,.previousAnswer>.indented,.reading>.indented {padding-top:20px;border-top:1px solid var(--clarity-line);}
+.answerRecord>.indented,.previousAnswer>.indented,.reading>.indented {padding-top:20px;border-top:0;}
 .answerRecord blockquote,.previousAnswer blockquote {margin:0;padding:0;border:0;border-radius:0;background:transparent;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;color:var(--flow-ink);}
 .recordCaption {margin:12px 0;font-size:13px;color:var(--flow-muted);line-height:1.7;}
 .recordNext {display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:550;color:var(--flow-green);min-height:44px;line-height:1.7;}
 .smallNote,.emptyNote {font-size:14px;line-height:1.85;color:var(--flow-muted);margin:0 0 15px;}
 .smallNote {font-size:13px;}
 .agendaItems :global(.linked-row) {padding:12px 0;border:0;gap:14px;}
-.agendaItems>:not(:first-child) {border-top:1px solid var(--clarity-line);}
+.agendaItems>:not(:first-child) {border-top:0;}
 .agendaItems :global(.row-text strong) {font-size:14px;font-weight:550;line-height:1.75;word-break:keep-all;}
 .agendaItems :global(.row-text span) {font-size:13px;line-height:1.75;color:var(--flow-muted);margin-top:3px;}
 .itemState {display:flex;align-items:center;gap:4px;font-size:13px;color:var(--flow-green);white-space:nowrap;flex-shrink:0;}
@@ -69,7 +69,7 @@
 .todayPlan>span {min-width:0;word-break:keep-all;overflow-wrap:anywhere;}
 .todayPlan :global(.text-link) {margin-left:auto;font-size:13px;color:var(--flow-muted);white-space:nowrap;}
 .completed>span {text-decoration:line-through;color:var(--flow-muted);}
-.quietLinks {display:flex;align-items:center;gap:8px 20px;flex-wrap:wrap;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--clarity-line);}
+.quietLinks {display:flex;align-items:center;gap:8px 20px;flex-wrap:wrap;margin:14px 0 0;padding-top:12px;border-top:0;}
 .quietLinks a {display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--flow-green);font-size:13px;line-height:1.7;}
 .confirmation {display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--flow-green);margin-top:12px;min-height:44px;line-height:1.8;}
 .lowerWorkspace {display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:40px;margin-top:12px;}
@@ -107,7 +107,7 @@
 .questionFocus :global(.button) {font-size:14px;min-height:48px;}
 .attemptState {color:var(--flow-muted);font-size:13px;}
 .flowPaths {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:4px 0 28px;}
-.flowPath {position:relative;padding:16px 30px 16px 0;border:0;border-top:1px solid var(--clarity-line);border-radius:0;background:transparent;min-width:0;transition:background .14s ease;}
+.flowPath {position:relative;padding:16px 30px 16px 0;border:0;border-top:0;border-radius:0;background:transparent;min-width:0;transition:background .14s ease;}
 .flowPath>span {font-size:14px;font-weight:600;line-height:1.6;display:block;margin-bottom:6px;}
 .flowPath>small {font-size:13px;line-height:1.8;color:var(--flow-muted);display:block;word-break:keep-all;overflow-wrap:anywhere;}
 .flowPath>svg {position:absolute;right:12px;top:18px;color:var(--flow-muted);}
@@ -271,7 +271,7 @@
 .remainingDeadlines>summary::after,.agendaDisclosure>summary::after {content:'+';margin-left:auto;font-size:18px;}
 .remainingDeadlines[open]>summary::after,.agendaDisclosure[open]>summary::after {content:'−';}
 .remainingDeadlines>summary::-webkit-details-marker,.agendaDisclosure>summary::-webkit-details-marker {display:none;}
-.agendaDisclosure {margin-top:12px;border-top:1px solid var(--clarity-line);padding-top:6px;}
+.agendaDisclosure {margin-top:12px;border-top:0;padding-top:6px;}
 .todayPlan>span>small {display:block;color:var(--flow-muted);font-size:12px;}
 .planActions {display:flex;gap:12px;align-items:center;margin-left:auto;flex-wrap:wrap;justify-content:flex-end;}
 .planActions :global(.text-link) {min-height:44px;}
@@ -279,3 +279,29 @@
 .moveDate input {min-height:44px;font-size:16px;}
 .moveConfirmation {display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.7;}
 .moveConfirmation input {width:18px;height:18px;flex-shrink:0;margin-top:3px;}
+
+/* Keep headings on the page and give only useful content a soft material well. */
+.dashboard,.today { --flow-green:var(--soft-accent-ink); --flow-ink:var(--clarity-ink); --flow-muted:var(--clarity-muted); --flow-peach:var(--soft-accent-ink); }
+.focus,.dashboard .focus { padding:24px; border:0; border-radius:var(--soft-radius); background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-soft)); box-shadow:var(--soft-shadow-raised); }
+.focusActions :global(.button),.dashboard .focusActions :global(.text-link) { min-height:44px; }
+.deadlineList>li+li,.agendaItems>:not(:first-child),.agendaDisclosure,.quietLinks { border:0; }
+.deadlineRow { min-height:80px; border:0; }
+.agenda>.indented,.recordMaterial>.indented,.answerRecord>.indented,.previousAnswer>.indented,.reading>.indented { padding:24px; border:0; border-radius:var(--soft-radius); background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-soft)); box-shadow:var(--soft-shadow-small); }
+.agendaItems :global(.linked-row) { border:0; padding-block:14px; }
+.todayPlan { padding-block:12px; border:0; }
+.reviewPlan { padding:24px; border:0; border-radius:var(--soft-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.reviewPlan input,.moveDate input,.activityPicker select { min-height:48px; padding:12px 16px; font-size:16px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.readingSwitch { gap:8px; padding:5px; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.readingSwitch>button,.readingSwitch>button[aria-pressed=true] { min-height:44px; padding:10px 16px; border:0; border-radius:14px; text-decoration:none; }
+.readingSwitch>button[aria-pressed=true] { color:var(--soft-accent-ink); background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-soft)); box-shadow:var(--soft-shadow-small); }
+.flowPath,.otherWays .flowPath { border:0; border-radius:var(--soft-control-radius); }
+.flowPath:hover { background:var(--clarity-mint); }
+.calendar :global(.planner-month),.dashboard .calendar :global(.planner-month) { padding:16px; border:0; border-radius:var(--soft-radius); background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-soft)); box-shadow:var(--soft-shadow-small); }
+.calendar :global(.planner-day-agenda),.dashboard .calendar :global(.planner-day-agenda) { padding:20px 0 0; border:0; }
+.stageTrail>li>span { border:0; background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-soft)); box-shadow:var(--soft-shadow-small); }
+.stageTrail>li[aria-current=step]>span { color:var(--soft-accent-ink); background:var(--clarity-mint); box-shadow:var(--soft-shadow-inset); }
+@media(max-width:767px) {
+ .focus,.dashboard .focus,.agenda>.indented,.recordMaterial>.indented,.answerRecord>.indented,.previousAnswer>.indented,.reading>.indented,.reviewPlan { padding:16px; }
+ .calendar :global(.planner-month),.dashboard .calendar :global(.planner-month) { padding:12px; }
+ .readingSwitch>button { flex:1; padding-inline:10px; }.stageTrail>li>span { padding:5px 8px; border-radius:12px; }
+}

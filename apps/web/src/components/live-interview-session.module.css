@@ -112,3 +112,20 @@
   .portrait { transition:none; transform:none; }
   .spinner,.stage[data-phase=listening] .stageStatus p>svg { animation:none; }
 }
+
+.page :global(.button) { min-height:44px; border-radius:var(--soft-control-radius); }
+.stageScene { border:0; border-radius:var(--soft-radius); background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-bg)); box-shadow:var(--soft-shadow-raised); }
+.otherPanelists { border:0; }
+.cameraVideo,.cameraPlaceholder { border-radius:22px; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.controls,.history,.historyItem { border:0; }
+.controls { margin-top:24px; }
+.history { margin-top:32px; }
+.history>summary { min-height:44px; padding:10px 14px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.ready,.recovery,.typedAnswer { gap:14px; padding-block:20px; border:0; }
+.error { border:0; border-radius:20px; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+@media(max-width:767px) {
+ .stageScene { padding:0 0 20px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+ .cameraPanel { border:0; padding-top:12px; }
+ .cameraPlaceholder { padding:0; border-radius:0; background:transparent; box-shadow:none; }
+ .error { padding:16px; }
+}

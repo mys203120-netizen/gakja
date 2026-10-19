@@ -29,16 +29,17 @@ import './assistant-workspace.css';
 import './speech-growth.css';
 import './plain-ui.css';
 import './school-axis.css';
-import './brand-clarity.css';
 import './clarity-chrome.css';
 import './clarity-practice.css';
 import './clarity-reading.css';
-import './light-workspace.css';
-import './light-conversations.css';
-import './light-learning.css';
-import './centered-auth.css';
 import './mobile-polish.css';
 import './scroll-behavior.css';
+// Shared design tokens and surfaces follow the legacy feature styles.
+import './brand-clarity.css';
+import './light-workspace.css';
+import './light-learning.css';
+import './light-conversations.css';
+import './centered-auth.css';
 export const metadata: Metadata = { title: { default: '각자ON · 각자의답', template: '%s · 각자ON' }, description: '물음 너머에는 각자의 답이 있습니다.', icons: { icon: '/brand-logo.svg' }, robots: { index: false, follow: false } };
-export const viewport: Viewport = { width:'device-width', initialScale:1, viewportFit:'cover', interactiveWidget:'resizes-content', themeColor:'#FFFFFF' };
+export const viewport: Viewport = { width:'device-width', initialScale:1, viewportFit:'cover', interactiveWidget:'resizes-content', themeColor:'#EDF9ED' };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="ko"><body>{children}<ScrollBehavior/></body></html>; }

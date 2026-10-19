@@ -33,3 +33,14 @@
 .searchResults > a { border-radius:12px; padding:14px 10px; }
 .searchResults > a:hover { background:var(--clarity-soft); }
 @media(max-width:700px) { .searchMeta { flex-wrap:wrap; gap:4px 12px; margin-top:12px; } }
+
+.moreLinks > a { min-height:48px; border-radius:var(--soft-control-radius); }
+.moreLinks > a[aria-current='page'] { background:var(--clarity-soft); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-inset); }
+.searchResults > a { border:0; border-radius:var(--soft-control-radius); padding:15px 12px; }
+.searchResults > a:hover { background:var(--clarity-soft); }
+@media(max-width:700px) {
+ .shell :global(.topbar) :global(.icon-button) { width:44px; height:44px; }
+ .shell nav.mobilePrimary { background:var(--clarity-bg); border:0; }
+ .shell nav.mobilePrimary > a,.shell nav.mobilePrimary > button { min-height:56px; border-radius:18px; }
+ .shell nav.mobilePrimary > [aria-current='page'],.shell nav.mobilePrimary > button[data-active='true'] { color:var(--soft-accent-ink); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+}

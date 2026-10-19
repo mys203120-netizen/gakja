@@ -97,3 +97,31 @@
 @media(prefers-reduced-motion:reduce) {
  .collapsibleShell:global(.app-shell) :global(.sidebar),.collapsibleShell:global(.app-shell) :global(.app-body),.collapsibleShell:global(.app-shell) :global(.main-nav)>a,.collapsibleShell:global(.app-shell) :global(.sidebar .sidebar-navigation .main-nav)>a>.navigationLabel,.collapsibleShell :global(.sidebar-brand .service-wordmark),.collapsibleShell :global(.sidebar-brand .admin-caption),.collapsibleShell :global(.sidebar-brand .brand strong),.collapsibleShell:global(.app-shell) :global(.sidebar-account .account-trigger),.collapsibleShell :global(.sidebar-account .account-name),.collapsibleShell :global(.sidebar-account .account-chevron),.sidebarNote { transition:none; }
 }
+
+/* Navigation shares the mint canvas; depth identifies the current destination. */
+.collapsibleShell:global(.app-shell) :global(.sidebar) { background:var(--clarity-bg); border-right:0; box-shadow:none; }
+.collapsibleShell:global(.app-shell) :global(.main-nav) { gap:8px; padding-block:4px; }
+.collapsibleShell:global(.app-shell) :global(.main-nav)>a { min-height:46px; border:0; border-radius:var(--soft-control-radius); }
+.collapsibleShell:global(.app-shell) :global(.main-nav)>a:global(.active),.collapsibleShell:global(.app-shell) :global(.main-nav)>a[aria-current=page] { color:var(--soft-accent-ink); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.collapsibleShell:global(.app-shell) :global(.main-nav)>a:hover { background:var(--clarity-soft); }
+.collapsibleShell :global(.sidebar-selection) { border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-inset); }
+.collapsibleShell:global(.app-shell) :global(.sidebar-account .account-trigger) { min-height:48px; border:0; border-radius:var(--soft-control-radius); }
+.collapsibleShell:global(.app-shell) :global(.sidebar-account .account-trigger:hover) { background:var(--clarity-soft); }
+.collapseToggle { top:23px; right:-22px; width:44px; height:44px; border:0; border-radius:16px; background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-bg)); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-small); }
+.collapseToggle:hover { background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.sectionNavigation { gap:8px; border:0; padding-block:4px; }
+.sectionNavigation>a { min-height:44px; padding:10px 14px; border:0; border-radius:var(--soft-control-radius); }
+.sectionNavigation>a[aria-current=page] { border:0; background:var(--clarity-soft); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-inset); }
+.practiceChoices { gap:24px; }
+.practiceChoices>a { border:0; border-radius:var(--soft-radius); background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-bg)); box-shadow:var(--soft-shadow-raised); }
+.practiceChoices>a>svg:first-child { background:var(--clarity-soft); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-inset); }
+.experienceEntry { border:0; padding-block:16px; }
+.resume { border:0; border-radius:var(--soft-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+@media(max-width:700px) {
+ .sectionNavigation { gap:4px; }
+ .sectionNavigation>a { padding-inline:12px; }
+ .practiceChoices { gap:20px; }
+ .practiceChoices>a { padding:22px 20px; }
+ .resume { padding:12px 0 24px; border-radius:0; background:transparent; box-shadow:none; }
+ .openPaths { border:0; }
+}

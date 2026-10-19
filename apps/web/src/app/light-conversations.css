@@ -85,3 +85,27 @@
   .app-shell .records-view .inline-actions { gap:10px; flex-wrap:wrap; }
   .app-shell .records-view .inline-actions > :is(a,button) { min-height:44px; white-space:normal; }
 }
+
+/* Shared mint controls and open reading areas across chat, interviews and reports. */
+.app-shell .interview-v2 .interview-format-tabs,.app-shell nav[aria-label="리포트 보기"] { gap:8px; padding-block:4px; border:0; }
+.app-shell .interview-v2 .interview-format-tabs a,.app-shell nav[aria-label="리포트 보기"] > a { min-height:44px; padding:10px 14px; border:0; border-radius:var(--soft-control-radius); }
+.app-shell .interview-v2 .interview-format-tabs a.active,.app-shell nav[aria-label="리포트 보기"] > a.active { border:0; color:var(--soft-accent-ink); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.app-shell .interview-entry-choices > a,.app-shell .interview-entry-choices > a:nth-child(2),.app-shell .interview-setup-main .interview-quick-start { border:0; border-radius:var(--soft-radius); background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-bg)); box-shadow:var(--soft-shadow-raised); }
+.app-shell .interview-entry-choices > a:hover { box-shadow:var(--soft-shadow-small); }
+.app-shell .interview-setup-settings { padding:20px 0; border:0; border-radius:0; background:transparent; }
+.app-shell .interview-v2 .interview-preset-list > label { min-height:44px; padding:14px 34px 14px 14px; border:0; border-radius:var(--soft-control-radius); background:transparent; }
+.app-shell .interview-v2 .interview-preset-list > label.selected { color:var(--soft-accent-ink); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.app-shell .interview-common-questions button { min-height:48px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.app-shell .interview-device-note { border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); }
+.app-shell .interview-school-note { border:0; }
+.app-shell .on-attachment-button,.app-shell .on-welcome > a { min-height:44px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); color:var(--soft-accent-ink); }
+.app-shell .records-view .records-overview > div,.app-shell .records-view .records-overview > div:nth-child(2),.app-shell .records-view .records-overview > div:nth-child(3),.app-shell .records-view .speech-metrics > div,.app-shell .records-view .speech-metrics > div:nth-child(even) { border:0; border-radius:var(--soft-radius); background:var(--clarity-bg); box-shadow:var(--soft-shadow-small); }
+.app-shell .records-view .speech-timeline,.app-shell .records-view .speech-next,.app-shell .records-view .speech-empty { border:0; border-radius:var(--soft-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.app-shell .records-view .records-report-row { padding:18px 0; border:0; border-radius:0; background:transparent; }
+.app-shell .records-view .study-answer { padding:22px; border:0; border-radius:var(--soft-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.app-shell .records-view .content-growth-evidence > summary { min-height:44px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); }
+@media(max-width:700px) {
+ .app-shell .records-view .records-overview > div,.app-shell .records-view .records-overview > div:nth-child(2),.app-shell .records-view .records-overview > div:nth-child(3),.app-shell .records-view .speech-metrics > div,.app-shell .records-view .speech-metrics > div:nth-child(even) { padding-inline:0; border-radius:0; background:transparent; box-shadow:none; }
+ .app-shell .records-view .study-answer { padding:18px 0; border-radius:0; background:transparent; box-shadow:none; }
+ .app-shell .records-view .speech-next { padding:20px 0; border-radius:0; background:transparent; box-shadow:none; }
+}

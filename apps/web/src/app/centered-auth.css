@@ -126,3 +126,18 @@
   .auth-page.auth-centered .auth-submit { min-height: 48px; height: 48px; border-radius: 10px; }
   .auth-centered .auth-entry-brand .brand strong { font-size: 21px; }
 }
+
+/* A single soft form surface keeps the entry calm and the fields tactile. */
+.auth-page.auth-centered .auth-form { border:0; border-radius:32px; background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-bg)); box-shadow:var(--soft-shadow-raised); }
+.auth-page.auth-centered .auth-form button:has(> img) { border:0; border-radius:var(--soft-control-radius); background:var(--clarity-bg); box-shadow:var(--soft-shadow-small); }
+.auth-page.auth-centered .auth-form button:has(> img):hover:not(:disabled) { border:0; background:var(--clarity-soft); }
+.auth-page.auth-centered .auth-form button:has(> img):active:not(:disabled) { box-shadow:var(--soft-shadow-inset); }
+.auth-page.auth-centered .auth-form input { border:0; border-radius:var(--soft-control-radius); background:var(--clarity-bg); box-shadow:var(--soft-shadow-inset); }
+.auth-page.auth-centered .auth-form input:focus { border:0; background:var(--clarity-bg); box-shadow:var(--soft-shadow-inset); outline:2px solid var(--clarity-action); outline-offset:3px; }
+.auth-page.auth-centered .password-field button { border-radius:14px; }
+.auth-page.auth-centered .auth-submit { border:0; border-radius:var(--soft-control-radius); background:var(--soft-gradient); color:var(--clarity-on-action); box-shadow:var(--soft-shadow-small); }
+.auth-page.auth-centered .auth-submit:hover:not(:disabled) { border:0; background:var(--soft-gradient); box-shadow:var(--soft-shadow-raised); }
+.auth-page.auth-centered .auth-submit:active:not(:disabled) { box-shadow:var(--soft-shadow-inset); }
+.auth-page.auth-centered .auth-submit:disabled { border:0; background:var(--clarity-soft); color:var(--clarity-muted); box-shadow:none; }
+.auth-page.auth-centered .alert,.auth-page.auth-centered .success-message { border:0; border-radius:var(--soft-control-radius); }
+@media(max-width:767px) { .auth-page.auth-centered .auth-form { padding:0; border-radius:0; background:transparent; box-shadow:none; } }

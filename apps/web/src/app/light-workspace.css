@@ -1,124 +1,93 @@
-/* Workspace surfaces and controls. Colors are owned by brand-clarity.css. */
-
-body { line-height: 1.65; letter-spacing: -.015em; }
-.app-shell .app-body { background: var(--clarity-bg); }
-.app-shell .sidebar { background: var(--clarity-surface); }
-.app-shell .topbar { background: var(--clarity-surface); min-height: 64px; border-bottom: 1px solid var(--clarity-line); }
-.app-shell .topbar .icon-button { border-radius: 50%; color: var(--clarity-muted); }
-.app-shell .topbar .icon-button:hover { background: var(--clarity-soft); }
-.app-shell .topbar-context .target-select select { background-color: var(--clarity-soft); border-color: transparent; min-height: 44px; padding-block: 6px; }
+/* Shared Soft UI surfaces. Feature modules retain their layout and state rules. */
+.app-shell .app-body { background: transparent; }
+.app-shell .sidebar { background: linear-gradient(150deg, var(--clarity-surface), var(--clarity-bg)); border-right: 0; }
+.app-shell .topbar { min-height: 72px; background: transparent; border-bottom: 0; }
+.app-shell .topbar-context, .app-shell .topbar-context .target-select { min-width: 0; }
+.app-shell .topbar-actions { flex-shrink: 0; }
+.app-shell .topbar .icon-button { color: var(--clarity-muted); border: 0; border-radius: 50%; background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); }
+.app-shell .topbar .icon-button:hover { background: var(--clarity-mint); }
+.app-shell .topbar-context .target-select select { min-height: 44px; max-width: 100%; padding-block: 9px; background-color: var(--clarity-surface); border: 0; border-radius: var(--soft-control-radius); box-shadow: var(--soft-shadow-small); }
+.app-shell .sidebar-brand { margin-bottom: 32px; }
+.app-shell .sidebar-profile { border-top: 0; }
 .app-shell .main-nav > a { color: var(--clarity-muted); }
-.app-shell .sidebar .main-nav > a[aria-current=page] { color: var(--clarity-on-action); }
-.app-shell .sidebar-selection { background: var(--clarity-action); }
-.app-shell .page-title { margin-bottom: var(--clarity-section-gap); gap: 12px; }
-.app-shell .page-title h1 { font-size: var(--clarity-title-size); font-weight: 650; letter-spacing: -.035em; line-height: 1.3; }
-.app-shell .page-title .subtitle { font-size: 14px; line-height: 1.65; margin-top: 8px; }
-.app-shell :is(.section-heading h2, .detail-section > h2) { font-size: var(--clarity-section-size); font-weight: 600; line-height: 1.45; }
-.app-shell .breadcrumb { margin-bottom: 14px; font-size: 12px; }
-.app-shell .body-copy { font-size: var(--clarity-body-size); line-height: var(--clarity-line-height); }
-body .button { min-height: 36px; padding: 8px 14px; border-radius: var(--clarity-control-radius); font-size: 13px; font-weight: 500; gap: 8px; }
-body .button.primary { background: var(--clarity-action); border-color: var(--clarity-action); }
-body .button.primary:hover:not(:disabled) { background: var(--clarity-action-hover); border-color: var(--clarity-action-hover); }
-body .button:is(.ghost,.secondary) { background: var(--clarity-soft); border-color: transparent; color: var(--clarity-ink); }
-body .button:is(.ghost,.secondary):hover:not(:disabled) { background: var(--clarity-mint); border-color: transparent; }
-body .button.small { min-height: 32px; padding: 6px 12px; }
-.app-shell .text-link { font-size: 13px; font-weight: 500; }
-.app-shell .linked-row { padding: 13px 10px; border-radius: var(--clarity-control-radius); }
-.app-shell .linked-row .row-text strong { font-size: 14px; line-height: 1.65; }
-.app-shell .linked-row .row-text > span { font-size: 13px; line-height: 1.6; }
-.app-shell .linked-row:hover { background: var(--clarity-soft); }
-.app-shell select { min-height: 40px; border-radius: var(--clarity-control-radius); padding-block: 8px; font-size: 14px; }
-.app-shell :is(input,textarea)::placeholder { color: var(--clarity-muted); }
-.app-shell .badge { border-radius: 8px; padding: 4px 9px; font-size: 12px; }
-.app-shell .app-footer { font-size: 11px; color: var(--clarity-muted); padding-block: 20px; }
-
-.app-shell .calendar-heading { margin-block: 18px 12px; }
-.app-shell .calendar-days { gap: 3px; }
-.app-shell .dashboard-calendar-panel .calendar-days > button { min-height: 56px; border-radius: 9px; padding: 6px; }
-.app-shell .dashboard-calendar-panel .calendar-days > button:hover { background: var(--clarity-mint); }
-.app-shell .dashboard-calendar-panel .calendar-days > button.today { background: var(--clarity-mint); }
-.app-shell .dashboard-calendar-panel .calendar-days > button.today > span:first-child { background: var(--clarity-green); color: var(--clarity-on-action); }
-.app-shell .calendar-weekdays { color: var(--clarity-muted); font-size: 12px; padding-bottom: 8px; }
-
-/* Practice and reading: modest headings, readable spacing and clear choices. */
-.app-shell .practice-home > header h1 { font-size: var(--clarity-title-size); line-height:1.35; margin-bottom: var(--clarity-section-gap); }
-.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) { gap: 18px; }
-.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a { padding: 24px; border-radius: 22px; background: var(--clarity-surface); }
-.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a[href^="/interview"] { background: var(--clarity-mint); }
-.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) h2 { font-size: var(--clarity-section-size); }
-.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) p { font-size: 14px; line-height: 1.65; }
-.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a:hover { box-shadow: inset 0 0 0 1px var(--clarity-line); }
-.app-shell .quiz-v3 .quiz-mode-row { padding: 16px; border-radius: 12px; }
-.app-shell .quiz-v3 .quiz-mode-row h2 { font-size: var(--clarity-section-size); }
-.app-shell .interview-advanced-toggle { border-radius: var(--clarity-control-radius); background: var(--clarity-soft); padding: 12px 14px; color: var(--clarity-green); }
-.app-shell .interview-v2 .interview-start-button { border-radius: var(--clarity-control-radius); }
-.app-shell .knowledge-row { gap: 26px; padding-block: 24px; }
-.app-shell .knowledge-row h2 { font-size: var(--clarity-section-size); line-height: 1.5; }
-.app-shell .knowledge-first h2 { font-size: var(--clarity-section-size); }
-.app-shell .records-view .records-report-row { border-radius: 12px; padding: 16px 12px; }
-.app-shell .records-view .records-report-row:hover { background: var(--clarity-soft); }
-.app-shell .records-view .records-row-icon { background: var(--clarity-soft); color: var(--clarity-muted); }
-.app-shell .school-learning .school-first-practice { background: var(--clarity-surface); border-radius: 22px; padding: 22px; }
-.app-shell .school-learning .school-first-practice strong { font-size: 19px; }
-.app-shell .mobile-nav { background: var(--clarity-surface); border-top: 1px solid var(--clarity-line); }
-.app-shell .mobile-nav > a[aria-current=page] { color: var(--clarity-green); }
-.app-shell .mobile-nav > a[aria-current=page] > svg { background: var(--clarity-mint); border-radius: 7px; outline: 5px solid var(--clarity-mint); }
-@media(max-width:700px) {
-  .app-shell .page-title h1 { font-size: var(--clarity-title-mobile-size); }
-  .app-shell .practice-home > header h1 { font-size:var(--clarity-title-mobile-size); }
-  .app-shell .dashboard-calendar-panel .calendar-days > button { min-height: 44px; padding: 4px; }
-  body .button { min-height: 44px; }
-  .app-shell .topbar { min-height: 60px; }
-  .app-shell .knowledge-row h2,.app-shell .knowledge-first h2 { font-size: var(--clarity-section-size); }
-  .app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a { padding: 20px; }
-}
-
-/* Shared controls also cover dialogs portalled outside the application shell. */
-body { background:var(--clarity-bg); }
-.app-shell .panel { background:var(--clarity-soft); border:0; border-radius:20px; box-shadow:none; }
-.app-shell .detail-section { padding:24px 0; border:0; border-bottom:1px solid var(--clarity-line); border-radius:0; background:transparent; box-shadow:none; }
-.app-shell .topbar-context { min-width:0; }
-.app-shell .topbar-context .target-select { min-width:0; }
-.app-shell .topbar-context .target-select select { max-width:100%; border-radius:var(--clarity-control-radius); }
-.app-shell .topbar-actions { flex-shrink:0; }
-.app-shell .sidebar { border-right:1px solid var(--clarity-line); }
-.app-shell .sidebar-brand { margin-bottom:32px; }
-.app-shell .admin-caption { padding:4px 8px; border-radius:7px; background:var(--clarity-soft); }
-.app-shell .main-nav > a[aria-current=page] { font-weight:650; }
-.app-shell .account-avatar { background:var(--clarity-mint); color:var(--clarity-green); }
-body .button { transition:background .16s ease,box-shadow .16s ease,transform .16s ease; }
-body .button.primary { color:var(--clarity-on-action); box-shadow:none; }
-body .button:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; }
-body :is(button,a,input,select,textarea,summary):focus-visible { outline:3px solid var(--clarity-green); outline-offset:3px; }
-body :is(.form-field,.native-modal) :is(input:not([type=checkbox]):not([type=radio]),textarea,select),.app-shell .search-field { border:1px solid var(--clarity-line); border-radius:var(--clarity-control-radius); background:var(--clarity-surface); }
-body :is(.form-field,.native-modal) :is(input:not([type=checkbox]):not([type=radio]),select) { min-height:46px; }
-body :is(input[type=checkbox],input[type=radio]) { accent-color:var(--clarity-green); }
-body .native-modal { border:1px solid var(--clarity-line); border-radius:24px; box-shadow:0 24px 80px #2023291a; }
-body .native-modal::backdrop { background:#20232966; backdrop-filter:blur(3px); }
-.app-shell .reader-toc { background:var(--clarity-soft); border-radius:16px; border:0; padding:20px; }
-.app-shell .reader-article { padding:32px; }
-.app-shell .reader-toc button.active { background:var(--clarity-mint); color:var(--clarity-green); border-radius:10px; }
-.app-shell .table-wrap { border:0; border-radius:0; background:var(--clarity-surface); }
-.app-shell table th { background:var(--clarity-soft); color:var(--clarity-muted); }
-.app-shell table td { border-color:var(--clarity-line); }
-.app-shell .empty { border-radius:20px; }
-@media(hover:hover) { body .button:hover:not(:disabled) { transform:none; } }
-@media(max-width:700px) {
- .app-shell .topbar { min-height:64px; }
- .app-shell .topbar-context .target-select select { min-height:40px; }
- .app-shell .detail-section,.app-shell .reader-article { padding:20px; }
- .app-shell .mobile-nav { box-shadow:0 -4px 20px #20232908; }
- .app-shell .page-title { flex-wrap:wrap; }
- body .button.small { min-height:44px; }
- body .native-modal { border-radius:20px; }
-}
-@media(prefers-reduced-motion:reduce) { body .button { transition:none; } body .button:hover:not(:disabled) { transform:none; } }
-
-/* Section titles belong to the page; only the content below needs a surface. */
+.app-shell .main-nav > a[aria-current=page] { color: var(--soft-accent-ink); font-weight: 650; }
+.app-shell .sidebar-selection { background: var(--clarity-mint); box-shadow: var(--soft-shadow-inset); }
+.app-shell .account-avatar { background: var(--clarity-mint); color: var(--soft-accent-ink); }
+.app-shell .admin-caption { padding: 4px 10px; border-radius: 999px; background: var(--clarity-soft); }
+.app-shell .panel { background: var(--clarity-surface); border: 0; border-radius: var(--soft-radius); box-shadow: var(--soft-shadow-raised); }
+/* Keep section headings in the page hierarchy, outside the raised content. */
 .app-shell:not(.admin-shell) .panel:has(> .section-heading),
-.app-shell:not(.admin-shell) .panel:has(> h2) { padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
-.app-shell:not(.admin-shell) .detail-section > .section-heading { margin-bottom:18px; }
-.app-shell .records-view :is(.speech-empty,.speech-next,.speech-trend,.speech-timeline,.content-growth-evidence) { border:0; border-radius:0; background:transparent; box-shadow:none; padding-inline:0; }
-.app-shell .records-view :is(.records-report-row,.content-growth-evidence-row,.study-answer) { border:0; border-bottom:1px solid var(--clarity-line); border-radius:0; background:transparent; padding:20px 0; }
-.app-shell .records-view .records-overview > div { border:0; border-radius:16px; background:var(--clarity-soft); }
-@media(max-width:700px) { .app-shell .records-view .records-overview > div { padding-inline:0; background:transparent; border-radius:0; } }
+.app-shell:not(.admin-shell) .panel:has(> h2),
+.app-shell .detail-section { padding: 24px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.app-shell:not(.admin-shell) .detail-section > .section-heading { margin-bottom: 20px; }
+.app-shell .page-title { gap: 12px; margin-bottom: var(--clarity-section-gap); }
+.app-shell .page-title .subtitle { margin-top: 10px; }
+.app-shell .text-link { min-height: 40px; display: inline-flex; align-items: center; gap: 6px; }
+.app-shell .linked-row { padding: 18px 12px; border: 0; border-radius: var(--soft-control-radius); }
+.app-shell .linked-row:hover { background: var(--clarity-mint); }
+.app-shell .linked-row .row-text strong { font-size: 15px; }
+.app-shell .linked-row .row-text > span { font-size: 14px; }
+.app-shell .badge { border: 0; border-radius: 999px; padding: 5px 10px; font-size: 12px; }
+.app-shell .badge.green { background: var(--clarity-mint); color: var(--soft-accent-ink); }
+.app-shell .app-footer { font-size: 12px; color: var(--clarity-muted); padding-block: 24px; }
+
+/* Shared field wells also cover portalled dialogs. */
+body :is(.form-field,.native-modal) :is(input:where(:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file])),textarea,select),
+.app-shell :is(.search-field,.settings-row input,.settings-row select) {
+  border: 0; border-radius: var(--soft-control-radius); background: var(--clarity-surface); color: var(--clarity-ink); box-shadow: var(--soft-shadow-inset); padding: 13px 16px; font: inherit;
+}
+body :is(.form-field,.native-modal) :is(input:not([type=checkbox]):not([type=radio]),select) { min-height: 46px; }
+body .native-modal .search-field input { min-height: 44px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.app-shell select { min-height: 44px; border-radius: var(--soft-control-radius); }
+body :is(input,textarea)::placeholder { color: var(--clarity-muted); opacity: 1; }
+body :is(input[type=checkbox],input[type=radio]) { accent-color: var(--clarity-action); }
+body .native-modal { border: 0; border-radius: 30px; background: var(--clarity-surface); color: var(--clarity-ink); box-shadow: 12px 16px 52px #596e5d3d, -5px -5px 20px #ffffff80; }
+body .native-modal::backdrop { background: #303f3859; backdrop-filter: none; }
+.app-shell .table-wrap { border: 0; border-radius: var(--soft-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-raised); overflow: auto; }
+.app-shell table th { background: var(--clarity-soft); color: var(--clarity-muted); border: 0; }
+.app-shell table td { border: 0; padding-block: 18px; }
+.app-shell table tbody tr:nth-child(even) { background: #e3f4dd40; }
+.app-shell table tbody tr:hover { background: var(--clarity-mint); }
+.app-shell .empty { border: 0; border-radius: var(--soft-radius); }
+
+/* Flat lists sit between the main surfaces without repeated rules or shadows. */
+.app-shell .records-view :is(.speech-empty,.speech-next,.speech-trend,.speech-timeline,.content-growth-evidence) { border: 0; border-radius: 0; background: transparent; box-shadow: none; padding-inline: 0; }
+.app-shell .records-view :is(.records-report-row,.content-growth-evidence-row,.study-answer) { border: 0; border-radius: 18px; background: transparent; box-shadow: none; padding: 20px 12px; }
+.app-shell .records-view .records-report-row:hover { background: var(--clarity-mint); }
+.app-shell .records-view .records-row-icon { background: var(--clarity-surface); color: var(--clarity-action); box-shadow: var(--soft-shadow-small); border-radius: 18px; }
+.app-shell .records-view .records-overview > div { border: 0; border-radius: var(--soft-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-raised); }
+.app-shell :is(.settings-row,.learning-row,.account-profile) { border: 0; }
+.app-shell .calendar-heading { margin-block: 20px 16px; }
+.app-shell .calendar-days { gap: 5px; }
+.app-shell .dashboard-calendar-panel .calendar-days > button { min-height: 56px; border: 0; border-radius: 16px; padding: 6px; }
+.app-shell .dashboard-calendar-panel .calendar-days > button:hover { background: var(--clarity-mint); }
+.app-shell .dashboard-calendar-panel .calendar-days > button.today { background: var(--clarity-surface); box-shadow: var(--soft-shadow-inset); }
+.app-shell .dashboard-calendar-panel .calendar-days > button.today > span:first-child { background: var(--soft-gradient); color: #fff; }
+.app-shell .calendar-weekdays { color: var(--clarity-muted); font-size: 13px; padding-bottom: 10px; }
+
+.app-shell .reader-toc { background: var(--clarity-surface); border-radius: var(--soft-radius); border: 0; padding: 22px; box-shadow: var(--soft-shadow-raised); }
+.app-shell .reader-article { background: var(--clarity-surface); border: 0; border-radius: var(--soft-radius); box-shadow: var(--soft-shadow-raised); padding: 32px; }
+.app-shell .reader-toc button.active { background: var(--clarity-mint); color: var(--soft-accent-ink); border-radius: 16px; box-shadow: var(--soft-shadow-inset); }
+.app-shell .reader-article :is(h2,h3) { border: 0; }
+.app-shell .interview-v2 :is(.interview-setup-settings,.interview-quick-start,.interview-device-note) { border: 0; border-radius: var(--soft-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-raised); padding: 24px; }
+.app-shell .interview-advanced-toggle { border: 0; border-radius: var(--soft-control-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); padding: 12px 16px; color: var(--clarity-action); }
+.app-shell .interview-v2 .interview-start-button { border-radius: var(--soft-control-radius); }
+.app-shell .interview-format-tabs { gap: 6px; border: 0; border-radius: 999px; padding: 6px; background: var(--clarity-soft); box-shadow: var(--soft-shadow-inset); }
+.app-shell .interview-format-tabs > button { border: 0; border-radius: 999px; padding: 12px 20px; min-height: 44px; color: var(--clarity-muted); }
+.app-shell .interview-format-tabs > button.active { border: 0; background: var(--soft-accent-gradient); color: var(--soft-accent-ink); box-shadow: var(--soft-shadow-small); }
+.app-shell nav.mobile-nav { background: var(--clarity-surface); border: 0; box-shadow: var(--soft-shadow-raised); backdrop-filter: none; }
+.app-shell .mobile-nav > a[aria-current=page] { color: var(--soft-accent-ink); }
+.app-shell .mobile-nav > a[aria-current=page] > svg { background: var(--clarity-mint); border-radius: 10px; outline: 5px solid var(--clarity-mint); }
+@media(max-width:1000px) { .app-shell .interview-setup-columns { grid-template-columns: minmax(0,1fr); } }
+@media(max-width:700px) {
+  .app-shell .topbar { min-height: 64px; }
+  .app-shell .page-title { flex-wrap: wrap; }
+  .app-shell .text-link { min-height: 44px; }
+  body :is(.form-field,.native-modal) :is(input,select,textarea) { font-size: 16px; }
+  body .native-modal { border-radius: 24px; }
+  .app-shell .detail-section { padding: 20px 0; }
+  .app-shell:not(.admin-shell) .main-content :is(.reader-toc,.reader-article,.interview-setup-settings,.interview-quick-start,.interview-device-note) { border: 0; border-radius: 24px; background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); padding: 20px 16px; }
+  .app-shell .records-view .records-overview > div { padding: 18px 14px; border-radius: 22px; }
+  .app-shell .records-view :is(.records-report-row,.content-growth-evidence-row,.study-answer) { padding-inline: 0; }
+  .app-shell .dashboard-calendar-panel .calendar-days > button { min-height: 44px; padding: 4px; }
+}

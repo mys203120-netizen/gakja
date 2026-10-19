@@ -1,35 +1,46 @@
 /* Shared brand values; feature styles below consume the same semantic palette. */
 :root {
   color-scheme: light;
-  --ui-card: #f4f7f5;
-  --ui-peach: #f4f7f5;
-  --ui-shadow: none;
+  --ui-card: #f8fcf8;
+  --ui-peach: #e3f4dd;
+  --ui-shadow: var(--soft-shadow-raised);
   --clarity-brand: #00ee77;
-  --clarity-bg: #ffffff;
-  --clarity-surface: #ffffff;
-  --clarity-soft: #f4f7f5;
-  --clarity-mint: #e9f8ef;
-  --clarity-ink: #262a2a;
-  --clarity-muted: #6f7773;
-  --clarity-action: #087f46;
-  --clarity-action-hover: #066b3a;
+  --clarity-bg: #edf9ed;
+  --clarity-surface: #f8fcf8;
+  --clarity-soft: #e8f3e7;
+  --clarity-mint: #dff2e8;
+  --clarity-ink: #303849;
+  --clarity-muted: #5b6d63;
+  --clarity-action: #397f68;
+  --clarity-action-hover: #2f6e59;
   --clarity-on-action: #ffffff;
-  --clarity-green: #087f46;
-  --clarity-green-hover: #066b3a;
-  --clarity-banner: #edf9f2;
-  --clarity-line: #e6e8e7;
-  --clarity-blue: #087f46;
+  --clarity-green: #397f68;
+  --clarity-green-hover: #2f6e59;
+  --clarity-banner: #e3f4dd;
+  --clarity-line: #d8e6d9;
+  --clarity-blue: #397f68;
+  --soft-mint: #65bda5;
+  --soft-leaf: #76bc66;
+  --soft-accent-ink: #194533;
+  /* Darker action fills keep white labels readable; pastel fills use dark ink. */
+  --soft-gradient: linear-gradient(135deg, #397f68, #4b8058);
+  --soft-accent-gradient: linear-gradient(135deg, #65bda5, #76bc66);
+  --soft-shadow-raised: 9px 9px 24px #bdcec042, -7px -7px 20px #ffffffb3;
+  --soft-shadow-small: 4px 5px 12px #bccfc04a, -4px -4px 10px #ffffff99;
+  --soft-shadow-inset: inset 2px 2px 6px #b6cbbd4d, inset -2px -2px 6px #ffffffc9;
+  --soft-radius: 26px;
+  --soft-control-radius: 18px;
   --clarity-warning: #926521;
   --clarity-danger: #bf403e;
   --clarity-motion: 160ms;
-  --clarity-title-size: 26px;
-  --clarity-title-mobile-size: 24px;
-  --clarity-section-size: 18px;
-  --clarity-body-size: 14px;
+  --clarity-title-size: 30px;
+  --clarity-title-mobile-size: 26px;
+  --clarity-section-size: 20px;
+  --clarity-body-size: 15px;
   --clarity-secondary-size: 13px;
-  --clarity-line-height: 1.65;
-  --clarity-control-radius: 10px;
-  --clarity-section-gap: 24px;
+  --clarity-line-height: 1.7;
+  --clarity-control-radius: 18px;
+  --clarity-section-gap: 28px;
   --bg: var(--clarity-bg);
   --surface: var(--clarity-surface);
   --surface2: var(--clarity-soft);
@@ -39,16 +50,16 @@
   --accent: var(--clarity-green);
   --link: var(--clarity-green);
   --line: var(--clarity-line);
-  --radius: 18px;
+  --radius: 26px;
 }
 
 body {
-  background: var(--clarity-bg);
+  background: radial-gradient(ellipse at 12% 0%, #e3f4dd 0, transparent 48%), radial-gradient(ellipse at 90% 65%, #dff3e9 0, transparent 55%), var(--clarity-bg);
   color: var(--clarity-ink);
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: var(--clarity-body-size);
+  line-height: var(--clarity-line-height);
   letter-spacing: -.02em;
 }
 
@@ -64,7 +75,7 @@ body {
   --muted: var(--clarity-muted);
   --accent: var(--clarity-green);
   --line: var(--clarity-line);
-  background: var(--clarity-bg);
+  background: transparent;
   color: var(--clarity-ink);
 }
 
@@ -73,7 +84,7 @@ body {
 .app-shell .page-title h1 {
   color: var(--clarity-ink);
   font-size: var(--clarity-title-size);
-  font-weight: 500;
+  font-weight: 650;
   line-height: 1.35;
   letter-spacing: -.035em;
   text-wrap: balance;
@@ -88,18 +99,19 @@ body {
 body .button {
   min-height: 44px;
   border-radius: var(--clarity-control-radius);
-  padding: 11px 19px;
+  padding: 11px 20px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.45;
-  box-shadow: none;
+  border: 0;
+  box-shadow: var(--soft-shadow-small);
   transition: background-color var(--clarity-motion) ease, border-color var(--clarity-motion) ease, color var(--clarity-motion) ease, transform var(--clarity-motion) ease;
 }
-body .button.primary { color: var(--clarity-on-action); background: var(--clarity-action); border-color: var(--clarity-action); }
-body .button.primary:hover:not(:disabled) { color: var(--clarity-on-action); background: var(--clarity-action-hover); border-color: var(--clarity-action-hover); transform: none; }
-body .button.primary:active:not(:disabled) { transform: translateY(1px); }
-body .button:is(.secondary, .ghost) { color: var(--clarity-ink); background: var(--clarity-surface); border-color: var(--clarity-line); }
-body .button:is(.secondary, .ghost):hover:not(:disabled) { background: var(--clarity-soft); border-color: var(--clarity-muted); }
+body .button.primary { color: var(--clarity-on-action); background: var(--soft-gradient); border-color: transparent; }
+body .button.primary:hover:not(:disabled) { color: var(--clarity-on-action); background: var(--clarity-action-hover); border-color: transparent; transform: translateY(-1px); }
+body .button:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--soft-shadow-inset); }
+body .button:is(.secondary, .ghost) { color: var(--clarity-ink); background: var(--clarity-surface); border-color: transparent; }
+body .button:is(.secondary, .ghost):hover:not(:disabled) { background: var(--clarity-mint); border-color: transparent; }
 body .button.small { min-height: 36px; padding: 8px 13px; font-size: 13px; }
 /* Keep the existing silhouette; state and a small arrow movement explain the action. */
 body .button:is(:disabled, [aria-disabled="true"]) {
@@ -127,7 +139,7 @@ body .button .cta-spinner { flex-shrink: 0; }
 .app-shell .linked-row .row-text > span { color: var(--clarity-muted); font-size: 14px; line-height: 1.7; }
 .app-shell .linked-row:hover .row-text strong { color: var(--clarity-green); }
 .app-shell :is(input, select, textarea) { accent-color: var(--clarity-green); }
-body :where(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--clarity-green); outline-offset: 3px; }
+body :where(a, button, input, select, textarea, summary):focus-visible { outline: 3px solid var(--clarity-green); outline-offset: 3px; }
 .app-shell .empty { color: var(--clarity-muted); padding-block: 28px; }
 .app-shell .empty > svg { color: var(--clarity-muted); }
 .app-shell .empty h3 { color: var(--clarity-ink); font-weight: 500; }
@@ -135,6 +147,11 @@ body :where(a, button, input, select, textarea, summary):focus-visible { outline
 @media (max-width: 500px) {
   .app-shell .page-title h1 { font-size: var(--clarity-title-mobile-size); }
   .app-shell .page-title .subtitle { font-size: 14px; }
+  body .button.small { min-height: 44px; }
+}
+@media (forced-colors: active) {
+  body :is(.button, input, select, textarea) { border: 1px solid ButtonText; }
+  body .button.primary { background: Highlight; color: HighlightText; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

@@ -17,3 +17,16 @@
 .name input { width:100%; padding:12px 14px; border:1px solid var(--clarity-line); border-radius:10px; background:var(--clarity-bg); color:var(--clarity-ink); font:inherit; }
 .tabs button:focus-visible,.menuTrigger:focus-visible,.popover button:focus-visible,.name input:focus-visible { outline:2px solid var(--clarity-action); outline-offset:2px; }
 @media(max-width:1000px) { .tabs { margin-top:8px; } .tabs button { min-height:44px; } .menuTrigger { flex-basis:44px; width:44px; height:44px; } .row>a { min-height:44px; } }
+
+.tabs { gap:4px; padding:4px; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.tabs button { flex:1; justify-content:center; min-height:44px; padding-inline:8px; border-radius:14px; }
+.tabs button[aria-pressed=true] { color:var(--soft-accent-ink); background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-bg)); box-shadow:var(--soft-shadow-small); }
+.list { gap:6px; }
+.row { min-height:44px; border-radius:16px; }
+.row:hover { background:var(--clarity-soft); }
+.active { color:var(--soft-accent-ink); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.row>a { min-height:44px; padding:13px 10px!important; }
+.menuTrigger { flex-basis:44px; width:44px; height:44px; border-radius:14px; }
+.popover { padding:8px; border:0; border-radius:22px; background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-bg)); box-shadow:var(--soft-shadow-raised); }
+.popover button { border-radius:14px; }
+.name input { min-height:48px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-bg); box-shadow:var(--soft-shadow-inset); }

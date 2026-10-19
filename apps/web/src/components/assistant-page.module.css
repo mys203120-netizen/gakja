@@ -80,3 +80,15 @@
  .page.page .workspace :global(.on-welcome) { padding:14px 0; }
  .page.page .workspace :global(.on-welcome h2) { font-size:var(--clarity-section-size); margin-bottom:20px; }
 }
+
+:global(.app-shell) :global(.main-content):has(.page),.page { background:var(--clarity-bg); }
+.page.page .workspace { gap:24px; }
+.page.page .workspace > :global(.chat-history) { border:0; padding-right:18px; }
+.page.page .workspace :global(.message.user .message-content) { border:0; border-radius:22px 22px 8px 22px; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.page.page .workspace :global(.message-save),.page.page .workspace :global(.message-sources button),.page :global(.on-reference-tools button) { min-height:44px; border:0; border-radius:var(--soft-control-radius); }
+.page.page .workspace :global(.message-save:hover),.page.page .workspace :global(.message-sources button:hover),.page :global(.on-reference-tools button:hover) { background:var(--clarity-soft); color:var(--soft-accent-ink); }
+.page.page .workspace :global(.on-activity-list a) { min-height:48px; border-radius:var(--soft-control-radius); }
+.page.page .workspace :global(.on-activity-list .search-field) { border:0; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.page.page .workspace :global(.chat-mobile-history[open]) { border:0; border-radius:20px; background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+@media(max-width:1000px) { .page.page .workspace { gap:6px; } }
+@media(max-width:700px) { .page.page .workspace > :global(.chat-mobile-history[open]) { padding:4px 10px 10px; } }

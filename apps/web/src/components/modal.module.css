@@ -73,3 +73,10 @@
   .backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:24px; }
   .backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions)>:global(.button) { width:100%; min-width:0; padding-inline:12px; }
 }
+
+.backdrop:global(.native-modal)::backdrop { background:color-mix(in srgb,var(--soft-accent-ink) 18%,transparent); }
+.backdrop:global(.native-modal) .surface:global(.modal) { padding:30px; border:0; border-radius:30px; background:linear-gradient(145deg,var(--clarity-surface),var(--clarity-bg)); box-shadow:var(--soft-shadow-raised); }
+.backdrop:global(.native-modal) .surface:global(.modal) .heading :global(.icon-button) { border:0; border-radius:16px; background:var(--clarity-soft); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-inset); }
+.backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions)>:global(.button) { border:0; border-radius:var(--soft-control-radius); }
+.backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions)>:global(.button.ghost) { border:0; background:var(--clarity-soft); box-shadow:var(--soft-shadow-small); }
+@media(max-width:700px) { .backdrop:global(.native-modal) .surface:global(.modal) { padding:24px 20px; border-radius:26px; } }

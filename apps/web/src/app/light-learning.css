@@ -1,54 +1,61 @@
-/* Shared reading and practice rhythm; scoped to the student learning pages. */
-.app-shell .quiz-v3 .quiz-paths { gap:24px; border:0; border-bottom:1px solid var(--clarity-line); margin-bottom:var(--clarity-section-gap); }
-.app-shell .quiz-v3 .quiz-paths a { padding:10px 0; min-height:44px; border:0; border-bottom:2px solid transparent; border-radius:0; font-size:var(--clarity-body-size); }
-.app-shell .quiz-v3 .quiz-paths a[aria-current=page] { background:transparent; color:var(--clarity-action); border-bottom-color:var(--clarity-action); box-shadow:none; }
-.app-shell .quiz-v3 .quiz-today { padding:24px; background:var(--clarity-surface); border-radius:20px; margin:0 0 24px; }
-.app-shell .quiz-v3 .quiz-today h2 { font-size:var(--clarity-section-size); line-height:1.5; margin-top:0; }
-.app-shell .quiz-v3 .quiz-today p { font-size:var(--clarity-body-size); line-height:var(--clarity-line-height); }
-.app-shell .quiz-v3 .quiz-mode-list { display:grid; gap:12px; }
-.app-shell .quiz-v3 .quiz-mode-row { padding:20px; border:0; border-radius:18px; background:var(--clarity-surface); gap:14px; }
-.app-shell .quiz-v3 .quiz-mode-row:nth-child(2) { background:var(--clarity-mint); }
-.app-shell .quiz-v3 .quiz-mode-row:nth-child(3) { background:var(--clarity-surface); }
-.app-shell .quiz-v3 .quiz-mode-row h2 { font-size:var(--clarity-section-size); line-height:1.5; }
-.app-shell .quiz-v3 .quiz-mode-row p { font-size:14px; line-height:1.65; }
-.app-shell .quiz-v3 .quiz-mode-row > div { min-width:0; }
-.app-shell .quiz-v3 .quiz-mode-row > svg { flex-shrink:0; }
-.app-shell .quiz-v3 :is(.quiz-time-choice,.quiz-library-links a,summary) { min-height:44px; line-height:1.65; }
-.app-shell .quiz-v3 .quiz-time-choice { padding-block:12px; }
-.app-shell .quiz-v3 .quiz-library-links { flex-wrap:wrap; gap:8px 20px; }
-.app-shell .quiz-v3 .quiz-library-links a { display:inline-flex; align-items:center; }
-.app-shell .quiz-v3 :is(h2,h3,p,summary) { word-break:keep-all; overflow-wrap:anywhere; }
-.app-shell .quiz-session .quiz-options > button { border-radius:var(--clarity-control-radius); }
-.app-shell .quiz-session .quiz-options > button:not(.selected):not([data-outcome]) { background:var(--clarity-soft); }
-.app-shell .quiz-session .quiz-options > button:focus-visible { outline:2px solid var(--clarity-action); outline-offset:3px; }
-.app-shell .knowledge-page .knowledge-tabs { gap:24px; border-bottom:1px solid var(--clarity-line); }
-.app-shell .knowledge-page .knowledge-tabs button { padding:10px 0; min-height:44px; border:0; border-bottom:2px solid transparent; border-radius:0; font-size:var(--clarity-body-size); }
-.app-shell .knowledge-page .knowledge-tabs button.active { background:transparent; color:var(--clarity-action); border-bottom-color:var(--clarity-action); box-shadow:none; }
-.app-shell .knowledge-page :is(.knowledge-row h2,.knowledge-watch-copy h2) { font-size:var(--clarity-section-size); line-height:1.5; font-weight:600; word-break:keep-all; overflow-wrap:anywhere; }
-.app-shell .knowledge-page .knowledge-thumbnail { border-radius:var(--clarity-control-radius); }
-.app-shell .knowledge-page .knowledge-reading-art { background:var(--clarity-surface); color:var(--clarity-green); border-radius:14px; }
-.app-shell .knowledge-page .knowledge-detail-link { padding:8px 14px; min-height:40px; background:var(--clarity-surface); color:var(--clarity-action); border-radius:var(--clarity-control-radius); }
-.app-shell .knowledge-page :is(.knowledge-bookmark,.knowledge-self-check button,.knowledge-completed button) { min-height:44px; border-radius:var(--clarity-control-radius); padding:10px 14px; font-size:14px; }
-.app-shell .knowledge-page .knowledge-bookmark { background:var(--clarity-soft); }
-.app-shell .knowledge-page .knowledge-understanding { margin-top:24px; padding:24px; background:var(--clarity-soft); border:0; border-radius:20px; }
-.app-shell .knowledge-page :is(.knowledge-note,.knowledge-understanding) textarea { padding:14px 16px; border:1px solid var(--clarity-line); border-radius:var(--clarity-control-radius); background:var(--clarity-surface); font-size:var(--clarity-body-size); line-height:var(--clarity-line-height); }
-.app-shell .knowledge-page textarea:focus { outline:2px solid var(--clarity-action); outline-offset:2px; }
-.app-shell .knowledge-page .knowledge-topic-row { gap:16px; padding:18px 0; }
-.app-shell .knowledge-page .knowledge-topic-row strong { line-height:1.7; overflow-wrap:anywhere; }
-.app-shell .knowledge-page :is(.text-link,.knowledge-watch-link,.knowledge-publisher-link) { min-height:44px; display:inline-flex; align-items:center; }
-.app-shell .knowledge-page :is(button,a):focus-visible { outline-color:var(--clarity-action); }
-@media(max-width:600px) {
- .app-shell .quiz-v3 .quiz-today { padding:20px; }
- .app-shell .quiz-v3 .quiz-mode-row { padding:18px 16px; flex-wrap:wrap; }
- .app-shell .quiz-v3 .quiz-mode-row > div { flex:1; }
- .app-shell .quiz-v3 .quiz-mode-row > span { margin-left:auto; }
- .app-shell :is(.quiz-v3,.knowledge-page) .button.small { min-height:44px; }
- .app-shell .knowledge-page .knowledge-understanding { padding:20px 16px; }
- .app-shell .knowledge-page :is(.knowledge-note,.knowledge-understanding) textarea { font-size:16px; }
- .app-shell .knowledge-page .knowledge-detail-link { min-height:44px; }
- .app-shell .knowledge-page .knowledge-topic-row { flex-wrap:wrap; }
- .app-shell .knowledge-page .knowledge-note-actions { flex-wrap:wrap; align-items:center; }
- .app-shell .knowledge-page .knowledge-note-actions > span { max-width:none; }
- .app-shell .knowledge-page .knowledge-self-check { gap:8px; }
- .app-shell .knowledge-page .knowledge-question-label select { white-space:normal; line-height:1.6; font-size:16px; }
+/* Learning shares the Soft UI palette without adding a card around every row. */
+.app-shell .practice-home > header h1 { font-size: var(--clarity-title-size); line-height: 1.35; margin-bottom: var(--clarity-section-gap); }
+.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) { gap: 24px; }
+.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a { padding: 28px; border: 0; border-radius: var(--soft-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-raised); }
+.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a:hover { background: var(--clarity-mint); }
+.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) h2 { font-size: var(--clarity-section-size); }
+.app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) p { font-size: 15px; line-height: 1.7; }
+.app-shell .quiz-v3 .quiz-paths,
+.app-shell .knowledge-page .knowledge-tabs { display: flex; gap: 6px; width: fit-content; max-width: 100%; border: 0; border-radius: 999px; margin-bottom: var(--clarity-section-gap); padding: 6px; background: var(--clarity-soft); box-shadow: var(--soft-shadow-inset); }
+.app-shell .quiz-v3 .quiz-paths a,
+.app-shell .knowledge-page .knowledge-tabs button { padding: 11px 18px; min-height: 44px; border: 0; border-radius: 999px; font-size: 14px; color: var(--clarity-muted); white-space: nowrap; }
+.app-shell .quiz-v3 .quiz-paths a[aria-current=page],
+.app-shell .knowledge-page .knowledge-tabs button.active { background: var(--soft-accent-gradient); color: var(--soft-accent-ink); border: 0; box-shadow: var(--soft-shadow-small); }
+.app-shell .quiz-v3 .quiz-today { padding: 26px; background: var(--clarity-surface); border: 0; border-radius: var(--soft-radius); box-shadow: var(--soft-shadow-raised); margin: 0 0 28px; }
+.app-shell .quiz-v3 .quiz-today h2 { font-size: var(--clarity-section-size); line-height: 1.5; margin-top: 0; }
+.app-shell .quiz-v3 .quiz-today p { font-size: var(--clarity-body-size); line-height: var(--clarity-line-height); }
+.app-shell .quiz-v3 .quiz-mode-list { display: grid; gap: 16px; }
+.app-shell .quiz-v3 .quiz-mode-row { padding: 24px; border: 0; border-radius: var(--soft-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); gap: 16px; }
+.app-shell .quiz-v3 .quiz-mode-row h2 { font-size: var(--clarity-section-size); line-height: 1.5; }
+.app-shell .quiz-v3 .quiz-mode-row p { font-size: 14px; line-height: 1.7; }
+.app-shell .quiz-v3 .quiz-mode-row > div { min-width: 0; }
+.app-shell .quiz-v3 .quiz-mode-row > svg { flex-shrink: 0; color: var(--clarity-action); }
+.app-shell .quiz-v3 :is(.quiz-time-choice,.quiz-library-links a,summary) { min-height: 44px; line-height: 1.7; }
+.app-shell .quiz-v3 .quiz-time-choice { padding-block: 12px; }
+.app-shell .quiz-v3 .quiz-library-links { flex-wrap: wrap; gap: 8px 20px; border: 0; }
+.app-shell .quiz-v3 .quiz-library-links a { display: inline-flex; align-items: center; }
+.app-shell .quiz-v3 :is(h2,h3,p,summary) { word-break: keep-all; overflow-wrap: anywhere; }
+.app-shell .quiz-session .quiz-options > button { border-radius: var(--soft-control-radius); }
+.app-shell .quiz-session .quiz-options > button:not(.selected):not([data-outcome]) { background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); }
+.app-shell .knowledge-page :is(.knowledge-row,.knowledge-topic-row,.knowledge-watch-row) { border: 0; box-shadow: none; }
+.app-shell .knowledge-page .knowledge-row { gap: 28px; padding-block: 28px; }
+.app-shell .knowledge-page :is(.knowledge-row h2,.knowledge-watch-copy h2) { font-size: var(--clarity-section-size); line-height: 1.5; font-weight: 600; word-break: keep-all; overflow-wrap: anywhere; }
+.app-shell .knowledge-page .knowledge-thumbnail { border-radius: 22px; }
+.app-shell .knowledge-page .knowledge-reading-art { background: var(--clarity-surface); color: var(--clarity-action); border-radius: 22px; box-shadow: var(--soft-shadow-small); }
+.app-shell .knowledge-page .knowledge-detail-link { padding: 10px 16px; min-height: 44px; background: var(--clarity-surface); color: var(--clarity-action); border: 0; border-radius: 18px; box-shadow: var(--soft-shadow-small); }
+.app-shell .knowledge-page :is(.knowledge-bookmark,.knowledge-self-check button,.knowledge-completed button) { min-height: 44px; border: 0; border-radius: 18px; padding: 11px 16px; font-size: 14px; }
+.app-shell .knowledge-page .knowledge-bookmark { background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); }
+.app-shell .knowledge-page .knowledge-understanding { margin-top: 28px; padding: 26px; background: var(--clarity-surface); border: 0; border-radius: var(--soft-radius); box-shadow: var(--soft-shadow-raised); }
+.app-shell .knowledge-page :is(.knowledge-note,.knowledge-understanding) textarea { padding: 16px; border: 0; border-radius: 18px; background: var(--clarity-surface); color: var(--clarity-ink); box-shadow: var(--soft-shadow-inset); font-size: var(--clarity-body-size); line-height: var(--clarity-line-height); }
+.app-shell .knowledge-page textarea:focus-visible { outline: 3px solid var(--clarity-action); outline-offset: 3px; }
+.app-shell .knowledge-page .knowledge-topic-row { gap: 16px; padding: 20px 0; }
+.app-shell .knowledge-page .knowledge-topic-row strong { line-height: 1.7; overflow-wrap: anywhere; }
+.app-shell .knowledge-page :is(.text-link,.knowledge-watch-link,.knowledge-publisher-link) { min-height: 44px; display: inline-flex; align-items: center; }
+.app-shell .school-learning .school-first-practice { background: var(--clarity-surface); border: 0; border-radius: var(--soft-radius); padding: 24px; box-shadow: var(--soft-shadow-raised); }
+.app-shell .school-learning .school-first-practice strong { font-size: 20px; }
+@media(max-width:700px) {
+  .app-shell .practice-home > header h1 { font-size: var(--clarity-title-mobile-size); }
+  .app-shell .practice-home > div:has(>a[href^="/quiz"]):has(>a[href^="/interview"]) > a { padding: 22px 18px; }
+  .app-shell .quiz-v3 .quiz-paths,.app-shell .knowledge-page .knowledge-tabs { overflow-x: auto; }
+  .app-shell .quiz-v3 .quiz-paths a,.app-shell .knowledge-page .knowledge-tabs button { padding-inline: 14px; }
+  .app-shell:not(.admin-shell) .main-content :is(.quiz-today,.quiz-mode-row,.knowledge-understanding,.school-first-practice) { border: 0; border-radius: 24px; background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); padding: 22px 16px; }
+  .app-shell .quiz-v3 .quiz-mode-row { flex-wrap: wrap; }
+  .app-shell .quiz-v3 .quiz-mode-row > div { flex: 1; }
+  .app-shell .quiz-v3 .quiz-mode-row > span { margin-left: auto; }
+  .app-shell .knowledge-page :is(.knowledge-note,.knowledge-understanding) textarea { font-size: 16px; }
+  .app-shell .knowledge-page .knowledge-topic-row { flex-wrap: wrap; }
+  .app-shell .knowledge-page .knowledge-note-actions { flex-wrap: wrap; align-items: center; }
+  .app-shell .knowledge-page .knowledge-note-actions > span { max-width: none; }
+  .app-shell .knowledge-page .knowledge-self-check { gap: 8px; }
+  .app-shell .knowledge-page .knowledge-question-label select { white-space: normal; line-height: 1.6; font-size: 16px; }
 }

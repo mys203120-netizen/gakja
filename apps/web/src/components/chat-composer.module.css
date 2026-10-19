@@ -109,3 +109,14 @@
   .conversation .inlineActions :global(.button) { min-height: 44px; padding-inline: 9px; }
 }
 @media (prefers-reduced-motion: reduce) { .shell .send { transition: none; } .shell .send:hover:not(:disabled), .shell .send:active:not(:disabled) { transform: none; } }
+
+.shell,.conversation .shell { border:0; border-radius:var(--soft-radius); background:var(--clarity-bg); box-shadow:var(--soft-shadow-inset); }
+.shell:focus-within,.conversation .shell:focus-within { border:0; box-shadow:var(--soft-shadow-inset); outline:2px solid var(--clarity-action); outline-offset:3px; }
+.shell .send { flex-basis:44px; width:44px; height:44px; color:var(--soft-accent-ink); background:var(--soft-accent-gradient); box-shadow:var(--soft-shadow-small); }
+.shell .send:hover:not(:disabled) { background:var(--soft-accent-gradient); box-shadow:var(--soft-shadow-small); }
+.shell .send:active:not(:disabled) { box-shadow:var(--soft-shadow-inset); }
+.shell .send:disabled,.shell .send[aria-busy="true"] { background:var(--clarity-soft); color:var(--clarity-muted); box-shadow:none; }
+.conversation .shell { grid-template-columns:minmax(0,1fr) 44px; padding:12px; }
+.conversation .inlineActions :global(.button) { min-height:44px; border-radius:14px; }
+.conversation .inlineActions :global(.button):hover:not(:disabled) { background:var(--clarity-soft); color:var(--soft-accent-ink); }
+@media(max-width:700px) { .conversation .shell { padding:9px; border-radius:24px; } }

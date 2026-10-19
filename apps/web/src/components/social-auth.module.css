@@ -16,3 +16,11 @@
 @media(max-width:700px) { .buttons { gap:10px; margin-bottom:25px; } .provider { min-height:54px; font-size:14px; gap:8px; padding:0 8px; } .provider img { width:20px; height:20px; } .divider { font-size:12px; gap:12px; margin-bottom:26px; } .invite { font-size:11px; margin-top:10px; } }
 
 @media(min-width:768px){.buttons{gap:10px;margin-bottom:22px}.provider{min-height:48px;font-size:14px;border-radius:10px}.divider{font-size:13px;margin-bottom:22px}}
+
+.provider { min-height:50px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-bg); color:var(--clarity-ink); box-shadow:var(--soft-shadow-small); }
+.provider:hover { background:var(--clarity-soft); }
+.provider:active { box-shadow:var(--soft-shadow-inset); }
+.google,.kakao { border:0; background:var(--clarity-bg); box-shadow:var(--soft-shadow-small); }
+.divider { gap:12px; }
+.divider::before,.divider::after { background:color-mix(in srgb,var(--clarity-action) 16%,transparent); }
+@media(max-width:700px) { .provider { min-height:54px; } }
