@@ -46,6 +46,11 @@
 .answerMode>button:disabled { cursor:default;opacity:.55; }
 .answerMode>p { flex-basis:100%;margin-top:2px;line-height:1.65; }
 .recordingAction { margin-top:0; }
+.liveTranscript { margin:16px 0; padding:16px; background:var(--clarity-soft); border-radius:var(--clarity-control-radius); }
+.liveTranscript>div { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; font-size:14px; }
+.liveTranscript>div>span,.liveTranscript>small { color:var(--clarity-muted); font-size:12px; line-height:1.65; }
+.liveTranscript>p { max-height:240px; max-height:min(32svh,240px); overflow-y:auto; margin:12px 0; white-space:pre-wrap; overflow-wrap:anywhere; font-size:16px; line-height:1.8; }
+.liveTranscript[data-phase="listening"]>div>strong { color:var(--clarity-green); }
 .recordStart { min-height:48px;padding-inline:22px; }
 .answerEditor,.practiceTools,.selfReview { border-top:1px solid var(--clarity-line);padding-block:14px;margin-top:8px; }
 .answerEditor>summary,.practiceTools>summary,.selfReview>summary { display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;cursor:pointer;list-style:none;font-size:14px;font-weight:500;line-height:1.6; }

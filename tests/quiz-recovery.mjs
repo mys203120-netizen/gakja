@@ -12,7 +12,7 @@ const target={id:'target',university:'서울시립대학교',campus:'본교',dep
 const savedTarget={...target,interview_stage:undefined};
 const item={id:'m1',question_id:'q1',prompt:'본인 역할은 무엇인가요?',activity_ids:['a1'],source_kind:'personal',target_id:'target',target_snapshot:savedTarget};
 const info={serverTime:new Date().toISOString(),session:{id:'session',student_id:'student',state:'active',mode:'answer',current_index:0,content_version:6,items:[item],metadata:{targetId:'target',targetSnapshot:savedTarget,drafts:{0:{response:'서버에 저장한 초안'}}}},responses:[],recordings:[],learning:{questions:[{id:'q1',prompt:item.prompt}],support_targets:[savedTarget],memory_items:[]}};
-const state={values:[],refs:[],hook:0,refHook:0,effects:[],calls:[],toasts:[],listener:null,adapter:null,apiAdapter:null,storage:new Map(),local:new Map(),now:0,capture:null,uploads:[],finishCount:0,tracksStopped:0,captureAvailable:true,uploadError:false,deviceRequests:0,timers:new Map(),confirm:false,events:new Map(),visibility:'visible',deviceGate:null,reservationGate:null,assertGate:null,cancelledReservations:0};
+const state={values:[],refs:[],hook:0,refHook:0,effects:[],calls:[],toasts:[],listener:null,adapter:null,apiAdapter:null,storage:new Map(),local:new Map(),now:0,capture:null,uploads:[],finishCount:0,tracksStopped:0,captureAvailable:true,uploadError:false,deviceRequests:0,timers:new Map(),confirm:false,events:new Map(),visibility:'visible',deviceGate:null,reservationGate:null,assertGate:null,cancelledReservations:0,live:null,liveGate:null};
 let timerId=0;
 class FakeRecorder {
   static isTypeSupported(){return true;}
@@ -39,6 +39,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   if(name==='./learning-help')return{LearningHelp:'LearningHelp'};
   if(name==='./audio-level-dot')return{AudioLevelDot:'AudioLevelDot'};
   if(name==='./playful-flow')return{animateStudyReceipt(){}};
+  if(name==='@/lib/client/realtime-transcription')return{connectLiveTranscription:(device,scope,update)=>{const live={scope,update,started:false,closed:false,finished:false,ready:Promise.resolve(state.liveGate),start(){this.started=true;update({phase:'listening',text:''});},close(){this.closed=true;},finish(){this.finished=true;}};state.live=live;return live;}};
   if(name==='@/lib/client/speech-recorder')return{startSpeechCapture(){if(!state.captureAvailable)return null;const started=state.now;return{elapsedMs:()=>state.now-started,dispose(){},pause(){},resume(){},finish(){state.finishCount++;const elapsed=state.now-started;return buildSpeechTelemetry([{atMs:0,rms:0},{atMs:elapsed-.1,rms:.04}],elapsed);}};}};
   if(name==='@/lib/client/recording-recovery')return{installRecordingExitGuard:()=>()=>{},readRecordingRecovery:async scope=>durableAudio.get(JSON.stringify(scope))||null,removeRecordingRecovery:async key=>{recoveryRemovals.push(key);durableAudio.delete(key);},beginRecordingRecovery:async(scope,mimeType)=>{await state.reservationGate;const key=JSON.stringify(scope),chunks=[];let closed=false;return{key,assertActive:async()=>{await state.assertGate;if(closed)throw Error('closed');},assertFresh:()=>{if(closed)throw Error('closed');},cancel:async()=>{if(chunks.length)throw Error('pending audio');closed=true;state.cancelledReservations++;durableAudio.delete(key);},append:async blob=>{if(closed)throw Error("closed");chunks.push(blob);durableAudio.set(key,{...scope,key,blob:new Blob(chunks,{type:mimeType||blob.type}),durationMs:1,complete:false});},finish:async measurement=>{if(closed)throw Error("closed");const saved={...scope,key,blob:new Blob(chunks,{type:mimeType||chunks[0]?.type}),...measurement,complete:true};durableAudio.set(key,saved);return saved;},flush:async()=>{}};}};
   if(name==='@/lib/recording-upload-client')return{uploadRecording:async(url,form)=>{const durationMs=Number(form.get('durationMs')),telemetry=form.get('speechTelemetry')?JSON.parse(form.get('speechTelemetry')):null;assert.ok(!telemetry||validateSpeechTelemetry(telemetry));assert.ok(!telemetry||Math.abs(telemetry.durationMs-durationMs)<=500);state.uploads.push({durationMs,telemetry,blob:form.get('recording')});if(state.uploadError)throw new Error('synthetic upload failed');return{recording:{id:'new-recording',session_id:'session',item_index:0,url:'/owned-recording'}};}};
@@ -48,7 +49,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   throw new Error(name);
 }});
 const render=()=>{state.hook=0;state.refHook=0;state.effects=[];return module.exports.QuizSession({id:'session'});};
-const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.values[23]=true;durableAudio.clear();recoveryRemovals.length=0;state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.uploadError=false;state.deviceRequests=0;state.timers.clear();state.confirm=false;state.events.clear();state.visibility='visible';state.deviceGate=null;state.reservationGate=null;state.assertGate=null;state.cancelledReservations=0;};
+const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.values[23]=true;durableAudio.clear();recoveryRemovals.length=0;state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.uploadError=false;state.deviceRequests=0;state.timers.clear();state.confirm=false;state.events.clear();state.visibility='visible';state.deviceGate=null;state.reservationGate=null;state.assertGate=null;state.cancelledReservations=0;state.live=null;state.liveGate=null;};
 const nodes=tree=>Array.isArray(tree)?tree.flatMap(nodes):tree&&typeof tree==='object'?[tree,...nodes(tree.props?.children),...nodes(tree.props?.aside)]:[];
 const text=value=>Array.isArray(value)?value.map(text).join(''):value&&typeof value==='object'?text(value.props?.children):typeof value==='string'?value:'';
 const saveButton=tree=>nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='답변 저장');
@@ -261,3 +262,20 @@ heading.props.ref.current={focus:options=>{focusOptions=options;},scrollIntoView
 state.effects.find(effect=>effect.toString().includes('questionHeading.current'))();
 check(focusOptions?.preventScroll===true&&scrollOptions?.block==='start'&&scrollOptions?.behavior==='instant','new question gets logical focus and scroll while respecting reduced motion');
 console.log(`Quiz recovery: ${checks} handler/render checks passed; no DB, provider or device calls.`);
+
+// Live captions are separate from the durable answer and cannot reopen cancelled preparation.
+reset({...oralInfo,recordings:[]});state.values[10]=true;tree=render();
+await nodes(tree).find(n=>n.type==='button'&&text(n.props.children).trim()==='답변 녹음').props.onClick();
+const liveAttempt=state.live;liveAttempt.update({phase:'listening',text:'실시간으로 말한 내용'});tree=render();
+check(liveAttempt.started&&text(tree).includes('실시간으로 말한 내용'),'live captions appear while the same recording is active');
+check(state.values[4]==='내 역할은 채취 조건 설계였습니다.','live captions never overwrite the editable draft');
+check(nodes(tree).some(n=>n.type==='button'&&text(n.props.children).startsWith('녹음 완료')),'live captions leave the stop control available');
+nodes(tree).find(n=>n.type==='button'&&text(n.props.children).startsWith('녹음 완료')).props.onClick();check(liveAttempt.finished,'stopping the recorder drains the corresponding live connection');
+reset({...oralInfo,recordings:[]});state.values[10]=true;let connectDone;state.liveGate=new Promise(resolve=>connectDone=resolve);tree=render();
+const pendingConnect=nodes(tree).find(n=>n.type==='button'&&text(n.props.children).trim()==='답변 녹음').props.onClick();await settle();const cancelledLive=state.live;
+check(!cancelledLive.started,'the transcription track stays disabled while preparing');
+tree=render();state.effects.find(effect=>effect.toString().includes('visibilitychange'))();state.visibility='hidden';state.events.get('visibilitychange')();
+connectDone();await pendingConnect;cancelledLive.update({phase:'listening',text:'취소 후 오래된 전사'});tree=render();
+check(cancelledLive.closed&&!cancelledLive.started&&state.values[11]==='idle','hidden preparation closes live transcription without recording');
+check(!text(tree).includes('취소 후 오래된 전사'),'late live captions cannot resurrect cancelled preparation');
+console.log('Live transcription component checks passed');

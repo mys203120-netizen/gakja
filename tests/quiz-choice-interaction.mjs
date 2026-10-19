@@ -157,6 +157,7 @@ function harness(initial = fixture(), storage = new Map()) {
       if (name === './learning-help') return { LearningHelp: 'LearningHelp' };
       if (name === './audio-level-dot') return { AudioLevelDot: 'AudioLevelDot' };
       if (name === './playful-flow') return { animateStudyReceipt() {} };
+      if (name === '@/lib/client/realtime-transcription') return { connectLiveTranscription() { throw new Error('Choice quiz must not request transcription'); } };
       if (name === '@/lib/client/speech-recorder') return { startSpeechCapture() { throw new Error('No microphone in choice tests'); } };
       if (name === '@/lib/recording-upload-client') return { uploadRecording() { throw new Error('No media upload in choice tests'); } };
       if (name === '@gakja/content-contracts/workflows') return contracts;

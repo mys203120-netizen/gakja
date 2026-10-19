@@ -97,6 +97,11 @@
 .editorTools label>.hint { display:block; margin-top:6px; font-size:12px; }
 .editorTools .chips { margin-bottom:12px; }
 .editorTools .pasteTool { margin-bottom:0; padding-bottom:0; border-bottom:0; }
+.optionalResult { margin-top:16px; padding:12px 0; border-block:1px solid var(--clarity-line); }
+.optionalResult>summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:32px; cursor:pointer; list-style:none; color:var(--clarity-muted); font-size:13px; }
+.optionalResult>summary::-webkit-details-marker { display:none; }
+.optionalResult>summary>svg { flex-shrink:0; transition:transform .18s ease; }
+.optionalResult[open]>summary>svg { transform:rotate(180deg); }
 .editorFooter { margin-top:12px; }
 .editorFooter>div { display:flex; align-items:center; flex-wrap:wrap; gap:8px 20px; }
 .editorFooter .backLink { margin:0; }
