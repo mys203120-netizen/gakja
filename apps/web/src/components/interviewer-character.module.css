@@ -1,0 +1,12 @@
+.avatar { position:relative; min-width:0; }
+.avatar>.portraitFrame { display:block; position:relative; width:100%; aspect-ratio:1; margin:0; }
+.portrait { display:block; width:100%; height:auto; aspect-ratio:1; object-fit:contain; user-select:none; }
+.mouth { position:absolute; display:block; pointer-events:none; }
+.mouth[hidden] { display:none; }
+.identity { width:100%; text-align:center; }
+.identity strong { font-weight:600; }
+.identity span { color:var(--clarity-muted); }
+.live2d { position:absolute; inset:0; width:100%; height:auto; aspect-ratio:1; opacity:0; pointer-events:none; }
+.live2d[data-live2d-ready=true] { opacity:1; }
+.portraitFrame:has(.live2d[data-live2d-ready=true])>.portrait { visibility:hidden; }
+.portraitFrame:has(.live2d[data-live2d-ready=true])>.mouth { display:none; }

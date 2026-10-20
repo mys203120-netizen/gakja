@@ -13,7 +13,7 @@ export type LiveInterviewServices = {
   speak(question:LiveInfo,generation:number,signal:AbortSignal):Promise<void>;
   beforeCapture?(question:LiveInfo,generation:number,signal:AbortSignal):Promise<void>;
   capture(onProgress:(value:LiveCaptureProgress)=>void,question:LiveInfo,generation:number):LiveAnswerCapture;
-  upload(recording:LiveAnswerRecording,question:LiveInfo,generation:number):Promise<string>;
+  upload(recording:LiveAnswerRecording,question:LiveInfo,generation:number,options?:{deferTranscription?:boolean}):Promise<string>;
   transcribe(mediaId:string):Promise<void>;
   answer(mediaId:string,question:LiveInfo,generation:number):Promise<unknown>;
   finish():Promise<void>;
@@ -38,6 +38,7 @@ export class LiveInterviewController {
   private intent=0;
   private disposed=false;
   private ending=false;
+  private preserveOnly=false;
   private devicePrepared=false;
   private wake?:()=>void;
   constructor(info:LiveInfo,private services:LiveInterviewServices,private changed:(value:LiveSnapshot)=>void){
@@ -50,9 +51,11 @@ export class LiveInterviewController {
   }
   /** Stop safely before an explicit switch to typing; final chunks still reach persistence. */
   async preserveAnswer(){this.pause();if(this.capture){const recording=await this.capture.stop('interrupted');return recording;}return this.pending?.recording;}
+  /** Changing remembered device choices preserves unfinished audio before releasing its tracks. */
+  async resetDevices(){this.pause();if(this.capture)await this.capture.stop('manual');this.devicePrepared=false;this.services.release();}
   async acceptTypedAnswer(info:LiveInfo){
     this.pause();this.runRevision++;this.wake?.();this.wake=undefined;await this.running;
-    this.pending=undefined;this.capture=undefined;this.ending=false;
+    this.pending=undefined;this.capture=undefined;this.ending=false;this.preserveOnly=false;
     if(info.session.state==='completed')this.services.release();
     this.emit({info,phase:info.session.state==='completed'?'complete':'paused',recording:undefined,progress:undefined,error:''});
   }
@@ -121,7 +124,7 @@ export class LiveInterviewController {
     const question=previous?.question||this.snapshot.info.question;
     const generation=previous?.generation??Number(this.snapshot.info.session.data.generation||0);
     if(!question)return;
-    this.ending=false;this.pause();const intent=this.intent;
+    this.ending=false;this.preserveOnly=false;this.pause();const intent=this.intent;
     const changed=()=>this.disposed||intent!==this.intent;
     const answered=(info:LiveInfo)=>info.turns?.some((turn:LiveInfo)=>turn.id===question.turnId&&turn.answer&&!turn.invalidated);
     const assertCurrent=(info:LiveInfo)=>{
@@ -144,10 +147,15 @@ export class LiveInterviewController {
       this.requested=true;this.intent++;await this.begin();
     }catch(error){if(!changed())await this.fail(error);}
   }
-  finish(){
-    this.ending=true;this.speech?.abort();
+  finish(options:{preserveOnly?:boolean}={}){
+    this.ending=true;this.preserveOnly=options.preserveOnly===true;this.speech?.abort();
     if(this.capture)void this.capture.stop('manual');
     return this.start();
+  }
+  private async complete(revision:number){
+    this.phase('saving');await this.services.finish();
+    if(this.disposed||revision!==this.runRevision)return;
+    await this.load();this.requested=false;this.emit({phase:'complete'});this.services.release();
   }
   private async fail(error:unknown){
     if(this.disposed)return;
@@ -174,6 +182,14 @@ export class LiveInterviewController {
           const pending=this.pending;
           // A lost response can mean the answer succeeded. Never attach old audio to the next turn.
           if(info.turns?.some((turn:LiveInfo)=>turn.id===pending.question.turnId&&turn.answer&&!turn.invalidated)){this.pending=undefined;this.emit({recording:undefined});continue;}
+          // Explicit exit after a recording/transcription error preserves the
+          // captured bytes without turning failed or silent audio into an answer.
+          // Do not discard the device copy if its upload still fails.
+          if(this.ending&&this.preserveOnly){
+            this.phase('saving');
+            if(!pending.mediaId)pending.mediaId=await this.services.upload(pending.recording!,pending.question,pending.generation,{deferTranscription:true});
+            await this.checkpoint(revision);await this.complete(revision);return;
+          }
           if(info.question?.turnId!==pending.question.turnId||Number(info.session.data.generation||0)!==pending.generation)throw new Error('다른 화면에서 질문 상태가 바뀌었어요. 보관한 녹음을 내려받고 면접을 다시 열어 주세요.');
           this.phase('saving');
           if(!pending.mediaId)pending.mediaId=await this.services.upload(pending.recording!,pending.question,pending.generation);
@@ -196,7 +212,7 @@ export class LiveInterviewController {
           continue;
         }
         if(this.ending||!info.question){
-          this.phase('saving');await this.services.finish();if(this.disposed||revision!==this.runRevision)return;await this.load();this.requested=false;this.emit({phase:'complete'});this.services.release();return;
+          await this.complete(revision);return;
         }
         const question=info.question,generation=Number(info.session.data.generation||0);
         if(!this.devicePrepared){await this.services.prepare();this.devicePrepared=true;await this.checkpoint(revision);}

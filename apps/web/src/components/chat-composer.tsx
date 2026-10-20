@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ArrowUp, LoaderCircle } from 'lucide-react';
+import {sendOnEnter} from '@/lib/client/enter-send';
 import styles from './chat-composer.module.css';
 
 type ChatComposerProps = {
@@ -19,9 +20,10 @@ type ChatComposerProps = {
   actions?: ReactNode;
   showCount?: boolean;
   variant?: 'default' | 'conversation';
+  enterToSend?: boolean;
 };
 
-export function ChatComposer({ value, onChange, onSend, label, placeholder = '', sendLabel = '메시지 보내기', busy = false, disabled = false, maxLength, inputId, textareaRef, actions, showCount = false, variant = 'default' }: ChatComposerProps) {
+export function ChatComposer({ value, onChange, onSend, label, placeholder = '', sendLabel = '메시지 보내기', busy = false, disabled = false, maxLength, inputId, textareaRef, actions, showCount = false, variant = 'default', enterToSend = true }: ChatComposerProps) {
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const input = textareaRef || internalRef;
   const composing = useRef(false);
@@ -61,11 +63,7 @@ export function ChatComposer({ value, onChange, onSend, label, placeholder = '',
         onChange={event => onChange(event.target.value)}
         onCompositionStart={() => { composing.current = true; }}
         onCompositionEnd={() => { composing.current = false; }}
-        onKeyDown={event => {
-          if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || composing.current) return;
-          event.preventDefault();
-          void submit();
-        }}
+        onKeyDown={event => {sendOnEnter(event,enterToSend,submit,{composing:composing.current,blocked:unavailable});}}
         disabled={unavailable}
         maxLength={maxLength}
         rows={1}
@@ -77,7 +75,7 @@ export function ChatComposer({ value, onChange, onSend, label, placeholder = '',
     </form>
     {variant !== 'conversation' && <div className={styles.tools}>
       {actions && <div className={styles.actions}>{actions}</div>}
-      <div className={styles.helper}>{showCount && <span>{value.length.toLocaleString()}자</span>}<span className={styles.keyboard}>Enter로 전송 · Shift+Enter로 줄바꿈</span></div>
+      <div className={styles.helper}>{showCount && <span>{value.length.toLocaleString()}자</span>}<span className={styles.keyboard}>{enterToSend?'Enter로 전송 · Shift+Enter로 줄바꿈':'Enter로 줄바꿈'}</span></div>
     </div>}
   </div>;
 }

@@ -179,3 +179,33 @@ test('real media and quiz endpoints reject forged file signatures before persist
     assert.equal(response.status,415);assert.equal(writes,0);
   }
 });
+test('media preservation-only upload stores the original without requiring transcription, while normal upload still transcribes',async()=>{
+  for(const deferred of [true,false]){
+    const bytes=Buffer.concat([Buffer.from([0x1a,0x45,0xdf,0xa3]),Buffer.alloc(128)]),form=new FormData();
+    form.set('recording',new File([bytes],'answer.webm',{type:'audio/webm'}));
+    for(const[key,value]of Object.entries({sessionId,turnId,questionId:'q',generation:'0',durationSeconds:'1',consent:'true'}))form.set(key,value);
+    if(deferred)form.set('deferTranscription','true');
+    let asset:any,transcriptions=0;
+    class FeatureError extends ApiError{constructor(status:number,message:string,public code:string){super(status,message);}}
+    const query=async(sql:string,args:any[]=[])=>{
+      if(sql.startsWith('select s.state'))return [{state:'active',session_data:{generation:0},turn_data:{}}];
+      if(sql.includes('from interview_sessions'))return [{id:sessionId,state:'active',data:{generation:0,context:{}}}];
+      if(sql.includes('from interview_turns'))return [{id:turnId,data:{}}];
+      if(sql.startsWith('insert into media_assets')){asset={id:args[0],bytes:args[3],metadata:JSON.parse(args[5])};return [];}
+      if(sql.startsWith('select metadata'))return [{metadata:asset.metadata}];
+      return [];
+    };
+    const route=load('apps/web/src/app/api/media/route.ts',{
+      '@/lib/auth':{checkOrigin(){},requireUser:async()=>({id:studentId,role:'student'})},
+      '@/lib/recording-upload':{recordingForm:async()=>({form,files:[]})},
+      '@/lib/db':{query,transaction:async(fn:any)=>fn({query:async(sql:string,args:any[])=>({rows:await query(sql,args)})})},
+      '@/lib/ai':{FeatureError,requireStudent(){},assertPublishedAccess:async()=>{},featureError:(error:any)=>({error:error.message,status:error.status||500})},
+      '@/lib/speech-analysis':{analyzeSpeech:()=>({status:'unmeasured'})},
+      '@/lib/interview-transcription':{transcribeOwnedInterviewRecording:async()=>{transcriptions++;return {transcriptionStatus:'completed'};}},
+      '@/lib/recording-transcription':{withRecordingTranscriptionLock:async(_key:string,work:Function)=>work(),transcriptionResponse:(metadata:any)=>({transcriptionStatus:metadata.transcriptionStatus})},
+    });
+    const response=await route.POST(new Request('http://local/api/media',{method:'POST',body:form})),value=await response.json();
+    assert.equal(response.status,200,JSON.stringify(value));assert.equal(Buffer.compare(asset.bytes,bytes),0);assert.equal(asset.metadata.transcriptionStatus,'pending');
+    assert.equal(transcriptions,deferred?0:1);assert.equal(value.transcriptionStatus,deferred?'pending':'completed');assert.ok(value.media.id);
+  }
+});

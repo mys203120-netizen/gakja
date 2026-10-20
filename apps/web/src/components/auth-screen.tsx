@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
-import { ArrowRight, Eye, EyeOff, LoaderCircle, ChevronLeft, Pause, Play } from 'lucide-react';
-import { Logo, Alert, post } from './shared';
+import { ArrowRight, Eye, EyeOff, LoaderCircle, ChevronLeft } from 'lucide-react';
+import { Logo, Alert, FloatingNotice, post } from './shared';
 import { socialErrors, socialNext, type SocialProvider } from '@/lib/social-auth-rules';
 import socialStyles from './social-auth.module.css';
 import { LoginIntroSheet } from './login-intro-sheet';
@@ -13,8 +13,6 @@ import { LoginIntroSheet } from './login-intro-sheet';
 export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'invite' | 'reset-password' }) {
   const router = useRouter();
   const art = useRef<HTMLDivElement>(null);
-  const logoRotation = useRef<gsap.core.Timeline | null>(null);
-  const logoRotationPaused = useRef(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
@@ -23,7 +21,6 @@ export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'in
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [focused, setFocused] = useState('');
-  const [motionPaused, setMotionPaused] = useState(false);
   const [canSetPassword, setCanSetPassword] = useState(false);
   const [providers, setProviders] = useState({ google: false, kakao: false });
 
@@ -56,26 +53,13 @@ export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'in
     if (mode !== 'login' || !art.current) return;
     const logos = art.current.querySelectorAll('.login-art-logo');
     gsap.set(logos, { rotation: 0, transformOrigin: '50% 50%' });
-    // Keep the explicitly requested sweep visible; the pause control remains available.
-    const rotation = gsap.timeline({ repeat: -1, paused: true });
-    for (let step = 0; step < 4; step += 1) {
-      rotation.to(logos, { rotation: (step + 1) * 90, duration: .42, ease: 'power2.inOut' }, step + .58);
-    }
-    logoRotation.current = rotation;
-    const syncVisibility = () => rotation.paused(document.hidden || logoRotationPaused.current);
-    syncVisibility();
-    document.addEventListener('visibilitychange', syncVisibility);
-    return () => {
-      document.removeEventListener('visibilitychange', syncVisibility);
-      rotation.kill();
-      logoRotation.current = null;
-    };
+    // The mark keeps its clockwise rhythm independently of field focus.
+    const media=gsap.matchMedia();
+    media.add('(prefers-reduced-motion: no-preference)',()=>{
+      gsap.to(logos,{rotation:360,duration:18,repeat:-1,ease:'none'});
+    });
+    return()=>{media.revert();gsap.killTweensOf(logos);};
   }, [mode]);
-
-  useEffect(() => {
-    logoRotationPaused.current = motionPaused || !!focused;
-    logoRotation.current?.paused(document.hidden || logoRotationPaused.current);
-  }, [mode, motionPaused, focused]);
 
   useEffect(() => {
     if (!art.current) return;
@@ -149,11 +133,10 @@ export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'in
       <form className="auth-form" method="post" aria-busy={!ready || busy} onSubmit={submit}>
         <div className="auth-center-mark">
           <div className="auth-logo-attention"><img className="login-art-logo" src="/brand-logo.svg" alt="" width={82} height={82}/><span className="auth-privacy-cue" aria-hidden="true"><EyeOff size={20} strokeWidth={1.6}/></span></div>
-          {mode === 'login' && <button type="button" className="auth-motion-toggle" aria-label={motionPaused ? '로고 모션 재생' : '로고 모션 일시정지'} onClick={()=>setMotionPaused(value=>!value)}>{motionPaused ? <Play size={14}/> : <Pause size={14}/>}</button>}
         </div>
         <div className="auth-center-intro"><h1 id="auth-title" tabIndex={-1} style={{scrollMarginTop:24,outline:'none'}}>{heading}</h1><p className="auth-intro">{intro}</p></div>
         {error && <Alert>{error}</Alert>}
-        {notice && <div className="success-message" role="status">{notice}</div>}
+        {notice && <FloatingNotice onDismiss={()=>setNotice('')}>{notice}</FloatingNotice>}
         {(mode === 'login' || mode === 'signup') && <>
           <div className={socialStyles.buttons}>
             <button type="button" disabled={busy} onClick={()=>socialSignIn('kakao')} className={socialStyles.provider+' '+socialStyles.kakao}><img src="/auth/kakao.svg" alt="" width={24} height={24}/>카카오로 시작</button>

@@ -136,7 +136,7 @@
 .auth-page.auth-centered .auth-form input { border:0; border-radius:var(--soft-control-radius); background:var(--clarity-bg); box-shadow:var(--soft-shadow-inset); }
 .auth-page.auth-centered .auth-form input:focus { border:0; background:var(--clarity-bg); box-shadow:var(--soft-shadow-inset); outline:2px solid var(--clarity-action); outline-offset:3px; }
 .auth-page.auth-centered .password-field button { border-radius:14px; }
-.auth-page.auth-centered .auth-submit { border:0; border-radius:var(--soft-control-radius); background:var(--soft-gradient); color:var(--clarity-on-action); box-shadow:var(--soft-shadow-small); }
+.auth-page.auth-centered .auth-submit { border:0; border-radius:var(--soft-control-radius); background:var(--soft-gradient); color:var(--clarity-on-brand); box-shadow:var(--soft-shadow-small); }
 .auth-page.auth-centered .auth-submit:hover:not(:disabled) { border:0; background:var(--soft-gradient); box-shadow:var(--soft-shadow-raised); }
 .auth-page.auth-centered .auth-submit:active:not(:disabled) { box-shadow:var(--soft-shadow-inset); }
 .auth-page.auth-centered .auth-submit:disabled { border:0; background:var(--clarity-soft); color:var(--clarity-muted); box-shadow:none; }
@@ -146,3 +146,61 @@
 .auth-centered .auth-field-heading { min-width:0; }
 .auth-centered .auth-field-heading a,.auth-page.auth-centered .auth-foot a { text-underline-offset:4px; }
 @media(max-width:767px) { .auth-page.auth-centered .auth-form { padding:0; border-radius:0; background:transparent; box-shadow:none; } }
+
+/* The entry uses the same quiet, airy surface as the learning workspace. */
+body .auth-page.auth-centered { background:var(--clarity-bg); }
+body .auth-centered .auth-entry-decoration { display:none; }
+body .auth-page.auth-centered .auth-form { padding:32px 24px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+body .auth-centered .auth-center-main { padding-top:112px; padding-bottom:36px; }
+body .auth-centered .auth-center-intro { margin-bottom:32px; }
+body .auth-page.auth-centered .auth-form input,
+body .auth-page.auth-centered .auth-form input:is(:hover,:focus,:focus-visible,:active) {
+  border:0 !important; outline:0 !important; border-radius:18px !important;
+  background:var(--clarity-surface) !important; background-color:var(--clarity-surface) !important;
+  color:var(--clarity-ink); box-shadow:none !important; transition:none;
+}
+body .auth-page.auth-centered .auth-form input { height:54px; min-height:54px; margin-top:10px; padding-inline:18px; font-size:16px; }
+body .auth-page.auth-centered .auth-form .password-field,
+body .auth-page.auth-centered .auth-form .password-field:focus-within,
+body .auth-page.auth-centered .auth-form .auth-field,
+body .auth-page.auth-centered .auth-form .auth-field:focus-within {
+  border:0; outline:0; box-shadow:none !important; background:transparent !important;
+}
+body .auth-page.auth-centered .password-field input { padding-right:58px; }
+body .auth-centered .auth-field { margin-bottom:24px; }
+body .auth-page.auth-centered .auth-form button:has(> img) { min-height:54px; height:54px; gap:10px; border:0; border-radius:18px; background:var(--clarity-surface); box-shadow:0 3px 10px rgb(34 13 42 / 4%); }
+body .auth-page.auth-centered .auth-form button:has(> img):hover:not(:disabled) { background:var(--clarity-surface); box-shadow:0 6px 16px rgb(34 13 42 / 8%); }
+body .auth-page.auth-centered .auth-submit { min-height:54px; height:54px; margin-top:8px; border-radius:18px; }
+body .auth-page.auth-centered .auth-foot { margin-top:24px; }
+body .auth-centered .auth-entry-footer { justify-content:center; gap:10px 24px; padding:8px 24px 12px; }
+body .auth-centered .auth-entry-footer>span:first-child { display:none; }
+@media(max-width:767px) {
+  body .auth-page.auth-centered .auth-form { padding:0; }
+  body .auth-centered .auth-center-main { padding:104px 24px 24px; }
+  body .auth-centered .auth-center-mark { margin-bottom:24px; }
+  body .auth-centered .auth-entry-footer { gap:8px 20px; }
+}
+@media(forced-colors:active) {
+  body .auth-page.auth-centered .auth-form input:focus-visible { outline:2px solid Highlight !important; outline-offset:3px; }
+}
+
+/* Separate translate motion leaves the mark's clockwise transform untouched. */
+@media(prefers-reduced-motion:no-preference) {
+  body .auth-page.auth-centered .auth-logo-attention { animation:auth-float-mark 8s ease-in-out infinite; }
+  body .auth-page.auth-centered .auth-center-intro { animation:auth-float-copy 11s ease-in-out infinite; }
+  body .auth-page.auth-centered .auth-entry-brand { animation:auth-float-brand 13s ease-in-out infinite; }
+  body .auth-page.auth-centered .auth-form>div>button:has(>img) { animation:auth-float-brand 12s ease-in-out infinite; }
+  body .auth-page.auth-centered .auth-form>div>button:has(>img):nth-child(2) { animation:auth-float-copy 15s ease-in-out -4s infinite; }
+  body .auth-page.auth-centered .auth-field { animation:auth-float-field 14s ease-in-out -2s infinite; }
+  body .auth-page.auth-centered .auth-field:has(#auth-password) { animation:auth-float-copy 16s ease-in-out -6s infinite; }
+  body .auth-page.auth-centered .auth-field:focus-within { animation-play-state:paused; }
+  body .auth-page.auth-centered .auth-submit { animation:auth-float-field 17s ease-in-out -8s infinite; }
+  body .auth-page.auth-centered .auth-foot { animation:auth-float-brand 19s ease-in-out -3s infinite; }
+}
+@keyframes auth-float-mark { 0%,100%{translate:0 0} 35%{translate:2px -3px} 70%{translate:-1px 1px} }
+@keyframes auth-float-copy { 0%,100%{translate:0 0} 45%{translate:-1px -1px} 75%{translate:1px 0} }
+@keyframes auth-float-brand { 0%,100%{translate:0 0} 40%{translate:1px 1px} 75%{translate:-1px 0} }
+@keyframes auth-float-field { 0%,100%{translate:0 0} 40%{translate:-1px 1px} 75%{translate:1px -1px} }
+@media(prefers-reduced-motion:reduce) {
+  body .auth-page.auth-centered :is(.auth-logo-attention,.auth-center-intro,.auth-entry-brand) { animation:none; translate:none; }
+}

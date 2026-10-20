@@ -128,3 +128,113 @@
  .resume>a { min-height:44px; flex-shrink:0; margin-left:auto; gap:6px; font-size:13px; }
  .openPaths { border:0; }
 }
+
+@media(max-width:700px) { .studentShell :global(.mobile-nav) { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+/* A fixed chrome geometry prevents the school header and dock from shifting
+   while each page loads its own content. */
+.collapsibleShell:global(.app-shell) :global(.sidebar) { background:var(--clarity-surface); border-right:1px solid var(--clarity-line); }
+.collapseToggle { position:fixed; z-index:2100; top:30px; left:calc(var(--sidebar-width) - 12px); right:auto; width:24px; height:24px; border:1px solid var(--clarity-line); border-radius:50%; background:#fff; color:var(--clarity-muted); box-shadow:none; transition:left 200ms ease; }
+.collapseToggle:hover { background:var(--clarity-soft); box-shadow:none; }
+.collapsibleShell :global(.sidebar-selection) { background:var(--clarity-mint); box-shadow:none; }
+.collapsibleShell:global(.app-shell) :global(.main-nav)>a:global(.active),.collapsibleShell:global(.app-shell) :global(.main-nav)>a[aria-current=page] { color:var(--soft-accent-ink); background:var(--clarity-mint); box-shadow:none; }
+.collapsibleShell:global(.app-shell) :global(.topbar) { position:sticky; top:0; z-index:80; height:72px; min-height:72px; padding-block:0; background:var(--clarity-surface); border-bottom:1px solid var(--clarity-line); isolation:isolate; }
+.collapsibleShell:global(.app-shell) :global(.topbar-context) { min-width:0; flex:1; gap:10px; }
+.collapsibleShell:global(.app-shell) :global(.topbar-actions) { flex-shrink:0; gap:4px; }
+.collapsibleShell:global(.app-shell) :global(.topbar .icon-button) { background:transparent; box-shadow:none; border-radius:10px; }
+.collapsibleShell:global(.app-shell) :global(.topbar .icon-button:hover) { background:var(--clarity-soft); }
+.collapsibleShell:global(.app-shell) :global(.main-content) { overflow-anchor:none; }
+.targetSwitcher { position:relative; width:min(440px,100%); min-width:0; }
+.targetPending { display:flex; flex-direction:column; justify-content:center; gap:6px; width:180px; max-width:100%; height:48px; flex-shrink:1; }
+.targetPending>span { display:block; width:120px; max-width:85%; height:12px; border-radius:4px; background:var(--clarity-soft); }
+.targetPending>span:last-child { width:80px; height:9px; }
+.unregisteredBrand { display:none; align-items:center; gap:7px; min-width:0; min-height:44px; text-decoration:none; }
+.unregisteredBrand :global(.service-wordmark) { display:flex; align-items:center; gap:4px; color:var(--clarity-ink); font-size:20px; font-weight:750; letter-spacing:-.05em; }
+.unregisteredBrand :global(.brand-on-image) { width:39px; height:23px; }
+.collapsibleShell:global(.app-shell) :global(nav.mobile-nav[data-ready=false]) { visibility:hidden; }
+.targetTrigger { display:flex; align-items:center; gap:14px; max-width:100%; min-height:48px; padding:6px 10px; margin-left:-10px; border:0; border-radius:10px; background:transparent; text-align:left; }
+.targetTrigger:hover,.targetTrigger[aria-expanded=true] { background:var(--clarity-soft); }
+.targetTrigger:focus-visible { outline:2px solid var(--clarity-green); outline-offset:2px; }
+.targetTrigger :global(.target-copy) { display:flex; flex-direction:column; min-width:0; gap:0; }
+.targetTrigger :global(.target-copy strong) { display:block; overflow:hidden; color:var(--clarity-ink); font-size:14px; font-weight:650; line-height:1.5; white-space:nowrap; text-overflow:ellipsis; }
+.targetTrigger :global(.target-copy small) { display:block; overflow:hidden; color:var(--clarity-muted); font-size:12px; line-height:1.5; white-space:nowrap; text-overflow:ellipsis; }
+.targetTrigger>svg { color:var(--clarity-muted); transition:transform 140ms ease; }
+.targetTrigger[aria-expanded=true]>svg { transform:rotate(180deg); }
+.targetMenu { position:absolute; z-index:90; top:calc(100% + 8px); left:-10px; width:340px; max-width:calc(100vw - 32px); max-height:min(430px,calc(100dvh - 110px)); padding:8px; overflow:auto; overscroll-behavior:contain; border:1px solid var(--clarity-line); border-radius:16px; background:var(--clarity-surface); box-shadow:0 12px 32px rgb(28 38 48 / 12%); }
+.targetMenu>p { padding:8px 10px; color:var(--clarity-muted); font-size:11px; font-weight:550; line-height:1.5; }
+.targetMenu>button { display:flex; align-items:center; gap:12px; width:100%; min-height:64px; padding:10px; border:0; border-radius:10px; background:transparent; text-align:left; }
+.targetMenu>button:hover,.targetMenu>button:focus-visible { background:var(--clarity-soft); outline:none; }
+.targetMenu>button[aria-checked=true] { background:var(--clarity-mint); }
+.targetMenu>button>span { display:grid; flex:1; min-width:0; gap:2px; }
+.targetMenu strong { font-size:14px; font-weight:600; line-height:1.5; overflow-wrap:anywhere; }
+.targetMenu small { color:var(--clarity-muted); font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+.targetMenu>button>svg { color:var(--clarity-green); }
+.targetMenu>a { display:flex; justify-content:space-between; align-items:center; min-height:44px; margin-top:6px; padding:10px; border-top:1px solid var(--clarity-line); color:var(--clarity-muted); font-size:12px; }
+.targetMenu>a:hover { color:var(--clarity-ink); }
+.targetMenu>a:focus-visible { outline:2px solid var(--clarity-green); outline-offset:-2px; border-radius:8px; }
+.sectionNavigation { border-bottom:1px solid var(--clarity-line); border-radius:0; gap:18px; padding:0; }
+.sectionNavigation>a { border-radius:0; padding-inline:2px; border-bottom:2px solid transparent; }
+.sectionNavigation>a[aria-current=page] { border-bottom:2px solid var(--clarity-green); background:transparent; color:var(--clarity-ink); box-shadow:none; }
+
+@media(max-width:700px) {
+ .collapsibleShell:global(.app-shell) :global(.topbar) { height:64px; min-height:64px; padding:0 16px; gap:8px; }
+ .collapsibleShell:global(.app-shell) :global(.topbar-context) { flex:1; min-width:0; }
+ .collapsibleShell:global(.app-shell) :global(.topbar-actions) { gap:0; }
+ .collapsibleShell:global(.app-shell) :global(.topbar .icon-button),.collapsibleShell:global(.app-shell) :global(.topbar .account-trigger.compact) { width:40px; height:44px; min-width:40px; min-height:44px; }
+ .targetSwitcher { width:100%; }
+ .targetTrigger { width:100%; gap:6px; min-height:48px; padding-inline:6px; margin-left:-6px; }
+ .targetTrigger :global(.target-copy) { flex:1; }
+ .targetTrigger :global(.target-copy strong) { font-size:14px; }
+ .targetTrigger :global(.target-copy small) { font-size:11px; }
+ .targetMenu { left:0; width:320px; max-width:calc(100vw - 32px); }
+ .collapsibleShell:global(.app-shell) :global(.main-content) { padding:24px 20px calc(92px + env(safe-area-inset-bottom,0px)); min-height:calc(100dvh - 64px); }
+ .collapsibleShell:global(.app-shell) :global(nav.mobile-nav) { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); position:fixed; z-index:85; inset:auto 0 calc(12px + env(safe-area-inset-bottom,0px)); width:204px; max-width:calc(100vw - 32px); height:56px; min-height:56px; margin:0 auto; padding:5px; gap:4px; border:1px solid var(--clarity-line); border-radius:20px; background:#fff; backdrop-filter:none; box-shadow:0 4px 18px rgb(28 38 48 / 10%); transform:none; transition:none; }
+ .collapsibleShell:global(.app-shell) :global(nav.mobile-nav)>:is(a,button) { display:flex; flex-direction:row; justify-content:center; align-items:center; width:100%; height:44px; min-height:44px; gap:0; padding:0; border:0; border-radius:14px; background:transparent; color:var(--clarity-muted); box-shadow:none; }
+ .collapsibleShell:global(.app-shell) :global(nav.mobile-nav)>:is(a[aria-current=page],button[data-active=true]) { color:var(--soft-accent-ink); background:var(--clarity-mint); box-shadow:none; }
+ .collapsibleShell:global(.app-shell) :global(nav.mobile-nav)>a>svg { width:21px; height:21px; color:inherit; background:transparent; outline:0; }
+ .collapsibleShell:global(.app-shell) :global(nav.mobile-nav .brand img) { width:23px; height:23px; }
+ .collapsibleShell:global(.app-shell) :global(nav.mobile-nav)>a:focus-visible { outline:2px solid var(--clarity-green); outline-offset:2px; }
+ .collapsibleShell:global(.admin-shell) :global(nav.mobile-nav) { grid-template-columns:repeat(5,minmax(0,1fr)); width:292px; }
+ .collapsibleShell:global(.admin-shell) :global(nav.mobile-nav)>button>span { display:none; }
+ .collapseToggle { display:none; }
+}
+
+@media(prefers-reduced-motion:reduce) { .collapseToggle { transition:none; } }
+
+@media(max-width:700px) { .unregisteredBrand { display:flex; } }
+
+/* Keep the icon column anchored while labels fold into the rail. */
+.collapsibleShell:global(.app-shell) :global(.sidebar) { transition:width 340ms cubic-bezier(.22,1,.36,1); }
+.collapsibleShell:global(.app-shell) :global(.app-body) { transition:margin-left 340ms cubic-bezier(.22,1,.36,1); }
+.collapseToggle { transition:left 340ms cubic-bezier(.22,1,.36,1),scale 180ms ease; }
+.collapseToggle>svg { transition:rotate 340ms cubic-bezier(.22,1,.36,1); }
+.collapsibleShell[data-sidebar-collapsed=true] .collapseToggle>svg { rotate:180deg; }
+.collapsibleShell:global(.app-shell)[data-sidebar-collapsed=true] :global(.sidebar .sidebar-navigation .main-nav)>a,
+.collapsibleShell:global(.app-shell) :global(.sidebar .sidebar-navigation .main-nav)>.lockedNavigationItem {
+  display:flex; align-items:center; justify-content:flex-start; width:100%; min-height:46px; height:46px; margin-inline:0; padding:10px 12px; gap:10px;
+}
+.collapsibleShell:global(.app-shell) :global(.sidebar .sidebar-navigation .main-nav)>:is(a,button)>.navigationLabel {
+  min-width:0; overflow:hidden; white-space:nowrap; transition:max-width 280ms cubic-bezier(.22,1,.36,1),opacity 180ms ease,translate 280ms cubic-bezier(.22,1,.36,1);
+}
+.collapsibleShell[data-sidebar-collapsed=true] :global(.main-nav)>:is(a,button)>.navigationLabel { max-width:0; opacity:0; translate:-6px 0; }
+.lockedNavigationItem { position:relative; cursor:default; opacity:.68; }
+.collapsibleShell:global(.app-shell) :global(.main-nav)>a.lockedNavigationItem,
+.collapsibleShell:global(.app-shell) :global(.main-nav)>a.lockedNavigationItem:hover { color:var(--clarity-muted); background:transparent; border:0; box-shadow:none; }
+.lockedNavigationItem>svg:first-child { width:20px; height:20px; flex:0 0 20px; }
+.lockedNavigationItem .navigationLabel { flex:1; text-overflow:ellipsis; }
+.navigationLock { flex-shrink:0; margin-left:auto; color:#969da3; }
+.collapsibleShell[data-sidebar-collapsed=true] .navigationLock { position:absolute; width:9px; height:9px; right:4px; bottom:6px; padding:1px; box-sizing:content-box; border-radius:3px; background:var(--clarity-surface); }
+@media(max-width:700px) { .collapsibleShell:global(.app-shell) :global(.app-body) { transition:none; } }
+@media(max-width:700px) { .studentShell[data-school-setup=true] :global(.main-content) { padding-bottom:calc(24px + env(safe-area-inset-bottom,0px)); } }
+@media(max-width:700px) {
+ .collapsibleShell:global(.app-shell) :global(nav.mobile-nav) { opacity:0; translate:0 10px; pointer-events:none; will-change:opacity,translate; transition:opacity 800ms cubic-bezier(.22,1,.36,1),translate 800ms cubic-bezier(.22,1,.36,1); }
+ .collapsibleShell:global(.app-shell) :global(nav.mobile-nav[data-scroll-active=true]),
+ .collapsibleShell:global(.app-shell) :global(nav.mobile-nav:has(:focus-visible)) { opacity:1; translate:0 0; pointer-events:auto; transition-duration:420ms,550ms; }
+ .collapsibleShell:global(.app-shell) :global(.topbar) { width:100%; max-width:100%; }
+ .collapsibleShell:global(.app-shell) :global(.main-content) { padding-inline:20px; min-width:0; width:100%; }
+}
+/* A fade carries no spatial movement; keep it even under the global motion reset. */
+@media(prefers-reduced-motion:reduce) { .collapsibleShell:global(.app-shell) :global(nav.mobile-nav) { translate:0 0; transition:opacity 500ms ease!important; } }
+@media(prefers-reduced-motion:reduce) {
+  .collapsibleShell:global(.app-shell) :global(.sidebar),.collapsibleShell:global(.app-shell) :global(.app-body),.collapseToggle,.collapseToggle>svg,.collapsibleShell:global(.app-shell) :global(.sidebar .sidebar-navigation .main-nav)>:is(a,button)>.navigationLabel { transition:none; }
+}

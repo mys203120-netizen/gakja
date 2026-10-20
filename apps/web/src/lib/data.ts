@@ -2,6 +2,8 @@ import 'server-only';
 import { ApiError, query } from './db';
 import type { Profile } from './auth';
 import { enrichSchoolTarget } from './school-directory';
+import {adminTrainingSummary} from './admin-training';
+import {koreaToday} from './planner-model';
 
 export const emptyLearning = { activities: [], questions: [], memory_items: [], source_refs: [], answer_scripts: [], support_targets: [], student_context: { core_keywords: [], representative_activity_ids: [], confirmed_goals: [] } };
 export async function getLearning(studentId: string, version?: number) {
@@ -18,7 +20,8 @@ export async function getAdminData(user: Profile) {
   const params = user.role === 'admin' ? [] : [user.id];
   const students = await query(`select p.id,p.email,p.name,p.role,p.active,p.created_at,c.id as package_id,c.active_version from profiles p left join content_packages c on c.student_id=p.id where p.role='student'${guard} order by p.name`, params);
   const ids = students.map((s) => s.id);
-  const [imports, confirmations, assignments, targets, productionLinks, audit, staff, usageLogs, briefings, knowledge, notifications, answers] = await Promise.all([
+  const today=koreaToday();
+  const [imports, confirmations, assignments, targets, productionLinks, audit, staff, usageLogs, briefings, knowledge, notifications, answers,trainingPreferences,trainingPlans,trainingSessions] = await Promise.all([
     query('select v.*,p.student_id,u.name as student_name from content_versions v join content_packages p on p.id=v.package_id join profiles u on u.id=p.student_id where p.student_id=any($1::uuid[]) order by v.created_at desc', [ids]),
     query('select c.*,p.name as student_name from student_confirmations c join profiles p on p.id=c.student_id where student_id=any($1::uuid[]) order by c.created_at desc', [ids]),
     query('select a.*,p.name as staff_name from staff_assignments a join profiles p on p.id=a.staff_id where student_id=any($1::uuid[])', [ids]),
@@ -33,9 +36,22 @@ export async function getAdminData(user: Profile) {
     query('select * from knowledge_releases order by created_at desc'),
     query('select n.*,p.name as student_name from notifications n join profiles p on p.id=n.student_id where n.student_id=any($1::uuid[]) order by n.created_at desc limit 100', [ids]),
     query('select a.*,p.name as student_name from user_answers a join profiles p on p.id=a.student_id where a.student_id=any($1::uuid[]) order by a.updated_at desc limit 100', [ids]),
+    query("select student_id,jsonb_build_object('trainingAvailability',data->'trainingAvailability','trainingDiagnostics',data->'trainingDiagnostics') as data from student_preferences where student_id=any($1::uuid[])",[ids]),
+    query("select id,student_id,completed,target,to_char(planned_date,'YYYY-MM-DD') as date from student_plans where student_id=any($1::uuid[]) and planned_date=$2::date",[ids,today]),
+    query(`select s.id,s.student_id,s.target_id,s.content_version,s.state,s.data->'context'->'target' as target_snapshot,
+      s.data->'context'->>'sourceKind' as source_kind,s.data->>'trainingPurpose' as purpose,s.data->>'trainingPlanId' as training_plan_id,
+      count(t.id) filter(where nullif(t.data->>'answer','') is not null and coalesce(t.data->>'invalidated','false')<>'true')::int as answers,
+      count(t.id) filter(where nullif(t.data->>'answer','') is not null and coalesce(t.data->>'invalidated','false')<>'true' and t.data->>'submissionSource'='text')::int as text_answers,
+      count(t.id) filter(where nullif(t.data->>'answer','') is not null and coalesce(t.data->>'invalidated','false')<>'true' and t.data->>'submissionSource'='recording')::int as audio_answers,
+      max(t.created_at) filter(where nullif(t.data->>'answer','') is not null and coalesce(t.data->>'invalidated','false')<>'true') as last_answer_at
+      from interview_sessions s left join interview_turns t on t.session_id=s.id and t.student_id=s.student_id
+      where s.student_id=any($1::uuid[]) and s.state in ('active','completed') group by s.id`,[ids]),
   ]);
   const totals = usageLogs.reduce((acc, row) => ({ requests: acc.requests + 1, input_tokens: acc.input_tokens + row.input_tokens, output_tokens: acc.output_tokens + row.output_tokens }), { requests: 0, input_tokens: 0, output_tokens: 0 });
-  return { students, imports, confirmations, assignments, targets: targets.map((r) => ({ id: r.id, student_id: r.student_id, ...r.data })), productionLinks, audit, staff, usage: { totals, logs: usageLogs }, briefings, knowledge, notifications, answers };
+  const presentedTargets=targets.map((r)=>({...r.data,id:r.id,student_id:r.student_id}));
+  const training=students.map(student=>({studentId:student.id,...adminTrainingSummary({studentId:student.id,activeVersion:student.active_version,targets:presentedTargets,
+    preferences:trainingPreferences.find(row=>row.student_id===student.id)?.data,plans:trainingPlans,sessions:trainingSessions,today})}));
+  return { students, imports, confirmations, assignments, targets: presentedTargets, training, productionLinks, audit, staff, usage: { totals, logs: usageLogs }, briefings, knowledge, notifications, answers };
 }
 export async function bootstrap(user: Profile) {
   if (user.role !== 'student') return { user, targets: [], package: null, documents: [], learning: emptyLearning, answers: [], memoryAttempts: [], memoryHistory: [], threads: [], interviews: [], reports: [], confirmations: [], notifications: [], admin: await getAdminData(user) };
@@ -60,6 +76,7 @@ export async function bootstrap(user: Profile) {
           'common_revision',current_question->'common_revision','source_type',current_question->'source_type',
           'source_kind',current_question->'source_kind','sourceKind',current_question->'sourceKind') else null end,
         'experienceCard',case when data->'experienceCard'->>'id' is not null then jsonb_build_object('id',data->'experienceCard'->'id') else null end,
+        'trainingPurpose',data->'trainingPurpose','trainingPlanId',data->'trainingPlanId',
         'targetName',data->'targetName'
       ) as data
       from interview_sessions cross join lateral (select jsonb_extract_path(data,'questionQueue',coalesce(nullif(data->>'index',''),'0')) as current_question) as overview

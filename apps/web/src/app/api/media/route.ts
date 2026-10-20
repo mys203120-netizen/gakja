@@ -136,7 +136,9 @@ export async function POST(request: Request) {
     return {id,mime,metadata};
     });
     let result:Record<string,any>=transcriptionResponse(stored.metadata);
-    if(audioBytes) {
+    // An explicit exit after capture trouble stores immutable bytes without
+    // making speech recognition a prerequisite for leaving the room.
+    if(audioBytes&&form.get('deferTranscription')!=='true') {
       try {result=await transcribeOwnedInterviewRecording(user.id,stored.id);}
       catch(error) {
         const [saved]=await query('select text,metadata from media_assets where id=$1 and student_id=$2',[stored.id,user.id]);

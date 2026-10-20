@@ -1,0 +1,89 @@
+.calendar { scroll-margin-top:100px; min-width:0; margin:32px 0; padding:24px; background:var(--clarity-surface); border:1px solid var(--clarity-line); border-radius:16px; }
+.calendar :global(.dashboard-planner) { border:0; padding:0; margin:0; scroll-margin-top:100px; }
+.calendar :global(.dashboard-calendar-panel) :global(.section-heading) { margin:0 0 8px; gap:12px; }
+.calendar :global(.dashboard-calendar-panel) :global(.section-heading h2) { font-size:17px; font-weight:600; letter-spacing:-.025em; }
+.calendar :global(.calendar-training-note) { display:flex; flex-wrap:wrap; gap:4px 12px; color:var(--clarity-muted); font-size:12px; line-height:1.7; margin:0 0 16px; }
+.calendar :global(.calendar-training-note a) { display:inline-flex; align-items:center; gap:4px; color:var(--clarity-green); white-space:nowrap; }
+.calendar :global(.planner-calendar-layout) { grid-template-columns:minmax(0,1.4fr) minmax(230px,1fr); gap:28px; }
+.calendar :global(.planner-month),.calendar :global(.month-calendar) { max-width:none; min-width:0; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-heading) { margin:8px 0 10px; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-heading strong) { font-size:15px; font-weight:550; }
+.calendar :global(.calendar-school-key) { gap:5px 9px; padding-bottom:8px; }
+.calendar :global(.calendar-school-key)>span { font-size:11px; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-days) { gap:2px; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button) { min-height:66px; padding:4px; border-radius:7px; background:transparent; box-shadow:none; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button:hover) { background:var(--clarity-soft); }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button:hover>span) { box-shadow:none; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button.selected) { background:var(--clarity-soft); }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button:focus-visible) { outline:2px solid var(--clarity-green); outline-offset:-2px; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button>.calendar-date-number) { color:var(--clarity-ink); font-size:12px; background:transparent; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button.today>.calendar-date-number) { color:var(--clarity-ink); background:var(--clarity-brand); }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-task-item) { color:var(--clarity-muted); background:var(--clarity-soft); font-size:10px; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-events) { padding-bottom:10px; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-event) { padding:13px 0; border:0; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-event+.calendar-event) { border-top:1px solid var(--clarity-line); }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-event>div>a) { font-size:13px; }
+.calendar :global(.plan-training-state) { display:flex; flex-shrink:0; align-items:center; justify-content:center; width:20px; min-height:24px; color:var(--clarity-muted); }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-upcoming) { margin-top:16px; padding-top:16px; border-top:1px solid var(--clarity-line); }
+.calendar :global(.dashboard-calendar-panel) :global(.week-plan-disclosure) { margin:14px 0 0; padding:0; border:0; }
+.calendar :global(.calendar-legend) { margin:5px 0 0; }
+.calendar :global(.calendar-day-summary) { display:flex; flex-direction:column; align-items:flex-start; gap:2px; min-width:0; padding:3px 2px; line-height:1.4; }
+.calendar :global(.calendar-day-summary strong) { color:var(--clarity-ink); font-size:11px; font-weight:600; }
+.calendar :global(.calendar-day-summary small),.calendar :global(.calendar-more-events) { color:var(--clarity-muted); font-size:10px; font-weight:400; white-space:nowrap; }
+.calendar :global(.calendar-hybrid-items) { display:flex; flex-direction:column; gap:3px; overflow:hidden; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button>.calendar-hybrid-items) { height:auto; min-height:0; max-height:none; }
+.calendar :global(.calendar-days>button.outside) { opacity:.4; }
+.calendar :global(.calendar-hybrid-items .calendar-interview-item) { padding:3px 4px; }
+.calendar :global(.calendar-hybrid-items .calendar-chip-track),.calendar :global(.calendar-hybrid-items .calendar-chip-time) { display:none; }
+.calendar :global(.calendar-hybrid-items .calendar-chip-name) { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; }
+.calendar :global(.calendar-hybrid-items .calendar-chip-school) { min-width:0; }
+.calendar :global(.calendar-hybrid-items .school-logo) { display:none; }
+.calendar :global(.calendar-event) { gap:12px; align-items:center; }
+.calendar :global(.calendar-event>svg),.calendar :global(.calendar-event>.school-logo) { flex-shrink:0; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-event.calendar-training-event) { padding:10px 0; gap:10px; align-items:flex-start; }
+.calendar :global(.calendar-training-event .plan-training-state) { min-height:24px; }
+.calendar :global(.calendar-plan-title) { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; min-width:0; font-size:12px; line-height:1.6; }
+.calendar :global(.calendar-plan-question>summary) { display:flex; align-items:center; gap:8px; list-style:none; cursor:pointer; }
+.calendar :global(.calendar-plan-question>summary::-webkit-details-marker) { display:none; }
+.calendar :global(.calendar-plan-question>summary>svg) { flex-shrink:0; color:var(--clarity-muted); }
+.calendar :global(.calendar-plan-question>p) { margin:10px 0 0; color:var(--clarity-muted); font-size:12px; line-height:1.7; }
+.calendar :global(.calendar-training-event .plan-training-meta) { display:flex; align-items:center; gap:12px; margin-top:5px; }
+.calendar :global(.dashboard-calendar-panel) :global(.calendar-training-event .plan-training-meta small) { font-size:11px; line-height:1.4; }
+.calendar :global(.calendar-training-event .plan-training-meta [data-state=완료]) { color:var(--clarity-green); }
+.calendar :global(.hybrid-week-plan>button) { align-items:center; gap:18px; padding-block:15px; }
+.calendar :global(.hybrid-week-plan>button>div) { flex:1; gap:9px; }
+.calendar :global(.calendar-week-category) { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px 14px; }
+.calendar :global(.calendar-week-category strong) { font-size:12px; font-weight:500; }
+.calendar :global(.calendar-week-category small) { color:var(--clarity-muted); font-size:11px; white-space:nowrap; }
+.error { display:grid; gap:8px; margin-top:16px; justify-items:start; }
+@media(max-width:900px) { .calendar :global(.planner-calendar-layout) { grid-template-columns:minmax(0,1fr); gap:18px; } }
+@media(max-width:700px) {
+ .calendar { margin:36px 0; padding:20px 10px; border:0; border-radius:16px; background:var(--clarity-surface); }
+ .calendar :global(.dashboard-calendar-panel)>:global(.section-heading),
+ .calendar :global(.calendar-training-note),
+ .calendar :global(.dashboard-calendar-panel)>:global(.calendar-status),
+ .calendar :global(.calendar-coverage-statuses),
+ .calendar :global(.planner-month)>:global(.calendar-heading),
+ .calendar :global(.calendar-school-key),
+ .calendar :global(.calendar-legend),
+ .calendar :global(.planner-day-agenda),
+ .calendar :global(.dashboard-calendar-panel)>:global(.week-plan-disclosure),
+ .error { margin-inline:0; }
+ .calendar :global(.dashboard-calendar-panel)>:global(.section-heading),.calendar :global(.calendar-training-note),.calendar :global(.dashboard-calendar-panel)>:global(.calendar-status),.calendar :global(.calendar-coverage-statuses),.calendar :global(.planner-month)>:global(.calendar-heading),.calendar :global(.calendar-school-key),.calendar :global(.calendar-legend),.calendar :global(.planner-day-agenda),.calendar :global(.dashboard-calendar-panel)>:global(.week-plan-disclosure) { margin-inline:2px; }
+ .calendar :global(.planner-selected-day) { scroll-margin-top:80px; }
+ .calendar :global(.dashboard-calendar-panel) :global(.section-heading h2) { font-size:16px; }
+ .calendar :global(.dashboard-calendar-panel) :global(.month-calendar) { margin-inline:0; }
+ .calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button) { min-height:78px; padding:4px 2px; }
+ .calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button>.calendar-date-number) { width:23px; min-width:23px; height:23px; font-size:11px; }
+ .calendar :global(.dashboard-calendar-panel) :global(.calendar-days>button>.calendar-hybrid-items) { display:flex; align-items:stretch; height:auto; min-height:35px; max-height:none; gap:3px; }
+ .calendar :global(.calendar-day-summary) { padding:2px 1px; gap:2px; }
+ .calendar :global(.calendar-day-summary strong) { font-size:10px; }
+ .calendar :global(.calendar-day-summary small),.calendar :global(.calendar-more-events) { font-size:9px; }
+ .calendar :global(.calendar-hybrid-items .calendar-interview-item) { min-height:15px; padding:2px; border-radius:4px; }
+ .calendar :global(.dashboard-calendar-panel) :global(.calendar-day-item) { font-size:10px; padding:3px 2px; }
+ .calendar :global(.calendar-chip-time),.calendar :global(.calendar-chip-track) { display:none; }
+ .calendar :global(.calendar-hybrid-items .calendar-chip-name) { font-size:9px; }
+ .calendar :global(.calendar-chip-school) { gap:2px; }
+ .calendar :global(.calendar-chip-school .school-logo) { display:none; }
+ .calendar :global(.dashboard-calendar-panel) :global(.calendar-weekdays>span) { padding-left:5px; font-size:11px; }
+}

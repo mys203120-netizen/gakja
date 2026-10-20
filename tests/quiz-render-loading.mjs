@@ -6,6 +6,7 @@ import { tsImport } from 'tsx/esm/api';
 const {growthContextKey}=await tsImport('../apps/web/src/lib/learning-growth.ts',import.meta.url);
 import {learningTargetIdentityMatches} from '../packages/content-contracts/src/workflows.ts';
 import * as quizView from '../apps/web/src/lib/quiz-session-view.ts';
+import {sendOnEnter} from '../apps/web/src/lib/client/enter-send.ts';
 
 // Render the actual component through lightweight hook/JSX adapters. A populated
 // question library matters: the loading regression previously crashed inside find().
@@ -31,6 +32,8 @@ const actionButton = ({pending=false,pendingLabel,disabled,children,type='button
 vm.runInNewContext(output, {
   module, exports: module.exports, URLSearchParams,
   require(name) {
+    if(name==='@/lib/client/draft-save')return {registerDraftSaver:()=>()=>{}};
+    if(name==='@/lib/client/enter-send')return {sendOnEnter};
     if (name === 'react') return {
       useState(initial) { const index = state.hook++; return [index < state.values.length ? state.values[index] : typeof initial === 'function' ? initial() : initial, value => state.writes.push({index,value})]; },
       useRef: value => {const ref={current:value};state.refs.push(ref);return ref;}, useEffect: () => {}, useCallback: callback => callback,
@@ -55,6 +58,7 @@ vm.runInNewContext(output, {
     if (name === './audio-level-dot') return { AudioLevelDot: 'AudioLevelDot' };
     if (name === './playful-flow') return { animateStudyReceipt: () => { throw new Error('Render must not play a completion animation'); } };
     if (name === '@/lib/client/speech-recorder') return { startSpeechCapture: () => { throw new Error('Render must not start microphone capture'); } };
+    if (name === '@/lib/client/realtime-transcription') return {connectLiveTranscription:()=>{throw Error('Render must not start live transcription');}};
     if (name === '@/lib/recording-upload-client') return { uploadRecording: () => { state.calls++; throw new Error('Render must not upload recordings'); } };
     throw new Error(`Unexpected import: ${name}`);
   },

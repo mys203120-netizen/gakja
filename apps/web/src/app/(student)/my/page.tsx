@@ -1,2 +1,2 @@
-import { Dashboard } from '@/components/dashboard';
-export default function Page() { return <Dashboard/>; }
+import { TodayTraining } from '@/components/training-hub';
+export default function Page() { return <TodayTraining/>; }

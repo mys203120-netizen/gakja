@@ -1,6 +1,7 @@
 import {Check, CircleAlert, LoaderCircle, Mic, Pause, Volume2} from 'lucide-react';
 import {Interviewer} from './interviewer-character';
 import styles from './live-interview-session.module.css';
+import type {InterviewerAvatarSignal} from '@/lib/client/interviewer-avatar';
 
 export type LiveInterviewPhase='idle'|'preparing'|'speaking'|'listening'|'saving'|'paused'|'recovering'|'complete'|'error';
 export type LivePanelist={id:string;name:string;gender?:string};
@@ -14,6 +15,7 @@ export type LiveInterviewerStageProps={
   questionKind?:string;
   statusText?:string;
   answerSeconds?:number;
+  avatarSignal?:InterviewerAvatarSignal;
 };
 
 const phaseCopy:Record<LiveInterviewPhase,{label:string;hint:string}>={
@@ -30,7 +32,7 @@ const phaseCopy:Record<LiveInterviewPhase,{label:string;hint:string}>={
 const fallback:LivePanelist[]=[{id:'A',name:'면접관 A',gender:'female'}];
 
 /** Presentation only: device access, speech and recording stay in the session controller. */
-export function LiveInterviewerStage({people,speakerId,phase,question,questionNumber,questionCount,questionKind,statusText,answerSeconds}:LiveInterviewerStageProps){
+export function LiveInterviewerStage({people,speakerId,phase,question,questionNumber,questionCount,questionKind,statusText,answerSeconds,avatarSignal}:LiveInterviewerStageProps){
   const panelists=people.length?people:fallback;
   const current=panelists.find(person=>person.id===speakerId)||panelists[0];
   const others=panelists.filter(person=>person.id!==current.id);
@@ -42,12 +44,12 @@ export function LiveInterviewerStage({people,speakerId,phase,question,questionNu
     <div className={styles.stageScene}>
       <div className={styles.stageTopline}><span className={styles.liveBadge}><span aria-hidden="true"/>Live 면접</span><span>{panelists.length}명의 면접관</span></div>
       <div className={styles.portraitStack} aria-hidden="true">
-        {panelists.map(person=><div key={person.id} className={styles.portrait} data-current={person.id===current.id}>
-          <Interviewer person={person} compact speaking={person.id===current.id&&phase==='speaking'} listening={person.id===current.id&&phase==='listening'} pending={busy}/>
+        {panelists.map((person,index)=><div key={person.id} className={styles.portrait} data-current={person.id===current.id}>
+          <Interviewer person={person} portraitIndex={index} avatarSignal={person.id===current.id?avatarSignal:undefined} compact speaking={person.id===current.id&&phase==='speaking'} listening={person.id===current.id&&phase==='listening'} pending={busy}/>
         </div>)}
       </div>
       <div className={styles.speakerIdentity}><strong>{current.name}</strong><span>{phase==='speaking'?'질문하고 있어요':phase==='listening'?'답변을 듣고 있어요':'함께 면접을 진행해요'}</span></div>
-      {others.length>0&&<ul className={styles.otherPanelists} aria-label="함께하는 면접관">{others.map(person=><li key={person.id}><div aria-hidden="true"><Interviewer person={person} compact/></div><span>{person.name}</span></li>)}</ul>}
+      {others.length>0&&<ul className={styles.otherPanelists} aria-label="함께하는 면접관">{others.map(person=><li key={person.id}><div aria-hidden="true"><Interviewer person={person} portraitIndex={panelists.indexOf(person)} compact/></div><span>{person.name}</span></li>)}</ul>}
     </div>
     <div className={styles.questionArea}>
       <div className={styles.questionMeta}><span>{question?questionLabel:phase==='complete'?'연습을 마쳤어요':'질문을 듣고 답해보세요'}</span><span>{current.name}</span></div>

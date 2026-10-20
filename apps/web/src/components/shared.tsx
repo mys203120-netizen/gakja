@@ -9,6 +9,7 @@ import modalStyles from './modal.module.css';
 import {InfoTip} from './info-tip';
 import tooltipStyles from './tooltip.module.css';
 export {InfoTip} from './info-tip';
+export {FloatingNotice} from './floating-notice';
 export type Item = Record<string, any>;
 export type Bootstrap = { user: Item; targets: Item[]; package: Item | null; documents: Item[]; learning: Item; answers: Item[]; memoryAttempts: Item[]; threads: Item[]; interviews: Item[]; reports: Item[]; confirmations: Item[]; notifications: Item[]; admin?: Item; [key:string]:any };
 export async function api<T = any>(url: string, options?: RequestInit): Promise<T> { return requestJson<T>(url, options); }
@@ -17,20 +18,20 @@ export const action = (action: string, payload: any = {}) => post('/api/actions'
 export function ActionButton({pending=false,pendingLabel,disabled,children,type='button',...props}:ButtonHTMLAttributes<HTMLButtonElement>&{pending?:boolean;pendingLabel?:ReactNode}) {
   return <button {...props} type={type} disabled={disabled||pending} aria-busy={pending||undefined} data-pending={pending||undefined}>{pending?<><LoaderCircle size={16} className="spin cta-spinner" aria-hidden="true"/>{pendingLabel??children}</>:children}</button>;
 }
-export function Logo({ size = 34, wordmark = true }: { size?: number; wordmark?: boolean }) { return <span className="brand"><img src="/brand-logo.svg" width={size} alt="" />{wordmark && <strong>각자의답</strong>}</span>; }
+export function Logo({ size = 34, wordmark = true }: { size?: number; wordmark?: boolean }) { return <span className="brand"><img src="/brand-logo.svg" width={size} alt="" />{wordmark && <strong className="brand-wordmark"><span aria-hidden="true">각자</span><sup className="brand-on-sup" aria-hidden="true"><img className="brand-on-image" src="/brand-on.png" alt="" width={26} height={15}/></sup><span className="sr-only">각자ON</span></strong>}</span>; }
 export function Spinner() { return <div className="loading"><LoaderCircle className="spin" size={25} /><span>불러오는 중</span></div>; }
 export function Badge({ children, tone = 'neutral' }: { children: ReactNode; tone?: string }) { return <span className={`badge ${tone}`}>{children}</span>; }
 export function Breadcrumb({ items }: { items: { label: string; href?: string }[] }) { const parents = items.slice(0, -1).filter(item => item.href); if (!parents.length) return null; return <nav className="breadcrumb" aria-label="상위 페이지">{parents.map((item, i) => <span key={i}>{i > 0 && <ChevronRight size={13}/>}<Link href={item.href!}>{item.label}</Link></span>)}</nav>; }
-const tabTitles=new Set(['연습','퀴즈','모의면접','AI 비서','나의 무기고','자료','내 교재','지식한입','시사 브리핑','지원 학교','내 리포트','연습 이력','답변 비교','활동','예상 질문']);
-export function PageTitle({ title, children, aside, questionId,titleMode }: { eyebrow?: string; title: string; children?: ReactNode; aside?: ReactNode; questionId?:string;titleMode?:'visible'|'tab' }) {
+const tabTitles=new Set(['연습','퀴즈','모의면접','AI 비서','나의 무기고','자료','내 교재','지식한입','시사 브리핑','지원 학교','내 리포트','내 기록','연습 이력','답변 비교','활동','예상 질문']);
+export function PageTitle({ title, children, aside, questionId,titleMode,help }: { eyebrow?: string; title: string; children?: ReactNode; aside?: ReactNode; questionId?:string;titleMode?:'visible'|'tab';help?:ReactNode }) {
   const tab=titleMode==='tab'||(titleMode!=='visible'&&!questionId&&tabTitles.has(title));
-  return <div className={'page-title'+(tab?' '+tooltipStyles.tabTitle:'')} data-tab-title={tab||undefined} data-title-only={tab&&!children&&!aside||undefined}><div className={tab?tooltipStyles.tabTitleContent:undefined}><h1 className={tab?tooltipStyles.hiddenTitle:undefined} data-question-key={questionId}>{title}</h1>{children&&(tab?<InfoTip label={title+' 안내'}>{children}</InfoTip>:<div className="subtitle">{children}</div>)}</div>{aside}</div>;
+  return <div className={'page-title'+(tab?' '+tooltipStyles.tabTitle:'')} data-tab-title={tab||undefined} data-title-only={tab&&!help&&!aside||undefined}><div className={tab?tooltipStyles.tabTitleContent:undefined}><h1 className={tab?tooltipStyles.hiddenTitle:undefined} data-question-key={questionId}>{title}</h1>{!tab&&children&&<div className="subtitle">{children}</div>}{help&&<InfoTip label={title+' 안내'}>{help}</InfoTip>}</div>{aside}</div>;
 }
 export function Empty({ title = '아직 기록이 없어요', children, href, label }: { title?: string; children?: ReactNode; href?: string; label?: string }) { return <div className="empty"><CircleHelp size={28} /><h3>{title}</h3>{children && <p>{children}</p>}{href && <Link className="button primary" href={href}>{label || '시작하기'}</Link>}</div>; }
 export function Alert({ children }: { children: ReactNode }) { return <div className="alert" role="alert">{children}</div>; }
 export function Modal({ title, onClose, children, initialFocusRef }: { title: string; onClose: () => void; children: ReactNode; initialFocusRef?: RefObject<HTMLElement | null> }) {
   const dialog=useRef<HTMLDialogElement>(null),id=useId();
-  useEffect(()=>{const element=dialog.current,previous=document.activeElement as HTMLElement|null;const overflow=document.body.style.overflow;document.body.style.overflow='hidden';element?.showModal();const initialFocus=initialFocusRef?.current||element?.querySelector<HTMLElement>('[data-autofocus]');initialFocus?.focus();return()=>{element?.close();document.body.style.overflow=overflow;previous?.focus();};},[]);
+  useEffect(()=>{const element=dialog.current,previous=document.activeElement as HTMLElement|null;const overflow=document.body.style.overflow;document.body.style.overflow='hidden';element?.showModal();const initialFocus=initialFocusRef?.current||element?.querySelector<HTMLElement>('[data-autofocus]');initialFocus?.focus({preventScroll:true});return()=>{element?.close();document.body.style.overflow=overflow;previous?.focus({preventScroll:true});};},[]);
   return createPortal(<dialog ref={dialog} className={`modal-backdrop native-modal ${modalStyles.backdrop}`} aria-labelledby={id} onKeyDown={event=>{
     if(event.key!=='Tab')return;
     const items=Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(item=>item.getClientRects().length>0);

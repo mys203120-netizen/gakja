@@ -16,9 +16,8 @@
 .settings { position: relative; flex: 0 0 auto; max-width: 100%; font-size: 14px; }
 .settings summary { cursor: pointer; padding: 8px 12px; min-height:36px; background:var(--clarity-soft); border-radius:18px; color:var(--clarity-green); text-align:right; list-style:none; }
 .settings[open] { width: min(360px, 100%); }
-.settings :global(.interview-live-settings) { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 12px; }
+.settings :global(.interview-live-settings) { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-top: 12px; }
 .settings :global(.toggle-row) { flex-direction: column; gap: 8px; align-items: flex-start; }
-.settings :global(.interview-reaction-note) { font-size: 13px; margin: 12px 0 0; color: var(--clarity-muted); }
 
 .focus { display: flex; align-items: flex-start; gap: 24px; margin: 0 0 18px; padding:22px; background:var(--clarity-soft); border-radius:16px; }
 .focus :global(.interview-message.current) { flex: 1; min-width: 0; margin: 0; }
@@ -71,7 +70,7 @@
   .focus :global(.interview-message.current p) { font-size: 18px; line-height: 1.7; }
   .focus :global(.interview-panelists) { flex: none; max-width: 100%; width: 100%; justify-content: flex-start; gap: 14px; }
   .focus :global(.interview-panelists .interviewer-avatar) { flex: 0 1 76px; width: 76px; max-width: 76px; }
-  .focus :global(.interviewer-avatar > svg) { width: 46px; height: auto; margin-inline: auto; }
+  .focus :global(.interviewer-avatar > img) { width: 46px; height: auto; margin-inline: auto; }
   .focus :global(.interviewer-avatar > div) { gap: 1px; margin-top: 2px; }
   .focus :global(.interviewer-avatar span) { font-size: 12px; line-height: 1.4; word-break: keep-all; }
   .session :global(.interview-capture) { display: grid; grid-template-columns: minmax(0, 110px) minmax(0, 1fr); gap: 12px; }

@@ -13,8 +13,20 @@ import { readAssistantStream } from '@/lib/assistant-stream-model';
 import { createAssistantDeltaBuffer } from '@/lib/assistant-delta-buffer';
 import { MarkdownMessage } from './markdown-message';
 import styles from './assistant-page.module.css';
+import {registerDraftSaver} from '@/lib/client/draft-save';
 type ChatSelection={sourceType?:'personal'|'common';questionId?:string;activityId?:string;briefingId?:string;targetId?:string;sourceVersion?:number};
 function version(value:unknown){const number=Number(value);return Number.isInteger(number)&&number>0&&number<=100000?number:undefined;}
+function readChatDraft(key:string){
+ const copies:string[]=[];
+ try{const saved=sessionStorage.getItem(key);if(saved!==null)copies.push(saved);}catch{}
+ try{const saved=localStorage.getItem(key);if(saved!==null)copies.push(saved);}catch{}
+ const stamp=(value:string)=>{try{const parsed=JSON.parse(value);return typeof parsed?.updatedAt==='number'&&Number.isFinite(parsed.updatedAt)?parsed.updatedAt:0;}catch{return 0;}};
+ return copies.sort((left,right)=>stamp(right)-stamp(left))[0]||'';
+}
+function clearChatDraft(key:string){try{sessionStorage.removeItem(key);}catch{}try{localStorage.removeItem(key);}catch{}}
+function cachedChatAttachments(value:unknown):Item[]{
+ return Array.isArray(value)?value.filter(file=>file&&typeof file.id==='string'&&/^[\w-]{1,160}$/.test(file.id)&&typeof file.name==='string'&&Number.isFinite(file.size)&&file.size>=0).slice(0,3).map(file=>({id:file.id,name:file.name.slice(0,200),size:file.size})):[];
+}
 export function chatSelection(params:Pick<URLSearchParams,'get'>,data:Item,globalTargetId:string,thread?:Item|null,assisted?:Item|null):ChatSelection{
  const context=thread?.context||assisted?.session?.data?.context||{};
  const briefingId=thread?context.briefingId||context.briefing_id||thread.briefingId:params.get('briefingId')||context.briefingId||context.briefing_id;
@@ -65,8 +77,20 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
  const requestVersion=commonContext&&!commonQuestion?undefined:version(pinnedVersion);
  const draftScope=sessionId||(quizSessionId?`quiz:${quizSessionId}:${quizItemIndex??''}`:null);
  const draftKey=chatDraftKey(data.user.id,threadId,{...selection,sourceVersion:version(pinnedVersion)},draftScope),pendingResponse=messages.some(m=>m.role==='assistant'&&m.status==='pending');
+ const latestDraft=useRef({key:draftKey,loaded:draftLoaded,message,attachments}),uploadFlight=useRef<Promise<void>|null>(null);
+ latestDraft.current={key:draftKey,loaded:draftLoaded,message,attachments};
  const ready=Boolean(threadId?thread?.resources:needsPreview?currentPreview:data.package)&&!previewError;
  const archived=Boolean(thread?.archived_at),disabled=!ready||loading||previewLoading||busy||uploading||pendingResponse||archived||Boolean(sessionId&&!assisted)||Boolean(quizSessionId&&!quizAssisted)||draftLoaded!==draftKey;
+ function draftSnapshot(key:string,text:string,files:Item[]){return JSON.stringify({draft:text,attachments:cachedChatAttachments(files),updatedAt:Date.now(),requestId:request.current.key===key?request.current.id:'',requestText:request.current.key===key?request.current.text:''});}
+ useEffect(()=>registerDraftSaver(data.user.id,async()=>{
+   await uploadFlight.current;
+   const current=latestDraft.current;
+   if(current.key!==draftKey||current.loaded!==draftKey||!current.message&&!current.attachments.length)return;
+   const snapshot=draftSnapshot(draftKey,current.message,current.attachments);
+   localStorage.setItem(draftKey,snapshot);
+   if(localStorage.getItem(draftKey)!==snapshot)throw new Error('작성 중인 질문을 보관하지 못했어요.');
+   try{sessionStorage.setItem(draftKey,snapshot);}catch{/* The verified persistent copy is sufficient. */}
+ }),[data.user.id,draftKey]);
  const interviewParams=new URLSearchParams({kind:'chat'});if(questionId||activityId||briefingId)interviewParams.set('count','1');if(questionId)interviewParams.set('questionId',questionId);if(activityId)interviewParams.set('activityId',activityId);if(briefingId)interviewParams.set('briefingId',briefingId);if(selection.targetId)interviewParams.set('targetId',selection.targetId);if(pinnedVersion)interviewParams.set('sourceVersion',String(pinnedVersion));if(commonContext)interviewParams.set('sourceType','common');
  useEffect(()=>{const handoff=streamHandoff.current;if(threadId&&handoff?.thread.id===threadId){streamHandoff.current=null;setThread(handoff.thread);setChanged(handoff.contextChanged);setLoading(false);return;}let disposed=false;setMessages([]);setThread(null);setError('');setChanged(false);setLoading(!!threadId);if(threadId)api(`/api/chat?threadId=${encodeURIComponent(threadId)}`).then(r=>{if(!disposed){setMessages(r.messages);setThread(r.thread);setChanged(r.contextChanged);}}).catch(err=>{if(!disposed)setError(err.message);}).finally(()=>{if(!disposed)setLoading(false);});return()=>{disposed=true;};},[threadId]);
  useEffect(()=>{setThreads(data.threads||[]);},[data.threads]);
@@ -78,13 +102,13 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
  // Detach the old controller before aborting so its late frames cannot update the new context.
  useEffect(()=>{sending.current=false;setBusy(false);if(!threadId)setMessages([]);return()=>{streamGeneration.current++;const previous=streamController.current;streamController.current=null;sending.current=false;previous?.abort();};},[draftKey]);
  useEffect(()=>{let disposed=false;setPreview(null);setPreviewKey('');setPreviewError('');setPreviewLoading(needsPreview);if(!needsPreview)return;if(params.get('sourceVersion')&&!version(params.get('sourceVersion'))){setPreviewError('자료 발행본을 확인해 주세요.');setPreviewLoading(false);return;}if(sessionId&&!assisted||quizSessionId&&!quizAssisted)return;api(sessionId&&assisted?.question?.turnId?`/api/learning-help?interviewSessionId=${encodeURIComponent(sessionId)}&interviewTurnId=${encodeURIComponent(assisted.question.turnId)}`:`/api/learning-help?${selectionKey}${selection.sourceType?'&sourceType='+selection.sourceType:''}`).then(r=>{if(!disposed){setPreview(r);setPreviewKey(selectionKey);}}).catch(err=>{if(!disposed)setPreviewError(err.message);}).finally(()=>{if(!disposed)setPreviewLoading(false);});return()=>{disposed=true;};},[needsPreview,selectionKey,sessionId,assisted?.session?.id,quizSessionId,quizAssisted?.quizScope?.sessionId]);
- useEffect(()=>{try{const saved=sessionStorage.getItem(draftKey)||'';let restored:Item|undefined;try{restored=JSON.parse(saved);}catch{}setMessage(restored&&typeof restored.draft==='string'?restored.draft:saved);request.current={key:draftKey,text:typeof restored?.requestText==='string'?restored.requestText:'',id:typeof restored?.requestId==='string'?restored.requestId:''};}catch{setMessage('');request.current={key:draftKey,text:'',id:''};}setDraftLoaded(draftKey);},[draftKey]);
- useEffect(()=>{if(draftLoaded!==draftKey)return;if(message)sessionStorage.setItem(draftKey,JSON.stringify({draft:message,requestId:request.current.key===draftKey?request.current.id:'',requestText:request.current.key===draftKey?request.current.text:''}));else sessionStorage.removeItem(draftKey);},[message,draftKey,draftLoaded,busy]);
+ useEffect(()=>{const saved=readChatDraft(draftKey);let restored:Item|undefined;try{restored=JSON.parse(saved);}catch{}setMessage(restored&&typeof restored.draft==='string'?restored.draft:saved);setAttachments(cachedChatAttachments(restored?.attachments));request.current={key:draftKey,text:typeof restored?.requestText==='string'?restored.requestText:'',id:typeof restored?.requestId==='string'?restored.requestId:''};setDraftLoaded(draftKey);},[draftKey]);
+ useEffect(()=>{if(draftLoaded!==draftKey)return;if(message||attachments.length){try{sessionStorage.setItem(draftKey,draftSnapshot(draftKey,message,attachments));}catch{}}else clearChatDraft(draftKey);},[message,attachments,draftKey,draftLoaded,busy]);
  useEffect(()=>{const frame=requestAnimationFrame(()=>{const scroller=bottom.current?.closest('.chat-messages');if(scroller&&followReply.current)scroller.scrollTo({top:messages.length?scroller.scrollHeight:0,behavior:'instant'});});return()=>cancelAnimationFrame(frame);},[messages]);
  // Announce newly completed requests, never the full saved history or a pending reply.
  function announceCompletedReply(reply:Item|undefined){if(reply?.role!=='assistant'||reply.status!=='completed'||typeof reply.content!=='string'||!reply.content.trim())return;const receipt=String(reply.id||reply.request_id||'');if(!receipt||announcedReply.current===receipt)return;announcedReply.current=receipt;setReplyAnnouncement('AI 비서 답변이 도착했어요.');}
  async function resume(){if(!assisted?.session||resuming||busy||pendingResponse)return;setResuming(true);try{await post('/api/interviews',{action:'resume',sessionId:assisted.session.id,turnId:assisted.question?.turnId});router.push(`/interview/${assisted.session.id}?kind=${assisted.session.kind}`);}catch(err){setError((err as Error).message);}finally{setResuming(false);}}
- async function reload(){if(!threadId||sending.current)return;setReplyAnnouncement('');setBusy(true);try{const r=await api(`/api/chat?threadId=${encodeURIComponent(threadId)}`);setMessages(r.messages);setThread(r.thread);setChanged(r.contextChanged);setError('');const receipt=r.messages.find((m:Item)=>m.role==='assistant'&&m.request_id===request.current.id);if(receipt?.status==='completed'){announceCompletedReply(receipt);setMessage('');sessionStorage.removeItem(draftKey);request.current={key:draftKey,text:'',id:''};}if(receipt?.status==='failed'){setError(receipt.error||receipt.data?.error||'응답이 중단됐어요. 다시 질문해 주세요.');request.current={key:draftKey,text:'',id:''};}}catch(err){setError((err as Error).message);}finally{setBusy(false);}}
+ async function reload(){if(!threadId||sending.current)return;setReplyAnnouncement('');setBusy(true);try{const r=await api(`/api/chat?threadId=${encodeURIComponent(threadId)}`);setMessages(r.messages);setThread(r.thread);setChanged(r.contextChanged);setError('');const receipt=r.messages.find((m:Item)=>m.role==='assistant'&&m.request_id===request.current.id);if(receipt?.status==='completed'){announceCompletedReply(receipt);setMessage('');clearChatDraft(draftKey);request.current={key:draftKey,text:'',id:''};}if(receipt?.status==='failed'){setError(receipt.error||receipt.data?.error||'응답이 중단됐어요. 다시 질문해 주세요.');request.current={key:draftKey,text:'',id:''};}}catch(err){setError((err as Error).message);}finally{setBusy(false);}}
  async function send(recommendedText?:string){
   const text=(recommendedText??message).trim();
   if(!text||sending.current||disabled)return;
@@ -114,7 +138,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
      deltas.discard();completed=true;contextChanged=Boolean(event.contextChanged);
      setMessages(items=>{const kept=items.filter(item=>item.id!==optimistic.id&&item.id!==assistantId&&item.id!==event.message?.id);const known=new Set(kept.map(item=>item.id));return[...kept,...[event.userMessage,event.message].filter((item):item is Item=>Boolean(item&&!known.has(item.id)))];});
      setChanged(contextChanged);announceCompletedReply(event.message);
-     setMessage('');setAttachments([]);sessionStorage.removeItem(draftKey);request.current={key:draftKey,text:'',id:''};
+     setMessage('');setAttachments([]);clearChatDraft(draftKey);request.current={key:draftKey,text:'',id:''};
     }else if(event.type==='pending'){
      deltas.discard();setMessages(items=>items.map(item=>item.id===assistantId?{...item,...event.message}:item));
      setError('이전 답변을 작성 중이에요. 잠시 후 대화를 다시 불러와 주세요.');
@@ -138,7 +162,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
    streamController.current=null;sending.current=false;setBusy(false);
    if(!threadId&&resolvedThreadId){
     const next=new URLSearchParams();if(sessionId)next.set('sessionId',sessionId);if(quizSessionId){next.set('quizSessionId',quizSessionId);if(quizItemIndex!==undefined)next.set('quizItemIndex',String(quizItemIndex));}
-    if(!completed)sessionStorage.setItem(chatDraftKey(data.user.id,resolvedThreadId,{...selection,sourceVersion:version(pinnedVersion)},draftScope),JSON.stringify({draft:text,requestId:request.current.id,requestText:request.current.text}));
+    if(!completed){const migratedKey=chatDraftKey(data.user.id,resolvedThreadId,{...selection,sourceVersion:version(pinnedVersion)},draftScope),snapshot=draftSnapshot(draftKey,text,latestDraft.current.attachments);try{sessionStorage.setItem(migratedKey,snapshot);}catch{}try{localStorage.setItem(migratedKey,snapshot);}catch{}}
     const savedThread={...(resolvedThread||{id:resolvedThreadId,target_id:selection.targetId,content_version:requestVersion,target:pinnedTarget,context:selection}),resources:resources||{learning,documents:data.documents||[]}};
     streamHandoff.current={thread:savedThread,contextChanged};
     setThread(savedThread);
@@ -153,9 +177,18 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
  async function uploadAttachments(files:FileList|null){
   if(!files?.length||uploading||busy)return;
   if(attachments.length+files.length>3){setError('파일은 한 번에 3개까지 첨부할 수 있어요.');return;}
-  setUploading(true);setError('');
-  try{const form=new FormData();for(const file of Array.from(files))form.append('files',file);const result=await uploadPrivateFiles('/api/chat/attachments',form);setAttachments(items=>[...items,...result.attachments]);}
-  catch(err){setError((err as Error).message);}finally{setUploading(false);if(attachmentInput.current)attachmentInput.current.value='';}
+  const capture=draftKey;setUploading(true);setError('');
+  const work=(async()=>{
+   const form=new FormData();for(const file of Array.from(files))form.append('files',file);
+   const result=await uploadPrivateFiles('/api/chat/attachments',form);
+   if(latestDraft.current.key!==capture)return;
+   const next=[...latestDraft.current.attachments,...result.attachments];
+   latestDraft.current={...latestDraft.current,attachments:next};setAttachments(next);
+  })();
+  uploadFlight.current=work;
+  try{await work;}
+  catch(err){if(latestDraft.current.key===capture)setError((err as Error).message);}
+  finally{if(uploadFlight.current===work)uploadFlight.current=null;setUploading(false);if(attachmentInput.current)attachmentInput.current.value='';}
  }
  async function removeAttachment(id:string){
   if(busy||uploading)return;
@@ -197,7 +230,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
  {pendingResponse&&!busy&&!error&&<button className="text-link" onClick={reload}>대화 다시 불러오기</button>}
  <input ref={attachmentInput} type="file" className="sr-only" tabIndex={-1} aria-label="첨부 파일 선택" accept=".pdf,.docx,.txt,.md,image/png,image/jpeg,image/webp,image/gif" multiple onChange={event=>void uploadAttachments(event.target.files)}/>
  {(attachments.length>0||uploading)&&<div className="chat-attachment-queue">{attachments.map(file=><div key={file.id}><Paperclip size={14}/><span>{file.name}</span><small>{Math.max(1,Math.round(file.size/1024))} KB</small><button type="button" disabled={busy||uploading} aria-label={`${file.name} 첨부 취소`} onClick={()=>void removeAttachment(file.id)}><X size={14}/></button></div>)}{uploading&&<span><LoaderCircle size={14} className="spin"/>자료 읽는 중</span>}</div>}
- <ChatComposer variant="conversation" textareaRef={textarea} label="AI 비서 메시지" placeholder={ready?briefingId?'이 기사에 대해 이야기해 보세요.':question?'이 질문에 대해 물어보세요.':activity?'내 경험에 대해 물어보세요.':'궁금한 점을 물어보세요.':previewLoading||loading?'질문을 불러오는 중이에요.':'질문이나 활동을 먼저 선택해 주세요.'} value={message} onChange={setMessage} onSend={send} maxLength={6000} busy={busy} disabled={disabled} actions={<><button type="button" className="button ghost small" disabled={disabled||attachments.length>=3} onClick={()=>attachmentInput.current?.click()}><Paperclip size={15}/>자료 첨부</button>{busy&&<button type="button" className="button ghost small" onClick={()=>streamController.current?.abort()}><Square size={13} fill="currentColor"/>응답 멈추기</button>}</>} />
+ <ChatComposer enterToSend={data.preferences?.enterToSend!==false} variant="conversation" textareaRef={textarea} label="AI 비서 메시지" placeholder={ready?briefingId?'이 기사에 대해 이야기해 보세요.':question?'이 질문에 대해 물어보세요.':activity?'내 경험에 대해 물어보세요.':'궁금한 점을 물어보세요.':previewLoading||loading?'질문을 불러오는 중이에요.':'질문이나 활동을 먼저 선택해 주세요.'} value={message} onChange={setMessage} onSend={send} maxLength={6000} busy={busy} disabled={disabled} actions={<><button type="button" className="button ghost small" disabled={disabled||attachments.length>=3} onClick={()=>attachmentInput.current?.click()}><Paperclip size={15}/>자료 첨부</button>{busy&&<button type="button" className="button ghost small" onClick={()=>streamController.current?.abort()}><Square size={13} fill="currentColor"/>응답 멈추기</button>}</>} />
  </section></div></div>;
 }
 

@@ -1,14 +1,15 @@
 'use client';
 import Link from 'next/link';
 import {useEffect,useRef,useState,type FormEvent} from 'react';
-import {ArrowRight,ArrowLeft,ArrowUpRight,CalendarDays,Check,BookOpen,ChevronRight,Search,X,GraduationCap,MessageCircle,Plus} from 'lucide-react';
+import {ArrowRight,ArrowLeft,ArrowUpRight,CalendarDays,Check,BookOpen,ChevronRight,Search,X,GraduationCap,Plus} from 'lucide-react';
 import {SchoolPicker} from './school-picker';
 import {SchoolLogo} from './school-logo';
-import {api,post,ActionButton,Breadcrumb,Alert,Spinner,Logo,type Item} from './shared';
+import {api,post,ActionButton,Alert,Spinner,Logo,type Item} from './shared';
 import {scheduleDateLabel} from '@/lib/schedule';
 import type {SchoolCalendarPreview} from '@/lib/school-onboarding-calendar-model';
 import {visibleCalendarSourceUrl,visibleCalendarSourceLabel,visibleCalendarSourceText} from '@/lib/calendar-source-presentation';
 import styles from './school-registration.module.css';
+import {TrainingAvailability} from './training-availability';
 
 type Props={catalog:Item[];loading:boolean;error:string;onSaved:(target:Item)=>Promise<void>;onboarding:boolean;initialTarget?:Item;registeredTargets?:Item[]};
 const stepLabels=['학교 선택','학과·전형','일정 등록'];
@@ -20,7 +21,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   const initialReference=initial?.school_reference_id||'',initialDepartment=initial?.department_catalog_id||'';
   const initialDepartmentPending=useRef(Boolean(initialReference&&initialDepartment));
   const [step,setStep]=useState(editing?1:0),[search,setSearch]=useState('');
-  const [admissionYear,setAdmissionYear]=useState(Number(initial?.admission_year||initial?.year)||2027);
+  const admissionYear=2027;
   const [referenceId,setReferenceId]=useState(initialReference),[other,setOther]=useState(editing&&!initialReference),[university,setUniversity]=useState(initial?.university||'');
   const [campus,setCampus]=useState(initial?.campus==='미정'?'':initial?.campus||''),[track,setTrack]=useState(initial?.admission_type||initial?.track||'');
   const [major,setMajor]=useState(initial?.department||initial?.major||''),[departmentId,setDepartmentId]=useState(initialDepartment),[manualMajor,setManualMajor]=useState(editing&&!initialDepartment);
@@ -43,7 +44,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   const currentCalendar=calendarKey===selectionKey?calendar:null;
   const ready=Boolean(currentCalendar&&!calendarLoading&&!departmentLoading&&currentCalendar.canReview&&track.trim()&&track.trim()!=='미정');
   const normalizedSearch=search.trim().replace(/\s/g,'').toLocaleLowerCase();
-  const filtered=catalog.filter(item=>`${item.university} ${item.canonicalName||''}`.replace(/\s/g,'').toLocaleLowerCase().includes(normalizedSearch));
+  const filtered=catalog.filter(item=>`${item.university} ${item.canonicalName||''} ${/UNIST|울산과학기술원/i.test(item.university)?'유니스트':''}`.replace(/\s/g,'').toLocaleLowerCase().includes(normalizedSearch));
   const tracks=trackChoices,hasKnownTrack=tracks.some(item=>item===track);
   useEffect(()=>{if(!track&&tracks.length===1)setTrack(tracks[0]);},[track,tracks]);
   const savedTargets=[...registeredTargets.filter(item=>!sessionTargets.some(saved=>saved.id===item.id)),...sessionTargets];
@@ -69,7 +70,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   },[referenceId,other,departmentRetry]);
   useEffect(()=>{
     setCalendar(null);setCalendarKey('');setAcknowledged(false);setCalendarError('');
-    if(!completeSelection||!Number.isInteger(admissionYear)||admissionYear<2024||admissionYear>2040){setCalendarLoading(false);return;}
+    if(!completeSelection){setCalendarLoading(false);return;}
     const controller=new AbortController();setCalendarLoading(true);
     const timer=setTimeout(()=>{api<{calendar:SchoolCalendarPreview}>('/api/schools/onboarding-calendar',{method:'POST',body:selectionKey,signal:controller.signal})
       .then(result=>{if(!controller.signal.aborted){setCalendar(result.calendar);setCalendarKey(selectionKey);setTrackChoices(result.calendar.tracks);}})
@@ -117,6 +118,8 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
     finally{setBusy(false);}
   }
 
+  if(registered&&onboarding&&!editing)return <TrainingAvailability onboarding schoolLabel={`${registered.university} · ${registered.department||registered.major}`} interviewLabel={currentCalendar?.matched.length?`공개 면접 일정 ${currentCalendar.matched.map(dateRange).join(' · ')} · 개인 배정 별도 확인`:currentCalendar?.statusLabel}/>;
+
   if(registered)return <div className={`${styles.page} ${styles.complete}`}>
     <span className={styles.completeMark}><Check size={30}/></span><p className={styles.eyebrow}>나의 면접 준비</p>
     <h1 ref={completionHeading} tabIndex={-1}>{editing?'지원 정보를 변경했어요.':'지원 학교를 등록했어요.'}</h1>
@@ -129,22 +132,20 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
     <div className={styles.completeLinks}><Link href="/my#dashboard-planner"><CalendarDays size={15}/>캘린더 확인<ArrowUpRight size={15}/></Link><Link href={`/schools/${encodeURIComponent(registered.id)}`}>학교 면접 안내<ArrowUpRight size={15}/></Link>{!editing&&<Link href="/schools">지원 학교 관리<ArrowUpRight size={15}/></Link>}</div>
   </div>;
 
-  return <div className={styles.page}>
-    {!onboarding&&<Breadcrumb items={[{label:'내 계정',href:'/account'},{label:'지원 학교',href:'/schools'},{label:editing?'지원 정보 변경':'학교 등록'}]}/>}
-    <header className={styles.header}><p className={styles.eyebrow}>{editing?'지원 정보 변경':onboarding?'각자ON 시작하기':'지원 학교 추가'}</p><h1>{editing?'변경할 지원 정보를 확인해 주세요.':'지원 학교부터, 나의 면접까지.'}</h1><p>{editing?'학교·학과·전형을 수정하고 면접 일정을 다시 확인해요.':`학생부형 면접을 준비할 학교와 학과를 고르면, 해당 전형과 ${admissionYear}학년도 공개 일정을 연결해요.`}</p></header>
-    {onboarding&&!editing&&<p className={styles.completeNote}><Link className="text-link" href="/start">학교 등록 전에 공통 질문 한 개 답해보기<ArrowUpRight size={15}/></Link></p>}
+  return <div className={styles.page} data-registration-step={step}>
+    <header className={styles.header}><h1>{editing?'지원 정보 변경':'지원 학교 등록'}</h1><p>{admissionYear}학년도 학교·학과·전형과 면접 일정을 연결해요.</p></header>
+    {onboarding&&!editing&&<p className={styles.optionalPractice}><Link className="text-link" href="/start">학교 등록 전에 공통 질문 한 개 답해보기<ArrowUpRight size={15}/></Link></p>}
     {!editing&&savedTargets.length>0&&<RegisteredSchoolList targets={savedTargets} finish={onboarding}/>}
     <ol className={styles.steps} aria-label="지원 학교 등록 단계">{stepLabels.map((label,index)=><li key={label} data-state={index<step?'done':index===step?'current':'next'}><button type="button" onClick={()=>goTo(index)} disabled={index>=step||busy} aria-current={index===step?'step':undefined}><span className={styles.stepNumber}>{index<step?<Check size={14}/>:index+1}</span><span>{label}</span></button>{index<2&&<ChevronRight size={17} aria-hidden="true"/>}</li>)}</ol>
     {error&&<Alert>{error}</Alert>}
     <div className={styles.workspace}>
       <form className={`${styles.form} school-registration`} onSubmit={submit}><fieldset disabled={busy||loading}>
         <section className={styles.stage} key={step} aria-labelledby="school-registration-heading">
-          <div className={styles.stageHeading}><div><h2 id="school-registration-heading" ref={heading} tabIndex={-1}>{step===0?'어느 학교를 준비하나요?':step===1?'학과와 전형을 골라주세요.':'면접 일정을 확인해 주세요.'}</h2><p>{step===0?'학생부·제출서류 기반 면접을 준비할 수 있는 학교예요.':step===1?'지원할 모집단위와 전형을 기준으로 일정을 찾아요.':'공개된 일정과 확인 상태를 캘린더에 연결해요.'}</p></div><span className={styles.stageCount}>{step+1} / 3</span></div>
+          <div className={styles.stageHeading}><div><h2 id="school-registration-heading" ref={heading} tabIndex={-1}>{step===0?'어느 학교를 준비하나요?':step===1?'학과와 전형을 골라주세요.':'면접 일정을 확인해 주세요.'}</h2></div><span className={styles.stageCount}>{step+1} / 3</span></div>
           {step===0&&<>{other?<div className={styles.manualSchool}><label>지원 학교 이름<input value={university} onChange={event=>setUniversity(event.target.value)} maxLength={100} required placeholder="학교 이름을 입력해 주세요"/></label><p>목록에 없는 학교도 등록할 수 있어요. 면접 일정은 입학처 확인이 필요해요.</p><button type="button" className={styles.linkButton} onClick={toggleManualSchool}>학교 목록에서 선택</button><div className={styles.actions}><span/><button className="button primary" disabled={!university.trim()}>학과·전형 선택<ArrowRight size={17}/></button></div></div>:<>
             <label className={styles.search}><Search size={19}/><input type="search" aria-label="지원 대학 검색" placeholder="학교 이름으로 검색" value={search} autoComplete="off" onChange={event=>setSearch(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();if(!event.nativeEvent.isComposing&&filtered.length===1)chooseSchool(filtered[0].id);}}}/>{search&&<button type="button" aria-label="학교 검색어 지우기" onClick={()=>setSearch('')}><X size={17}/></button>}</label>
             <div className={styles.listHeading}><span>{normalizedSearch?'검색한 학교':'지원 대학'}</span><span aria-live="polite">{filtered.length}개 대학</span></div>
             {loading?<Spinner/>:filtered.length?<ul className={styles.schoolList} aria-label="지원할 학교">{filtered.map(item=><li key={item.id}><button type="button" data-selected={referenceId===item.id} onClick={()=>chooseSchool(item.id)}><SchoolLogo school={item} size={34} loading="lazy"/><span>{item.university}</span><ChevronRight size={16}/></button></li>)}</ul>:<div className={styles.noResults}><GraduationCap size={28}/><p>검색한 학교가 없어요.</p><span>학교 이름을 다시 확인해 주세요. 제시문·교과 구술 면접만 있는 학교는 목록에 없어요.</span></div>}
-            <p className={styles.directoryFoot}>학교 전체가 아닌, 선택한 학과·전형의 면접 방식을 기준으로 준비해요.</p>
           </>}</>}
           {step===1&&<>
             <div className={styles.selectedSchool}><SchoolLogo school={selected||{university:universityName}} size={40}/><span>{universityName}</span><button type="button" className={styles.linkButton} onClick={()=>goTo(0)}>변경</button></div>
@@ -154,7 +155,6 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
                 {!other&&saveError&&!currentSchool&&!departmentLoading&&<button type="button" className={styles.linkButton} onClick={()=>{setSaveError('');setDepartmentRetry(value=>value+1);}}>학과 다시 불러오기</button>}
               </div>
               {!manualMajor&&department&&department.programs?.length>0&&<label>관심 세부 전공<select value={interestDepartment} onChange={event=>setInterestDepartment(event.target.value)}><option value="">광역 모집단위 전체로 준비할게요</option>{department.programs.map((name:string)=><option key={name} value={name}>{name}</option>)}</select><small>실제 지원 모집단위는 {department.name}로 유지해요. 관심 전공은 지식한입과 면접 질문에 반영하며, 입학 후 전공 배정을 보장하지 않아요. {department.programSourceUrl&&<a href={department.programSourceUrl} target="_blank" rel="noreferrer">{department.programSourceYear}학년도 공식 전공 안내</a>}</small></label>}
-              <div className={styles.yearRow}><label>지원 학년도<input type="number" min={2024} max={2040} required value={admissionYear} onChange={event=>setAdmissionYear(Number(event.target.value))}/></label></div>
               <div className={styles.field} aria-busy={calendarLoading}>
                 <SchoolPicker label="학생부형 지원 전형" choices={tracks.map(item=>({id:item,label:item}))} value={hasKnownTrack?track:''} onChange={setTrack} placeholder={!completeSelection?'학과를 먼저 선택해 주세요':calendarLoading?'전형 확인 중':tracks.length?'지원 전형을 선택해 주세요':'확인된 학생부형 전형 없음'} disabled={!completeSelection||busy||calendarLoading||!tracks.length}/>
                 {completeSelection&&!calendarLoading&&currentCalendar&&(!tracks.length||track&&!ready)&&<p className={styles.sourceNote}>{!tracks.length?'이 학과에서 확인된 학생부형 면접 전형이 없어요. 다른 학과를 선택해 주세요.':'지원할 전형을 위 목록에서 다시 선택해 주세요.'}{editing?' 기존 지원 정보와 학습 기록은 저장 전까지 그대로 유지돼요.':''}</p>}
@@ -163,8 +163,8 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
               </div>
               {(other||manualMajor)&&<label>캠퍼스<input value={campus} onChange={event=>setCampus(event.target.value)} maxLength={100} placeholder="캠퍼스명 (선택)"/></label>}
             </div>
-            <p className={styles.sourceNote}>{other||manualMajor?'직접 입력한 학교·학과는 확인 전이에요. 모집요강과 함께 확인해 주세요.':<>지원 학년도 모집단위는 {selected?.admissionUrl?<a href={selected.admissionUrl} target="_blank" rel="noreferrer">입학처<ArrowUpRight size={12}/></a>:'입학처'}에서 확인해 주세요.</>}</p>
-            <div className={styles.actions}><button type="button" className={styles.back} onClick={()=>goTo(0)}><ArrowLeft size={15}/>학교 선택</button><button className="button primary" disabled={!ready}>면접 일정 확인<ArrowRight size={17}/></button></div>
+            {(other||manualMajor)&&<p className={styles.sourceNote}>직접 입력한 학교·학과는 확인 전이에요. 모집요강과 함께 확인해 주세요.</p>}
+            <div className={styles.actions}><button type="button" className={styles.back} onClick={()=>goTo(0)}><ArrowLeft size={15}/>학교 선택</button><button className="button primary" disabled={!ready}>다음<ArrowRight size={17}/></button></div>
           </>}
           {step===2&&<>
             <div className={styles.reviewIdentity}><SchoolLogo school={selected||{university:universityName}} size={42}/><div><h3>{universityName}</h3><p>{majorName} · {track} · {admissionYear}학년도</p></div><button type="button" className={styles.linkButton} onClick={()=>goTo(1)}>수정</button></div>
@@ -178,17 +178,16 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
       </fieldset></form>
       <aside className={styles.summary} data-step={step} aria-label="선택한 지원 정보">
         <div className={styles.summaryTop}><Logo size={34} wordmark={false}/><span>나의 면접 준비</span><span>{admissionYear}학년도</span></div>
-        <h2>{universityName||'어디로 향하고 있나요?'}</h2><p className={styles.summarySubtitle}>{universityName?'선택한 지원 정보가 준비의 기준이 돼요.':'학교를 고르면 준비 내용이 여기에 모여요.'}</p>
+        <h2>{universityName||'선택한 지원 정보'}</h2>
         <dl className={styles.summaryDetails}><div><dt>지원 학교</dt><dd data-pending={!universityName}>{universityName||'학교 선택 전'}</dd></div><div><dt>학과·학부</dt><dd data-pending={!majorName}>{majorName||'학과 선택 전'}</dd></div><div><dt>지원 전형</dt><dd data-pending={!track.trim()}>{track.trim()||'전형 선택 전'}</dd></div></dl>
         <div className={styles.summarySchedule}><CalendarDays size={20}/><div><span>{calendarLoading?'면접 일정 조회 중':track.trim()&&currentCalendar?currentCalendar.statusLabel:'전형 선택 후 일정 조회'}</span><p>{track.trim()&&currentCalendar?currentCalendar.matched.length?currentCalendar.matched.map(dateRange).join(' · '):visibleCalendarSourceText(currentCalendar.note):`${admissionYear}학년도`}</p></div></div>
-        <div className={styles.connected}><span>등록 후 이어지는 준비</span><p><GraduationCap size={16}/>학교 면접 안내</p><p><MessageCircle size={16}/>지원 정보에 맞춘 면접 연습</p><p><CalendarDays size={16}/>캘린더에 면접 일정 연결</p></div>
       </aside>
     </div>
   </div>;
 }
 function RegisteredSchoolList({targets,currentId,finish=false}:{targets:Item[];currentId?:string;finish?:boolean}){
   if(!targets.length)return null;
-  return <section className={styles.savedSection} aria-label="등록한 지원 학교"><div className={styles.savedHeading}><h2>등록한 지원 학교 <span>{targets.length}개</span></h2>{finish&&<Link href="/my">등록 마치고 시작<ArrowRight size={14}/></Link>}</div><ul className={styles.savedList}>{targets.map(target=><li className={styles.savedItem} key={target.id}><SchoolLogo school={target} size={30}/><div><span>{target.university}</span><p>{[target.department||target.major,target.admission_type||target.track].filter(Boolean).join(' · ')}</p></div>{currentId===target.id&&<span className={styles.savedCheck}><Check size={13}/>저장됨</span>}</li>)}</ul></section>;
+  return <section className={styles.savedSection} aria-label="등록한 지원 학교"><div className={styles.savedHeading}><h2>등록한 지원 학교 <span>{targets.length}개</span></h2>{finish&&<Link href="/my">등록 마치고 시작<ArrowRight size={14}/></Link>}</div><ul className={styles.savedList}>{targets.map(target=><li className={styles.savedItem} key={target.id}><SchoolLogo school={target} size={38}/><div><span>{target.university}</span><p>{[target.department||target.major,target.admission_type||target.track].filter(Boolean).join(' · ')}</p></div>{currentId===target.id&&<span className={styles.savedCheck}><Check size={13}/>저장됨</span>}</li>)}</ul></section>;
 }
 function SchoolCalendarReview({calendar}:{calendar:SchoolCalendarPreview}){
   const days=(item:SchoolCalendarPreview['matched'][number])=>item.startDate===item.endDate?scheduleDateLabel(item.startDate):`${scheduleDateLabel(item.startDate)}–${scheduleDateLabel(item.endDate)}`;

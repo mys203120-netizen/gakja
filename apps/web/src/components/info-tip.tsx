@@ -3,10 +3,12 @@
 import {useCallback,useEffect,useId,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {Info} from 'lucide-react';
+import {useHelpEnabled} from './help-preferences';
 import styles from './tooltip.module.css';
 
 /** Optional context stays available by pointer, keyboard, and touch. */
 export function InfoTip({label,children}:{label:string;children:ReactNode}) {
+  const enabled=useHelpEnabled();
   const id=useId(),trigger=useRef<HTMLButtonElement>(null),panel=useRef<HTMLDivElement>(null);
   const pinned=useRef(false),closeTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const [open,setOpen]=useState(false),[position,setPosition]=useState<{top:number;left:number}|null>(null);
@@ -15,8 +17,9 @@ export function InfoTip({label,children}:{label:string;children:ReactNode}) {
   const show=()=>{cancelClose();setOpen(true);};
   const leave=()=>{cancelClose();if(pinned.current)return;closeTimer.current=setTimeout(()=>{if(document.activeElement!==trigger.current)close();},150);};
   useEffect(()=>()=>cancelClose(),[cancelClose]);
+  useEffect(()=>{if(!enabled)close();},[enabled,close]);
   useEffect(()=>{
-    if(!open)return;
+    if(!open||!enabled)return;
     const place=()=>{
       const anchor=trigger.current?.getBoundingClientRect(),surface=panel.current?.getBoundingClientRect();
       if(!anchor||!surface)return;
@@ -28,7 +31,8 @@ export function InfoTip({label,children}:{label:string;children:ReactNode}) {
     const key=(event:KeyboardEvent)=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();}};
     place();window.addEventListener('resize',place);window.addEventListener('scroll',place,true);document.addEventListener('pointerdown',outside,true);document.addEventListener('focusin',outside,true);document.addEventListener('keydown',key,true);
     return()=>{window.removeEventListener('resize',place);window.removeEventListener('scroll',place,true);document.removeEventListener('pointerdown',outside,true);document.removeEventListener('focusin',outside,true);document.removeEventListener('keydown',key,true);};
-  },[open,children,close]);
+  },[open,enabled,children,close]);
+  if(!enabled)return null;
   return <span className={styles.tip}>
     <button ref={trigger} type="button" className={styles.trigger} aria-label={label} aria-expanded={open} aria-controls={open?id:undefined} aria-describedby={open?id:undefined}
       onPointerEnter={event=>{if(event.pointerType!=='touch')show();}} onPointerLeave={leave} onFocus={show} onBlur={event=>{if(event.relatedTarget&&!panel.current?.contains(event.relatedTarget as Node))close();}}

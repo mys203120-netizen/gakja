@@ -1,12 +1,14 @@
 'use client';
-import {useEffect,useState,type CSSProperties} from 'react';
-import {ChevronLeft,ChevronRight,Plus,Check,CalendarDays} from 'lucide-react';
+import {useEffect,useRef,useState,type CSSProperties} from 'react';
+import {ChevronLeft,ChevronRight,ChevronDown,Plus,Check,CalendarDays,ArrowRight} from 'lucide-react';
+import Link from 'next/link';
 import {AutomaticPracticePlan} from './automatic-practice-plan';
 import {useApp} from './app-shell';
 import {api,post,Modal,Alert,InfoTip,type Item,targetName} from './shared';
 import {koreaToday,monthDays,planWeek,shiftPlanDay,validPlanDay,type PlanTargetOption} from '@/lib/planner-model';
 import {personalDate,scheduleDetails,scheduleDateLabel} from '@/lib/schedule';
 import {calendarSchoolTones,calendarInterviewTime} from '@/lib/calendar-presentation';
+import {summarizeTrainingPlans} from '@/lib/training-plan-summary';
 import {visibleCalendarSourceLabel,visibleCalendarSourceText,visibleCalendarSourceUrl} from '@/lib/calendar-source-presentation';
 import {SchoolLogo} from './school-logo';
 export type InterviewScheduleItem={id:string;schoolReferenceId:string;university:string;targetId:string;admissionYear:number;campus:string;trackLabel:string;departmentLabel?:string;matchedDepartment?:string;departmentCount?:number|null;startDate:string;endDate:string;rawDate?:string;note?:string;format?:'video_submission';sourceUrl:string;sourceLabel:string;checkedAt:string;applicability:'track_match'|'school_reference';schoolHref:string};
@@ -22,9 +24,28 @@ function DecisionSource({decision,checkedAt}:{decision:OfficialScheduleDecision;
   return <div className="calendar-source-evidence">{url?<a href={url} target="_blank" rel="noreferrer">{label==='관리자'?'관리자 참고 출처':label==='입학처'?'입학처 원문':label?`${label} 원문`:'일정 원문'}<ChevronRight size={12}/></a>:label&&<span>{label} 설정</span>}{at&&<time dateTime={at}>{scheduleDateLabel(at)} 확인</time>}</div>;
 }
 type CalendarEvent={id:string;date?:string;start?:string;end?:string;title:string;kind:'plan'|'interview'|'assignment';plan?:Item;href?:string;personalAt?:string;schoolSchedule?:InterviewScheduleItem;targetId?:string};
+const trainingKindLabels:Record<string,string>={diagnostic:'첫 진단',recall:'복습',focus:'집중 보완',mixed:'연결 면접',review:'정리',break:'휴식'};
 function localDay(value?:string){if(!value)return '';const date=new Date(value);return Number.isFinite(date.getTime())?koreaToday(date):'';}
-export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],interviewScheduleCoverage,loaded=true,automaticPractice=[],onAutomaticPractice}:{plans:Item[];onPlans:(plans:Item[])=>void;tasks:Item[];interviewSchedules?:InterviewScheduleItem[];interviewScheduleCoverage?:InterviewScheduleCoverage;loaded?:boolean;automaticPractice?:Item[];onAutomaticPractice?:(items:Item[])=>void}) {
+export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],interviewScheduleCoverage,loaded=true,automaticPractice=[],onAutomaticPractice,hybrid=false}:{plans:Item[];onPlans:(plans:Item[])=>void;tasks:Item[];interviewSchedules?:InterviewScheduleItem[];interviewScheduleCoverage?:InterviewScheduleCoverage;loaded?:boolean;automaticPractice?:Item[];onAutomaticPractice?:(items:Item[])=>void;hybrid?:boolean}) {
   const {data}=useApp(),today=koreaToday(),[month,setMonth]=useState(today.slice(0,7)),[selected,setSelected]=useState(today),[adding,setAdding]=useState(false),[editing,setEditing]=useState<Item|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+  const selectedDay=useRef<HTMLDivElement>(null),scrollFrame=useRef<number|null>(null);
+  useEffect(()=>()=>{if(scrollFrame.current!==null)cancelAnimationFrame(scrollFrame.current);},[]);
+  useEffect(()=>{setMonth(today.slice(0,7));setSelected(today);},[today]);
+  function selectDay(day:string,changeVisibleMonth=false){
+    setSelected(day);if(changeVisibleMonth)setMonth(day.slice(0,7));
+    // Only an explicit date selection scrolls. Loading, replanning and month arrows keep their position.
+    if(!window.matchMedia('(max-width:700px)').matches)return;
+    if(scrollFrame.current!==null)cancelAnimationFrame(scrollFrame.current);
+    scrollFrame.current=requestAnimationFrame(()=>{
+      scrollFrame.current=null;
+      const detail=selectedDay.current;if(!detail)return;
+      const header=document.querySelector<HTMLElement>('.topbar');
+      const scrollRoot=document.scrollingElement||document.documentElement;
+      const scrollPadding=Number.parseFloat(window.getComputedStyle(scrollRoot).scrollPaddingTop)||0;
+      detail.style.scrollMarginTop=`${Math.max(0,Math.max(0,header?.getBoundingClientRect().bottom||64)+16-scrollPadding)}px`;
+      detail.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+    });
+  }
   const registeredSchools=new Set(data.targets.map(target=>target.school_reference_id||targetName(target))).size;
   const schoolSchedules=interviewSchedules.filter(item=>validPlanDay(item.startDate)&&validPlanDay(item.endDate)&&item.startDate<=item.endDate);
   const schoolTargets=new Set(schoolSchedules.map(item=>item.targetId));
@@ -38,7 +59,7 @@ export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],inte
   };
   const combinedTargets=new Set(schoolSchedules.filter(item=>combinedAppointment(item)).map(item=>item.targetId));
   const events:CalendarEvent[]=[
-    ...plans.map(plan=>({id:plan.id,date:plan.date,title:plan.title,kind:'plan' as const,plan,href:plan.href||undefined,targetId:plan.target?.targetId||plan.target_id})),
+    ...plans.filter(plan=>plan.target?.automaticPractice?.hybrid?.kind!=='break').map(plan=>({id:plan.id,date:plan.date,title:plan.title,kind:'plan' as const,plan,href:plan.href||undefined,targetId:plan.target?.targetId||plan.target_id})),
     ...tasks.filter(t=>t.due_at).map(t=>({id:t.id,date:localDay(t.due_at),title:t.title||'퀴즈 과제',kind:'assignment' as const,href:`/quiz/assignments/${t.id}`,targetId:t.target_id||t.targetId})),
     ...data.targets.flatMap<CalendarEvent>(t=>{const date=personalDate(t),schedule=scheduleDetails(t),items:CalendarEvent[]=[];const title=[targetName(t),t.admission_type||t.track].filter(Boolean).join(' · ');if(date&&!combinedTargets.has(t.id))items.push({id:t.id,date:date.includes('T')?localDay(date):date,title,kind:'interview',personalAt:date,href:`/schools/${t.id}`,targetId:t.id});if(!schoolTargets.has(t.id)&&!officialNonDatedTargets.has(t.id)&&schedule.period_start&&!date)items.push({id:`legacy:${t.id}`,start:schedule.period_start,end:schedule.period_end||schedule.period_start,title,kind:'interview',href:`/schools/${t.id}`,targetId:t.id});return items;}),
     ...schoolSchedules.map<CalendarEvent>(item=>{const appointment=combinedAppointment(item);return {id:`${item.id}:${item.targetId}`,...(appointment?{date:appointment.includes('T')?localDay(appointment):appointment}:{start:item.startDate,end:item.endDate}),title:`${item.university} · ${item.trackLabel}${item.format==='video_submission'?' · 동영상 면접 제출':''}`,kind:'interview',personalAt:appointment||undefined,schoolSchedule:item,href:item.schoolHref,targetId:item.targetId};}),
@@ -54,8 +75,9 @@ export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],inte
   const compareEventTime=(a:CalendarEvent,b:CalendarEvent)=>timeOrder(a).localeCompare(timeOrder(b))||a.title.localeCompare(b.title,'ko');
   const onDay=(day:string)=>events.filter(event=>event.date===day||!!event.start&&event.start<=day&&(event.end||event.start)>=day).sort(compareEventTime);
   function changeMonth(delta:number){const [year,num]=month.split('-').map(Number),next=new Date(Date.UTC(year,num-1+delta,1)).toISOString().slice(0,7);setMonth(next);setSelected(`${next}-01`);}
-  async function complete(plan:Item){if(busy)return;setBusy(true);try{const result=await post('/api/planner',{action:'update',id:plan.id,expectedRevision:plan.revision,completed:!plan.completed});onPlans(plans.map(p=>p.id===plan.id?result.plan:p));setError('');}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
-  const week=planWeek(selected),weekPlans=plans.filter(p=>week.includes(p.date));
+  async function complete(plan:Item){if(busy||plan.target?.automaticPractice?.hybrid)return;setBusy(true);try{const result=await post('/api/planner',{action:'update',id:plan.id,expectedRevision:plan.revision,completed:!plan.completed});onPlans(plans.map(p=>p.id===plan.id?result.plan:p));setError('');}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  const week=planWeek(selected),weekPlans=plans.filter(p=>week.includes(p.date)&&p.target?.automaticPractice?.hybrid?.kind!=='break');
+  const weekLearningCount=hybrid?summarizeTrainingPlans(weekPlans).reduce((sum,item)=>sum+item.count,0):weekPlans.length;
   const selectedEvents=onDay(selected),selectedInterviewIds=new Set(selectedEvents.filter(event=>event.kind==='interview').map(event=>event.id));
   const upcoming=events.filter(event=>event.kind==='interview'&&(event.end||event.date||event.start||'')>=today&&!selectedInterviewIds.has(event.id)).sort((a,b)=>(a.date||a.start||'').localeCompare(b.date||b.start||'')||compareEventTime(a,b));
   const coverageTargets=interviewScheduleCoverage?.targets||[],needsReview=coverageTargets.filter(item=>item.status!=='available'||item.unresolvedCount>0||Boolean(item.officialDecisions?.length));
@@ -63,18 +85,21 @@ export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],inte
   const hasManagedSource=coverageTargets.some(item=>item.managed);
   const nonDatedTargets=coverageTargets.filter(item=>['no_interview','date_pending','unpublished','unverified','source_missing','not_listed','year_mismatch','campus_mismatch'].includes(item.status));
   function eventRow(event:CalendarEvent,showDate=false){
+    const automatic=event.plan?.target?.automaticPractice,compactTraining=Boolean(hybrid&&automatic?.hybrid);
+    const trainingState=event.plan?.completed||event.plan?.performedAt?'완료':event.plan?.date===today&&(automatic?.startedAt||automatic?.hybrid?.startedAt)?'진행 중':'예정';
     const source=event.schoolSchedule;
-    const sourceLabel=visibleCalendarSourceLabel(source?.sourceLabel,source?.sourceUrl),sourceUrl=visibleCalendarSourceUrl(source?.sourceUrl),sourceNote=visibleCalendarSourceText(source?.note),eventHref=visibleCalendarSourceUrl(event.href);
+    const sourceLabel=visibleCalendarSourceLabel(source?.sourceLabel,source?.sourceUrl),sourceUrl=visibleCalendarSourceUrl(source?.sourceUrl),sourceNote=visibleCalendarSourceText(source?.note);
+    const eventHref=event.plan?.target?.automaticPractice?.hybrid?(event.plan.date===today?`/my/train?planId=${encodeURIComponent(event.plan.id)}`:event.plan.performedAt||event.plan.completed?'/records':''):visibleCalendarSourceUrl(event.href);
     const department=source?.matchedDepartment||source?.departmentLabel;
     const longDepartment=Boolean(department&&!source?.matchedDepartment&&department.length>100);
     const target=data.targets.find(target=>target.id===event.targetId);
     const school=event.kind==='interview'?schoolFor(event):null;
     const appointmentLabel=event.personalAt?[!showDate?scheduleDateLabel(event.personalAt,true):null,!event.personalAt.includes('T')?'응시 시간 발표 대기':null].filter(Boolean).join(' · '):'';
-    return <div key={`${event.kind}:${event.id}`} className={`calendar-event ${school?'calendar-school-event':''} ${event.plan?.completed?'completed':''}`} style={school?schoolStyle(school.key):undefined}>
-      {event.plan?<button className="plan-check" aria-label={`${event.title} 직접 체크 ${event.plan.completed?'취소':'하기'}`} aria-pressed={event.plan.completed} disabled={busy} onClick={()=>complete(event.plan!)}>{event.plan.completed&&<Check size={13}/>}</button>:school?<SchoolLogo school={school} size={24}/>:<CalendarDays size={16}/>}
+    return <div key={`${event.kind}:${event.id}`} className={`calendar-event ${school?'calendar-school-event':''} ${compactTraining?'calendar-training-event':''} ${event.plan?.completed?'completed':''}`} style={school?schoolStyle(school.key):undefined}>
+      {event.plan?.target?.automaticPractice?.hybrid?<span className="plan-training-state" aria-label={compactTraining?`${automatic.hybrid.kind==='break'?'휴식':'훈련'} ${trainingState}`:event.plan.performedAt||event.plan.completed?'훈련 기록 있음':'계획된 훈련'}>{event.plan.performedAt||event.plan.completed?<Check size={16}/>:<CalendarDays size={16}/>}</span>:event.plan?<button className="plan-check" aria-label={`${event.title} 직접 체크 ${event.plan.completed?'취소':'하기'}`} aria-pressed={event.plan.completed} disabled={busy} onClick={()=>complete(event.plan!)}>{event.plan.completed&&<Check size={13}/>}</button>:school?<SchoolLogo school={school} size={24}/>:<CalendarDays size={16}/>}
       <div>
-        {showDate&&<button type="button" className="calendar-event-date" onClick={()=>{const day=event.date||event.start!;setSelected(day);setMonth(day.slice(0,7));}}>{event.date?scheduleDateLabel(event.personalAt||event.date,true):event.start===event.end?scheduleDateLabel(event.start):`${scheduleDateLabel(event.start)}–${scheduleDateLabel(event.end)}`}<ChevronRight size={13}/></button>}
-        {eventHref?<a href={eventHref}>{event.title}<ChevronRight size={14}/></a>:<span>{event.title}</span>}
+        {showDate&&<button type="button" className="calendar-event-date" onClick={()=>selectDay(event.date||event.start!,true)}>{event.date?scheduleDateLabel(event.personalAt||event.date,true):event.start===event.end?scheduleDateLabel(event.start):`${scheduleDateLabel(event.start)}–${scheduleDateLabel(event.end)}`}<ChevronRight size={13}/></button>}
+        {eventHref?<a href={eventHref}><span className={compactTraining?'calendar-plan-title':undefined}>{event.title}</span><ChevronRight size={14}/></a>:compactTraining&&event.title.length>100?<details className="calendar-plan-question"><summary><span className="calendar-plan-title">{event.title}</span><ChevronDown size={14}/></summary><p>{event.title}</p></details>:<span className={compactTraining?'calendar-plan-title':undefined}>{event.title}</span>}
         {source?<>
           <small className="calendar-schedule-context">{[source.campus,!longDepartment&&department].filter(Boolean).join(' · ')}</small>
           {longDepartment&&<details className="calendar-departments"><summary>모집단위 {source.departmentCount?`${source.departmentCount}개 `:''}확인</summary><p>{department}</p></details>}
@@ -83,14 +108,14 @@ export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],inte
           {sourceNote&&<small>{sourceNote}</small>}
           {(sourceUrl||sourceLabel||source.checkedAt)&&<div className="calendar-source-evidence">{sourceUrl?<a className="calendar-source-link" href={sourceUrl} target="_blank" rel="noreferrer" aria-label={`${source.university} ${source.trackLabel} ${sourceLabel} 일정 원문`}>{sourceLabel?`${sourceLabel} `:''}{sourceLabel==='관리자'?'참고 출처':'일정 원문'}<ChevronRight size={12}/></a>:sourceLabel&&<span>{sourceLabel} 설정</span>}{source.checkedAt&&<time dateTime={source.checkedAt}>{scheduleDateLabel(source.checkedAt)} 확인</time>}</div>}
         </>:event.kind==='interview'?<><small>{[target?.campus,target?.department||target?.major].filter(Boolean).join(' · ')}</small>{event.personalAt?appointmentLabel&&<small>{appointmentLabel}</small>:event.start&&<small>응시일·시간 발표 대기</small>}</>:null}
-        {event.plan&&<div className="plan-evidence">{event.plan.target?.automaticPractice&&<small>자동 계획 · 약 {event.plan.target.automaticPractice.minutes}분</small>}<small>{event.plan.completed?'직접 체크함':'직접 체크 전'}</small>{event.plan.performedAt&&<small className="plan-recorded">연습 기록 있음</small>}{event.plan.target&&!event.plan.targetAvailable&&<small>연결 자료가 변경됐어요</small>}</div>}
+        {event.plan&&(compactTraining?<div className="plan-evidence plan-training-meta"><small>{automatic.hybrid.kind==='break'?'휴식':'훈련'} · {automatic.minutes}분</small><small data-state={trainingState}>{trainingState}</small>{event.plan.targetAvailable===false&&<small>연결 자료 변경됨</small>}</div>:<div className="plan-evidence">{automatic&&<small>{automatic.hybrid?'오늘 훈련':'자동 계획'} · 약 {automatic.minutes}분</small>}{automatic?.hybrid?<small>{event.plan.performedAt||event.plan.completed?'훈련 기록 있음':'완료한 답변으로 반영돼요'}</small>:<><small>{event.plan.completed?'직접 체크함':'직접 체크 전'}</small>{event.plan.performedAt&&<small className="plan-recorded">연습 기록 있음</small>}</>}{event.plan.target&&!event.plan.targetAvailable&&<small>연결 자료가 변경됐어요</small>}</div>)}
       </div>
-      {event.plan&&<button className="text-link plan-edit" onClick={()=>setEditing(event.plan!)}>수정</button>}
+      {event.plan&&!event.plan.target?.automaticPractice?.hybrid&&<button className="text-link plan-edit" onClick={()=>setEditing(event.plan!)}>수정</button>}
     </div>;
   }
   return <section className="dashboard-planner dashboard-calendar-panel" id="dashboard-planner" tabIndex={-1} aria-labelledby="dashboard-calendar-title">
     <div className="section-heading"><h2 id="dashboard-calendar-title">계획과 면접 일정{(data.targets.length>0||interviewScheduleCoverage?.source)&&<InfoTip label="일정 범위와 확인 시점">{data.targets.length>0&&<p>지원 학교 전체 · {registeredSchools}개 학교{data.targets.length>registeredSchools?` · ${data.targets.length}개 지원처`:''}</p>}{interviewScheduleCoverage?.source&&<p>{interviewScheduleCoverage.source.admissionYear}학년도 수시{hasOfficialSource&&interviewScheduleCoverage.officialCheckedAt?<> · 입학처 · <time dateTime={interviewScheduleCoverage.officialCheckedAt}>{scheduleDateLabel(interviewScheduleCoverage.officialCheckedAt)}</time> 확인</>:interviewScheduleCoverage.source.checkedAt&&<> · <time dateTime={interviewScheduleCoverage.source.checkedAt}>{scheduleDateLabel(interviewScheduleCoverage.source.checkedAt)}</time> 확인</>}{hasManagedSource&&' · 관리자 설정'}</p>}</InfoTip>}</h2><button className="text-link" onClick={()=>setAdding(true)}><Plus size={15}/>계획 추가</button></div>
-    <AutomaticPracticePlan plans={plans} onPlans={onPlans} configuration={automaticPractice} onConfiguration={onAutomaticPractice}/>
+    {hybrid?<nav className="calendar-training-note" aria-label="캘린더 설정"><Link href="/availability">학습 시간 수정<ArrowRight size={13}/></Link></nav>:<AutomaticPracticePlan plans={plans} onPlans={onPlans} configuration={automaticPractice} onConfiguration={onAutomaticPractice}/>}
     {interviewScheduleCoverage?.stale&&<p className="calendar-status" role="status">{interviewScheduleCoverage.lastRefreshFailed?'최신 일정 연결이 지연되어 마지막 확인 자료를 보여드려요.':'마지막 확인 자료를 표시하고 있어요.'}{visibleCalendarSourceUrl(interviewScheduleCoverage.source.url)&&<> <a href={visibleCalendarSourceUrl(interviewScheduleCoverage.source.url)} target="_blank" rel="noreferrer">일정 원문 확인</a></>}</p>}
     {nonDatedTargets.length>0&&<ul className="calendar-coverage-statuses" aria-label="지원 전형의 면접 상태">{nonDatedTargets.map(item=>{
       const target=data.targets.find(target=>target.id===item.targetId);
@@ -102,22 +127,29 @@ export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],inte
       return <li key={item.targetId}><div><a href={`/schools/${item.targetId}`}>{item.university}<ChevronRight size={13}/></a>{scope&&<small>{scope}</small>}</div><div className="calendar-coverage-result"><span data-status={item.status}>{coverageStatusLabels[item.status]}</span>{officialUrl?<a href={officialUrl} target="_blank" rel="noreferrer" aria-label={`${item.university} ${scope} ${sourceLabel} 출처`}>{sourceLabel==='관리자'?'관리자 참고 출처':'입학처 원문'}<ChevronRight size={12}/></a>:item.managed&&<span>관리자 설정</span>}{checkedAt&&(officialUrl||item.managed)&&<time dateTime={checkedAt}>{scheduleDateLabel(checkedAt)} 확인</time>}</div></li>;
     })}</ul>}
     <div className="planner-calendar-layout"><div className="planner-month">
-    <div className="calendar-heading"><strong>{Number(month.slice(0,4))}년 {Number(month.slice(5))}월</strong><div><button className="icon-button" onClick={()=>changeMonth(-1)} aria-label="이전 달"><ChevronLeft size={17}/></button><button className="calendar-today" onClick={()=>{setMonth(today.slice(0,7));setSelected(today);}}>오늘</button><button className="icon-button" onClick={()=>changeMonth(1)} aria-label="다음 달"><ChevronRight size={17}/></button></div></div>
+    <div className="calendar-heading"><strong>{Number(month.slice(0,4))}년 {Number(month.slice(5))}월</strong><div><button className="icon-button" onClick={()=>changeMonth(-1)} aria-label="이전 달"><ChevronLeft size={17}/></button><button className="calendar-today" onClick={()=>selectDay(today,true)}>오늘</button><button className="icon-button" onClick={()=>changeMonth(1)} aria-label="다음 달"><ChevronRight size={17}/></button></div></div>
     {calendarSchools.length>0&&<div className="calendar-school-key" aria-label="학교별 일정 색상">{calendarSchools.map(school=><span key={school.key} style={schoolStyle(school.key)}><SchoolLogo school={school} size={18}/><span>{school.university}</span></span>)}</div>}
     <div className="month-calendar"><div className="calendar-weekdays">{['일','월','화','수','목','금','토'].map(d=><span key={d}>{d}</span>)}</div><div className="calendar-days">{monthDays(month).map(day=>{
       const items=onDay(day),interviews=items.filter(item=>item.kind==='interview');
-      const labels=items.map(event=>event.kind==='interview'?`${schoolFor(event).university} ${calendarInterviewTime(event.personalAt,event.schoolSchedule?.format)}${event.schoolSchedule?.applicability==='school_reference'?' · 지원 전형 확인 필요':''}`:event.title);
-      return <button key={day} aria-label={`${day}${items.length?`, 일정 ${items.length}개`:''}${interviews.length?`, 면접 ${interviews.length}개`:''}${labels.length?`, ${labels.join(' / ')}`:''}`} aria-controls="planner-selected-day" aria-pressed={selected===day} className={`${day.startsWith(month)?'':'outside'} ${day===today?'today':''} ${day===selected?'selected':''}`} onClick={()=>setSelected(day)}><span className="calendar-date-number">{Number(day.slice(8))}</span><div className="calendar-day-items">{items.map(event=>{
-        if(event.kind!=='interview')return <span className={`calendar-day-item calendar-task-item ${event.kind}`} key={`${event.kind}:${event.id}`} title={event.title}>{event.title}</span>;
+      const practice=items.filter(event=>event.plan?.target?.automaticPractice?.hybrid&&event.plan.target.automaticPractice.hybrid.kind!=='break');
+      const minutes=items.reduce((sum,event)=>sum+Math.max(0,Number(event.plan?.target?.automaticPractice?.minutes)||0),0);
+      const completed=practice.filter(event=>event.plan?.completed||event.plan?.performedAt).length;
+      const personalCount=items.filter(event=>event.kind!=='interview'&&!event.plan?.target?.automaticPractice?.hybrid).length;
+      const labels=hybrid?[]:items.map(event=>event.kind==='interview'?`${schoolFor(event).university} ${calendarInterviewTime(event.personalAt,event.schoolSchedule?.format)}${event.schoolSchedule?.applicability==='school_reference'?' · 지원 전형 확인 필요':''}`:event.title);
+      const dayAria=hybrid?[day,minutes>0?`계획 ${minutes}분`:'',practice.length?`훈련 ${completed}/${practice.length} 완료`:'',personalCount?`개인 계획 ${personalCount}개`:'',interviews.length?`면접 ${interviews.length}개`:''].filter(Boolean).join(', '):`${day}${items.length?`, 일정 ${items.length}개`:''}${interviews.length?`, 면접 ${interviews.length}개`:''}${labels.length?`, ${labels.join(' / ')}`:''}`;
+      return <button key={day} aria-label={dayAria} aria-controls="planner-selected-day" aria-pressed={selected===day} className={`${day.startsWith(month)?'':'outside'} ${day===today?'today':''} ${day===selected?'selected':''}`} onClick={()=>selectDay(day)}><span className="calendar-date-number">{Number(day.slice(8))}</span><div className={`calendar-day-items${hybrid?' calendar-hybrid-items':''}`}>
+      {hybrid&&(practice.length>0||personalCount>0)&&<span className="calendar-day-summary">{minutes>0&&<strong>{minutes}분</strong>}{practice.length>0?<small>{completed}/{practice.length} 완료</small>:<small>계획 {personalCount}개</small>}</span>}
+      {(hybrid?interviews.slice(0,1):items).map(event=>{
+        if(event.kind!=='interview'){const automatic=event.plan?.target?.automaticPractice;return <span className={`calendar-day-item calendar-task-item ${event.kind}`} key={`${event.kind}:${event.id}`} title={event.title}>{hybrid&&automatic?.hybrid?`${trainingKindLabels[automatic.hybrid.kind]||'훈련'} · ${automatic.minutes}분`:event.title}</span>;}
         const school=schoolFor(event),track=event.schoolSchedule?.trackLabel||data.targets.find(target=>target.id===event.targetId)?.admission_type;
         const multipleTracks=interviews.filter(item=>schoolFor(item).key===school.key).length>1;
         const time=calendarInterviewTime(event.personalAt,event.schoolSchedule?.format);
         return <span key={`interview:${event.id}`} className="calendar-day-item calendar-interview-item" data-school={school.key} style={schoolStyle(school.key)} title={`${event.title} · ${time}${event.schoolSchedule?.applicability==='school_reference'?' · 지원 전형 확인 필요':''}`}><span className="calendar-chip-school"><SchoolLogo school={school} size={16}/><span className="calendar-chip-name">{school.university}</span></span>{multipleTracks&&track&&<span className="calendar-chip-track">{track}</span>}{event.schoolSchedule?.applicability==='school_reference'&&<span className="calendar-chip-track">참고 일정</span>}<span className="calendar-chip-time">{time}{event.start&&event.end&&event.start!==event.end&&event.schoolSchedule?.format!=='video_submission'?' · 면접 기간':''}</span></span>;
-      })}</div></button>;
+      })}{hybrid&&interviews.length>1&&<small className="calendar-more-events">면접 +{interviews.length-1}</small>}{hybrid&&practice.length>0&&personalCount>0&&<small className="calendar-more-events">개인 계획 {personalCount}개</small>}</div></button>;
     })}</div></div>
     <div className="calendar-legend"><span><i className="plan"/>계획</span><span><i className="assignment"/>과제</span><span><CalendarDays size={12} aria-hidden="true"/>면접</span></div>
     </div><div className="planner-day-agenda" aria-live="polite">
-    <div className="planner-selected-day" id="planner-selected-day"><div className="selected-day-heading"><strong>{Number(selected.slice(5,7))}월 {Number(selected.slice(8))}일</strong><span>{selected===today?'오늘':new Intl.DateTimeFormat('ko-KR',{weekday:'long',timeZone:'UTC'}).format(new Date(`${selected}T00:00:00Z`))}</span></div>
+    <div className="planner-selected-day" id="planner-selected-day" ref={selectedDay}><div className="selected-day-heading"><strong>{Number(selected.slice(5,7))}월 {Number(selected.slice(8))}일</strong><span>{selected===today?'오늘':new Intl.DateTimeFormat('ko-KR',{weekday:'long',timeZone:'UTC'}).format(new Date(`${selected}T00:00:00Z`))}</span></div>
     <div className="calendar-events">{selectedEvents.length?selectedEvents.map(event=>eventRow(event)):!loaded?<p className="calendar-status">일정을 불러오고 있어요.</p>:<button className="calendar-empty" onClick={()=>setAdding(true)}>이날의 계획을 추가해 보세요.<Plus size={15}/></button>}</div>
     </div>
     {upcoming.length>0&&<section className="calendar-upcoming" aria-labelledby="calendar-upcoming-title"><h3 id="calendar-upcoming-title">다가오는 면접</h3>{upcoming.map(event=>eventRow(event,true))}</section>}
@@ -127,8 +159,11 @@ export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],inte
       return <section key={item.targetId} className="calendar-school-guidance"><a href={`/schools/${item.targetId}`}>{item.university}<ChevronRight size={13}/></a><p>{visibleCalendarSourceText(item.note)||coverageStatusNotes[item.status]}</p>{item.officialDecisions?.map((decision,i)=><div className="calendar-official-decision" key={`${decision.trackLabel}:${i}`}><div className="calendar-decision-heading"><span>{decision.trackLabel==='*'?'전체 전형':decision.trackLabel}</span><span data-status={decision.status}>{coverageStatusLabels[decision.status]}</span></div><p className="calendar-decision-scope">{decision.departments.length?decision.departments.join(', '):'전체 모집단위'}</p><p>{visibleCalendarSourceText(decision.reason)||coverageStatusNotes[decision.status]}</p><DecisionSource decision={decision} checkedAt={interviewScheduleCoverage?.officialCheckedAt}/></div>)}{item.unresolved?.map((entry,i)=><p className="calendar-unresolved" key={`${entry.trackLabel}:${i}`}>{entry.trackLabel} · {entry.rawDate}<small>{visibleCalendarSourceText(entry.reason)||coverageStatusNotes.needs_review}</small></p>)}{officialSources.length>0&&<nav className="calendar-official-sources" aria-label={`${item.university} 입학처 자료`}>{officialSources.map(source=><a href={source.url} target="_blank" rel="noreferrer" key={source.url}>{source.title}<ChevronRight size={12}/></a>)}</nav>}</section>;
     })}</div></details>}
     </div></div>
-    <details className="week-plan-disclosure"><summary>주간 계획 보기<span>{weekPlans.length}개</span></summary><div className="week-plan-heading"><h3>이번 주 계획</h3><span>{Number(week[0].slice(5,7))}.{Number(week[0].slice(8))}–{Number(week[6].slice(5,7))}.{Number(week[6].slice(8))}</span><div><button className="icon-button" aria-label="이전 주" onClick={()=>{const day=shiftPlanDay(selected,-7);setSelected(day);setMonth(day.slice(0,7));}}><ChevronLeft size={15}/></button><button className="icon-button" aria-label="다음 주" onClick={()=>{const day=shiftPlanDay(selected,7);setSelected(day);setMonth(day.slice(0,7));}}><ChevronRight size={15}/></button></div></div>
-    <div className="week-plan">{week.map((day,i)=><button key={day} className={day===selected?'selected':''} onClick={()=>{setSelected(day);setMonth(day.slice(0,7));}}><span>{['월','화','수','목','금','토','일'][i]}<b>{Number(day.slice(8))}</b></span><div>{weekPlans.filter(p=>p.date===day).length?weekPlans.filter(p=>p.date===day).map(p=><span className={p.completed?'completed':''} key={p.id}>{p.title}</span>):<small>—</small>}</div></button>)}</div>
+    <details className="week-plan-disclosure"><summary>주간 계획 보기<span>{weekLearningCount}개</span></summary><div className="week-plan-heading"><h3>이번 주 계획</h3><span>{Number(week[0].slice(5,7))}.{Number(week[0].slice(8))}–{Number(week[6].slice(5,7))}.{Number(week[6].slice(8))}</span><div><button className="icon-button" aria-label="이전 주" onClick={()=>{const day=shiftPlanDay(selected,-7);setSelected(day);setMonth(day.slice(0,7));}}><ChevronLeft size={15}/></button><button className="icon-button" aria-label="다음 주" onClick={()=>{const day=shiftPlanDay(selected,7);setSelected(day);setMonth(day.slice(0,7));}}><ChevronRight size={15}/></button></div></div>
+    <div className={`week-plan${hybrid?' hybrid-week-plan':''}`}>{week.map((day,i)=>{
+      const dayPlans=weekPlans.filter(plan=>plan.date===day),categories=hybrid?summarizeTrainingPlans(dayPlans):[];
+      return <button key={day} className={day===selected?'selected':''} onClick={()=>selectDay(day,true)}><span>{['월','화','수','목','금','토','일'][i]}<b>{Number(day.slice(8))}</b></span><div>{hybrid?categories.length?categories.map(category=><span className="calendar-week-category" key={category.kind}><strong>{category.label}</strong><small>{category.count}회{category.minutes!==null?` · ${category.minutes}분`:''}</small></span>):<small>학습 계획 없음</small>:dayPlans.length?dayPlans.map(plan=><span className={plan.completed?'completed':''} key={plan.id}>{plan.title}</span>):<small>—</small>}</div></button>;
+    })}</div>
     </details>
     {error&&<Alert>{error}</Alert>}
     {adding&&<Modal title="계획 추가" onClose={()=>setAdding(false)}><PlanForm initialDate={selected} onClose={()=>setAdding(false)} onSave={plan=>{onPlans([...plans,plan].sort((a,b)=>a.date.localeCompare(b.date)));setAdding(false);setSelected(plan.date);setMonth(plan.date.slice(0,7));}}/></Modal>}

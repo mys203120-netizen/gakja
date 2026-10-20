@@ -147,7 +147,7 @@
 .app-shell .interview-v2 .interview-preset-list strong { font-weight:450; color:var(--clarity-ink); }
 .app-shell .interview-v2 .interview-preset-list>label.selected strong { color:var(--clarity-green); }
 .app-shell .interview-v2 .interview-preset-list input[type="radio"] { accent-color:var(--clarity-green); right:10px; }
-.app-shell .interview-v2 :is(.interview-school-note p,.interview-school-note>span,.interview-context-label,.interview-device-note,.interview-quick-start p,.interview-reaction-note) { color:var(--clarity-muted); }
+.app-shell .interview-v2 :is(.interview-school-note p,.interview-school-note>span,.interview-context-label,.interview-device-note,.interview-quick-start p) { color:var(--clarity-muted); }
 .app-shell .interview-v2 :is(.interview-school-note a,.interview-selected-question>a) { color:var(--clarity-green); }
 .app-shell .interview-v2 .interview-school-note { padding:16px 0; margin-top:22px; }
 .app-shell .interview-v2 .interview-common-note { border:0; margin:10px 0 22px; padding:14px 16px; border-radius:6px; background:var(--clarity-soft); }

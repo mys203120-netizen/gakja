@@ -101,7 +101,7 @@ test('downward scroll exhausts outer ranges and sends only residual delta inward
   assert.deepEqual([d.root.scrollTop, panel.scrollTop, inner.scrollTop], [1000, 100, 40]);
   assert.equal(d.root.calls[0].behavior, 'instant');
   assert.equal(inner.attrs.get('data-scroll-visible'), 'true');
-  assert.equal(d.root.attrs.has('data-scroll-visible'), false);
+  assert.equal(d.root.attrs.has('data-scroll-visible'), true);
 });
 
 test('upward scroll exhausts the inner range before moving its parents', () => {
@@ -188,18 +188,21 @@ test('line and page wheel delta modes are converted before scroll distribution',
   assert.equal(d.root.scrollTop, 840);
 });
 
-test('only actual scoped inner scrolling reveals a scrollbar, renewed for 700ms', () => {
+test('actual inner and document scrolling reveal a scrollbar, renewed for 900ms before fading', () => {
   const d = ordinary();
   assert.equal(d.inner.attrs.has('data-scroll-visible'), false);
   assert.equal(d.registrations.find(row => row.name === 'scroll')?.options.capture, true);
   d.emit('scroll', { target: d.inner });
   assert.equal(d.inner.attrs.get('data-scroll-visible'), 'true');
-  d.advance(699); assert.equal(d.inner.attrs.has('data-scroll-visible'), true);
-  d.emit('scroll', { target: d.inner }); d.advance(699);
+  d.advance(899); assert.equal(d.inner.attrs.has('data-scroll-visible'), true);
+  d.emit('scroll', { target: d.inner }); d.advance(899);
   assert.equal(d.inner.attrs.has('data-scroll-visible'), true);
   d.advance(1); assert.equal(d.inner.attrs.has('data-scroll-visible'), false);
   d.emit('scroll', { target: d.root }); d.emit('scroll', { target: d.app });
-  assert.equal(d.root.attrs.has('data-scroll-visible'), false);
+  assert.equal(d.root.attrs.has('data-scroll-visible'), true);
+  assert.equal(d.root.attrs.get('data-scroll-decorated'),'true');
+  d.advance(900);assert.equal(d.root.attrs.has('data-scroll-visible'),false);
+  assert.equal(d.root.attrs.get('data-scroll-decorated'),'true','decoration survives so the registered thumb colour can fade');
   assert.equal(d.app.attrs.has('data-scroll-visible'), false);
   const outside = d.node(d.body, { range: 100 }); d.emit('scroll', { target: outside });
   assert.equal(outside.attrs.has('data-scroll-visible'), false);

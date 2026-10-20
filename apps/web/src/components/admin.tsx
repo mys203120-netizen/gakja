@@ -61,6 +61,12 @@ function Overview() {
   return <>
     <PageTitle title="운영 현황" aside={<Link className="button primary" href="/admin/imports/new"><Upload size={17} />콘텐츠 등록</Link>} />
     <div className={overviewStyles.overview}>
+      <section className={overviewStyles.training} aria-labelledby="overview-training">
+        <div className={overviewStyles.heading}><div><h2 id="overview-training">학생 준비 현황</h2><p className={overviewStyles.trainingNote}>학교 등록부터 진단과 오늘 훈련까지 확인해요.</p></div><Link className="text-link" href="/admin/students">학생 관리<ChevronRight size={15}/></Link></div>
+        <div className={overviewStyles.trainingHead} aria-hidden="true"><span>학생</span><span>학교 · 학습 시간</span><span>진단</span><span>오늘 훈련</span><span>최근 답변</span></div>
+        {students.length?students.slice(0,8).map(student=>{const state=rows(admin.training).find(item=>item.studentId===student.id);return <Link className={overviewStyles.trainingRow} href={`/admin/students/${student.id}`} key={student.id}><span><strong>{student.name}</strong><small>{state?.nextStep||'준비 상태 확인'}</small></span><span><strong>{state?.schoolCount?`${state.schoolCount}개 지원처`:'학교 미등록'}</strong><small>{state?.availability?.configured?`오늘 ${state.availability.todayMinutes}분 가능`:'학습 시간 미설정'}</small></span><span><small className={overviewStyles.mobileLabel}>진단</small>{state?.diagnosis?.completed||0} / {state?.diagnosis?.total||0}개</span><span><small className={overviewStyles.mobileLabel}>오늘 훈련</small>{state?.training?.planned?`${state.training.completed} / ${state.training.planned}개`:'저장된 계획 없음'}</span><span><small className={overviewStyles.mobileLabel}>최근 답변</small>{state?.training?.lastPracticedAt?dateLabel(state.training.lastPracticedAt):'아직 없음'}</span></Link>;}):<Empty title="아직 등록된 학생이 없습니다" href="/admin/students" label="학생 관리"/>}
+        <p className={overviewStyles.trainingNote}>오늘 계획은 학생이 마지막으로 접속해 저장한 내용이에요. 다음 접속 시 면접 일정과 새 답변에 맞춰 다시 조정됩니다.</p>
+      </section>
       <div className={overviewStyles.queues} aria-label="처리할 일">
         {pending.length ? <section className={overviewStyles.queue} aria-labelledby="overview-confirmations">
           <div className={overviewStyles.heading}><h2 id="overview-confirmations">확인 요청 <Badge tone="amber">{pending.length}건</Badge></h2><Link className="text-link" href="/admin/reviews">전체 보기<ChevronRight size={15} /></Link></div>
@@ -107,6 +113,7 @@ function StudentDetail({ id }: { id: string }) {
       <div><span>계정</span><Badge tone={s.active ? 'green' : 'neutral'}>{s.active ? '활성' : '비활성'}</Badge></div>
     </div>
     <ErrorMessage error={op.error} />
+    <StudentTrainingStatus value={rows(admin.training).find(item=>item.studentId===id)}/>
     <div className="dashboard-middle-grid">
       <section className="panel"><div className="section-heading"><h2>지원 정보</h2><button className="button small ghost" onClick={() => setEditTarget({})}><Plus size={16} />지원처 추가</button></div>
         {targets.length ? targets.map(t => <button className="linked-row full" key={t.id} onClick={() => setEditTarget(t)}><div className="row-text"><strong>{targetName(t)}</strong><span>{[targetMajor(t), t.admission_type].filter(Boolean).join(' · ')}</span></div><span className="muted">{t.interview_date ? dateLabel(t.interview_date) : '날짜 미정'}</span><ChevronRight size={16} /></button>) : <Empty title="지원처가 없습니다" />}
@@ -124,6 +131,20 @@ function StudentDetail({ id }: { id: string }) {
     {editProduction && <Modal title="제작 건 연결" onClose={() => setEditProduction(null)}><ProductionForm studentId={id} value={editProduction} onClose={() => setEditProduction(null)} /></Modal>}
     {activeConfirm && <Modal title={s.active ? '계정을 비활성화할까요?' : '계정을 활성화할까요?'} onClose={() => setActiveConfirm(false)}><p>{s.name} · {s.email}</p>{s.active && <p className="muted">현재 로그인한 세션이 종료됩니다.</p>}<ErrorMessage error={op.error} /><button disabled={op.busy} className="button primary full" onClick={() => op.run(() => action('deactivate', { studentId: id, active: !s.active }), '계정 상태를 변경했습니다.', () => setActiveConfirm(false))}>{op.busy ? '처리 중' : s.active ? '비활성화' : '활성화'}</button></Modal>}
   </>;
+}
+
+function StudentTrainingStatus({value}:{value?:Item}){
+  if(!value)return null;
+  const availability=value.availability||{},training=value.training||{},diagnosis=value.diagnosis||{};
+  return <section className={overviewStyles.training} aria-labelledby="student-training-title"><div className={overviewStyles.heading}><h2 id="student-training-title">면접 준비 현황</h2><Badge>{value.nextStep}</Badge></div>
+    <div className={overviewStyles.trainingCards}>
+      <div><span><CalendarDays size={16}/>오늘 훈련</span><strong>{training.completed||0} / {training.planned||0}<small>개 완료</small></strong><p>{availability.configured?`오늘 가능 ${availability.todayMinutes}분 · 계획 ${training.plannedMinutes||0}분`:'학생의 학습 시간 설정 전'}</p>{training.inProgress>0&&<p>진행 중 {training.inProgress}개</p>}</div>
+      <div><span><Activity size={16}/>준비 현황</span><strong>{diagnosis.completed||0} / {diagnosis.total||0}<small>개 지원처 진단</small></strong><p>{availability.configured?`현재 평일 ${availability.weekdayMinutes}분 · 주말 ${availability.weekendMinutes}분`:'평일·주말·날짜별 학습 시간을 설정할 수 있어요.'}</p></div>
+      <div><span><History size={16}/>내 기록</span><strong>글 {training.textAnswers||0}<small>· 음성 {training.audioAnswers||0}회</small></strong><p>{training.lastPracticedAt?`최근 답변 ${dateTime(training.lastPracticedAt)}`:'현재 지원 정보에 연결된 제출 답변이 없어요.'}</p></div>
+    </div>
+    {!!value.targets?.length&&<ul className={overviewStyles.trainingTargets}>{value.targets.map((target:Item)=><li key={target.targetId}><span><strong>{target.university}</strong><small>{target.department}</small></span><span>{target.diagnosticState==='completed'?'진단 완료':target.diagnosticState==='in_progress'?'진단 진행 중':'첫 진단 전'}{target.reviewRequests>0&&<small>직접 고른 보완 질문 {target.reviewRequests}개</small>}</span><span>{target.date?<>{dateLabel(target.date)}<small>{target.dateKind==='personal'?'개별 면접일':'공개 기간 시작 · 개인 배정 확인 필요'}</small></>:'면접 일정 확인 필요'}</span></li>)}</ul>}
+    <p className={overviewStyles.trainingNote}>저장된 계획과 실제 제출 답변을 표시합니다. 직접 체크한 정리·휴식은 면접 답변 실적으로 계산하지 않으며, 실력 점수나 합격 가능성을 뜻하지 않아요.</p>
+  </section>;
 }
 
 function TargetForm({ studentId, target, onClose }: { studentId: string; target: Item; onClose: () => void }) {

@@ -41,16 +41,16 @@
 }
 
 .app-shell .motion-toggle-track {
-  @apply gk:transition-[background-color,box-shadow] gk:duration-[260ms] gk:ease-[cubic-bezier(.22,1,.36,1)] gk:motion-reduce:transition-none;
+  @apply gk:transition-[background-color] gk:duration-[260ms] gk:ease-[cubic-bezier(.22,1,.36,1)] gk:motion-reduce:transition-none;
   position: relative;
   display: block;
   flex: 0 0 50px;
   width: 50px;
   height: 28px;
-  border: 1px solid var(--clarity-muted);
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: var(--clarity-soft);
-  box-shadow: var(--soft-shadow-inset);
+  background: #dce1e5;
+  box-shadow: none;
   pointer-events: none;
 }
 
@@ -64,14 +64,14 @@
   height: 20px;
   border-radius: 50%;
   background: var(--clarity-surface);
-  box-shadow: 0 2px 4px color-mix(in srgb,var(--soft-accent-ink) 18%,transparent);
+  box-shadow: none;
   transform: translateX(0);
 }
 
 .app-shell button.motion-toggle-button[aria-checked=true] .motion-toggle-track,
 .app-shell .motion-toggle-input:checked + .motion-toggle-track {
-  background: var(--soft-accent-gradient);
-  border-color: var(--clarity-action);
+  background: var(--clarity-brand);
+  border-color: transparent;
 }
 .app-shell button.motion-toggle-button[aria-checked=true] .motion-toggle-thumb,
 .app-shell .motion-toggle-input:checked + .motion-toggle-track .motion-toggle-thumb { transform: translateX(22px); }

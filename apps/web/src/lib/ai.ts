@@ -5,7 +5,6 @@ import { createSign } from 'node:crypto';
 import { z } from 'zod';
 import { getLearning } from '@/lib/data';
 import { ApiError, query, transaction } from '@/lib/db';
-import { REACTION_INSTRUCTIONS, reactionSchema, validateInterviewerReaction, type ReactionInput } from '@/lib/interviewer-reaction';
 import { assertCommonAccess, commonInterviewQuestions, interviewLearningHistory, schoolLearningIdentityMatches } from '@/lib/school-learning';
 import { streamedJsonContent } from '@/lib/assistant-stream-model';
 import type { ChatAttachmentInput } from '@/lib/chat-attachments';
@@ -277,7 +276,7 @@ export async function completeUsage(id: string, status: string, usage?: { input_
   await query('update ai_usage_logs set status=$2,input_tokens=$3,output_tokens=$4 where id=$1', [id, status, usage?.input_tokens || 0, usage?.output_tokens || 0]);
 }
 
-export async function coach(studentId: string, context: LearningContext, task: string, history: { role: 'user' | 'assistant'; content: string }[] = [], feature: 'chat' | 'interview' = 'chat', contextId?: string, reactionInput?: ReactionInput) {
+export async function coach(studentId: string, context: LearningContext, task: string, history: { role: 'user' | 'assistant'; content: string }[] = [], feature: 'chat' | 'interview' = 'chat', contextId?: string) {
   // Approved content stays pinned, but a student's new correction must apply immediately after assist.
   const confirmations = await query('select * from student_confirmations where student_id=$1 order by created_at desc', [studentId]);
   context = { ...context, studentConfirmations: confirmations.map(row => ({ entity_id: row.entity_id, confirmation_status: row.confirmation_status || row.data?.confirmation_status || (row.state === 'different' ? 'student_says_different' : row.state === 'confirmed' ? 'confirmed_by_student' : 'needs_confirmation'), response: row.response || null })) };
@@ -286,14 +285,13 @@ export async function coach(studentId: string, context: LearningContext, task: s
   try {
     const response = await client.responses.create({
       model: modelFor(feature), store: false, max_output_tokens: 3000,
-      instructions: `${INSTRUCTIONS}${feature === 'interview' ? `\n${INTERVIEW_FEEDBACK_INSTRUCTIONS}` : ''}\n작업: ${task}${reactionInput ? `\n${REACTION_INSTRUCTIONS}` : ''}`,
+      instructions: `${INSTRUCTIONS}${feature === 'interview' ? `\n${INTERVIEW_FEEDBACK_INSTRUCTIONS}` : ''}\n작업: ${task}`,
       input: [
         { role: 'developer', content: `승인 자료(JSON 데이터): ${JSON.stringify(compactContext(context))}` },
         ...(context.studentAnswerEvidence ? [{role:'developer' as const,content:`현재 학생 답변(JSON 데이터·승인 사실 아님): ${JSON.stringify({student_answer_evidence:context.studentAnswerEvidence})}`}]:[]),
-        ...(reactionInput ? [{ role: 'developer' as const, content: `반응 대상으로 고정된 질문·학생 제출 답변(JSON 데이터): ${JSON.stringify(reactionInput)}` }] : []),
         ...history.slice(-14).map((message) => ({ role: message.role, content: message.content.slice(0, 12000) })),
       ],
-      text: { format: { type: 'json_schema', name: reactionInput ? 'coaching_reply_with_reaction' : 'coaching_reply', strict: true, schema: reactionInput ? { ...coachingSchema, properties: { ...coachingSchema.properties, reaction: reactionSchema }, required: [...coachingSchema.required, 'reaction'] } : coachingSchema } },
+      text: { format: { type: 'json_schema', name: 'coaching_reply', strict: true, schema: coachingSchema } },
     });
     if (response.status !== 'completed' || !response.output_text) throw new FeatureError(502, 'AI 응답이 완료되지 않았어요. 저장된 기록에서 다시 이어가 주세요.', 'AI_INCOMPLETE');
     const rawOutput = JSON.parse(response.output_text);
@@ -302,7 +300,7 @@ export async function coach(studentId: string, context: LearningContext, task: s
     const allowedIds = new Set(cards.map((source) => source.id));
     if (output.source_ids.some((id) => !allowedIds.has(id))) throw new FeatureError(502, 'AI 근거 연결을 확인하지 못했어요. 다시 시도해 주세요.', 'AI_INVALID_SOURCE');
     await completeUsage(usageId, 'completed', response.usage);
-    return { content: output.content, sources: cards.filter((source) => output.source_ids.includes(source.id)), model: modelFor(feature), promptVersion: PROMPT_VERSION, ...(reactionInput ? { reaction: validateInterviewerReaction(rawOutput.reaction, reactionInput) } : {}) };
+    return { content: output.content, sources: cards.filter((source) => output.source_ids.includes(source.id)), model: modelFor(feature), promptVersion: PROMPT_VERSION };
   } catch (error) {
     await completeUsage(usageId, 'failed');
     if (error instanceof FeatureError) throw error;
@@ -472,7 +470,6 @@ export function selfCheckReport(context: LearningContext, turns: { question_id: 
     sections: answered.map((turn) => ({
       questionId: turn.question_id, question: turn.question, answer: turn.answer,
       turnId: turn.id, assisted: Boolean(turn.data?.assisted), speakerId: turn.data?.speakerId, questionKind: turn.data?.questionKind, derivedFromCorrectedTranscript: Boolean(turn.data?.derivedFromCorrectedTranscript),
-      interviewerReaction: turn.data?.reaction || null, reactionRevisions: turn.data?.reactionRevisions || [],
       sourceType:turn.data?.sourceType || 'personal', sourceSnapshot:turn.data?.sourceSnapshot || null, commonRevision:turn.data?.commonRevision || null, practiceLabel:turn.data?.practiceLabel || null,
       briefingId: context.briefingId || null,
       selfCheck: ['질문에 직접 답했나요?', '내가 실제로 한 행동이 드러나나요?', '주장에 연결되는 근거를 말했나요?'],

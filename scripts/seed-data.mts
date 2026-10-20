@@ -9,10 +9,7 @@ loadProjectEnv();
 
 export const testAccounts = [
   { id: '10000000-0000-4000-8000-000000000001', email: 'admin@gakja.test', name: '운영 관리자', role: 'admin' },
-  { id: '10000000-0000-4000-8000-000000000002', email: 'staff@gakja.test', name: '이지원', role: 'staff' },
   { id: '10000000-0000-4000-8000-000000000003', email: 'harin@gakja.test', name: '김하린', role: 'student', track: 'environment' },
-  { id: '10000000-0000-4000-8000-000000000004', email: 'doyun@gakja.test', name: '이도윤', role: 'student', track: 'biology' },
-  { id: '10000000-0000-4000-8000-000000000005', email: 'pending@gakja.test', name: '박서연', role: 'student' },
 ];
 if (!process.env.DATABASE_URL) throw new Error('루트 .env.local에 DATABASE_URL을 설정해 주세요.');
 const isSupabase = process.argv.includes('--supabase');
@@ -35,7 +32,6 @@ try {
   }
   await client.query('begin');
   for (const account of testAccounts) await client.query('insert into profiles(id,email,name,role,password_hash) values($1,$2,$3,$4,$5) on conflict(email) do update set name=excluded.name,role=excluded.role,password_hash=excluded.password_hash', [account.id, account.email, account.name, account.role, isSupabase ? null : passwordHash]);
-  for (const account of testAccounts.filter((a) => a.role === 'student')) await client.query('insert into staff_assignments(staff_id,student_id) values($1,$2) on conflict do nothing', [testAccounts[1].id, account.id]);
   for (const account of testAccounts.filter((a) => a.track)) {
     const packs = createDemoPack(account.id, account.name, account.track as 'environment' | 'biology');
     const first = packs[0], learning = first.learning_data;

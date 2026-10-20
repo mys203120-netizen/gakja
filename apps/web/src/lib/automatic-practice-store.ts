@@ -1,13 +1,16 @@
 import 'server-only';
 import type {PoolClient} from 'pg';
-import {transaction,ApiError} from './db';
+import {transaction,ApiError,query} from './db';
 import {getPlanContext,ownedPlanTarget,presentPlan} from './planner-context';
-import {automaticPracticeDays,practiceDeadline,practiceDaysLeft,practicePhase,practicePhaseLabels} from './automatic-practice';
+import {automaticPracticeDays,practiceDaysLeft,practicePhase,practicePhaseLabels} from './automatic-practice';
 import {koreaToday,shiftPlanDay,type PlanTarget} from './planner-model';
 import {recordMatchesCurrentTarget} from './learning-target-scope';
 import {interviewSupportForTarget,isStudentRecordQuestion} from './school-interview-scope';
 import {focusTraining} from './focus-training';
 import {knowledgeTargetKey} from './knowledge-flow-model';
+import {normalizeTrainingAvailability} from './training-availability';
+import {hybridDeadlines} from './hybrid-training';
+import {studentAdmissionCalendar} from './admission-calendar-store';
 type Context=Awaited<ReturnType<typeof getPlanContext>>;
 type Value=Record<string,any>;
 type QuestionTarget=PlanTarget&{kind:'question';title:string;sourceType:'personal'|'common';sourceVersion:number;questionSnapshot:Value;targetSnapshot:Value;targetId:string};
@@ -46,20 +49,33 @@ export async function pauseAutomaticPractice(studentId:string,targetId:string){
 }
 /** Replace only untouched automatic entries; never delete a plan or declare it performed. */
 export async function synchronizeAutomaticPractice(studentId:string,context:Context,today=koreaToday()){
+  const savedPreferences=(await query('select data from student_preferences where student_id=$1',[studentId]))[0]?.data||{};
+  if(normalizeTrainingAvailability(savedPreferences.trainingAvailability)){
+    const {getHybridTraining}=await import('./hybrid-training-store');
+    const training=await getHybridTraining(studentId,undefined,today);
+    return training.deadlines.map(deadline=>({targetId:deadline.targetId,enabled:true,date:deadline.date,dateSource:deadline.source,dateLabel:deadline.label,daysLeft:deadline.daysLeft,
+      phase:'connection',phaseLabel:training.today.focus,dailyMinutes:training.today.capacityMinutes,status:deadline.status,
+      plannedToday:training.today.tasks.filter(task=>task.targetId===deadline.targetId).length}));
+  }
+  const calendar=await studentAdmissionCalendar(studentId);
   return transaction(async db=>{
     await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+studentId]);
     const registered=(await db.query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null for share",[studentId])).rows;
     if(registered.length!==context.schoolTargets.length||registered.some(row=>!context.schoolTargets.some(saved=>saved.id===row.id&&knowledgeTargetKey(saved.data)===knowledgeTargetKey(row.data))))return [];
     const rows=(await db.query("select *,to_char(planned_date,'YYYY-MM-DD') as date from student_plans where student_id=$1 order by created_at desc,id for update",[studentId])).rows;
     const events=(await db.query('select id,kind,data,created_at from study_session_events where student_id=$1 order by created_at desc',[studentId])).rows;
-    const preferences=(await db.query('select data from student_preferences where student_id=$1',[studentId])).rows[0]?.data?.automaticPractice||{};
+    const currentPreferences=(await db.query('select data from student_preferences where student_id=$1',[studentId])).rows[0]?.data||{};
+    // A concurrent availability save must not be followed by the legacy 20-minute fallback.
+    if(normalizeTrainingAvailability(currentPreferences.trainingAvailability))return [];
+    const preferences=currentPreferences.automaticPractice||{};
     const fresh={...context,events},decorated:Value[]=rows.map(row=>presentPlan(row,fresh));
     const fixed=decorated.filter(plan=>!plan.target?.automaticPractice||plan.completed||plan.performedAt);
     const configs=context.schoolTargets.flatMap(school=>{
       const current={...school.data,id:school.id};
       const configured=preferences[school.id];
       const settings=configured&&recordMatchesCurrentTarget({targetId:school.id,targetSnapshot:configured.targetSnapshot},[current])?configured:rows.find(row=>row.target?.targetId===school.id&&row.target?.automaticPractice&&recordMatchesCurrentTarget({targetId:school.id,targetSnapshot:row.target.targetSnapshot},[current]))?.target.automaticPractice;
-      const deadline=practiceDeadline(current,settings);
+      const actual=hybridDeadlines({today,targets:[current],schedules:calendar.interviewSchedules,coverage:calendar.interviewScheduleCoverage.targets,settings:{[school.id]:settings}})[0];
+      const deadline=actual?.date?{date:actual.date,source:actual.source,label:actual.label}:null;
       if(!deadline||!interviewSupportForTarget(current).supported)return [];
       const days=practiceDaysLeft(today,deadline.date),minutes=[10,20,30].includes(settings?.dailyMinutes)?settings.dailyMinutes:20;
       const targets=automaticQuestionTargets(fresh,school.id),questions=automaticQuestionFacts(fresh,current,targets);

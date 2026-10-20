@@ -17,8 +17,9 @@ import { learningRetryHref } from '@/lib/learning-navigation';
 import { studyAnswerComparisonHref, studyWeakPointHref } from '@/lib/study-record-links';
 import { koreaToday } from '@/lib/planner-model';
 import { action, api, post, PageTitle, Breadcrumb, Badge, Empty, LinkedRow, Alert, Spinner, dateLabel, type Item } from './shared';
-import { Mic, MessagesSquare, Sparkles, ArrowUpRight, RotateCcw, ListChecks } from 'lucide-react';
+import { Mic, MessagesSquare, Sparkles, ArrowUpRight, RotateCcw, ListChecks, Download, LoaderCircle } from 'lucide-react';
 import styles from './learning-surfaces.module.css';
+import toolbarStyles from './records-toolbar.module.css';
 
 function useStudyReports(id?:string) {
   const [reports,setReports]=useState<Item|null>(null),[error,setError]=useState('');
@@ -37,6 +38,7 @@ function useStudyReports(id?:string) {
 function ReportNav({active='reports'}:{active?:string}) {
   return <nav className="subnav" aria-label="리포트 보기">{[['reports','/records','발화와 답변'],['history','/records/history','연습 이력'],['comparisons','/records/comparisons','답변 비교']].map(([key,href,label])=><Link key={key} href={href} className={active===key?'active':''} aria-current={active===key?'page':undefined}>{label}</Link>)}</nav>;
 }
+function interviewLabel(session?:Item){const kind=session?.data?.trainingPurpose;return ({diagnostic:'첫 진단',recall:'누적 복습',focus:'집중 보완',mixed:'연결 면접'} as Record<string,string>)[kind]||(session?.kind==='video'?'화상 모의면접':'채팅 모의면접');}
 
 function StudyReportNumbers({report,showReview=true}:{report:Item;showReview?:boolean}) {
   return <div className="records-overview">
@@ -68,9 +70,9 @@ export function RecordsPages({ slug = [] }: { slug?: string[] }) {
   const history = slug[0] === 'history';
   const memoryHistory = (data.memoryHistory || data.memoryAttempts)?.slice(0, 30) || [];
   return <div className={"records-view "+styles.report}>
-    <Breadcrumb items={[{ label: '내 리포트', href: slug.length ? '/reports' : undefined }, ...(history ? [{ label: '연습 이력' }] : [])]} />
-    <PageTitle title={history ? '연습 이력' : '내 리포트'} aside={<button className="button ghost" onClick={exportRecords} disabled={exporting||!reports}>{exporting?'내보내는 중':'내 기록 내보내기'}</button>} />
-    <ReportNav active={history?'history':'reports'} />
+    <Breadcrumb items={[{ label: '내 기록', href: slug.length ? '/records' : undefined }, ...(history ? [{ label: '연습 이력' }] : [])]} />
+    <PageTitle title={history ? '연습 이력' : '내 기록'} />
+    <div className={toolbarStyles.toolbar}><ReportNav active={history?'history':'reports'} /><button type="button" className={toolbarStyles.export} onClick={exportRecords} disabled={exporting||!reports} aria-label={exporting?'내 기록 내보내는 중':'내 기록 내보내기'} aria-busy={exporting||undefined} title="내 기록 내보내기">{exporting?<LoaderCircle size={18} className="spin"/>:<Download size={18}/>}</button></div>
     {(error||finishError)&&<Alert>{finishError||error}</Alert>}
     {history ? <>
       {!!reports?.history?.length&&<section className="records-history-section"><h2>최근 학습</h2>{[...reports.history].reverse().slice(0,50).map((event:Item)=><StudyAnswer key={event.id} event={event}/>)}</section>}
@@ -80,7 +82,7 @@ export function RecordsPages({ slug = [] }: { slug?: string[] }) {
       </div>
       {!!data.interviews?.length && <section className="records-history-section">
         <h2>면접 연습</h2>
-        {data.interviews.map(i => <LinkedRow key={i.id} href={'/interview/' + i.id} title={i.kind === 'video' ? '화상 모의면접' : '채팅 모의면접'} subtitle={dateLabel(i.created_at)} end={<Badge tone={i.state === 'completed' ? 'green' : 'neutral'}>{i.state === 'completed' ? '완료' : i.state === 'cancelled' ? '취소' : '진행 중'}</Badge>}><span className="records-row-icon">{i.kind === 'video' ? <Mic size={22} strokeWidth={1.5} /> : <MessagesSquare size={22} strokeWidth={1.5} />}</span></LinkedRow>)}
+        {data.interviews.map(i => <LinkedRow key={i.id} href={'/interview/' + i.id} title={interviewLabel(i)} subtitle={dateLabel(i.created_at)} end={<Badge tone={i.state === 'completed' ? 'green' : 'neutral'}>{i.state === 'completed' ? '완료' : i.state === 'cancelled' ? '취소' : '진행 중'}</Badge>}><span className="records-row-icon">{i.kind === 'video' ? <Mic size={22} strokeWidth={1.5} /> : <MessagesSquare size={22} strokeWidth={1.5} />}</span></LinkedRow>)}
       </section>}
       {!!memoryHistory.length && <section className="records-history-section">
         <h2>암기 복습</h2>
@@ -102,10 +104,10 @@ export function RecordsPages({ slug = [] }: { slug?: string[] }) {
       </>}
       {!!reports?.current?.report?.eventCount&&<section className="study-current"><div className="section-heading"><h2>이번 학습</h2><Badge tone="green">자동 저장 중</Badge></div><div className="study-report-actions"><Link className="text-link" href={'/reports/sessions/'+reports.current.id}>진행 기록 보기<ArrowUpRight size={17}/></Link><button className="button secondary" onClick={finish} disabled={finishing}>{finishing?'저장하는 중':'학습 마치기'}</button></div></section>}
       {!!reports?.sessions?.length&&<section className="records-history-section"><h2>학습 리포트</h2><div className="records-report-list">{reports.sessions.map((session:Item)=><Link className="records-report-row" key={session.id} href={'/reports/sessions/'+session.id}><span className="records-row-icon"><ListChecks size={25}/></span><div><h2>{dateLabel(session.started_at)} 학습</h2><p>그날 남긴 답변과 연습 기록</p></div><ArrowUpRight size={22} strokeWidth={1.5}/></Link>)}</div></section>}
-      {!!data.reports?.length&&<section className="records-history-section"><h2>모의면접 피드백</h2><div className="records-report-list">
+      {!!data.reports?.length&&<section className="records-history-section"><h2>훈련·면접 피드백</h2><div className="records-report-list">
       {data.reports.map(r => <Link className="records-report-row" key={r.id} href={'/reports/reports/' + r.id}>
         <span className="records-row-icon">{r.data?.kind === 'video' ? <Mic size={26} strokeWidth={1.5} /> : <MessagesSquare size={26} strokeWidth={1.5} />}</span>
-        <div><h2>{r.data?.kind === 'video' ? '화상' : '채팅'} 모의면접</h2><p>{dateLabel(r.created_at)}</p></div>
+        <div><h2>{interviewLabel(data.interviews?.find(session=>session.id===r.session_id)||{kind:r.data?.kind})}</h2><p>{dateLabel(r.created_at)}</p></div>
         <ArrowUpRight size={22} strokeWidth={1.5} />
       </Link>)}
     </div></section>}
@@ -233,7 +235,8 @@ function AnswerComparisons({ questionId }: { questionId?: string }) {
   const [viewMode, setViewMode] = useState<'columns'|'wipe'>('columns');
   const [selectedContext,setSelectedContext]=useState('');
   const comparisonTarget=params.get('targetId'),comparisonSource=params.get('sourceType'),comparisonVersion=params.get('sourceVersion');
-  const versions: Item[] = materialComparisonVersions(workflows?.versions || [],{targetId:comparisonTarget,sourceType:comparisonSource,sourceVersion:comparisonVersion});
+  const activityFilter=params.get('activityId');
+  const versions: Item[] = materialComparisonVersions(workflows?.versions || [],{targetId:comparisonTarget,sourceType:comparisonSource,sourceVersion:comparisonVersion}).filter(version=>{if(!activityFilter)return true;if(activityFilter.startsWith('experience:'))return version.experience_card?.id===activityFilter.slice(11);if(activityFilter.startsWith('question:'))return version.question_id===activityFilter.slice(9);const question=data.learning.questions?.find((q:Item)=>q.id===version.question_id);return version.activity_ids?.includes(activityFilter)||question?.activity_ids?.includes(activityFilter);});
   const questionIds = [...new Set<string>(versions.map(v => v.question_id))];
   const selected = selectedQuestion || questionIds[0] || '';
   const matching=versions.filter(v=>v.question_id===selected);
@@ -253,7 +256,7 @@ function AnswerComparisons({ questionId }: { questionId?: string }) {
   useEffect(() => { setSelectedContext(''); }, [selected,comparisonTarget,comparisonSource,comparisonVersion]);
   useEffect(() => { setLeftId(''); setRightId(''); setViewMode('columns'); }, [selected,comparisonTarget,comparisonSource,comparisonVersion,comparisonContext]);
   return <div className="learning-v2 answer-comparisons">
-    <Breadcrumb items={[{ label: '내 리포트', href: '/records' }, { label: '답변 비교' }]} />
+    <Breadcrumb items={[{ label: '내 기록', href: '/records' }, { label: '답변 비교' }]} />
     <PageTitle title="답변 비교" />
     <ReportNav active="comparisons" />
     {error && <><Alert>{error}</Alert><button className="button ghost" onClick={reload}>다시 불러오기</button></>}

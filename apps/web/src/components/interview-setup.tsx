@@ -65,7 +65,7 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
   async function start() {
     if (!ready || busy) return; setBusy(true); setError('');
     try {
-      const response = await api('/api/interviews', { method: 'POST', body: JSON.stringify({ action: 'start', experienceCardId:params.get('experienceCardId')||undefined, experienceRevision:params.get('experienceRevision')||undefined, kind, mode: effectiveMode, targetId: targetId || undefined, questionId: params.get('questionId') || undefined, sourceType: commonOnly ? 'common' : params.get('sourceType') === 'personal' ? 'personal' : undefined, sourceVersion: sourceVersionInput(params), briefingId: params.get('briefingId') || undefined, briefingQuestionIndex: params.has('briefingQuestionIndex') ? Number(params.get('briefingQuestionIndex')) : undefined, activityId: params.get('activityId') || undefined, assisted: params.get('assisted') === '1', followups: state.followups, pressure: state.pressure, interviewerReactions: state.reactions, panelistCount, difficulty: state.difficulty, feedbackTiming: state.timing, questionCount: state.count, requestId: crypto.randomUUID() }) });
+      const response = await api('/api/interviews', { method: 'POST', body: JSON.stringify({ action: 'start', experienceCardId:params.get('experienceCardId')||undefined, experienceRevision:params.get('experienceRevision')||undefined, kind, mode: effectiveMode, targetId: targetId || undefined, questionId: params.get('questionId') || undefined, sourceType: commonOnly ? 'common' : params.get('sourceType') === 'personal' ? 'personal' : undefined, sourceVersion: sourceVersionInput(params), briefingId: params.get('briefingId') || undefined, briefingQuestionIndex: params.has('briefingQuestionIndex') ? Number(params.get('briefingQuestionIndex')) : undefined, activityId: params.get('activityId') || undefined, assisted: params.get('assisted') === '1', followups: state.followups, pressure: state.pressure, panelistCount, difficulty: state.difficulty, feedbackTiming: state.timing, questionCount: state.count, requestId: crypto.randomUUID() }) });
       router.push(`/interview/${response.session.id}?kind=${kind}`);
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
@@ -117,8 +117,6 @@ export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {
           <label>면접관<select value={panelistCount} onChange={e => update({ panelistCount: Number(e.target.value) })}>{Array.from({ length: range ? range.max - range.min + 1 : 5 }, (_, i) => range ? range.min + i : i + 1).map(n => <option value={n} key={n}>{n}명{!range ? ' · 연습 설정' : ''}</option>)}</select></label>
           <label>질문 깊이<select value={state.difficulty} onChange={e => update({ difficulty: e.target.value as 'standard' | 'deep' })}><option value="standard">기본</option><option value="deep">심화</option></select></label>
           <label>피드백<select value={state.timing} onChange={e => update({ timing: e.target.value as 'turn' | 'end' })}><option value="end">종료 후</option><option value="turn">질문마다</option></select></label>
-          <Switch label="면접관 반응" value={state.reactions} onChange={() => update({ reactions: !state.reactions })} />
-          <p className="interview-reaction-note">{state.reactions ? '답변 제출 후 반응 · 질문마다 피드백' : '켜면 답변 제출 뒤 면접관이 호응해요.'}</p>
           <Switch label="꼬리질문" value={state.followups} onChange={() => update({ followups: !state.followups })} />
           <Switch label="압박" value={state.pressure} onChange={() => update({ pressure: !state.pressure })} />
         </div>}

@@ -12,6 +12,7 @@ import {previewSchoolAdmissionCalendar} from '@/lib/school-onboarding-calendar';
 import {schoolCalendarRegistration,sameSchoolRegistrationTarget} from '@/lib/school-onboarding-calendar-model';
 import {schoolHasDocumentInterview,interviewSupportForTarget,isStudentRecordQuestion} from './school-interview-scope';
 import {departmentPracticeQuestions,departmentQuestionMatchesTarget} from './department-learning';
+import {normalizeTrainingAvailability} from './training-availability';
 export const schoolLearningIdentityMatches=learningTargetIdentityMatches;
 
 /** Public department metadata is a learning lens, not a confirmed admissions rule. */
@@ -102,8 +103,13 @@ function registrationView(result:{id:string;data:Record<string,any>},prepared:Pr
   const {official,reference}=prepared;
   return enrichSchoolTarget({...result.data,id:result.id,majorContext:schoolMajorContext(result.data),talentProfile:schoolTalentForTarget(result.data),profile:official?{...official.data,id:official.id,status:official.status,source:official.provenance,reviewed:true}:reference?{...reference.data,id:reference.id,status:reference.status,source:reference.source}:null});
 }
-async function saveSchoolSelection(client:Pick<PoolClient,'query'>,studentId:string,selectedTargetId:string|null,calendarReviewed=true) {
+async function saveSchoolSelection(client:Pick<PoolClient,'query'>,studentId:string,selectedTargetId:string|null,calendarReviewed=true,requireAvailability=false) {
   await client.query("insert into student_preferences(student_id,data) values($1,$2) on conflict(student_id) do update set data=student_preferences.data || excluded.data,updated_at=now()",[studentId,JSON.stringify({selectedTargetId,schoolOnboardingCompleted:true,...(calendarReviewed?{schoolCalendarOnboardingCompleted:true}:{})})]);
+  if(requireAvailability){
+    // The upsert above owns this row lock, including concurrent first preference saves.
+    const [preferences]=(await client.query('select data from student_preferences where student_id=$1 for update',[studentId])).rows;
+    if(!normalizeTrainingAvailability(preferences?.data?.trainingAvailability))await client.query("update student_preferences set data=jsonb_set(data,'{trainingAvailabilityRequired}','true'::jsonb,true),updated_at=now() where student_id=$1",[studentId]);
+  }
 }
 export async function registerStudentSchool(studentId: string, raw: unknown) {
   const input=schoolRegistrationSchema.parse(raw);
@@ -120,7 +126,7 @@ export async function registerStudentSchool(studentId: string, raw: unknown) {
       delete next.archived_at;
       result=(await client.query('update support_targets set data=$1::jsonb where id=$2 and student_id=$3 returning id,data',[JSON.stringify(next),result.id,studentId])).rows[0];
     }
-    await saveSchoolSelection(client,studentId,result.id,Boolean(calendarRegistration));
+    await saveSchoolSelection(client,studentId,result.id,Boolean(calendarRegistration),input.onboarding===true);
     if (!existing.rows.length) await client.query("insert into audit_logs(actor_id,student_id,action,data) values($1,$1,'school.self_register',$2)",[studentId,JSON.stringify({targetId:result.id,referenceId:reference?.id || null,admissionYear:input.admissionYear})]);
     if(restoring)await client.query("insert into audit_logs(actor_id,student_id,action,data) values($1,$1,'school.self_restore',$2)",[studentId,JSON.stringify({targetId:result.id})]);
     if(calendarRegistration&&existing.rows[0]?.data?.admission_calendar_registration?.fingerprint!==calendarRegistration.fingerprint)await client.query("insert into audit_logs(actor_id,student_id,action,data) values($1,$1,'school.calendar_register',$2)",[studentId,JSON.stringify({targetId:result.id,status:calendarRegistration.status,fingerprint:calendarRegistration.fingerprint,admissionYear:input.admissionYear})]);

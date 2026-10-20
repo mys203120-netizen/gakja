@@ -6,6 +6,7 @@ import {studentAdmissionCalendar,refreshAdmissionCalendar} from '@/lib/admission
 import {after} from 'next/server';
 import { z } from 'zod';
 import {synchronizeAutomaticPractice} from '@/lib/automatic-practice-store';
+import {presentHybridPlan} from '@/lib/hybrid-training-store';
 const targetSchema = z.object({kind:z.enum(['question','activity','video','assignment']),id:z.string().min(1).max(200),targetId:z.string().min(1).max(200).optional(),sourceType:z.enum(['personal','common']).optional(),sourceVersion:z.number().int().min(1).max(100000).optional()}).strict();
 const inputSchema = z.discriminatedUnion('action',[
   z.object({action:z.literal('create'),title:z.string().trim().min(1).max(160),date:z.string().refine(validPlanDay),kind:z.enum(['study','quiz','interview','reading']).default('study'),target:targetSchema.nullable().optional()}),
@@ -21,9 +22,12 @@ export async function GET(request:Request) {
     const context = await getPlanContext(user.id,initialPlans.map(plan=>plan.target).filter(Boolean));
     const automaticPractice=await synchronizeAutomaticPractice(user.id,context);
     const allPlans=await query(`select ${columns} from student_plans where student_id=$1 order by planned_date,created_at`,[user.id]);
-    const plans=new URL(request.url).searchParams.get('history')==='1'?allPlans:allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded');
+    const plans=(new URL(request.url).searchParams.get('history')==='1'?allPlans:allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded')).filter(plan=>plan.target?.automaticPractice?.hybrid?.kind!=='break');
+    const hybridSessions=allPlans.some(plan=>plan.target?.automaticPractice?.hybrid)?await query("select id from interview_sessions where student_id=$1 and state='completed' and data ? 'trainingPlanId'",[user.id]):[];
+    const completedSessionIds=new Set(hybridSessions.map(row=>row.id));
+    const presented=plans.map(plan=>presentHybridPlan(plan,context,completedSessionIds));
     if(calendar.refreshDue)after(()=>refreshAdmissionCalendar());
-    return Response.json({plans:plans.map(plan=>presentPlan(plan,context)),automaticPractice,supersededPlanCount:allPlans.length-allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded').length,targets:context.targets,interviewSchedules:calendar.interviewSchedules,interviewScheduleCoverage:calendar.interviewScheduleCoverage},{headers:privateHeaders});
+    return Response.json({plans:presented,automaticPractice,supersededPlanCount:allPlans.length-allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded').length,targets:context.targets,interviewSchedules:calendar.interviewSchedules,interviewScheduleCoverage:calendar.interviewScheduleCoverage},{headers:privateHeaders});
   } catch(error){return errorResponse(error);}
 }
 export async function POST(request: Request) {
@@ -38,6 +42,7 @@ export async function POST(request: Request) {
       if(input.action==='create')return (await client.query(`insert into student_plans(student_id,title,planned_date,kind,target) values($1,$2,$3,$4,$5) returning ${columns}`,[user.id,input.title,input.date,input.kind,target?JSON.stringify(target):null])).rows[0];
       const [current]=(await client.query('select * from student_plans where id=$1 and student_id=$2 for update',[input.id,user.id])).rows;
       if(!current)throw new ApiError(404,'계획을 찾을 수 없어요.');if(current.revision!==input.expectedRevision)throw new ApiError(409,'다른 화면에서 변경한 계획이에요. 다시 확인해 주세요.');
+      if(current.target?.automaticPractice?.hybrid)throw new ApiError(409,'자동 훈련은 오늘 훈련에서 진행해 주세요. 일정은 학습 시간 설정에서 조정할 수 있어요.');
       // A manually edited automatic entry becomes a personal plan and must survive regeneration.
       if(current.target?.automaticPractice&&(input.title!==undefined||input.date!==undefined||input.kind!==undefined))await client.query("update student_plans set target=target-'automaticPractice' where id=$1 and student_id=$2",[input.id,user.id]);
       return (await client.query(`update student_plans set title=coalesce($3,title),planned_date=coalesce($4,planned_date),completed=coalesce($5,completed),target=case when $6 then $7::jsonb else target end,kind=coalesce($8,kind),revision=revision+1,updated_at=now() where id=$1 and student_id=$2 returning ${columns}`,[input.id,user.id,input.title??null,input.date??null,input.completed??null,input.target!==undefined,target?JSON.stringify(target):null,input.kind??null])).rows[0];

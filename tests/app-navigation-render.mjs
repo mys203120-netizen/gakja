@@ -29,17 +29,14 @@ function load(name,context,environment={}){
   throw Error(name);
  }});return module.exports;
 }
-equal(nav.STUDENT_NAVIGATION.map(item=>item.label),['오늘','연습','AI 비서','무기고','자료','내 리포트']);
+equal(nav.STUDENT_NAVIGATION.map(item=>item.label),['오늘 훈련','준비 현황','내 기록']);
 equal(nav.MOBILE_STUDENT_NAVIGATION.map(item=>[item.href,item.label]),[
- ['/my','오늘'],['/learn','연습'],['/on','AI 비서'],['/knowledge','자료'],['/records','내 리포트'],
+ ['/my','오늘 훈련'],['/preparation','준비 현황'],['/records','내 기록'],
 ]);
-equal(nav.MOBILE_STUDENT_NAVIGATION.map(item=>[item.href,item.label]),nav.STUDENT_NAVIGATION.filter(item=>item.id!=='armory').map(item=>[item.href,item.label]));
-equal(nav.STUDENT_NAVIGATION.find(item=>item.id==='armory').description,'내 경험 정리');
+equal(nav.MOBILE_STUDENT_NAVIGATION.map(item=>[item.href,item.label]),nav.STUDENT_NAVIGATION.map(item=>[item.href,item.label]));
 for(const [href,routes] of Object.entries({
- '/my':['/my','/my/today'],
- '/learn':['/learn','/armory','/armory/answer/edit','/quiz/session/answer','/quiz/assignments/task','/interview/new','/interview/session','/chat/interviews/session','/practice/video/session','/on/interviews','/on/interviews/new','/on/interviews/session','/on/interviews/session/turn'],
- '/on':['/on','/on/conversation','/on/interviews-extra'],
- '/knowledge':['/knowledge','/knowledge/article','/materials/questions/question','/materials/briefings/article','/schools/school','/account/confirmations'],
+ '/my':['/my','/my/today','/my/train','/my/diagnosis','/availability','/learn','/quiz/session/answer','/quiz/assignments/task','/interview/new','/interview/session','/chat/interviews/session','/practice/video/session','/on/interviews','/on/interviews/new','/on/interviews/session','/on/interviews/session/turn','/on','/on/conversation','/on/interviews-extra'],
+ '/preparation':['/preparation','/armory','/armory/answer/edit','/knowledge','/knowledge/article','/materials/questions/question','/materials/briefings/article','/schools/school','/account/confirmations'],
  '/records':['/records','/records/comparisons','/reports/report'],
 })){
  for(const route of routes)equal(nav.MOBILE_STUDENT_NAVIGATION.filter(item=>nav.mobileStudentActive(route,item.href)).map(item=>item.href),[href]);
@@ -47,12 +44,12 @@ for(const [href,routes] of Object.entries({
 for(const route of ['/online','/armory-extra','/myth','/records-old','/account/settings']){
  equal(nav.MOBILE_STUDENT_NAVIGATION.filter(item=>nav.mobileStudentActive(route,item.href)).map(item=>item.href),[]);
 }
-for(const [section,paths] of Object.entries({today:['/my','/my/today'],armory:['/armory','/armory/example'],practice:['/learn','/quiz','/quiz/memory','/quiz/assignments','/quiz/session/example','/interview','/interview/new','/interview/example','/chat/interviews/example','/practice/video/example'],resources:['/knowledge','/knowledge/example','/materials','/materials/questions/example','/materials/briefings','/schools','/schools/example','/account/confirmations'],reports:['/records','/records/comparisons','/reports/example']})){
+for(const [section,paths] of Object.entries({today:['/my','/my/today','/my/diagnosis','/my/train','/availability','/learn','/quiz','/quiz/memory','/quiz/assignments','/quiz/session/example','/interview','/interview/new','/interview/example','/chat/interviews/example','/practice/video/example'],preparation:['/preparation','/armory','/armory/example','/knowledge','/knowledge/example','/materials','/materials/questions/example','/materials/briefings','/schools','/schools/example','/account/confirmations'],records:['/records','/records/comparisons','/reports/example']})){
  for(const route of paths){equal(nav.studentSection(route),section);equal(nav.STUDENT_NAVIGATION.filter(item=>nav.studentSection(item.href)===nav.studentSection(route)).map(item=>item.id),[section]);}
 }
-for(const route of ['/on','/on/conversation','/on/interviews-extra'])equal(nav.studentSection(route),'assistant');equal(nav.studentSection('/account/settings'),null);
+for(const route of ['/on','/on/conversation','/on/interviews-extra'])equal(nav.studentSection(route),'today');equal(nav.studentSection('/account/settings'),null);
 for(const route of ['/on/interviews','/on/interviews/new','/on/interviews/session','/on/interviews/session/turn']){
- equal(nav.studentSection(route),'practice');
+ equal(nav.studentSection(route),'today');
  equal(nav.practiceSectionHref(route),'/interview');
 }
 for(const route of ['/on/interviews','/on/interviews/new','/on/interviews/new/setup','/on/interviews-extra/session'])equal(nav.isAnswerWorkspace(route),false);
@@ -64,21 +61,36 @@ for(const route of ['/knowledge','/materials/briefings','/materials','/schools',
 }
 for(const route of ['/knowledge','/materials/briefings/article','/schools/school']){
  path=route;const markup=renderToStaticMarkup(React.createElement(SectionNavigation));
- equal(markup.includes('aria-label="자료 탐색"'),true);
- equal(markup.includes('href="/armory"'),false);
+ equal(markup.includes('aria-label="준비 자료와 활동"'),true);
+ equal(markup.includes('href="/armory"'),true);
  const active=markup.match(/<a[^>]*href="([^"]+)"[^>]*aria-current="page"/);
  equal(active?.[1],route.startsWith('/schools')?'/schools':route.startsWith('/materials/briefings')?'/materials/briefings':'/knowledge');
 }
-for(const route of ['/on','/on/conversation','/armory','/armory/answer/edit']){
+for(const route of ['/my','/my/diagnosis','/my/train','/preparation','/availability']){
  path=route;equal(renderToStaticMarkup(React.createElement(SectionNavigation)),'');
+}
+for(const route of ['/on','/on/conversation','/armory','/armory/answer/edit']){
+ path=route;const markup=renderToStaticMarkup(React.createElement(SectionNavigation));
+ equal((markup.match(/aria-current="page"/g)||[]).length,1);
+ equal(markup.includes('href="/my"')||markup.includes('href="/preparation"'),true);
 }
 for(const route of ['/on/interviews','/on/interviews/new']){
  path=route;const markup=renderToStaticMarkup(React.createElement(SectionNavigation));
- equal(markup.includes('aria-label="연습 탐색"'),true);
+ equal(markup.includes('aria-label="오늘 훈련과 연습"'),true);
  equal(markup.match(/<a[^>]*href="([^"]+)"[^>]*aria-current="page"/)?.[1],'/interview');
 }
 for(const route of ['/quiz/session/frozen','/interview/frozen','/practice/video/frozen','/chat/interviews/frozen','/on/interviews/frozen','/on/interviews/frozen/turn']){
  path=route;equal(renderToStaticMarkup(React.createElement(SectionNavigation)),'');
+}
+// The AI helper still allows active answer/recording workspaces to pause or veto a move.
+{
+ const events=[];
+ path='/learn';
+ const {SectionNavigation:Interactive}=load('section-navigation.tsx',undefined,{react:{...React,useRef:()=>({current:null}),useEffect(){}},globals:{Event,window:{dispatchEvent(event){events.push(event);event.preventDefault();}}}});
+ const tree=Interactive(),nodes=value=>Array.isArray(value)?value.flatMap(nodes):value&&typeof value==='object'?[value,...nodes(value.props?.children)]:[];
+ const helper=nodes(tree).find(node=>node.props?.href==='/on');let prevented=false;
+ helper.props.onClick({preventDefault(){prevented=true;}});
+ equal(events[0].type,'gakja:open-on');equal(prevented,true);
 }
 // Active tabs scroll only their own horizontal strip, never the document.
 for(const [left,right,reduced,expected] of [[360,440,false,[120,'smooth']],[-30,50,true,[-30,'instant']],[10,80,false,null]]){
@@ -101,4 +113,4 @@ equal(markup.indexOf('href="/interview?targetId=target"')<markup.indexOf('href="
 equal(markup.indexOf('href="/armory"')<markup.indexOf('aria-label="약점 집중 훈련"'),true);
 equal(markup.includes('<strong>내 경험 정리</strong>'),true);
 context.data.interviews=[old];markup=renderToStaticMarkup(React.createElement(PracticeHome));equal(markup.includes('저장한 답에서 이어가기'),false);
-console.log(`App navigation: ${checks} route/context/render checks passed; independent armory, mobile practice access, nested active routes, focused answer workspaces and frozen-target resume verified.`);
+console.log(`App navigation: ${checks} route/context/render checks passed; three shared menus, nested activity/material access, focused answer workspaces and frozen-target resume verified.`);

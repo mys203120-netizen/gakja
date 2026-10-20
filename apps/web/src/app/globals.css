@@ -25,7 +25,11 @@
 html {
   background: var(--bg);
   scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+  scrollbar-gutter: stable;
 }
+
+@media (max-width:700px) { html { scroll-padding-top:80px; } }
 
 body {
   margin: 0;

@@ -16,8 +16,10 @@ export function SectionNavigation(){
     if(overflow)container.scrollBy({left:overflow,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
   },[path]);
   if(isAnswerWorkspace(path))return null;
-  const items=section==='resources'?RESOURCE_SECTIONS:section==='practice'?PRACTICE_SECTIONS:null;
+  if(path==='/my'||path==='/preparation'||path==='/availability'||path.startsWith('/my/diagnosis')||path.startsWith('/my/train'))return null;
+  const items=section==='preparation'?RESOURCE_SECTIONS:section==='today'?PRACTICE_SECTIONS:null;
   if(!items)return null;
-  const current=section==='resources'?resourceSectionHref(path):practiceSectionHref(path);
-  return <nav ref={navigation} className={styles.sectionNavigation} data-scrollbar="hidden" aria-label={section==='resources'?'자료 탐색':'연습 탐색'}>{items.map(item=><Link key={item.href} href={item.href} aria-current={current===item.href?'page':undefined}>{item.label}</Link>)}{section==='resources'&&<Link className={styles.factLink} href="/account/confirmations" aria-current={path.startsWith('/account/confirmations')?'page':undefined}>사실 확인</Link>}</nav>;
+  const current=section==='preparation'?resourceSectionHref(path):practiceSectionHref(path);
+  function openAssistant(event:React.MouseEvent){const pause=new Event('gakja:open-on',{cancelable:true});window.dispatchEvent(pause);if(pause.defaultPrevented)event.preventDefault();}
+  return <nav ref={navigation} className={styles.sectionNavigation} data-scrollbar="hidden" aria-label={section==='preparation'?'준비 자료와 활동':'오늘 훈련과 연습'}>{items.map(item=><Link key={item.href} href={item.href} onClick={item.href==='/on'?openAssistant:undefined} aria-current={current===item.href?'page':undefined}>{item.label}</Link>)}{section==='preparation'&&<Link className={styles.factLink} href="/account/confirmations" aria-current={path.startsWith('/account/confirmations')?'page':undefined}>사실 확인</Link>}</nav>;
 }

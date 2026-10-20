@@ -3,11 +3,14 @@ import {z} from 'zod';
 import {requireUser,checkOrigin} from '@/lib/auth';
 import {ApiError,errorResponse,query,transaction} from '@/lib/db';
 import {getPlanContext,presentPlan} from '@/lib/planner-context';
-import {automaticPracticeDays,practiceDeadline} from '@/lib/automatic-practice';
+import {automaticPracticeDays} from '@/lib/automatic-practice';
 import {automaticQuestionTargets,automaticQuestionFacts,saveAutomaticPracticeSettings,pauseAutomaticPractice} from '@/lib/automatic-practice-store';
 import {interviewSupportForTarget} from '@/lib/school-interview-scope';
 import {knowledgeTargetKey} from '@/lib/knowledge-flow-model';
 import {koreaToday} from '@/lib/planner-model';
+import {studentAdmissionCalendar} from '@/lib/admission-calendar-store';
+import {hybridDeadlines} from '@/lib/hybrid-training';
+import {normalizeTrainingAvailability} from '@/lib/training-availability';
 
 const schema=z.discriminatedUnion('action',[
   z.object({action:z.literal('pause'),targetId:z.string().min(1).max(200)}).strict(),
@@ -25,9 +28,14 @@ export async function POST(request:Request){
     const school=context.schoolTargets.find(row=>row.id===input.targetId);
     if(!school)throw new ApiError(404,'현재 등록된 지원 학교를 선택해 주세요.');
     if(input.action==='pause'){await pauseAutomaticPractice(user.id,school.id);return Response.json({paused:true},{headers});}
+    const preferences=(await query('select data from student_preferences where student_id=$1',[user.id]))[0]?.data||{};
+    if(normalizeTrainingAvailability(preferences.trainingAvailability))throw new ApiError(409,'등록한 학습 가능 시간은 오늘 훈련의 전체 지원처에 함께 적용돼요. 오늘 훈련에서 시간을 수정해 주세요.');
     const current={...school.data,id:school.id};
     const support=interviewSupportForTarget(current);if(!support.supported)throw new ApiError(409,support.reason);
-    const deadline=practiceDeadline(current,{interviewDate:input.interviewDate});
+    const calendar=await studentAdmissionCalendar(user.id);
+    const actual=hybridDeadlines({today,targets:[current],schedules:calendar.interviewSchedules,coverage:calendar.interviewScheduleCoverage.targets,settings:{[school.id]:{interviewDate:input.interviewDate,dateSource:'goal'}}})[0];
+    if(actual.status==='no_interview')throw new ApiError(409,actual.reason);
+    const deadline=actual?.date?{date:actual.date,source:actual.source,label:actual.label}:null;
     if(deadline&&deadline.date!==input.interviewDate)throw new ApiError(409,'등록된 면접일이 바뀌었어요. 학교 일정에서 확인한 뒤 계획을 다시 만들어 주세요.');
     const targets=automaticQuestionTargets(context,school.id);
     let drafts;

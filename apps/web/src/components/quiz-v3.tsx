@@ -13,6 +13,8 @@ import { animateStudyReceipt } from './playful-flow';
 import {connectLiveTranscription,type LiveTranscription,type LiveTranscript} from '@/lib/client/realtime-transcription';
 import { startSpeechCapture,decodeRecordingTelemetry, type SpeechCapture } from '@/lib/client/speech-recorder';
 import {beginRecordingRecovery,readRecordingRecovery,removeRecordingRecovery,installRecordingExitGuard,type RecordingRecoveryWriter} from '@/lib/client/recording-recovery';
+import {registerDraftSaver} from '@/lib/client/draft-save';
+import {sendOnEnter} from '@/lib/client/enter-send';
 import { learningTargetIdentityMatches } from '@gakja/content-contracts/workflows';
 import { quizAssistanceLabel, quizResponseNeedsReview, recallRating, savedQuizSubmission, type RecallStatus } from '@/lib/quiz-session-view';
 import styles from './quiz-session-ui.module.css';
@@ -98,14 +100,22 @@ export function QuizSession({id}:{id:string}) {
   const preparationAttempt=useRef<RecordingPreparation|null>(null),preparationTimer=useRef<ReturnType<typeof setTimeout>|null>(null),sessionUpdateVersion=useRef(0);
   const liveCapture=useRef<LiveTranscription|null>(null),liveCaptionBody=useRef<HTMLParagraphElement|null>(null);
   const recordingLifecycle=useRef<{capture:MediaRecorder;interrupted:boolean;needsMeasurement:boolean;cleanup:()=>void}|null>(null),pendingSaveLock=useRef(false);
+  const logoutSaving=useRef(false),suspendedForLogout=useRef(false),savePendingLocal=useRef(false),latestSelected=useRef(selected),logoutSave=useRef<()=>Promise<void>>(async()=>{});
+  const submissionFinished=useRef<Promise<void>>(Promise.resolve()),resolveSubmissionFinished=useRef<(()=>void)|null>(null);
+  const recordingWork=useRef<Promise<void>>(Promise.resolve());
+  const sessionWork=useRef<Promise<Item>|null>(null);
+  const answerComposing=useRef(false);
+  const answerScope=useRef(dto?.session?`gakja-quiz:${dto.session.student_id}:${id}:${dto.session.current_index}`:'');
   useEffect(()=>{const body=liveCaptionBody.current;if(body&&liveTranscript?.phase==='listening')body.scrollTop=body.scrollHeight;},[liveTranscript?.text,liveTranscript?.phase]);
   pendingAudioRef.current=pendingAudio;
   latest.current=dto;
   latestAnswer.current=answer;
   latestRecording.current=recording;
   recordingPhase.current=recordingState;
+  latestSelected.current=selected;
   const apply=useCallback((value:Item)=>{sessionUpdateVersion.current++;offset.current=new Date(value.serverTime).getTime()-Date.now();latest.current=value;setDto(value);},[]);
   const pauseOnExit=useCallback((beacon=true)=>{
+    if(logoutSaving.current)return;
     const value=latest.current,current=value?.session,preparing=!!preparationAttempt.current;
     if(preparing)void cancelPreparation();
     if(current?.state!=='active'||sending.current||!preparing&&!recordingLifecycle.current?.interrupted&&recordingPhase.current!=='idle')return;
@@ -151,7 +161,7 @@ export function QuizSession({id}:{id:string}) {
   const draftKey=item?`gakja-quiz:${session.student_id}:${id}:${session.current_index}`:'';
   const activityKey=`gakja-quiz-activity:${data.user.id}:${id}`;
   const transcriptReady=Boolean(recording?.id&&recording.item_index===session?.current_index&&(!recording.session_id||recording.session_id===id)&&recording.transcript_cleanup?.status==='completed'&&typeof recording.display_transcript==='string'&&recording.display_transcript.trim());
-  useEffect(()=>{if(!draftKey)return;liveCapture.current?.close();liveCapture.current=null;setLiveTranscript(null);setRecordingNotice('');setRecoveryWaiting(false);loadedDraft.current='';const remote=session.metadata?.drafts?.[String(session.current_index)],remoteText=typeof remote==='string'?remote:remote?.response||'';let local:string|null=null;try{local=localStorage.getItem(draftKey)??sessionStorage.getItem(draftKey);}catch{}savedDraft.current={key:draftKey,response:remoteText};const priorRecording=dto?.recordings?.find((r:Item)=>r.item_index===session?.current_index);setAnswer(local??(remoteText||((priorRecording?.transcript_cleanup?.status==='completed'&&priorRecording.display_transcript)||'')));setRecallStatus('unchecked');try{const pending=JSON.parse(sessionStorage.getItem(draftKey+':submission')||'null');pendingSubmission.current=pending?.itemIndex===session.current_index?pending:null;if(pendingSubmission.current&&['remembered','uncertain','needs_confirmation','unchecked'].includes(pendingSubmission.current.recallStatus))setRecallStatus(pendingSubmission.current.recallStatus);}catch{pendingSubmission.current=null;}setDraftStatus(remoteText?'saved':'idle');setHint(null);setFeedback(null);setSelected(null);setRecordingSaved(false);setPendingAudio(null);setRecording(dto?.recordings?.find((r:Item)=>r.item_index===session?.current_index)||null);},[draftKey]);
+  useEffect(()=>{if(!draftKey)return;liveCapture.current?.close();liveCapture.current=null;setLiveTranscript(null);setRecordingNotice('');setRecoveryWaiting(false);loadedDraft.current='';const remote=session.metadata?.drafts?.[String(session.current_index)],remoteText=typeof remote==='string'?remote:remote?.response||'';let local:string|null=null;try{local=localStorage.getItem(draftKey)??sessionStorage.getItem(draftKey);}catch{}savedDraft.current={key:draftKey,response:remoteText};const priorRecording=dto?.recordings?.find((r:Item)=>r.item_index===session?.current_index);const initialAnswer=local??(remoteText||((priorRecording?.transcript_cleanup?.status==='completed'&&priorRecording.display_transcript)||''));latestAnswer.current=initialAnswer;answerScope.current=draftKey;setAnswer(initialAnswer);setRecallStatus('unchecked');try{const pending=JSON.parse(sessionStorage.getItem(draftKey+':submission')||'null');pendingSubmission.current=pending?.itemIndex===session.current_index?pending:null;if(pendingSubmission.current&&['remembered','uncertain','needs_confirmation','unchecked'].includes(pendingSubmission.current.recallStatus))setRecallStatus(pendingSubmission.current.recallStatus);}catch{pendingSubmission.current=null;}setDraftStatus(remoteText?'saved':'idle');setHint(null);setFeedback(null);let restoredChoice:string|null=null;if(session.mode==='choice'&&!(dto?.responses||[]).some((response:Item)=>response.item_index===session.current_index)){try{const choice=JSON.parse(localStorage.getItem(draftKey+':choice')??sessionStorage.getItem(draftKey+':choice')??'null');if(choice?.studentId===data.user.id&&choice.sessionId===id&&choice.itemIndex===session.current_index&&choice.memoryItemId===item.id&&item.options?.some((option:Item)=>option.id===choice.selectedOptionId))restoredChoice=choice.selectedOptionId;}catch{}}latestSelected.current=restoredChoice;setSelected(restoredChoice);setRecordingSaved(false);setPendingAudio(null);setRecording(dto?.recordings?.find((r:Item)=>r.item_index===session?.current_index)||null);},[draftKey]);
   useEffect(()=>{
     if(!draftKey)return;let active=true,reading=false,timer:ReturnType<typeof setTimeout>|undefined;
     try{setTextAlternative(localStorage.getItem(draftKey+':text-mode')==='true');}catch{setTextAlternative(false);}
@@ -183,40 +193,95 @@ export function QuizSession({id}:{id:string}) {
     draftQueue.current=work;
     try{await work;if(mounted.current&&latestAnswer.current===text)setDraftStatus('saved');}catch(e){if(mounted.current)setDraftStatus('failed');throw e;}
   },[id]);
+  function persistChoice(current:Item,optionId:string|null){
+    if(!optionId||!current.items?.[current.current_index]?.options?.some((option:Item)=>option.id===optionId))return true;
+    const key=`gakja-quiz:${current.student_id}:${id}:${current.current_index}:choice`;
+    const value=JSON.stringify({studentId:data.user.id,sessionId:id,itemIndex:current.current_index,memoryItemId:current.items[current.current_index].id,selectedOptionId:optionId});
+    let stored=false;try{localStorage.setItem(key,value);stored=true;}catch{}try{sessionStorage.setItem(key,value);stored=true;}catch{}return stored;
+  }
+  logoutSave.current=async()=>{
+    logoutSaving.current=true;suspendedForLogout.current=true;savePendingLocal.current=true;setBusy(true);setCountdown(null);
+    const opening=latest.current;
+    if(opening?.session.state==='active'){latest.current={...opening,session:{...opening.session,state:'paused'}};setDto(latest.current);}
+    try{
+      await sessionWork.current?.catch(()=>{});
+      if(sending.current)await submissionFinished.current;
+      if(sending.current)throw new Error('진행 중인 요청을 확인한 뒤 다시 로그아웃해 주세요.');
+      const pending=pendingSubmission.current;
+      if(pending){
+        const recovered=await api<Item>('/api/quiz?sessionId='+id),receipt=savedQuizSubmission(recovered.responses||[],pending);
+        if(!receipt)throw new Error('보낸 답변의 저장을 확인하지 못했어요. 답변을 다시 확인한 뒤 로그아웃해 주세요.');
+        const key=`gakja-quiz:${recovered.session.student_id}:${id}:${pending.itemIndex}`;
+        pendingSubmission.current=null;try{localStorage.removeItem(key);localStorage.removeItem(key+':choice');sessionStorage.removeItem(key);sessionStorage.removeItem(key+':submission');sessionStorage.removeItem(key+':choice');}catch{}
+        applySavedChoice(recovered,receipt);
+      }
+      await cancelPreparation();
+      if(recorder.current?.state==='recording'||recorder.current?.state==='paused')stopRecording();
+      await recordingFinished.current;
+      await recordingWork.current;
+      await recoveryWriter.current?.flush();
+      const audio=pendingAudioRef.current;
+      if(audio){const stored=await readRecordingRecovery({studentId:data.user.id,sessionId:id,itemIndex:audio.index,kind:'quiz'});if(!stored||stored.key!==audio.recoveryKey||!stored.blob.size)throw new Error('녹음의 기기 저장을 확인하지 못했어요. 원본을 보관한 뒤 다시 로그아웃해 주세요.');}
+      const current=latest.current?.session;
+      if(!current||['completed','ended'].includes(current.state))return;
+      if(current.id!==id||current.student_id!==data.user.id)throw new Error('초안을 저장할 계정을 확인하지 못했어요.');
+      const key=`gakja-quiz:${current.student_id}:${id}:${current.current_index}`;
+      if(current.mode!=='choice'&&answerScope.current!==key){
+        const remote=current.metadata?.drafts?.[String(current.current_index)],remoteText=typeof remote==='string'?remote:remote?.response||'';
+        let local:string|null=null;try{local=localStorage.getItem(key)??sessionStorage.getItem(key);}catch{}
+        latestAnswer.current=local??remoteText;answerScope.current=key;setAnswer(latestAnswer.current);
+      }
+      const text=latestAnswer.current;
+      if(current.mode==='choice'){
+        if(!persistChoice(current,latestSelected.current))throw new Error('선택한 보기를 기기에 보관하지 못했어요. 저장 공간을 확인해 주세요.');
+      }else{
+        try{localStorage.setItem(key,text);}catch{}try{sessionStorage.setItem(key,text);}catch{}
+        await draftQueue.current.catch(()=>{});
+        savedDraft.current={key:'',response:''};draftRequest.current=null;
+        await saveDraft(text,current.current_index,key);
+        await draftQueue.current;
+      }
+      try{localStorage.setItem(activityKey,JSON.stringify({itemIndex:current.current_index,updatedAt:new Date().toISOString(),hasDraft:current.mode==='choice'?!!latestSelected.current:!!text.trim()||!!audio||!!latestRecording.current,hasRecording:!!audio||!!latestRecording.current}));}catch{}
+      apply(await post('/api/quiz',{action:'pause',sessionId:id,itemIndex:current.current_index}));
+    }catch(cause){if(mounted.current)setError((cause as Error).message);throw cause;}
+    finally{logoutSaving.current=false;savePendingLocal.current=false;if(mounted.current)setBusy(false);}
+  };
+  useEffect(()=>registerDraftSaver(data.user.id,()=>logoutSave.current()),[data.user.id,id]);
   useEffect(()=>{if(!draftKey||session?.mode==='choice'||done||busy)return;if(loadedDraft.current!==draftKey){loadedDraft.current=draftKey;return;}try{localStorage.setItem(draftKey,answer);sessionStorage.setItem(draftKey,answer);const hasRecording=!!pendingAudioRef.current||!!latestRecording.current||recordingPhase.current==='recording';localStorage.setItem(activityKey,JSON.stringify({itemIndex:session.current_index,updatedAt:new Date().toISOString(),hasDraft:!!answer.trim()||hasRecording,hasRecording}));}catch{}if(savedDraft.current.key===draftKey&&savedDraft.current.response===answer)return;setDraftStatus('saving');const timer=setTimeout(()=>{void saveDraft(answer,session.current_index,draftKey).catch(()=>{});},450);return()=>clearTimeout(timer);},[answer,draftKey,session?.mode,session?.current_index,done,busy,saveDraft,activityKey]);
   useEffect(()=>{const openAssistant=(event:Event)=>{const value=latest.current?.session;if(!value||['completed','ended'].includes(value.state))return;event.preventDefault();if(value.mode==='choice'){toast('답변 저장 후 AI 비서에서 확인해 주세요.');return;}if(recordingPhase.current!=='idle'||pendingAudio){toast('녹음을 마치고 저장한 뒤 이동해 주세요.');return;}if(sending.current||busy)return;setBusy(true);setError('');void(async()=>{try{const currentItem=value.items[value.current_index];await cancelPreparation();await saveDraft(latestAnswer.current,value.current_index,draftKey);apply(await post('/api/quiz',{action:'pause',sessionId:id,itemIndex:value.current_index}));router.push('/on?'+new URLSearchParams({quizSessionId:id,quizItemIndex:String(value.current_index),questionId:currentItem.question_id||'',...(currentItem.target_id||value.metadata?.targetId?{targetId:currentItem.target_id||value.metadata.targetId}:{}),sourceType:currentItem.source_kind==='common'?'common':'personal',sourceVersion:String(currentItem.source_kind==='common'?currentItem.common_revision||1:value.content_version||'')}).toString());}catch(e){setError('초안 저장을 확인하지 못했어요. 다시 저장한 뒤 이동해 주세요.');setDraftStatus('failed');}finally{setBusy(false);}})();};window.addEventListener('gakja:open-on',openAssistant);return()=>window.removeEventListener('gakja:open-on',openAssistant);},[id,draftKey,saveDraft,apply,pendingAudio,busy,router,toast]);
-  async function transition(action:string,extra:Item={}) {sessionUpdateVersion.current++;setError('');return post('/api/quiz',{action,sessionId:id,itemIndex:latest.current?.session.current_index,...extra});}
-  async function start() {if(sending.current)return;sessionUpdateVersion.current++;setCountdown(3);}
-  useEffect(()=>{if(countdown===null)return;const timer=setTimeout(async()=>{if(countdown>1)setCountdown(countdown-1);else{setCountdown(null);setBusy(true);try{apply(await transition('start'));}catch(e){setError((e as Error).message);}finally{setBusy(false);}}},400);return()=>clearTimeout(timer);},[countdown]);
+  async function transition(action:string,extra:Item={}) {sessionUpdateVersion.current++;setError('');const work=post('/api/quiz',{action,sessionId:id,itemIndex:latest.current?.session.current_index,...extra});sessionWork.current=work;return work;}
+  async function start() {if(logoutSaving.current||sending.current)return;suspendedForLogout.current=false;sessionUpdateVersion.current++;setCountdown(3);}
+  useEffect(()=>{if(countdown===null)return;const timer=setTimeout(async()=>{if(logoutSaving.current)return;if(countdown>1)setCountdown(countdown-1);else{setCountdown(null);setBusy(true);try{apply(await transition('start'));}catch(e){setError((e as Error).message);}finally{setBusy(false);}}},400);return()=>clearTimeout(timer);},[countdown]);
   const submit=useCallback(async(selectedOptionId:string|null,timedOut=false,rating?:string,recallOverride?:RecallStatus)=>{
-    if(sending.current||choiceReview||!latest.current||latest.current.session.state!=='active'||recordingPhase.current!=='idle'||pendingAudio||preparation!==null)return;const current=latest.current.session,receiptOrigin=document.activeElement instanceof HTMLElement?document.activeElement.getBoundingClientRect():undefined;
+    if(logoutSaving.current||sending.current||choiceReview||!latest.current||latest.current.session.state!=='active'||recordingPhase.current!=='idle'||pendingAudio||preparation!==null)return;const current=latest.current.session,receiptOrigin=document.activeElement instanceof HTMLElement?document.activeElement.getBoundingClientRect():undefined;
     const selectedRecall=recallOverride||recallStatus,payload={action:'answer',sessionId:id,itemIndex:current.current_index,selectedOptionId,timedOut,response:current.mode==='choice'?'':answer,rating:rating||(current.mode==='choice'?'good':recallRating(selectedRecall)),recallStatus:current.mode==='choice'?undefined:selectedRecall,hintUsed:!!hint,recordingId:textAlternative?undefined:recording?.id,...(current.mode==='oral'&&textAlternative?{responseMode:'text'}:{})};
     if(!pendingSubmission.current||JSON.stringify({...pendingSubmission.current,requestId:undefined})!==JSON.stringify(payload))pendingSubmission.current={...payload,requestId:crypto.randomUUID()};
     const request=pendingSubmission.current;try{if(draftKey)sessionStorage.setItem(draftKey+':submission',JSON.stringify(request));}catch{}
-    sending.current=true;setSubmissionAction(rating==='again'?'again':'answer');setBusy(true);setError('');setSelected(selectedOptionId);
-    const clearDraft=()=>{pendingSubmission.current=null;savedDraft.current={key:'',response:''};try{localStorage.removeItem(activityKey);if(draftKey){localStorage.removeItem(draftKey);sessionStorage.removeItem(draftKey);sessionStorage.removeItem(draftKey+':submission');}}catch{}};
+    submissionFinished.current=new Promise(resolve=>{resolveSubmissionFinished.current=resolve;});sending.current=true;latestSelected.current=selectedOptionId;if(current.mode==='choice')persistChoice(current,selectedOptionId);setSubmissionAction(rating==='again'?'again':'answer');setBusy(true);setError('');setSelected(selectedOptionId);
+    const clearDraft=()=>{pendingSubmission.current=null;savedDraft.current={key:'',response:''};try{localStorage.removeItem(activityKey);if(draftKey){localStorage.removeItem(draftKey);sessionStorage.removeItem(draftKey);sessionStorage.removeItem(draftKey+':submission');localStorage.removeItem(draftKey+':choice');sessionStorage.removeItem(draftKey+':choice');}}catch{}};
     try {
       await draftQueue.current.catch(()=>{});
       const response=await post('/api/quiz',request);
       clearDraft();setFeedback(response.response);if(['completed','ended'].includes(response.session.state))animateStudyReceipt(receiptOrigin);
-      if(response.session.mode==='choice'&&response.session.timed!==false&&response.session.state==='ready') {
-        setTimeout(async()=>{if(!mounted.current)return;try{apply(await post('/api/quiz',{action:'start',sessionId:id,itemIndex:response.session.current_index}));setFeedback(null);setSelected(null);}catch(e){apply(response);setError((e as Error).message);}finally{sending.current=false;setBusy(false);}},650);
+      if(response.session.mode==='choice'&&response.session.timed!==false&&response.session.state==='ready'&&!suspendedForLogout.current) {
+        setTimeout(async()=>{if(!mounted.current){sending.current=false;resolveSubmissionFinished.current?.();resolveSubmissionFinished.current=null;return;}if(suspendedForLogout.current){applySavedChoice(response,response.response);sending.current=false;setBusy(false);resolveSubmissionFinished.current?.();resolveSubmissionFinished.current=null;return;}try{apply(await transition('start',{itemIndex:response.session.current_index}));setFeedback(null);setSelected(null);}catch(e){apply(response);setError((e as Error).message);}finally{sending.current=false;setBusy(false);resolveSubmissionFinished.current?.();resolveSubmissionFinished.current=null;}},650);
       }else{applySavedChoice(response,response.response);sending.current=false;setBusy(false);}
       await refresh();
-    }catch(e){try{const recovered=await api<Item>('/api/quiz?sessionId='+id),saved=savedQuizSubmission(recovered.responses||[],request);if(saved){clearDraft();applySavedChoice(recovered,saved);setFeedback(saved);toast('저장된 답변을 다시 불러왔어요.');await refresh();}else setError('답변 저장을 확인하지 못했어요. 같은 요청으로 다시 저장해 주세요.');}catch{setError((e as Error).message);}sending.current=false;setBusy(false);setSelected(null);}
+    }catch(e){try{const recovered=await api<Item>('/api/quiz?sessionId='+id),saved=savedQuizSubmission(recovered.responses||[],request);if(saved){clearDraft();applySavedChoice(recovered,saved);setFeedback(saved);toast('저장된 답변을 다시 불러왔어요.');await refresh();}else setError('답변 저장을 확인하지 못했어요. 같은 요청으로 다시 저장해 주세요.');}catch{setError((e as Error).message);}sending.current=false;setBusy(false);setSelected(null);}finally{if(!sending.current){resolveSubmissionFinished.current?.();resolveSubmissionFinished.current=null;}}
   },[id,answer,hint,recording,draftKey,refresh,apply,applySavedChoice,choiceReview,recallStatus,pendingAudio,toast,textAlternative,activityKey,preparation]);
   async function nextChoice() {
-    if(!choiceReview||sending.current||busy||!latest.current)return;
+    if(logoutSaving.current||!choiceReview||sending.current||busy||!latest.current)return;
+    suspendedForLogout.current=false;
     sending.current=true;setBusy(true);setError('');
     try {
       const current=latest.current.session;
-      if(!['completed','ended'].includes(current.state))apply(await post('/api/quiz',{action:'start',sessionId:id,itemIndex:current.current_index}));
+      if(!['completed','ended'].includes(current.state))apply(await transition('start',{itemIndex:current.current_index}));
       try{sessionStorage.setItem('gakja-quiz:'+id+':reviewed',String(choiceReview.id??choiceReview.item_index));}catch{}
       setChoiceReview(null);setFeedback(null);setSelected(null);
     }catch(e){setError('다음 문제를 시작하지 못했어요. 다시 눌러 주세요.');}
     finally{sending.current=false;setBusy(false);}
   }
-  useEffect(()=>{if(!session||session.mode!=='choice'||session.state!=='active'||!session.deadline_at||feedback||error)return;const tick=()=>{const ms=Math.max(0,new Date(session.deadline_at).getTime()-(Date.now()+offset.current));setLeft(ms/1000);if(ms<=0&&!sending.current)submit(null,true);};tick();const timer=setInterval(tick,80);return()=>clearInterval(timer);},[session?.state,session?.deadline_at,feedback,error,submit]);
+  useEffect(()=>{if(!session||session.mode!=='choice'||session.state!=='active'||!session.deadline_at||feedback||error)return;const tick=()=>{if(logoutSaving.current||suspendedForLogout.current)return;const ms=Math.max(0,new Date(session.deadline_at).getTime()-(Date.now()+offset.current));setLeft(ms/1000);if(ms<=0&&!sending.current)submit(null,true);};tick();const timer=setInterval(tick,80);return()=>clearInterval(timer);},[session?.state,session?.deadline_at,feedback,error,submit]);
   useEffect(()=>{const onKey=(event:KeyboardEvent)=>{
     if(!session||session.mode!=='choice'||session.state!=='active'||busy||sending.current||feedback||choiceReview||countdown!==null)return;
     if(event.defaultPrevented||event.isComposing||event.repeat||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey)return;
@@ -253,12 +318,13 @@ export function QuizSession({id}:{id:string}) {
     if(!mounted.current||latest.current?.session.id!==id||latest.current?.session.current_index!==index)return;
     const updated={...saved,raw_transcript:result.rawTranscript,display_transcript:result.transcript,transcript_cleanup:{status:result.cleanupStatus,error:result.cleanupError},transcription_status:result.transcriptionStatus};
     setRecording(updated);
-    if(result.cleanupStatus==='completed'&&typeof result.transcript==='string'&&latestAnswer.current===baseline&&!baseline.trim())setAnswer(result.transcript);
+    if(result.cleanupStatus==='completed'&&typeof result.transcript==='string'&&latestAnswer.current===baseline&&!baseline.trim()){latestAnswer.current=result.transcript;setAnswer(result.transcript);}
     if(result.cleanupStatus!=='completed')setError(result.cleanupError||result.transcriptionError||'녹음은 저장했어요. 문장 정리를 다시 시도하거나 직접 입력해 주세요.');
   }
   async function retryRecordingTranscript() {
     if(!recording||recordingState!=='idle'||busy)return;const baseline=latestAnswer.current,index=session.current_index;setTranscriptProcessing(true);setRecordingState('uploading');setError('');
-    try{await finishRecordingTranscript(recording,index,baseline);}catch(e){if(mounted.current)setError((e as Error).message);}finally{if(mounted.current){setTranscriptProcessing(false);setRecordingState('idle');}}
+    const finishWork=trackRecordingWork();
+    try{await finishRecordingTranscript(recording,index,baseline);}catch(e){if(mounted.current)setError((e as Error).message);}finally{if(mounted.current){setTranscriptProcessing(false);setRecordingState('idle');}finishWork();}
   }
   function useRecordingTranscript() {
     const current=latest.current?.session,audio=latestRecording.current;
@@ -266,11 +332,13 @@ export function QuizSession({id}:{id:string}) {
     setAnswer(audio.display_transcript);
   }
   async function uploadRecording(candidate:NonNullable<typeof pendingAudio>) {
+    if(logoutSaving.current||suspendedForLogout.current)return;
     if(candidate.complete===false){setError('중단된 녹음이에요. 원본을 먼저 확인해 주세요. 이어서 저장하려면 복구 카드에서 확인해 주세요.');return;}
     if(candidate.durationMs>180_000){setError('화면이 멈춰 녹음이 3분을 넘었어요. 원본을 내려받은 뒤 다시 녹음해 주세요.');return;}
-    const baseline=latestAnswer.current;setRecordingState('uploading');setTranscriptProcessing(false);setError('');
-    try{const form=new FormData();form.set('recording',candidate.blob,'answer.'+(candidate.blob.type.includes('mp4')?'mp4':candidate.blob.type.includes('ogg')?'ogg':'webm'));form.set('sessionId',id);form.set('itemIndex',String(candidate.index));form.set('consent','true');form.set('durationMs',String(candidate.durationMs));if(candidate.telemetry)form.set('speechTelemetry',JSON.stringify(candidate.telemetry));const saved=await sendRecording('/api/quiz',form);if(!saved.recording?.id)throw new Error('녹음 저장 확인을 받지 못했어요. 원본을 보관하고 다시 저장해 주세요.');if(candidate.recoveryKey)await removeRecordingRecovery(candidate.recoveryKey);pendingAudioRef.current=null;if(mounted.current){setRecording(saved.recording);setRecordingSaved(true);setRecordingNotice('');setPendingAudio(null);setTranscriptProcessing(true);await finishRecordingTranscript(saved.recording,candidate.index,baseline);}}catch(e){if(mounted.current)setError((e as Error).message);}finally{if(mounted.current){setRecordingState('idle');setTranscriptProcessing(false);}}
+    const finishWork=trackRecordingWork(),baseline=latestAnswer.current;setRecordingState('uploading');setTranscriptProcessing(false);setError('');
+    try{const form=new FormData();form.set('recording',candidate.blob,'answer.'+(candidate.blob.type.includes('mp4')?'mp4':candidate.blob.type.includes('ogg')?'ogg':'webm'));form.set('sessionId',id);form.set('itemIndex',String(candidate.index));form.set('consent','true');form.set('durationMs',String(candidate.durationMs));if(candidate.telemetry)form.set('speechTelemetry',JSON.stringify(candidate.telemetry));const saved=await sendRecording('/api/quiz',form);if(!saved.recording?.id)throw new Error('녹음 저장 확인을 받지 못했어요. 원본을 보관하고 다시 저장해 주세요.');if(candidate.recoveryKey)await removeRecordingRecovery(candidate.recoveryKey);pendingAudioRef.current=null;if(mounted.current){latestRecording.current=saved.recording;setRecording(saved.recording);setRecordingSaved(true);setRecordingNotice('');setPendingAudio(null);setTranscriptProcessing(true);await finishRecordingTranscript(saved.recording,candidate.index,baseline);}}catch(e){if(mounted.current)setError((e as Error).message);}finally{if(mounted.current){setRecordingState('idle');setTranscriptProcessing(false);}finishWork();}
   }
+  function trackRecordingWork(){let finish!:()=>void;recordingWork.current=new Promise(resolve=>{finish=resolve;});return finish;}
   function finishRecordingMeasurement() {
     if(stoppedRecording.current)return stoppedRecording.current;
     liveCapture.current?.finish();
@@ -300,9 +368,10 @@ export function QuizSession({id}:{id:string}) {
   }
   async function retryPendingRecording() {
     const candidate=pendingAudioRef.current;
-    if(!candidate||pendingSaveLock.current||recordingPhase.current!=='idle')return;
+    if(logoutSaving.current||!candidate||pendingSaveLock.current||recordingPhase.current!=='idle')return;
     const current=()=>mounted.current&&latest.current?.session.id===id&&latest.current.session.current_index===candidate.index&&pendingAudioRef.current===candidate;
     if(!current())return;
+    suspendedForLogout.current=false;
     pendingSaveLock.current=true;recordingPhase.current='uploading';setRecordingState('uploading');setError('');
     try{
       if(latest.current?.session.state!=='active'){const value=await transition('start');if(!current())return;apply(value);}
@@ -334,7 +403,7 @@ export function QuizSession({id}:{id:string}) {
   }
   async function record() {
     const current=latest.current?.session;
-    if(!consent||recordingPhase.current!=='idle'||!item||pendingAudioRef.current||preparationAttempt.current||current?.state!=='active'||document.visibilityState==='hidden')return;
+    if(logoutSaving.current||!consent||recordingPhase.current!=='idle'||!item||pendingAudioRef.current||preparationAttempt.current||current?.state!=='active'||document.visibilityState==='hidden')return;
     const attempt:RecordingPreparation={generation:captureGeneration.current,index:current.current_index,writer:null,device:null,live:null};preparationAttempt.current=attempt;
     setError('');setRecordingNotice('');setLiveTranscript(null);liveCapture.current?.close();liveCapture.current=null;setRecordingSaved(false);recordingPhase.current='uploading';setRecordingState('uploading');
     try {
@@ -400,14 +469,14 @@ export function QuizSession({id}:{id:string}) {
         let candidate:NonNullable<typeof pendingAudio>={blob,...measurement,index,complete:true,needsMeasurement:lifecycle.needsMeasurement,recoveryKey:writer.key};
         try{const durable=await writer.finish({...measurement,needsMeasurement:lifecycle.needsMeasurement});candidate={...candidate,recoveryKey:durable.key};}catch{if(mounted.current)setError('기기에 보관하지 못했어요. 이동하기 전에 원본을 내려받아 주세요.');}
         pendingAudioRef.current=candidate;resolveRecordingFinished.current?.();resolveRecordingFinished.current=null;
-        if(!mounted.current||generation!==captureGeneration.current)return;recordingPhase.current='idle';setMeterStream(null);setPendingAudio(candidate);setRecordingState('idle');if(!lifecycle.interrupted&&document.visibilityState!=='hidden')await uploadRecording(candidate);
+        if(!mounted.current||generation!==captureGeneration.current)return;recordingPhase.current='idle';setMeterStream(null);setPendingAudio(candidate);setRecordingState('idle');if(!savePendingLocal.current&&!lifecycle.interrupted&&document.visibilityState!=='hidden')await uploadRecording(candidate);
       };recordStart.current=performance.now();setRecordSeconds(0);capture.start(250);attempt.live?.start();preparationAttempt.current=null;recordingPhase.current='recording';setMeterStream(device);setRecordingState('recording');setSkipPreparation(true);try{localStorage.setItem('gakja-recording-ready-seen:'+data.user.id,'true');}catch{}
     }catch(e){if(preparationAttempt.current!==attempt)return;speechCapture.current?.dispose();speechCapture.current=null;await cancelPreparation();if(mounted.current&&!preparationAttempt.current)setError((e as Error).message);}
   }
   if(!dto)return <div className="quiz-v3">{error?<Alert>{error}</Alert>:<Spinner/>}</div>;
   const voiceFirst=session.mode==='oral'&&!textAlternative;
   const answerEditor=<div className={styles.answerEditorBody}><label htmlFor={'quiz-answer-'+id}>{voiceFirst?(recording?'말한 답변을 확인하고 다듬어 보세요.':'필요하면 말할 내용을 짧게 메모해 두세요.'):'내 답변'}</label>
-    <textarea id={'quiz-answer-'+id} aria-label="내 답변" value={answer} maxLength={10_000} onChange={e=>setAnswer(e.target.value)} placeholder={voiceFirst?'말할 내용이나 다시 생각할 점을 적어보세요.':'내 답을 적어보세요.'} disabled={busy||recordingState==='uploading'}/>
+    <textarea id={'quiz-answer-'+id} aria-label="내 답변" value={answer} maxLength={10_000} onChange={e=>{answerScope.current=draftKey;latestAnswer.current=e.target.value;setAnswer(e.target.value);}} onKeyDown={event=>{sendOnEnter(event,!voiceFirst&&data.preferences?.enterToSend!==false,()=>submit(null),{composing:answerComposing.current,blocked:busy||session.state!=='active'||recordingState!=='idle'||!!pendingAudio||preparation!==null||(!answer.trim()&&!recording)});}} onCompositionStart={()=>{answerComposing.current=true;}} onCompositionEnd={()=>{answerComposing.current=false;}} placeholder={voiceFirst?'말할 내용이나 다시 생각할 점을 적어보세요.':'내 답을 적어보세요.'} disabled={busy||recordingState==='uploading'}/>
   </div>;
   const recordingControls=<div className={'quiz-record '+styles.recordingAction}>{preparation!==null&&<section className={styles.recordingPreparation} aria-label="녹음 준비"><strong aria-live="polite">{preparation===0?'마이크를 확인해 주세요.':`${preparation}초 뒤 녹음을 시작해요.`}</strong><p><AudioLevelDot stream={meterStream} phase="recording"/>말해 보며 음량을 확인해 주세요. 아직 답변을 녹음하거나 전사하지 않아요. 시작하면 말하는 내용이 실시간으로 보여요.</p><div>{preparation===0&&<button className="button primary" onClick={()=>setPreparation(3)}>준비됐어요 · 3초 뒤 시작</button>}<button className="button secondary" onClick={()=>{setPreparation(null);void beginRecord();}}>지금 시작</button><button className="text-link" onClick={cancelPreparation}>취소</button></div><label><input type="checkbox" checked={skipPreparation} onChange={event=>{setSkipPreparation(event.target.checked);try{localStorage.setItem('gakja-recording-skip-ready:'+data.user.id,String(event.target.checked));}catch{}}}/>다음부터 준비 단계 건너뛰기</label></section>}<label className="quiz-record-consent"><input type="checkbox" checked={consent} disabled={recordingState!=='idle'} onChange={e=>{setConsent(e.target.checked);if(!e.target.checked&&preparation!==null)void cancelPreparation();}}/>마이크 사용·OpenAI 실시간 전사·비공개 녹음 저장에 동의해요.</label><div className="quiz-record-controls">{recordingState==='recording'?<button className="button quiz-record-stop" onClick={stopRecording}><AudioLevelDot stream={meterStream} phase="recording"/>녹음 완료 · {recordSeconds}초</button>:<button className={'button '+(voiceFirst?'primary '+styles.recordStart:'ghost')} disabled={!consent||busy||recordingState==='uploading'||!!pendingAudio||preparation!==null||recoveryWaiting} onClick={record}>{recordingState==='uploading'?<AudioLevelDot stream={null} phase="uploading"/>:recording?<RotateCcw size={17}/>:<AudioLevelDot stream={null} phase="idle"/>} {recordingState==='uploading'?(preparationAttempt.current?'마이크·전사 준비 중':transcriptProcessing?'문장 정리 중':'녹음 저장 중'):recording?'다시 녹음':'답변 녹음'}</button>}{recordingSaved&&recordingState==='idle'&&<span className="quiz-record-saved" role="status"><AudioLevelDot stream={null} phase="saved"/>녹음 저장됨</span>}{recording&&recordingState==='idle'&&<audio controls preload="metadata" src={recording.url}/>}</div>{liveTranscript&&preparation===null&&<section className={styles.liveTranscript} aria-label="실시간 전사 미리보기" data-phase={liveTranscript.phase}><div><strong>{liveTranscript.phase==='connecting'?'실시간 전사 연결 중':liveTranscript.phase==='unavailable'?'저장 후 전사로 이어갈게요':liveTranscript.phase==='listening'?'말하는 내용을 듣고 있어요':liveTranscript.phase==='finishing'?'마지막 말을 옮기고 있어요':'실시간 전사 미리보기'}</strong><span>미리보기</span></div>{liveTranscript.text?<p ref={liveCaptionBody} aria-live="off" tabIndex={0} aria-label="실시간으로 전사된 내용">{liveTranscript.text}</p>:<p>{liveTranscript.phase==='unavailable'?'녹음은 계속할 수 있어요. 저장한 뒤 전체 음성으로 전사해요.':'녹음을 시작하고 말하면 여기에 글이 나타나요.'}</p>}<small>미리보기는 답변에 자동으로 입력되지 않아요. 녹음 저장 후 전사를 확인하고 수정해 주세요.</small></section>}{transcriptProcessing&&<p className="transcript-processing" role="status">녹음을 글로 옮기고 문장을 정리하고 있어요.</p>}{recording?.raw_transcript&&<details className="transcript-raw"><summary>원전사 보기</summary><p>{recording.raw_transcript}</p></details>}{recording&&recordingState==='idle'&&recording.transcript_cleanup?.status!=='completed'&&<button className="button ghost small" disabled={busy} onClick={retryRecordingTranscript}>{recording.raw_transcript?'문장 정리 다시 시도':'전사 다시 시도'}</button>}{transcriptReady&&answer!==recording?.display_transcript&&<button className="text-link" disabled={busy||recordingState!=='idle'||!!pendingAudio||transcriptProcessing} onClick={useRecordingTranscript}>정리된 전사 사용</button>}</div>;
   const circumference=2*Math.PI*26;

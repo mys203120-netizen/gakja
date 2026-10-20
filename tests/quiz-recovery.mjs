@@ -7,6 +7,7 @@ import {validateSpeechTelemetry} from '../apps/web/src/lib/speech-analysis.ts';
 
 const load=(path,require=()=>{throw new Error('Unexpected import');})=>{const module={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL(path,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,require,Set});return module.exports;};
 const view=load('../apps/web/src/lib/quiz-session-view.ts');
+const enterSend=load('../apps/web/src/lib/client/enter-send.ts');
 const contracts=load('../packages/content-contracts/src/workflows.ts',name=>name==='./index'?{}:{});
 const target={id:'target',university:'서울시립대학교',campus:'본교',department:'환경공학부',admission_year:2027,admission_type:'학생부종합전형Ⅰ(면접형)',interview_stage:'2단계'};
 const savedTarget={...target,interview_stage:undefined};
@@ -39,6 +40,8 @@ const recoveryRemovals=[];
 const module={exports:{}};
 const actionButton=({pending=false,pendingLabel,disabled,children,type='button',...props})=>({type:'button',props:{...props,type,disabled:disabled||pending,'aria-busy':pending||undefined,children:pending?[{type:'LoaderCircle',props:{size:16,'aria-hidden':true}},pendingLabel??children]:children}});
 vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/quiz-v3.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,console,Date,Set,JSON,Blob,FormData,URL,URLSearchParams,AbortController,requestAnimationFrame:callback=>{callback();return 1;},cancelAnimationFrame(){},performance:{now:()=>state.now},crypto:{randomUUID:()=>`request-${++uuid}`},setTimeout:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearTimeout:id=>state.timers.delete(id),setInterval:(callback,ms)=>{const id=++timerId;state.timers.set(id,{callback,ms});return id;},clearInterval:id=>state.timers.delete(id),HTMLElement:class {},document:{activeElement:null,get visibilityState(){return state.visibility;},addEventListener(name,listener){state.events.set(name,listener);},removeEventListener(name){state.events.delete(name);}},navigator:{sendBeacon:(url,body)=>{state.calls.push({url,beacon:body});return true;},mediaDevices:{getUserMedia:async()=>{state.deviceRequests++;await state.deviceGate;return createDevice();}}},MediaRecorder:FakeRecorder,localStorage:{getItem:key=>state.local.get(key)??null,setItem:(key,value)=>state.local.set(key,value),removeItem:key=>state.local.delete(key)},sessionStorage:{getItem:key=>state.storage.get(key)??null,setItem:(key,value)=>state.storage.set(key,value),removeItem:key=>state.storage.delete(key)},window:{matchMedia:()=>({matches:true}),MediaRecorder:FakeRecorder,confirm:()=>{state.confirmCalls=(state.confirmCalls||0)+1;return state.confirm;},addEventListener:(name,listener)=>{state.events.set(name,listener);if(name==='gakja:open-on')state.listener=listener;},removeEventListener(name){state.events.delete(name);}},require(name){
+  if(name==='@/lib/client/draft-save')return{registerDraftSaver:(userId,save)=>{state.logoutSaver=save;return()=>{if(state.logoutSaver===save)state.logoutSaver=null;};}};
+  if(name==='@/lib/client/enter-send')return enterSend;
   if(name==='react')return{useState(initial){const index=state.hook++;if(!(index in state.values))state.values[index]=typeof initial==='function'?initial():initial;return[state.values[index],value=>{state.values[index]=typeof value==='function'?value(state.values[index]):value;}];},useRef(initial){const index=state.refHook++;if(!(index in state.refs))state.refs[index]={current:initial};return state.refs[index];},useEffect(callback){state.effects.push(callback);},useCallback:callback=>callback};
   if(name==='react/jsx-runtime')return{jsx:(type,props)=>type===actionButton?actionButton(props):({type,props}),jsxs:(type,props)=>type===actionButton?actionButton(props):({type,props}),Fragment:'Fragment'};
   if(name==='next/link')return{__esModule:true,default:'Link'};
@@ -60,7 +63,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   throw new Error(name);
 }});
 const render=()=>{state.hook=0;state.refHook=0;state.effects=[];return module.exports.QuizSession({id:'session'});};
-const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.values[23]=true;durableAudio.clear();recoveryRemovals.length=0;state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.uploadError=false;state.deviceRequests=0;state.timers.clear();state.confirm=false;state.events.clear();state.visibility='visible';state.deviceGate=null;state.reservationGate=null;state.assertGate=null;state.cancelledReservations=0;state.live=null;state.liveGate=null;state.decodeResult=buildSpeechTelemetry([{atMs:0,rms:.04},{atMs:1499,rms:.04}],1500);state.decodeCalls=0;state.decodeGate=null;state.confirmCalls=0;};
+const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.values[23]=true;durableAudio.clear();recoveryRemovals.length=0;state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.uploadError=false;state.deviceRequests=0;state.timers.clear();state.confirm=false;state.events.clear();state.visibility='visible';state.deviceGate=null;state.reservationGate=null;state.assertGate=null;state.cancelledReservations=0;state.live=null;state.liveGate=null;state.logoutSaver=null;state.decodeResult=buildSpeechTelemetry([{atMs:0,rms:.04},{atMs:1499,rms:.04}],1500);state.decodeCalls=0;state.decodeGate=null;state.confirmCalls=0;};
 const nodes=tree=>Array.isArray(tree)?tree.flatMap(nodes):tree&&typeof tree==='object'?[tree,...nodes(tree.props?.children),...nodes(tree.props?.aside)]:[];
 const text=value=>Array.isArray(value)?value.map(text).join(''):value&&typeof value==='object'?text(value.props?.children):typeof value==='string'?value:'';
 const saveButton=tree=>nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='답변 저장');
@@ -420,3 +423,48 @@ for(const revisit of ['focus','pageshow','visibilitychange','lease-poll']){
   cleanupRecovery();
 }
 console.log(`Quiz mobile lifecycle: ${checks} total handler/render checks passed; synthetic native events only.`);
+
+// Logout flushes only a draft or private recovery copy. It never publishes an answer.
+const registerLogout=()=>{render();state.effects.find(effect=>effect.toString().includes('registerDraftSaver'))();return state.logoutSaver;};
+reset();state.adapter=pauseResponse;tree=render();const saveLogout=registerLogout();
+nodes(tree).find(node=>node.type==='textarea'&&node.props['aria-label']==='내 답변').props.onChange({target:{value:'디바운스 전 마지막 문장'}});
+await saveLogout();
+check(state.calls.filter(call=>call.payload).map(call=>call.payload.action).join(',')==='draft,pause','logout saves a draft and pauses without answer/end');
+check(state.calls[0].payload.response==='디바운스 전 마지막 문장'&&state.local.get('gakja-quiz:student:session:0')==='디바운스 전 마지막 문장','logout reads the immediate input ref before a debounce or rerender');
+
+reset();state.adapter=async(url,payload)=>{if(payload.action==='draft')throw Error('offline draft');return pauseResponse(url,payload);};
+await assert.rejects(registerLogout(),/offline draft/);
+check(!state.calls.some(call=>['pause','answer','end'].includes(call.payload?.action))&&state.local.has('gakja-quiz:student:session:0'),'failed server draft blocks logout and keeps the private local text');
+
+reset();state.adapter=pauseResponse;tree=render();const autosaveEffect=()=>state.effects.find(effect=>effect.toString().includes('loadedDraft.current !== draftKey'))();
+autosaveEffect();render();autosaveEffect();
+const olderDraft=deferred();let draftCount=0;state.adapter=async(url,payload)=>{if(payload.action==='draft'&&++draftCount===1)await olderDraft.promise;return pauseResponse(url,payload);};
+const oldTick=[...state.timers.values()].find(timer=>timer.ms===450);oldTick.callback();await settle();tree=render();
+nodes(tree).find(node=>node.type==='textarea'&&node.props['aria-label']==='내 답변').props.onChange({target:{value:'이전 저장 뒤에도 남겨야 할 최신 문장'}});
+const queuedLogout=registerLogout()();await settle();check(!state.calls.some(call=>call.payload?.action==='pause'),'logout waits for an older queued draft before pausing');
+olderDraft.resolve();await queuedLogout;
+check(state.calls.filter(call=>call.payload?.action==='draft').at(-1).payload.response==='이전 저장 뒤에도 남겨야 할 최신 문장','the newest text wins after older queued autosave');
+
+await startMobileRecording();state.now=1500;const activeRecordingLogout=registerLogout()();await settle();
+check(state.capture.state==='inactive'&&!state.calls.some(call=>call.payload?.action==='pause'),'logout stops capture and waits for final native media events before pause');
+await state.capture.deliverStop();await activeRecordingLogout;
+check(durableAudio.size===1&&state.uploads.length===0&&recoveryRemovals.length===0,'logout keeps the completed recording in private IDB without upload or deletion');
+check(state.calls.some(call=>call.payload?.action==='pause')&&!state.calls.some(call=>['answer','end'].includes(call.payload?.action)),'recording logout pauses after durable preservation without submission');
+
+reset();state.adapter=pauseResponse;state.values[17]={blob:new Blob(['not-durable']),index:0,durationMs:1500,recoveryKey:'missing',complete:true};
+await assert.rejects(registerLogout(),/녹음의 기기 저장/);
+check(!state.calls.some(call=>call.payload?.action==='pause'),'missing recording readback blocks logout while the original remains in memory');
+
+reset();state.adapter=pauseResponse;state.values[10]=true;const latePermission=deferred();state.deviceGate=latePermission.promise;tree=render();
+const openingMicrophone=nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();await settle();
+await registerLogout()();latePermission.resolve();await openingMicrophone;await settle();
+check(state.capture===null&&state.uploads.length===0&&state.tracksStopped===1&&state.values[0].session.state==='paused','logout cancels recording preparation and a late permission cannot start capture or upload');
+
+reset({...info,session:{...info.session,items:[item,{...item,id:'m2',question_id:'q2'}]}});const submittedAnswer=deferred();
+const afterAnswer={...info,session:{...info.session,state:'ready',current_index:1,items:[item,{...item,id:'m2',question_id:'q2'}],metadata:{drafts:{1:{response:'다음 질문에 미리 적은 초안'}}}},responses:[{id:'saved-text',item_index:0,response:'내 역할은 채취 조건 설계였습니다.',data:{}}]};
+state.adapter=async(url,payload)=>{if(payload.action==='answer'){await submittedAnswer.promise;return {...afterAnswer,response:afterAnswer.responses[0]};}return {...afterAnswer,session:{...afterAnswer.session,state:'paused'}};};
+tree=render();const submittingText=saveButton(tree).props.onClick();await settle();const leavingAfterAnswer=registerLogout()();await settle();
+submittedAnswer.resolve();await submittingText;await leavingAfterAnswer;
+const nextDraft=state.calls.find(call=>call.payload?.action==='draft');
+check(nextDraft?.payload.itemIndex===1&&nextDraft.payload.response==='다음 질문에 미리 적은 초안','a text answer completed during logout never becomes the next question’s draft before React effects run');
+console.log(`Quiz logout draft/media checks passed: ${checks} total; no DB, provider or real microphone calls.`);

@@ -31,12 +31,13 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   if(name==='react-dom')return {createPortal};
   if(name==='react/jsx-runtime')return jsx;
   if(name==='lucide-react')return icons;
+  if(name==='./shared')return {Logo:({size})=>React.createElement('svg',{width:size,height:size,'aria-hidden':true})};
   if(name.endsWith('.module.css'))return {default:new Proxy({},{get:(_,key)=>String(key)})};
   throw new Error(name);
  }
 });
 
-function loadAuth({ hooks = React, post = async () => { throw new Error('Unexpected auth write'); }, router = {}, fetch = async () => { throw new Error('Unexpected auth read'); } } = {}) {
+function loadAuth({ hooks = React, post = async () => { throw new Error('Unexpected auth write'); }, router = {}, animation=gsap, fetch = async () => { throw new Error('Unexpected auth read'); } } = {}) {
   const module = { exports: {} };
   vm.runInNewContext(source, {
     module, exports: module.exports, Date, URLSearchParams, fetch,
@@ -49,7 +50,7 @@ function loadAuth({ hooks = React, post = async () => { throw new Error('Unexpec
       if (name === 'next/link') return { default: link };
       if (name === 'next/navigation') return { useRouter: () => router };
       if (name === 'lucide-react') return icons;
-      if (name === 'gsap') return { default: gsap };
+      if (name === 'gsap') return { default: animation };
       if (name === '@/lib/social-auth-rules') return rules;
       if (name.endsWith('.module.css')) return { default: new Proxy({}, { get: (_, key) => String(key) }) };
       if (name === './shared') return {
@@ -83,8 +84,8 @@ function nodes(value) {
   if (!value || typeof value !== 'object') return [];
   return [value, ...nodes(value.props?.children)];
 }
-function harness(mode, { canSetPassword = false, post = async () => ({ message: '확인 메일을 보냈어요.' }), router = {} } = {}) {
-  const state = [], effects = []; let index = 0;
+function harness(mode, { canSetPassword = false, post = async () => ({ message: '확인 메일을 보냈어요.' }), router = {}, animation=gsap } = {}) {
+  const state = [], effects = [],effectState=[]; let index = 0;
   const hooks = {
     useState(initial) {
       const slot = index++;
@@ -96,9 +97,9 @@ function harness(mode, { canSetPassword = false, post = async () => ({ message: 
       if (!(slot in state)) state[slot] = { current: initial };
       return state[slot];
     },
-    useEffect(callback) { effects.push(callback); },
+    useEffect(callback,deps) {const slot=index++,previous=effectState[slot];if(!previous||deps.some((value,i)=>!Object.is(value,previous.deps[i]))){effectState[slot]={deps};effects.push(()=>{previous?.cleanup?.();effectState[slot].cleanup=callback();});}},
   };
-  const AuthScreen = loadAuth({ hooks, post, router, fetch: async () => ({ json: async () => ({ canSetPassword, providers: {} }) }) });
+  const AuthScreen = loadAuth({ hooks, post, router, animation, fetch: async () => ({ json: async () => ({ canSetPassword, providers: {} }) }) });
   function render() { index = 0; return AuthScreen({ mode }); }
   async function hydrate() {
     // Flush only the effects registered by the first render, then allow the
@@ -158,11 +159,22 @@ test('reset and invite keep their existing capability checks after hydration', a
   }
 });
 
-test('intro is discoverable only on login and never opens before user interaction',()=>{
+test('login intro remains in the document flow, with no modal, close or pause controls',()=>{
  for(const mode of ['login','signup','invite','reset-password']){
   const html=renderToStaticMarkup(React.createElement(loadAuth(),{mode}));
   assert.equal(html.includes('각자ON 둘러보기'),mode==='login');
   assert.doesNotMatch(html,/<dialog/);
-  if(mode==='login'){assert.match(html,/aria-haspopup="dialog"/);assert.match(html,/aria-expanded="false"/);}
+  if(mode==='login'){assert.match(html,/id="login-overview"/);assert.match(html,/aria-controls="login-overview"/);assert.match(html,/오늘 훈련/);assert.match(html,/준비 현황/);assert.match(html,/내 기록/);assert.match(html,/상단으로/);assert.doesNotMatch(html,/aria-haspopup="dialog"|소개 닫기|일시정지|나의 무기고|Chat · Live/);}
  }
+});
+
+
+test('the login mark rotates clockwise continuously without a pause control or a focus-triggered restart',async()=>{
+  const rotations=[],logos=[{mark:true}],attention=[{attention:true}];
+  const animation={...gsap,matchMedia:()=>({add:(_query,callback)=>callback(),revert:nothing}),to:(targets,options)=>{if(targets===logos)rotations.push(options);}};
+  const view=harness('login',{animation});let tree=view.render();
+  nodes(tree).find(node=>node.type==='main').props.ref.current={querySelectorAll:selector=>selector==='.login-art-logo'?logos:attention,querySelector:()=>null};
+  tree=await view.hydrate();assert.equal(rotations.length,1);assert.equal(rotations[0].rotation,360);assert.equal(rotations[0].repeat,-1);assert.equal(rotations[0].ease,'none');
+  nodes(tree).find(node=>node.type==='input'&&node.props.name==='email').props.onFocus();view.render();tree=await view.hydrate();
+  assert.equal(rotations.length,1,'typing focus cannot restart or pause the mark loop');assert.equal(nodes(tree).some(node=>node.props?.className==='auth-motion-toggle'),false);
 });

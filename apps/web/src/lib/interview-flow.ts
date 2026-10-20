@@ -1,7 +1,7 @@
 /** The URL is the source of truth for preparation, including Chat/Live navigation. */
 export type InterviewSetupState = {
   mode: 'basic' | 'document' | 'major' | 'university';
-  followups: boolean; pressure: boolean; reactions: boolean;
+  followups: boolean; pressure: boolean;
   difficulty: 'standard' | 'deep'; timing: 'end' | 'turn';
   count: number; panelistCount: number; advanced: boolean;
 };
@@ -14,12 +14,11 @@ export function hasInterviewSelection(params: Search) {
   return Boolean(params.get('questionId') || params.get('briefingId') || params.get('activityId'));
 }
 export function interviewSetupState(params: Search): InterviewSetupState {
-  const reactions = params.get('reactions') === '1';
   return {
     mode: (modes.includes(params.get('mode') || '') ? params.get('mode') : 'basic') as InterviewSetupState['mode'],
-    followups: params.get('followups') === '1', pressure: params.get('pressure') === '1', reactions,
+    followups: params.get('followups') === '1', pressure: params.get('pressure') === '1',
     difficulty: params.get('difficulty') === 'deep' ? 'deep' : 'standard',
-    timing: reactions || params.get('feedback') === 'turn' ? 'turn' : 'end',
+    timing: params.get('feedback') === 'turn' ? 'turn' : 'end',
     count: integer(params.get('count'), hasInterviewSelection(params) ? 1 : 4, 8),
     panelistCount: integer(params.get('panelists'), 2, 5), advanced: params.get('details') === '1',
   };
@@ -27,13 +26,11 @@ export function interviewSetupState(params: Search): InterviewSetupState {
 export function interviewSetupHref(kind: 'chat' | 'video', params: Search, updates: Partial<InterviewSetupState> & { targetId?: string } = {}) {
   const query = new URLSearchParams(params.toString());
   const state = { ...interviewSetupState(params), ...updates };
-  if (updates.timing === 'end') state.reactions = false;
-  if (state.reactions) state.timing = 'turn';
   query.set('kind', kind);
   query.set('mode', state.mode);
   query.set('followups', state.followups ? '1' : '0');
   query.set('pressure', state.pressure ? '1' : '0');
-  query.set('reactions', state.reactions ? '1' : '0');
+  query.delete('reactions');
   query.set('difficulty', state.difficulty);
   query.set('feedback', state.timing);
   query.set('count', String(state.count));

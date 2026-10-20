@@ -2,34 +2,35 @@
 :root {
   color-scheme: light;
   --ui-card: #ffffff;
-  --ui-peach: #e7fbdc;
+  --ui-peach: #f0faf4;
   --ui-shadow: var(--soft-shadow-raised);
-  --clarity-brand: #00ee77;
-  --clarity-bg: #f1fff7;
+  --clarity-brand: #00ed77;
+  --clarity-bg: #f7f8fa;
   --clarity-surface: #ffffff;
-  --clarity-soft: #f1f8f3;
-  --clarity-mint: #d9fbe8;
-  --clarity-ink: #23352d;
-  --clarity-muted: #526d60;
-  --clarity-action: #087a48;
-  --clarity-action-hover: #05643a;
+  --clarity-soft: #f1f3f5;
+  --clarity-mint: #e4faee;
+  --clarity-ink: #22272b;
+  --clarity-muted: #687078;
+  --clarity-action: #008747;
+  --clarity-action-hover: #008747;
   --clarity-on-action: #ffffff;
-  --clarity-green: #087a48;
-  --clarity-green-hover: #05643a;
-  --clarity-banner: #e7fbdc;
-  --clarity-line: #d9eade;
-  --clarity-blue: #087a48;
-  --soft-mint: #69d4ad;
-  --soft-leaf: #8ada80;
-  --soft-accent-ink: #174b32;
-  /* Darker action fills keep white labels readable; pastel fills use dark ink. */
-  --soft-gradient: linear-gradient(135deg, #087a48, #11834c);
-  --soft-accent-gradient: linear-gradient(135deg, #69d4ad, #8ada80);
-  --soft-shadow-raised: 0 14px 32px rgb(46 116 76 / 15%), 0 4px 10px rgb(46 116 76 / 7%), -8px -8px 20px rgb(255 255 255 / 95%);
-  --soft-shadow-small: 0 7px 16px rgb(46 116 76 / 13%), 0 2px 5px rgb(46 116 76 / 5%), -4px -4px 12px rgb(255 255 255 / 90%);
-  --soft-shadow-inset: inset 2px 3px 6px rgb(46 116 76 / 9%), inset -2px -2px 6px rgb(255 255 255 / 90%);
-  --soft-radius: 26px;
-  --soft-control-radius: 18px;
+  --clarity-on-brand: #220D2A;
+  --clarity-green: #008747;
+  --clarity-green-hover: #008747;
+  --clarity-banner: #f0faf4;
+  --clarity-line: #e5e8eb;
+  --clarity-blue: #008747;
+  --soft-mint: #00ed77;
+  --soft-leaf: #00ed77;
+  --soft-accent-ink: #008747;
+  /* The original logo green is the primary accent; neutral surfaces carry depth. */
+  --soft-gradient: linear-gradient(#00ed77, #00ed77);
+  --soft-accent-gradient: linear-gradient(#e4faee, #e4faee);
+  --soft-shadow-raised: 0 2px 10px rgb(28 38 48 / 4%), 0 0 0 1px rgb(28 38 48 / 5%);
+  --soft-shadow-small: 0 1px 4px rgb(28 38 48 / 5%);
+  --soft-shadow-inset: none;
+  --soft-radius: 20px;
+  --soft-control-radius: 12px;
   --soft-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6d63' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --clarity-warning: #926521;
   --clarity-danger: #bf403e;
@@ -40,7 +41,7 @@
   --clarity-body-size: 15px;
   --clarity-secondary-size: 13px;
   --clarity-line-height: 1.7;
-  --clarity-control-radius: 18px;
+  --clarity-control-radius: 12px;
   --clarity-section-gap: 28px;
   --bg: var(--clarity-bg);
   --surface: var(--clarity-surface);
@@ -51,11 +52,11 @@
   --accent: var(--clarity-green);
   --link: var(--clarity-green);
   --line: var(--clarity-line);
-  --radius: 26px;
+  --radius: 20px;
 }
 
 body {
-  background: radial-gradient(ellipse at 6% 0%, #e7fbdc 0, transparent 42%), radial-gradient(ellipse at 96% 58%, #d9fbea 0, transparent 52%), var(--clarity-bg);
+  background: var(--clarity-bg);
   color: var(--clarity-ink);
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 400;
@@ -108,8 +109,8 @@ body .button {
   box-shadow: var(--soft-shadow-small);
   transition: background-color var(--clarity-motion) ease, border-color var(--clarity-motion) ease, color var(--clarity-motion) ease, transform var(--clarity-motion) ease;
 }
-body .button.primary { color: var(--clarity-on-action); background: var(--soft-gradient); border-color: transparent; }
-body .button.primary:hover:not(:disabled) { color: var(--clarity-on-action); background: var(--clarity-action-hover); border-color: transparent; transform: translateY(-1px); }
+body .button.primary { color: var(--clarity-on-brand); background: var(--soft-gradient); border-color: transparent; font-weight:600; }
+body .button.primary:hover:not(:disabled) { color: var(--clarity-on-brand); background: var(--clarity-brand); border-color: transparent; box-shadow: 0 4px 12px rgb(34 13 42 / 10%); }
 body .button:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--soft-shadow-inset); }
 body .button:is(.secondary, .ghost) { color: var(--clarity-ink); background: var(--clarity-surface); border-color: transparent; }
 body .button:is(.secondary, .ghost):hover:not(:disabled) { background: var(--clarity-mint); border-color: transparent; }

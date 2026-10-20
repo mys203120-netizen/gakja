@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+import * as availability from '../apps/web/src/lib/training-availability.ts';
+import * as hybrid from '../apps/web/src/lib/hybrid-training.ts';
+
+test('read-through replanning retires only owned untouched current/future automatic breaks and preserves their history',async()=>{
+ const today='2026-10-21',studentId='synthetic-owner',school={university:'검증대학',department:'검증학과'};
+ const row=(id:string,date:string,extra:any={})=>({id,student_id:studentId,date,title:'기존 자동 휴식',completed:false,target:{automaticPractice:{minutes:10,status:'active',hybrid:{kind:'break'}}},...extra});
+ const plans=[row('past','2026-10-20'),row('today',today),row('future','2026-10-22'),row('completed',today,{completed:true}),row('started',today,{target:{automaticPractice:{minutes:10,status:'active',startedAt:today+'T01:00:00Z',hybrid:{kind:'break'}}}})];
+ const foreign=row('foreign',today,{student_id:'other-student'}),before=structuredClone({plans,foreign}),writes:any[]=[];
+ const context={schoolTargets:[{id:'school',data:school}],selectedTargetId:'school',events:[]};
+ const query=async(sql:string,args:any[]=[])=>{
+  if(sql.includes('pg_advisory_xact_lock'))return {rows:[]};
+  if(sql.startsWith('select data from student_preferences'))return {rows:[{data:{trainingAvailability:{version:2,startDate:'2026-10-01',savedAt:'2026-10-20T00:00:00Z',revision:1,weekdayMinutes:120,weekendMinutes:120,blockedDates:[],overrides:{}}}}]};
+  if(sql.startsWith('select id,data from support_targets'))return {rows:[{id:'school',data:school}]};
+  if(sql.includes('from study_session_events')||sql.includes('from interview_sessions'))return {rows:[]};
+  if(sql.includes('from student_plans'))return {rows:plans};
+  if(sql.startsWith('update student_plans')){assert.equal(args[1],studentId);const plan=plans.find(plan=>plan.id===args[0])!;writes.push(args[0]);plan.target.automaticPractice={...plan.target.automaticPractice,...JSON.parse(args[2])};return {rows:[]};}
+  throw Error('Unexpected SQL '+sql);
+ };
+ const module={exports:{} as any};
+ const code=ts.transpileModule(readFileSync('apps/web/src/lib/hybrid-training-store.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ vm.runInNewContext(code,{module,exports:module.exports,Set,Map,Date,JSON,Number,Object,String,require(name:string){
+  if(name==='server-only')return {};
+  if(name==='./db')return {ApiError:Error,transaction:async(work:any)=>work({query})};
+  if(name==='./planner-context')return {getPlanContext:async()=>context,presentPlan:(plan:any)=>({...plan,href:'/my',targetAvailable:true,performedAt:null})};
+  if(name==='./automatic-practice-store')return {automaticQuestionTargets:()=>new Map(),automaticQuestionFacts:()=>[]};
+  if(name==='./admission-calendar-store')return {studentAdmissionCalendar:async()=>({interviewSchedules:[],interviewScheduleCoverage:{targets:[]},refreshDue:false})};
+  if(name==='./school-interview-scope')return {interviewSupportForTarget:()=>({supported:true})};
+  if(name==='./learning-target-scope')return {recordMatchesCurrentTarget:()=>true};
+  if(name==='./knowledge-flow-model')return {knowledgeTargetKey:(value:any)=>JSON.stringify(value)};
+  if(name==='./planner-model')return {koreaToday:()=>today};
+  if(name==='./training-availability')return availability;
+  if(name==='./hybrid-training')return hybrid;
+  throw Error(name);
+ }});
+ const result=await module.exports.getHybridTraining(studentId,'school',today);
+ assert.deepEqual(writes,['today','future']);
+ for(const id of ['past','completed','started'])assert.deepEqual(plans.find(row=>row.id===id),before.plans.find(row=>row.id===id));
+ assert.deepEqual(foreign,before.foreign);assert.ok(result.days.every((day:any)=>day.tasks.every((task:any)=>task.kind!=='break')));
+});

@@ -5,6 +5,9 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import pg from 'pg';
 import { loadProjectEnv } from '../scripts/load-env.mjs';
+import {tsImport} from 'tsx/esm/api';
+const training=await tsImport('../apps/web/src/lib/admin-training.ts',import.meta.url);
+const planner=await tsImport('../apps/web/src/lib/planner-model.ts',import.meta.url);
 
 // Exercise production getAdminData with real SQL inside one rolled-back local
 // transaction. No HTTP authentication fixture or external provider is needed.
@@ -30,6 +33,8 @@ vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.Mo
   require(name) {
     if (name === 'server-only') return {};
     if (name === './school-directory') return { enrichSchoolTarget: target => target };
+    if (name === './admin-training') return training;
+    if (name === './planner-model') return planner;
     if (name === './db') return { ApiError: class ApiError extends Error { constructor(status, message) { super(message); this.status = status; } }, query: productionQuery };
     throw new Error(`Unexpected production import: ${name}`);
   },

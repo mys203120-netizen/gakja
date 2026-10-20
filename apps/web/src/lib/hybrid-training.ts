@@ -1,0 +1,150 @@
+import {koreaToday,shiftPlanDay,validPlanDay} from './planner-model';
+import {personalDate} from './schedule';
+import {availabilityMinutesForDate,normalizeTrainingAvailability} from './training-availability';
+
+type Value=Record<string,any>;
+export type HybridTaskKind='diagnostic'|'recall'|'focus'|'mixed'|'review'|'break';
+export type HybridDeadline={targetId:string;university:string;department:string;date:string|null;source:'personal'|'public_day'|'public_period'|'goal'|null;label:string;periodStart:string|null;periodEnd:string|null;status:'ready'|'passed'|'today'|'needs_review'|'no_interview'|'unmatched'|'unsupported';reason:string;daysLeft:number|null;availableMinutes:number};
+export type HybridAttempt={at:string;assisted?:boolean;timedOut?:boolean;outcome?:boolean;inputMode?:string};
+export type HybridQuestion={id:string;title:string;targetId:string;sourceType:'personal'|'common';sourceVersion:number;activityIds:string[];category:'personal'|'major'|'talent';attempts:HybridAttempt[];href?:string};
+export type HybridTask={id:string;title:string;kind:HybridTaskKind;minutes:number;reason:string;targetId:string|null;questionId?:string;sourceType?:'personal'|'common';sourceVersion?:number;activityIds:string[];href?:string|null;performedAt?:string|null;completed?:boolean;startedAt?:string|null;status:'pending'|'in_progress'|'completed';manual?:boolean;date?:string;sequence?:number};
+export type HybridAllocation={mode:'foundation'|'repair'|'rehearsal'|'connection';daysLeft:number|null;observedQuestions:number;totalQuestions:number;focusShare:number;mixedShare:number;reason:string};
+export type HybridDay={date:string;capacityMinutes:number;plannedMinutes:number;remainingMinutes:number;unallocatedMinutes:number;tasks:HybridTask[];focus:string;reason:string;allocation:HybridAllocation};
+export const daysBetween=(from:string,to:string)=>Math.round((Date.parse(to+'T00:00:00Z')-Date.parse(from+'T00:00:00Z'))/86400000);
+
+/** A public period supplies a preparation goal; it never becomes an applicant appointment. */
+export function hybridDeadlines(input:{today:string;targets:Value[];schedules:Value[];coverage:Value[];settings?:Value;availability?:unknown}):HybridDeadline[]{
+  const availability=normalizeTrainingAvailability(input.availability,input.today);
+  return input.targets.map<HybridDeadline>(target=>{
+    const targetId=String(target.id),coverage=input.coverage.find(row=>row.targetId===targetId),all=input.schedules.filter(row=>row.targetId===targetId);
+    const year=Number(target.admission_year||target.admissionYear||target.year),calendarYear=year?String(year-1):null;
+    const matched=all.filter(row=>row.applicability==='track_match'&&validPlanDay(row.startDate)&&validPlanDay(row.endDate)&&row.startDate<=row.endDate&&(!calendarYear||row.startDate.startsWith(calendarYear+'-')&&row.endDate.startsWith(calendarYear+'-')));
+    const base:HybridDeadline={targetId,university:String(target.university||''),department:String(target.department||target.major||''),date:null,source:null,label:'면접 일정 확인 필요',periodStart:null,periodEnd:null,status:'unmatched',reason:coverage?.note||'선택한 전형·학과의 면접 일정을 확인해 주세요.',daysLeft:null,availableMinutes:0};
+    const unavailable=coverage?.status==='no_interview'||target.interviewSupported===false;
+    if(unavailable)return {...base,status:coverage?.status==='no_interview'?'no_interview':'unsupported',label:coverage?.status==='no_interview'?'면접 미실시':'학생부형 준비 범위 확인',reason:target.interviewSupportReason||coverage?.note||base.reason};
+    const person=personalDate(target),personal=person?(person.includes('T')?koreaToday(new Date(person)):person):null;
+    const targetSettings=input.settings?.[targetId],goal=String(targetSettings?.interviewDate||'');
+    let date:string|null=null,source:HybridDeadline['source']=null,label=base.label,reason=base.reason;
+    if(personal&&validPlanDay(personal)&&!['needs_review','changed'].includes(String(target.schedule?.status||''))){date=personal;source='personal';label='내 개별 면접일';reason='등록한 개인 면접일을 기준으로 준비해요.';}
+    else if(coverage?.status==='available'&&matched.length){
+      const starts=matched.map(row=>row.startDate).sort(),ends=matched.map(row=>row.endDate).sort();
+      base.periodStart=starts[0];base.periodEnd=ends.at(-1)!;
+      date=starts[0];source=base.periodStart===base.periodEnd?'public_day':'public_period';
+      label=source==='public_day'?'학교 공개 면접일 · 개인 배정 확인 필요':'공개 기간 시작 전 준비 목표 · 개인 배정 대기';
+      reason=source==='public_day'?'선택한 전형·학과와 연결된 공개 일정이에요. 개인 응시일은 별도로 확인해 주세요.':`공개 면접 기간 ${base.periodStart}~${base.periodEnd}에 맞춘 임시 준비 목표예요. 개인 응시일 확정 후 다시 조정해요.`;
+    }else if(validPlanDay(goal)&&targetSettings?.dateSource==='goal'){
+      date=goal;source='goal';label='내가 직접 정한 준비 목표일';reason='실제 면접일이 아닌 직접 선택한 준비 목표를 사용해요. 학교 일정 확인 후 수정해 주세요.';
+    }
+    if(!date)return {...base,status:coverage?.status==='needs_review'?'needs_review':'unmatched'};
+    let availableMinutes=0;
+    // The rolling view is short; the capacity forecast still spans the actual remaining period.
+    for(let day=input.today;day<date;day=shiftPlanDay(day,1))availableMinutes+=availabilityMinutesForDate(availability,day);
+    const daysLeft=daysBetween(input.today,date);
+    return {...base,date,source,label,reason,daysLeft,availableMinutes,status:daysLeft<0?'passed':daysLeft===0?'today':'ready'};
+  }).sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.targetId.localeCompare(b.targetId));
+}
+
+/** These are observations and student-marked review requests, never inferred ability scores. */
+export function hybridQuestionObservation(question:HybridQuestion,diagnostics:Value,today:string){
+  const latest=[...question.attempts].sort((a,b)=>b.at.localeCompare(a.at))[0];
+  const diagnostic=diagnostics?.[question.targetId];
+  const marked=Array.isArray(diagnostic?.needsReviewQuestionIds)&&diagnostic.needsReviewQuestionIds.includes(question.id);
+  const categoryMarked=Array.isArray(diagnostic?.focusCategories)&&diagnostic.focusCategories.includes(question.category);
+  const helped=Boolean(latest?.assisted),timedOut=Boolean(latest?.timedOut),incorrect=latest?.outcome===false;
+  const lastDay=latest?.at?(latest.at.includes('T')?koreaToday(new Date(latest.at)):latest.at):null;
+  const due=Boolean(lastDay&&lastDay<today);
+  return {unseen:!latest,due,marked,categoryMarked,helped,timedOut,incorrect,needsReview:marked||categoryMarked||helped||timedOut||incorrect,
+    reason:marked?'직접 다시 확인할 질문으로 선택했어요.':categoryMarked?'진단에서 더 연습할 영역으로 선택했어요.':helped?'최근 답변에서 도움을 사용해, 도움 없이 다시 답할 시간을 배치했어요.':timedOut?'최근 답변에서 시간이 초과되어 답변을 다시 정리해요.':incorrect?'최근 개념 확인에서 틀린 항목을 다시 확인해요.':!latest?'아직 답변하지 않은 영역을 확인해요.':due?'이전에 답한 내용을 자료 없이 다시 떠올려요.':'활동의 근거와 설명을 더 구체적으로 확인해요.'};
+}
+
+/** Only untouched automatic tasks can be replaced. Past records and started work remain intact. */
+export function preserveHybridPlan(plan:Value,today:string){
+  const auto=plan.target?.automaticPractice;
+  if(!auto)return true;
+  if(plan.completed||plan.performedAt||plan.date<today)return true;
+  const started=auto.startedAt||auto.hybrid?.startedAt;
+  return Boolean(started&&plan.date===today);
+}
+
+/** The deadline changes proportions only after actual coverage/diagnosis permits it. */
+export function hybridAllocation(date:string,questions:HybridQuestion[],deadlines:HybridDeadline[],diagnostics:Value={}):HybridAllocation{
+  const observations=questions.map(question=>hybridQuestionObservation(question,diagnostics,date));
+  const observedQuestions=observations.filter(observation=>!observation.unseen).length,totalQuestions=questions.length;
+  const days=deadlines.filter(item=>item.date&&item.date>date).map(item=>daysBetween(date,item.date!));
+  const daysLeft=days.length?Math.min(...days):null;
+  const base={daysLeft,observedQuestions,totalQuestions};
+  if(observations.some(observation=>observation.needsReview))return {...base,mode:'repair',focusShare:0.65,mixedShare:0.15,reason:'실제 도움·시간 초과 기록 또는 직접 고른 보완점이 있어 집중 보완 시간을 늘렸어요.'};
+  const diagnosed=questions.length>0&&questions.every(question=>diagnostics[question.targetId]?.state==='completed');
+  if(!diagnosed||observedQuestions<Math.ceil(totalQuestions/2))return {...base,mode:'foundation',focusShare:0.6,mixedShare:0.2,reason:'미확인 기록과 질문이 남아 내용 확인 시간을 먼저 확보했어요. 면접이 가까워도 연결 면접만 늘리지 않아요.'};
+  if(daysLeft!==null&&daysLeft<=7)return {...base,mode:'rehearsal',focusShare:0.4,mixedShare:0.4,reason:`가장 가까운 준비 마감이 ${daysLeft}일 남았고 실제 답변과 진단이 있어 여러 주제를 연결하는 시간을 늘렸어요.`};
+  if(daysLeft!==null&&daysLeft>21)return {...base,mode:'connection',focusShare:0.55,mixedShare:0.25,reason:`가장 가까운 준비 마감이 ${daysLeft}일 남아 기록·개념 확인과 간격을 둔 답변 연습을 함께 쌓아요.`};
+  return {...base,mode:'connection',focusShare:0.5,mixedShare:0.3,reason:'확인한 활동과 개념을 보완하면서 학교·다른 주제에 연결하는 답변을 늘려요.'};
+}
+
+const taskKey=(date:string,kind:HybridTaskKind,index:number,question:HybridQuestion)=>`hybrid:${date}:${kind}:${index}:${question.targetId}:${question.sourceType}:${question.sourceVersion}:${question.id}`;
+const minutes=(value:unknown)=>Number.isFinite(Number(value))?Math.max(0,Math.round(Number(value))):0;
+
+/** One student's daily capacity is shared by every school. Seven days is a detail window, not a course length. */
+export function hybridTrainingDays(input:{today:string;availability:unknown;deadlines:HybridDeadline[];questions:HybridQuestion[];diagnostics?:Value;fixedTasks?:HybridTask[];windowDays?:number}):HybridDay[]{
+  const availability=normalizeTrainingAvailability(input.availability,input.today),diagnostics=input.diagnostics||{},fixedTasks=(input.fixedTasks||[]).filter(task=>task.manual||task.kind!=='break');
+  const counts=new Map<string,number>(),questionDates=new Map<string,string>();
+  const days:HybridDay[]=[];
+  for(let offset=0;offset<(input.windowDays??7);offset++){
+    const date=shiftPlanDay(input.today,offset),capacityMinutes=availabilityMinutesForDate(availability,date);
+    const fixed=fixedTasks.filter(task=>task.date===date),fixedMinutes=fixed.reduce((sum,task)=>sum+minutes(task.minutes),0);
+    const active=input.deadlines.filter(deadline=>deadline.status==='ready'&&deadline.date!>date);
+    const eligible=input.questions.filter(question=>active.some(deadline=>deadline.targetId===question.targetId));
+    const tasks=[...fixed];let budget=Math.max(0,capacityMinutes-fixedMinutes),sequence=0;
+    const observations=eligible.map(question=>hybridQuestionObservation(question,diagnostics,date));
+    const allocation=hybridAllocation(date,eligible,active,diagnostics);
+    const evidence=observations.filter(observation=>observation.needsReview).length,unseen=observations.filter(observation=>observation.unseen).length;
+    const first=eligible.some(question=>diagnostics[question.targetId]?.state!=='completed');
+    const initial=budget;
+    const slots:Array<{kind:HybridTaskKind;minutes:number}>=[];
+    if(eligible.length&&budget){
+      const routineCapacity=Math.max(0,capacityMinutes-fixed.filter(task=>task.manual).reduce((sum,task)=>sum+task.minutes,0));
+      const reviewMinutes=routineCapacity>=50?10:routineCapacity>=20?5:0;
+      const learning=routineCapacity-reviewMinutes;
+      const startMinutes=learning>=30?Math.round(learning*.2):Math.min(5,learning);
+      const mixedMinutes=learning>=30?Math.round(learning*allocation.mixedShare):0;
+      const focusMinutes=learning-startMinutes-mixedMinutes;
+      const done=(kinds:HybridTaskKind[])=>fixed.filter(task=>!task.manual&&kinds.includes(task.kind)).reduce((sum,task)=>sum+task.minutes,0);
+      let remainingAllocation=budget;
+      const allocate=(kind:HybridTaskKind,desired:number)=>{const amount=Math.min(remainingAllocation,Math.max(0,desired));if(amount)slots.push({kind,minutes:amount});remainingAllocation-=amount;};
+      // A completed diagnosis already fills today's opening block; replanning cannot insert another one.
+      allocate(first?'diagnostic':'recall',startMinutes-done(['diagnostic','recall']));
+      let focusLeft=Math.min(remainingAllocation,Math.max(0,focusMinutes-done(['focus'])));
+      while(focusLeft>0){const size=Math.min(25,focusLeft);slots.push({kind:'focus',minutes:size});focusLeft-=size;}
+      remainingAllocation-=Math.min(remainingAllocation,Math.max(0,focusMinutes-done(['focus'])));
+      allocate('mixed',mixedMinutes-done(['mixed']));
+      allocate('review',reviewMinutes-done(['review']));
+    }
+    const todayUsed=new Map<string,number>();let previous:HybridQuestion|undefined;
+    for(const slot of slots){
+      const rank=(question:HybridQuestion)=>{
+        const observation=hybridQuestionObservation(question,diagnostics,date),deadline=active.find(item=>item.targetId===question.targetId)!;
+        const schoolLoad=counts.get(question.targetId)||0,questionLoad=todayUsed.get(question.id)||0;
+        const urgency=16/Math.sqrt(Math.max(1,daysBetween(date,deadline.date!)));
+        let score=urgency-schoolLoad*2-questionLoad*12;
+        if(slot.kind==='diagnostic')score+=Number(observation.unseen)*18+Number(diagnostics[question.targetId]?.state!=='completed')*8;
+        if(slot.kind==='recall')score+=Number(observation.due)*12+Number(observation.needsReview)*6-Number(observation.unseen)*8;
+        if(slot.kind==='focus')score+=Number(observation.needsReview)*18+Number(observation.unseen)*7;
+        if(slot.kind==='mixed')score+=Number(!observation.unseen)*9+Number(question.category!=='personal')*2;
+        const last=questionDates.get(`${question.targetId}:${question.id}`);
+        if(last===date)score-=10;
+        return score;
+      };
+      const question=slot.kind==='break'||slot.kind==='review'?previous||eligible[0]:[...eligible].sort((a,b)=>rank(b)-rank(a)||a.id.localeCompare(b.id))[0];
+      if(!question)continue;
+      const observation=hybridQuestionObservation(question,diagnostics,date),diagnosed=diagnostics[question.targetId]?.state==='completed';
+      const titles:Record<HybridTaskKind,string>={diagnostic:diagnosed?'미확인 질문 짧게 답하기':'첫 진단 · 활동·개념·지원 동기 확인',recall:'이전 답변 자료 없이 다시 꺼내기',focus:observation.needsReview?'확인된 보완점 집중 연습':'활동·개념 확인하고 내 말로 답하기',mixed:question.attempts.length?'여러 주제 연결 면접':'짧은 안내 면접 · 답변과 꼬리질문',review:'오늘 반영된 내용과 내일 계획 확인',break:'잠시 쉬기'};
+      const reasons:Record<HybridTaskKind,string>={diagnostic:'아직 확인하지 않은 영역을 짧게 답해요. 미응시를 약점으로 판단하지 않아요.',recall:observation.reason,focus:`${observation.reason} ${allocation.reason}`,mixed:`오늘 내용과 다른 활동·학교 질문을 함께 답해요. ${allocation.reason}`,review:'오늘 저장한 답변과 새로 확인한 사실을 살피고, 다음 학습의 중점을 선택해요.',break:'오늘 설정한 총 시간 안에서 휴식을 함께 배치했어요.'};
+      const task:HybridTask={id:taskKey(date,slot.kind,sequence,question),title:(slot.kind==='focus'?`${titles.focus} · ${question.title}`:titles[slot.kind]).slice(0,160),kind:slot.kind,minutes:slot.minutes,reason:reasons[slot.kind],targetId:question.targetId,questionId:question.id,sourceType:question.sourceType,sourceVersion:question.sourceVersion,activityIds:question.activityIds,href:question.href||null,status:'pending',date,sequence:sequence++};
+      tasks.push(task);budget-=task.minutes;
+      if(!['break','review'].includes(slot.kind)){counts.set(question.targetId,(counts.get(question.targetId)||0)+slot.minutes/10);todayUsed.set(question.id,(todayUsed.get(question.id)||0)+1);questionDates.set(`${question.targetId}:${question.id}`,date);previous=question;}
+    }
+    const focus=evidence?'도움·시간·직접 선택한 보완점 다시 확인':unseen?'아직 확인하지 않은 활동과 개념 살피기':'이전 답변 회상과 여러 주제 연결';
+    days.push({date,capacityMinutes,plannedMinutes:tasks.reduce((sum,task)=>sum+task.minutes,0),remainingMinutes:tasks.filter(task=>task.status!=='completed'&&!task.completed&&!task.performedAt).reduce((sum,task)=>sum+task.minutes,0),unallocatedMinutes:Math.max(0,budget),tasks,focus,allocation,reason:!availability?'학습 가능한 시간을 먼저 설정해 주세요.':!capacityMinutes?'학습하지 않는 날로 설정했어요.':!eligible.length?'정확한 일정과 연습할 질문을 확인하면 계획을 만들 수 있어요.':fixedMinutes>=capacityMinutes?'수동·진행·완료 계획을 보존해 추가 일정을 배치하지 않았어요.':`${allocation.reason} ${initial}분 안에서 누적 회상·집중 보완·연결 면접을 함께 배치했어요.`});
+  }
+  return days;
+}

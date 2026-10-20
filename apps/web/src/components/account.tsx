@@ -6,29 +6,33 @@ import { Settings2, Flag, ArrowUpRight, Check } from 'lucide-react';
 import { useApp } from './app-shell';
 import { useLearningWorkflows } from './practice';
 import { LearningPreferences } from './learning-preferences';
-import { action, post, Breadcrumb, PageTitle, Alert, Badge, Empty, Spinner, dateLabel, targetName, targetMajor, targetDate, Modal, type Item } from './shared';
+import { SettingsSelect } from './settings-select';
+import { action, post, Breadcrumb, PageTitle, Alert, FloatingNotice, Badge, Empty, Spinner, dateLabel, targetName, targetMajor, targetDate, Modal, type Item } from './shared';
 
 export function AccountPages({ slug = [] }: { slug?: string[] }) {
   const { data, refresh, toast } = useApp();
   const [error, setError] = useState('');
   const [welcome, setWelcome] = useState(false);
+  const [savingPreference,setSavingPreference]=useState('');
   useEffect(() => { setWelcome(new URLSearchParams(window.location.search).get('welcome') === '1'); }, []);
   const settings = slug[0] === 'settings';
   if (slug[0] === 'confirmations') return <ConfirmationInbox />;
   async function preference(key: string, value: any) {
-    try { await action('preference', { [key]: value }); await refresh(); toast('설정을 저장했어요.'); }
+    if(savingPreference)return;
+    setSavingPreference(key);
+    try { await action('preference', { [key]: value }); await refresh(); setError(''); toast('설정을 저장했어요.'); }
     catch (e) { setError((e as Error).message); }
+    finally { setSavingPreference(''); }
   }
   return <>
     <Breadcrumb items={[{ label: '내 계정', href: settings ? '/account' : undefined }, ...(settings ? [{ label: '설정' }] : [])]} />
     <PageTitle title={settings ? '설정' : '내 계정'} aside={!settings ? <Link className="button ghost" href="/account/settings"><Settings2 size={16} />설정</Link> : undefined} />
     {error && <Alert>{error}</Alert>}
-    {welcome && !settings && <div className="success-message" role="status">계정이 연결됐어요. 지원 학교를 선택하고 첫 질문부터 시작해 보세요. <Link href="/schools/new">학교 선택<ArrowUpRight size={14}/></Link></div>}
+    {welcome && !settings && <FloatingNotice onDismiss={()=>setWelcome(false)}>계정이 연결됐어요. 지원 학교를 선택해 주세요.</FloatingNotice>}
     {settings ? <section className="settings-list">
       <h2>학습·대화</h2>
-      <div className="settings-row"><div><strong>설명 길이</strong></div><select aria-label="설명 길이" value={data.preferences?.answerLength || 'normal'} onChange={e => preference('answerLength', e.target.value)}><option value="short">짧게</option><option value="normal">보통</option><option value="long">자세히</option></select></div>
-      <div className="settings-row"><div><strong>설명 방식</strong></div><select aria-label="설명 방식" value={data.preferences?.explanationStyle || 'step'} onChange={e => preference('explanationStyle', e.target.value)}><option value="step">단계별로</option><option value="example">예시 중심</option><option value="question">질문과 함께</option></select></div>
-      <label className="preparation-note"><strong>준비 메모</strong><textarea defaultValue={data.preferences?.preparationNote || ''} placeholder="각자ON에서 참고할 내용을 적어주세요." onBlur={e => preference('preparationNote', e.target.value)} /></label>
+      <div className="settings-row"><div><strong>설명 길이</strong></div><SettingsSelect label="설명 길이" value={data.preferences?.answerLength || 'normal'} disabled={Boolean(savingPreference)} onChange={value=>void preference('answerLength',value)} options={[{value:'short',label:'짧게'},{value:'normal',label:'보통'},{value:'long',label:'자세히'}]}/></div>
+      <div className="settings-row"><div><strong>설명 방식</strong></div><SettingsSelect label="설명 방식" value={data.preferences?.explanationStyle || 'step'} disabled={Boolean(savingPreference)} onChange={value=>void preference('explanationStyle',value)} options={[{value:'step',label:'단계별로'},{value:'example',label:'예시 중심'},{value:'question',label:'질문과 함께'}]}/></div>
       <LearningPreferences/>
     </section> : <>
       <div className="account-grid">

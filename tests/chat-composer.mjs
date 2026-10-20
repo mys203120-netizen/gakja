@@ -8,12 +8,15 @@ import ts from 'typescript';
 const source = fs.readFileSync(new URL('../apps/web/src/components/chat-composer.tsx', import.meta.url), 'utf8');
 const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 } }).outputText;
 const module = { exports: {} };
+const enterModule={exports:{}};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/lib/client/enter-send.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module:enterModule,exports:enterModule.exports});
 vm.runInNewContext(output, {
   module, exports: module.exports,
   require(name) {
     if (name === 'react') return { useRef: value => ({ current: value }), useState: value => [value, () => {}], useEffect: () => {} };
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
     if (name === 'lucide-react') return { ArrowUp: 'ArrowUp', LoaderCircle: 'LoaderCircle' };
+    if(name==='@/lib/client/enter-send')return enterModule.exports;
     if (name.endsWith('.css')) return { default: {} };
     throw new Error(`Unexpected import: ${name}`);
   },
@@ -37,6 +40,8 @@ function enter(input, details = {}) {
 let f = fixture();
 equal(enter(f.input), true); equal(f.sends(), 1); equal(f.button.disabled, false); equal(f.input.rows, 1);
 f = fixture(); equal(enter(f.input, { shiftKey: true }), false); equal(f.sends(), 0);
+f = fixture({enterToSend:false}); equal(enter(f.input),false);equal(f.sends(),0);f.form.onSubmit({preventDefault(){}});equal(f.sends(),1);
+for(const detail of [{repeat:true},{ctrlKey:true},{metaKey:true},{altKey:true},{defaultPrevented:true}]){f=fixture();equal(enter(f.input,detail),false);equal(f.sends(),0);}
 f = fixture(); equal(enter(f.input, { nativeEvent: { isComposing: true, keyCode: 13 } }), false); equal(f.sends(), 0);
 f = fixture(); equal(enter(f.input, { nativeEvent: { isComposing: false, keyCode: 229 } }), false); equal(f.sends(), 0);
 f = fixture(); f.input.onCompositionStart(); equal(enter(f.input), false); equal(f.sends(), 0); f.input.onCompositionEnd(); equal(enter(f.input), true); equal(f.sends(), 1);

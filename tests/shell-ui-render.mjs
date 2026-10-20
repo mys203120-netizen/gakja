@@ -9,13 +9,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { tsImport } from 'tsx/esm/api';
 const search = await tsImport('../apps/web/src/lib/material-search.ts', import.meta.url);
 const navigation = await tsImport('../apps/web/src/lib/app-navigation.ts', import.meta.url);
+const onboarding = await tsImport('../apps/web/src/lib/student-onboarding.ts', import.meta.url);
 const source = ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/app-shell.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
 const target = { id: 'uos', university: '서울시립대학교', department: '환경공학부' };
-const bootstrap = { user: { id: 'student', name: '하린' }, targets: [target], preferences: {}, notifications: [], learning: { activities: [{ id: 'a1', title: '환경 실험' }], questions: [{ id: 'q1', prompt: '환경 문제는?', support_target_ids: ['uos'] }, { id: 'q2', prompt: '다른 학교 환경 질문', support_target_ids: ['other'] }] } };
+const bootstrap = { user: { id: 'student', name: '하린',role:'student' }, targets: [target], preferences: {}, notifications: [], learning: { activities: [{ id: 'a1', title: '환경 실험' }], questions: [{ id: 'q1', prompt: '환경 문제는?', support_target_ids: ['uos'] }, { id: 'q2', prompt: '다른 학교 환경 질문', support_target_ids: ['other'] }] } };
 const link = ({ href, children, ...props }) => React.createElement('a', { href, ...props }, children);
 const wrapper = ({ children }) => React.createElement(React.Fragment, null, children);
-function render({ admin = false, path = '/my', query = '', searchOpen = false, moreOpen = false, sidebarCollapsed = false } = {}) {
-  const state = [bootstrap, '', 'uos', false, searchOpen, query, '', null, 0, moreOpen, sidebarCollapsed]; let index = 0;
+function render({ admin = false, path = '/my', query = '', searchOpen = false, moreOpen = false, sidebarCollapsed = false, schoolSwitchOpen = false,account=bootstrap } = {}) {
+  const state = [account, '', account.targets[0]?.id||'', false, searchOpen, query, '', 0, false, null, 0, moreOpen, sidebarCollapsed, schoolSwitchOpen]; let index = 0;
   const hooks = { ...React, useEffect() {}, useState(initial) { return [index < state.length ? state[index++] : initial, () => {}]; } };
   const module = { exports: {} };
   vm.runInNewContext(source, { module, exports: module.exports, console, Date, Event, require(name) {
@@ -27,10 +28,14 @@ function render({ admin = false, path = '/my', query = '', searchOpen = false, m
     if (name === 'gsap') return { default: {} };
     if (name.endsWith('.module.css')) return { default: new Proxy({}, { get: (_, key) => String(key) }) };
     if (name === '@/lib/app-navigation') return navigation;
+    if (name === '@/lib/client/draft-save') return {flushPendingDrafts:async()=>{}};
     if (name === './section-navigation') return { SectionNavigation: () => null };
     if (name === '@/lib/material-search') return search;
-    if (name === '@/lib/student-onboarding') return { studentOnboardingDestination: () => null };
+    if (name === '@/lib/student-onboarding') return onboarding;
     if (name === './motion') return { PageMotion: wrapper };
+    if (name === './help-preferences') return { HelpPreferencesProvider: wrapper };
+    if (name === './mobile-tab-swipe') return { MobileTabSwipe: () => null };
+    if (name === './mobile-scroll-navigation') return {MobileScrollNavigation:()=>null};
     if (name === './study-session-provider') return { StudySessionProvider: wrapper, finishStudySession() {} };
     if (name === './account-menu') return { AccountMenu: () => React.createElement('span', null, '계정 메뉴') };
     if (name === './resource-panel') return { ResourcePanel: wrapper };
@@ -62,22 +67,22 @@ const desktop = admin.match(/<nav class="main-nav"[^>]*>([\s\S]*?)<\/nav>/)?.[1]
 assert.equal((desktop.match(/<a /g) || []).length, 10);
 const student = render({path:'/materials/questions/q1'});
 const studentRail = student.match(/<nav class="main-nav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || '';
-assert.equal((studentRail.match(/<a /g)||[]).length,6);
-assert.ok(studentRail.includes('href="/armory"')&&studentRail.includes('aria-label="무기고 · 내 경험 정리"'));
-assert.ok(studentRail.includes('<small class="navigationDescription">내 경험 정리</small>'),'the armory entry explains its purpose in the sidebar');
-assert.ok(studentRail.includes('href="/on"')&&studentRail.includes('title="AI 비서"'));
-const resourceLink=studentRail.match(/<a[^>]*href="\/knowledge"[^>]*>/)?.[0]||'';
-assert.ok(resourceLink.includes('aria-label="자료"')&&resourceLink.includes('aria-current="page"'));
+assert.equal((studentRail.match(/<a /g)||[]).length,3);
+assert.ok(studentRail.includes('href="/preparation"')&&studentRail.includes('aria-label="준비 현황"'));
+assert.ok(studentRail.includes('href="/my"')&&studentRail.includes('title="오늘 훈련"'));
+assert.ok(studentRail.includes('href="/records"')&&studentRail.includes('title="내 기록"'));
+const resourceLink=studentRail.match(/<a[^>]*href="\/preparation"[^>]*>/)?.[0]||'';
+assert.ok(resourceLink.includes('aria-label="준비 현황"')&&resourceLink.includes('aria-current="page"'));
 assert.ok(student.includes('aria-label="각자ON 홈"')&&!student.includes('class="sidebar-tools"'));
-assert.ok(student.includes('aria-label="AI 비서"')&&student.includes('href="/on"'));
+assert.ok(student.includes('aria-label="오늘 훈련"')&&student.includes('href="/my"'));
 const dockOf=markup=>markup.match(/<nav class="mobile-nav [^"]*"[^>]*aria-label="주 메뉴"[^>]*>([\s\S]*?)<\/nav>/)?.[1]||'';
 const dockLinks=dock=>[...dock.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(match=>({attributes:match[1],body:match[2],href:match[1].match(/href="([^"]+)"/)?.[1]}));
 const dock=dockOf(student),links=dockLinks(dock);
-assert.deepEqual(links.map(item=>item.href),['/my','/learn','/on','/knowledge','/records']);
-for(const [index,label] of ['오늘','연습','AI 비서','자료','내 리포트'].entries())assert.ok(links[index].body.includes(`<span>${label}</span>`));
+assert.deepEqual(links.map(item=>item.href),['/my','/preparation','/records']);
+for(const [index,label] of ['오늘 훈련','준비 현황','내 기록'].entries())assert.ok(links[index].attributes.includes(`aria-label="${label}"`) && links[index].body.includes(`<span class="sr-only">${label}</span>`));
 assert.ok(links[0].body.includes('data-logo-size="25"')&&links[0].body.includes('data-wordmark="false"'),'mobile home receives the compact brand mark');
-assert.ok(!dock.includes('href="/armory"'),'mobile armory opens from the practice home while retaining five primary destinations');
-assert.ok(student.includes('src="/brand-on.png"')&&student.includes('alt="" width="42" height="24"'),'wordmark uses the provided ON image');
+assert.ok(!dock.includes('href="/armory"'),'experience editing remains a preparation subroute with three primary destinations');
+assert.ok(student.includes('<sup class="brand-on-sup">')&&student.includes('src="/brand-on.png"')&&student.includes('alt="" width="26" height="15"'),'wordmark uses a compact superscript ON without a separating space');
 const topbar=student.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1]||'';
 assert.ok(topbar.includes('<div class="mobileAccount">'),'header account is limited to mobile, where the sidebar is unavailable');
 assert.ok(student.includes('class="sidebar-account"'),'desktop keeps the sidebar account entry');
@@ -85,13 +90,29 @@ assert.ok(!topbar.includes('href="/on"'),'desktop AI primary link replaces the d
 assert.ok(!topbar.includes('locationLabel'),'school context does not repeat the current navigation title');
 assert.ok(!topbar.includes('class="mobile-brand"')&&!topbar.includes('data-logo-size='),'student topbar leaves space for the school context');
 assert.ok(topbar.includes('<span class="target-copy" aria-hidden="true"><strong>서울시립대학교</strong><small>환경공학부</small></span>'),'school and major have separate visible text elements');
-assert.ok(topbar.includes('지원 학교 변경')&&topbar.includes('<select')&&topbar.includes('<option value="uos" selected="">'),'school switcher retains its labelled native select and selected target');
-assert.match(topbar,/<span class="target-change-cue" aria-hidden="true">변경<svg[^>]*lucide-chevron-down/,'school switching has a visible change label and chevron');
+assert.ok(topbar.includes('aria-label="지원 학교 변경 · 서울시립대학교 환경공학부"')&&topbar.includes('aria-haspopup="menu"')&&topbar.includes('aria-expanded="false"'),'school switcher is labelled and announces its closed menu');
+const schoolMenu=render({schoolSwitchOpen:true});
+assert.ok(schoolMenu.includes('role="menu" aria-label="지원 학교 선택"')&&schoolMenu.includes('role="menuitemradio" aria-checked="true"'),'school picker announces the selected school');
+assert.ok(schoolMenu.includes('href="/schools"')&&schoolMenu.includes('지원 학교 관리'),'school picker links directly to school settings');
+assert.match(topbar,/<svg[^>]*lucide-chevron-down/,'school switching retains a compact chevron affordance');
+const unregisteredAccount={...bootstrap,targets:[],preferences:{schoolCalendarOnboardingCompleted:true}};
+for(const path of ['/schools/new','/account','/account/settings']){
+ const unregistered=render({path,account:unregisteredAccount,searchOpen:true,query:'환경'});
+ assert.ok(!unregistered.includes('aria-label="자료 검색"')&&!unregistered.includes('aria-label="나의 자료 검색"'),'school registration gates both the search launcher and any previously open dialog');
+ assert.ok(unregistered.includes('class="unregisteredBrand"')&&unregistered.includes('aria-label="각자ON · 지원 학교 선택"'),'unregistered school context carries the app logo');
+ assert.ok(!unregistered.includes('지원처 미등록'),'mobile header does not show a dead school status');
+ assert.ok(unregistered.includes('본문'),'account and settings remain available before school registration');
+ assert.equal(dockLinks(dockOf(unregistered)).length,0,'no learning routes appear before initial school setup');
+ assert.ok(!unregistered.includes('aria-label="주 메뉴"'),'an empty mobile dock is omitted instead of painting a floating pill');
+}
+assert.equal(studentOnboardingDestinationForHome(),'/schools/new?onboarding=1');
+function studentOnboardingDestinationForHome(){return onboarding.studentOnboardingDestination(unregisteredAccount,'/my');}
 for(const [path,href] of [
- ['/my/today','/my'],['/quiz/session/answer','/learn'],['/chat/interviews/session','/learn'],
- ['/on/interviews','/learn'],['/on/interviews/new','/learn'],['/on/interviews/session','/learn'],['/on/interviews/session/turn','/learn'],
- ['/on','/on'],['/on/conversation','/on'],['/armory/answer/edit','/learn'],
- ['/materials/questions/question','/knowledge'],['/reports/report','/records'],
+ ['/my/today','/my'],['/quiz/session/answer','/my'],['/chat/interviews/session','/my'],
+ ['/my/diagnosis','/my'],['/my/train','/my'],['/availability','/my'],
+ ['/on/interviews','/my'],['/on/interviews/new','/my'],['/on/interviews/session','/my'],['/on/interviews/session/turn','/my'],
+ ['/on','/my'],['/on/conversation','/my'],['/armory/answer/edit','/preparation'],
+ ['/preparation','/preparation'],['/materials/questions/question','/preparation'],['/reports/report','/records'],
 ]){
  const rendered=render({path});
  assert.deepEqual(dockLinks(dockOf(rendered)).filter(item=>item.attributes.includes('aria-current="page"')).map(item=>item.href),[href],`exactly one mobile area is active for ${path}`);
@@ -122,7 +143,7 @@ for(const options of [{},{admin:true,path:'/admin'}]){
 
 // Exercise the real shell event handlers and mount effects without browser layout.
 function interactiveShell({persisted='true',blocked=false,onboarding=false,admin=false}={}){
- const state=[bootstrap,'','uos',false,false,'','',null,0,false];
+ const state=[bootstrap,'','uos',false,false,'','',0,false,null,0,false];
  const refs=[],effects=[],writes=[],events=[];let stateIndex=0,refIndex=0,mounted=false,reads=0,cancelAssistant=false;
  const account=()=>null;
  const hooks={...React,useRef(initial){const index=refIndex++;return refs[index]??=( {current:initial} );},useCallback:fn=>fn,
@@ -139,8 +160,11 @@ function interactiveShell({persisted='true',blocked=false,onboarding=false,admin
    if(name==='lucide-react')return icons;if(name==='gsap')return {default:{}};
    if(name.endsWith('.module.css'))return {default:new Proxy({},{get:(_,key)=>String(key)})};
    if(name==='@/lib/app-navigation')return navigation;if(name==='@/lib/material-search')return search;
+   if(name==='@/lib/client/draft-save')return {flushPendingDrafts:async()=>{}};
    if(name==='@/lib/student-onboarding')return {studentOnboardingDestination:()=>onboarding?'/schools/register':null};
    if(name==='./section-navigation')return {SectionNavigation:()=>null};if(name==='./motion')return {PageMotion:wrapper};
+   if(name==='./help-preferences')return {HelpPreferencesProvider:wrapper};if(name==='./mobile-tab-swipe')return {MobileTabSwipe:()=>null};
+   if(name==='./mobile-scroll-navigation')return {MobileScrollNavigation:()=>null};
    if(name==='./study-session-provider')return {StudySessionProvider:wrapper,finishStudySession(){}};
    if(name==='./account-menu')return {AccountMenu:account};if(name==='./resource-panel')return {ResourcePanel:wrapper};
    if(name==='./school-logo')return {SchoolLogo:()=>null};
@@ -154,7 +178,7 @@ const toggleOf=tree=>descendants(tree).find(node=>node.type==='button'&&node.pro
 for(const admin of [false,true]){
  const session=interactiveShell({admin});
  let tree=session.render();
- assert.equal(tree.props['data-sidebar-collapsed'],'true','server-equivalent and first client render start collapsed');
+ assert.equal(tree.props['data-sidebar-collapsed'],'false','first render exposes the menu labels before restoring a saved preference');
  assert.equal(session.reads,0,'storage is not read during rendering');
  session.mount();tree=session.render();
  assert.equal(tree.props['data-sidebar-collapsed'],'true','saved preference is restored after mounting');
@@ -169,19 +193,22 @@ for(const admin of [false,true]){
  assert.equal(descendants(sidebar).find(node=>node.type===session.account).props.compact,undefined,'bottom account menu keeps opening above its trigger when labels collapse');
  if(!admin){
   const rail=descendants(tree).find(node=>node.props?.id==='desktop-navigation');
-  assert.equal(descendants(rail).filter(node=>node.type==='a').length,6);
-  const ai=descendants(rail).find(node=>node.props?.href==='/on');let prevented=false;
-  session.cancelAssistant();ai.props.onClick({preventDefault(){prevented=true;}});
-  assert.equal(session.events.at(-1).type,'gakja:open-on');assert.equal(prevented,true,'desktop AI shortcut respects the interview pause/cancel guard');
+  assert.equal(descendants(rail).filter(node=>node.type==='a').length,3);
+  assert.equal(descendants(rail).some(node=>node.props?.href==='/preparation'),true);
  }
 }
 const blockedStorage=interactiveShell({blocked:true});blockedStorage.render();assert.doesNotThrow(()=>blockedStorage.mount());
 let blockedTree=blockedStorage.render();assert.doesNotThrow(()=>toggleOf(blockedTree).props.onClick());blockedTree=blockedStorage.render();
-assert.equal(blockedTree.props['data-sidebar-collapsed'],'false','clicking works when localStorage throws');
-for(const [persisted,expected] of [[null,'true'],['false','false']]){
+assert.equal(blockedTree.props['data-sidebar-collapsed'],'true','clicking works when localStorage throws');
+for(const [persisted,expected] of [[null,'false'],['false','false']]){
  const preference=interactiveShell({persisted});preference.render();preference.mount();
- assert.equal(preference.render().props['data-sidebar-collapsed'],expected,'fresh navigation is collapsed while an explicit expansion preference is restored');
+ assert.equal(preference.render().props['data-sidebar-collapsed'],expected,'fresh navigation exposes labels and restores an explicit expansion preference');
 }
 const onboardingShell=interactiveShell({onboarding:true}),onboardingTree=onboardingShell.render();
 assert.equal(descendants(onboardingTree).filter(node=>node.type==='a'&&node.props.href==='/on').length,0,'initial school setup does not expose the AI navigation early');
+const locked=descendants(onboardingTree).filter(node=>node.type==='a'&&node.props['aria-disabled']==='true'&&String(node.props['aria-label']).includes('학교 등록 후 이용'));
+assert.equal(locked.length,3,'unregistered rail reuses exactly the three primary navigation entries');
+assert.deepEqual(locked.map(node=>node.props.href),['/my','/preparation','/records']);
+assert.ok(locked.every(node=>descendants(node).some(child=>child.props?.className==='navigationLock')),'every locked menu includes a visible lock mark');
+for(const node of locked){let prevented=false;node.props.onClick({preventDefault(){prevented=true;}});assert.equal(prevented,true);}
 console.log('Shell UI passed: desktop/mobile routes, accessible sidebar toggling, preference restoration, blocked storage, onboarding and interview pause guard.');

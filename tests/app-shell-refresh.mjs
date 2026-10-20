@@ -13,8 +13,8 @@ const fixture = marker => ({ user: { id: 'harin', name: '하린' }, marker, targ
 let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
 function all(value) { return Array.isArray(value) ? value.flatMap(all) : value && typeof value === 'object' ? [value, ...all(value.props?.children)] : []; }
-function harness({ storedSidebarPreference = null, storageUnavailable = false } = {}) {
-  const slots = [], effects = [], queued = [], requests = [], storageWrites = [];
+function harness({ storedSidebarPreference = null, storageUnavailable = false, selectionRemovalBlocked=false, draftGate=null, studyGate=null, authGate=null, authLogoutFails=false } = {}) {
+  const slots = [], effects = [], queued = [], requests = [], storageWrites = [],logoutSteps=[],navigations=[];
   let cursor = 0, disposed = false, disposedWrites = 0;
   const hooks = {
     createContext: () => ({ Provider: 'AppContextProvider' }), useContext: () => null,
@@ -39,22 +39,24 @@ function harness({ storedSidebarPreference = null, storageUnavailable = false } 
   const api = url => new Promise((resolve, reject) => { check(url === '/api/bootstrap', 'shell only requests bootstrap'); requests.push({ resolve, reject }); });
   const styles = { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
   const module = { exports: {} }, router = { replace() {}, push() {}, refresh() {} };
-  vm.runInNewContext(code, { module, exports: module.exports, console, setTimeout, clearTimeout, sessionStorage: { getItem: () => null }, localStorage: { getItem() { if (storageUnavailable) throw new Error('Storage unavailable'); return storedSidebarPreference; }, setItem(key, value) { if (storageUnavailable) throw new Error('Storage unavailable'); storageWrites.push([key, value]); } }, require(name) {
+  vm.runInNewContext(code, { module, exports: module.exports, console, setTimeout, clearTimeout, window:{location:{replace(path){logoutSteps.push('navigate');navigations.push(path);}}}, sessionStorage: { getItem: () => null,removeItem(key){logoutSteps.push('selection_remove');check(key==='gakja-target:harin','logout removes only the current fixture selection');if(selectionRemovalBlocked)throw new DOMException('Browser storage blocked','SecurityError');} }, localStorage: { getItem() { if (storageUnavailable) throw new Error('Storage unavailable'); return storedSidebarPreference; }, setItem(key, value) { if (storageUnavailable) throw new Error('Storage unavailable'); storageWrites.push([key, value]); } }, require(name) {
     if (name === 'react') return hooks;
-    if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
+    if (name === 'react/jsx-runtime') return { jsx: (type, props, key) => ({ type, props, key }), jsxs: (type, props, key) => ({ type, props, key }) };
     if (name === 'next/link') return { __esModule: true, default: 'Link' };
     if (name === 'next/navigation') return { usePathname: () => '/my', useRouter: () => router };
     if (name === 'gsap') return { __esModule: true, default: {} };
     if (name.endsWith('.module.css')) return styles;
-    if (name === './shared') return { api, post: () => { throw new Error('Unexpected mutation'); }, Logo: 'Logo', Spinner: 'Spinner', Alert: 'Alert', Modal: 'Modal', Badge: 'Badge', targetName: () => '', targetMajor: () => '' };
+    if (name === './shared') return { api, post: async(url,input) => {check(url==='/api/auth'&&input.action==='logout','logout callback only sends the auth logout mutation');logoutSteps.push('auth_logout');if(authGate)await authGate;if(authLogoutFails)throw Error('auth offline');return {ok:true};}, Logo: 'Logo', Spinner: 'Spinner', Alert: 'Alert', Modal: 'Modal', Badge: 'Badge', FloatingNotice:'FloatingNotice', targetName: () => '', targetMajor: () => '' };
+    if(name==='@/lib/client/draft-save')return {flushPendingDrafts:async user=>{check(user==='harin','logout flush uses the current fixture owner');logoutSteps.push('drafts');if(draftGate)await draftGate;}};
+    if(name==='./study-session-provider')return {StudySessionProvider:'StudySessionProvider',finishStudySession:async reason=>{check(reason==='logout','study time ends for logout');logoutSteps.push('study_finish');if(studyGate)await studyGate;}};
     if (name === '@/lib/student-onboarding') return { studentOnboardingDestination: () => null };
     if (name === '@/lib/material-search') return { normalizeMaterialQuery: value => value.trim(), searchStudentMaterials: () => [] };
     if (name === '@/lib/app-navigation') return { STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], MOBILE_STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], mobileStudentActive: (path, href) => path === href, studentSection: () => 'today' };
     return new Proxy({}, { get: (_, key) => String(key) });
   } });
   const render = () => { cursor = 0; queued.length = 0; const tree = module.exports.AppShell({ children: 'Student screen' }); while (queued.length) queued.shift()(); return tree; };
-  const state = () => { const tree = render(), nodes = all(tree), sidebarToggle = nodes.find(node => node.props?.['aria-controls'] === 'desktop-navigation'); return { provider: nodes.find(node => node.type === 'AppContextProvider')?.props.value, alert: nodes.find(node => node.type === 'Alert')?.props.children, sidebarCollapsed: tree.props['data-sidebar-collapsed'], sidebarToggle: sidebarToggle.props }; };
-  return { requests, render, state, storageWrites, strictReplay() { effects.forEach(effect => effect?.cleanup?.()); effects.forEach(effect => { if (effect) effect.cleanup = effect.effect(); }); }, dispose() { effects.forEach(effect => effect?.cleanup?.()); disposed = true; }, get disposedWrites() { return disposedWrites; } };
+  const state = () => { const tree = render(), nodes = all(tree), sidebarToggle = nodes.find(node => node.props?.['aria-controls'] === 'desktop-navigation'); return { provider: nodes.find(node => node.type === 'AppContextProvider')?.props.value, alert: nodes.find(node => node.type === 'Alert')?.props.children, sidebarCollapsed: tree.props['data-sidebar-collapsed'],inert:tree.props.inert,ariaBusy:tree.props['aria-busy'], sidebarToggle: sidebarToggle.props,notice:nodes.find(node=>node.type==='FloatingNotice'),accountMenus:nodes.filter(node=>node.type==='AccountMenu') };  };
+  return { requests, render, state, storageWrites, logoutSteps,navigations, strictReplay() { effects.forEach(effect => effect?.cleanup?.()); effects.forEach(effect => { if (effect) effect.cleanup = effect.effect(); }); }, dispose() { effects.forEach(effect => effect?.cleanup?.()); disposed = true; }, get disposedWrites() { return disposedWrites; } };
 }
 
 // New students see icons and names. Only a stored explicit collapse hides labels.
@@ -117,5 +119,43 @@ for (const [storedSidebarPreference, expected] of [[null, 'false'], ['true', 'tr
 {
   const h = harness(); h.render(); h.dispose(); h.requests[0].resolve(fixture('after unmount')); await flush();
   check(h.disposedWrites === 0, 'a bootstrap completing after unmount never updates shell state');
+}
+
+// Exercise the real callback passed by AppShell to both actual account-menu positions.
+// Private browser storage is optional; authenticated logout success must still navigate.
+for(const compact of [false,true]){
+ let release,releaseStudy,releaseAuth;const gate=new Promise(resolve=>{release=resolve;}),studyGate=new Promise(resolve=>{releaseStudy=resolve;}),authGate=new Promise(resolve=>{releaseAuth=resolve;});
+ const h=harness({selectionRemovalBlocked:true,draftGate:gate,studyGate,authGate});h.render();h.requests[0].resolve(fixture('logout-fixture'));await flush();
+ const menu=h.state().accountMenus.find(node=>Boolean(node.props.compact)===compact);check(!!menu,`${compact?'mobile':'desktop'} account menu receives the AppShell logout binding`);
+ check(!h.state().inert&&!h.state().ariaBusy,'ordinary learning remains interactive before logout');
+ const leaving=menu.props.onLogout();check(h.state().inert===true&&h.state().ariaBusy===true,'logout immediately makes the complete learning shell inert');await flush();
+ check(h.logoutSteps.join(',')==='drafts'&&h.navigations.length===0,'authentication remains available until pending drafts settle');
+ check(h.state().inert===true,'the shell is locked while draft writers are pending');
+ release();await flush();check(h.logoutSteps.at(-1)==='study_finish'&&h.state().inert===true&&h.state().ariaBusy===true,'the lock remains after writers finish while study-session completion is pending');
+ releaseStudy();await flush();check(h.logoutSteps.at(-1)==='auth_logout'&&h.state().inert===true&&h.state().ariaBusy===true,'the lock remains after study completion while authentication logout is pending');
+ releaseAuth();await leaving;
+ check(h.state().inert===true&&h.state().ariaBusy===true,'successful auth keeps the entire shell inert until full document replacement');
+ check(h.logoutSteps.join(',')==='drafts,study_finish,auth_logout,selection_remove,navigate','the actual menu callback saves, closes authentication and navigates despite blocked optional storage');
+ check(h.navigations.length===1&&h.navigations[0]==='/login','successful logout replaces the document with login exactly once');
+ check(h.state().provider.data.marker==='logout-fixture','the old shell stays visually stable until document replacement rather than clearing its content');h.dispose();
+}
+{
+ let releaseAuth;const authGate=new Promise(resolve=>{releaseAuth=resolve;});
+ const h=harness({authLogoutFails:true,authGate});h.render();h.requests[0].resolve(fixture('logout-failure'));await flush();
+ const leaving=h.state().accountMenus[0].props.onLogout(),failed=assert.rejects(leaving,/auth offline/);await flush();
+ check(h.state().inert===true&&h.state().ariaBusy===true,'a pending auth response holds the shell lock even when the preceding draft writer has returned');
+ releaseAuth();await failed;check(!h.state().inert&&!h.state().ariaBusy,'authentication failure unlocks the original learning screen for an explicit retry');
+ check(h.navigations.length===0&&!h.logoutSteps.includes('selection_remove'),'auth failure propagates to the menu retry UI without replacing the document or clearing selection');h.dispose();
+}
+// A second identical save is another receipt: its React key must remount the notice
+// so the prior instance's cleanup cannot dismiss the new acknowledgement early.
+{
+ const h=harness();h.render();h.requests[0].resolve(fixture('toast-fixture'));await flush();
+ const toast=h.state().provider.toast;toast('설정을 저장했어요.');const first=h.state().notice;
+ toast('설정을 저장했어요.');const second=h.state().notice;
+ check(first?.type==='FloatingNotice'&&second?.type==='FloatingNotice','both settings saves render the shared transient receipt');
+ check(first.props.children===second.props.children&&second.key>first.key,'same-message saves increment the receipt nonce instead of reusing an expiring notice');
+ second.props.onDismiss();check(!h.state().notice,'dismissal removes the receipt without changing the learning page');
+ toast('설정을 저장했어요.');check(h.state().notice.key>second.key,'a repeated save after dismissal also receives a fresh receipt identity');h.dispose();
 }
 console.log(`AppShell: ${checks} checks passed; expanded navigation defaults and saved choices, StrictMode replay, refresh response ordering and unmount guards exercised against actual component hooks; external calls: 0.`);

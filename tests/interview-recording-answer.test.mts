@@ -141,6 +141,15 @@ test('Live timer resume preserves a saved capture while Chat resume and explicit
   reset();assert.equal((await call({action:'pause'})).status,200);assert.equal(state.session.data.generation,4);assert.equal((await call({action:'resume'})).status,200);assert.equal(state.session.data.generation,4);assert.equal((await call({generation:4})).body.code,'STALE_GENERATION');
   reset();state.session.data.paused=true;state.session.data.processing='pending-provider';state.session.data.processingAt=Date.now();assert.equal((await call({action:'resume'})).body.code,'INTERVIEW_PENDING');assert.equal(state.session.data.paused,true);assert.equal(state.session.data.generation,3);
 });
+test('a repeated Live resume retains the saved recording generation and submits it once',async()=>{
+  reset();
+  for(let attempt=0;attempt<3;attempt++){
+    const result=await call({action:'resume'});
+    assert.equal(result.status,200);assert.equal(state.session.data.generation,3);assert.equal(state.session.data.paused,false);
+  }
+  assert.equal((await call()).status,200);assert.equal(state.events.length,1);
+  assert.equal((await call()).status,200);assert.equal(state.events.length,1);
+});
 test('new Live sessions exclude room setup time; Chat sessions retain their running timer',async()=>{
   for(const kind of ['video','chat']){
     reset();const result=await call({action:'start',kind,mode:'basic',turnId:undefined,mediaId:undefined,generation:undefined,requestId:randomUUID()});assert.equal(result.status,200,JSON.stringify(result.body));

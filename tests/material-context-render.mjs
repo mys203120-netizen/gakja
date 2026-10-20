@@ -33,6 +33,7 @@ function load(file, exports) {
     if (name === '@/lib/learning-growth') return growth;
     if (name === '@/lib/learning-navigation') return navigation;
     if (name === '@/lib/study-record-links') return studyLinks;
+    if (name === '@/lib/document-delivery-client') return { loadDocumentOriginal: async () => { throw new Error('Document downloads are outside this frozen render fixture.'); } };
     if (name === '@/lib/planner-model') return { koreaToday: () => '2026-10-15' };
     if (name.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
     if (name.startsWith('./') || name === 'lucide-react') return new Proxy({}, { get: (_, key) => String(key) });
@@ -83,6 +84,21 @@ for (const pick of picks) check(nodes(pick).filter(node => node.type === 'option
 query.set('sourceVersion', '8'); tree = records.AnswerComparisons({});
 check(nodes(tree).some(node => node.type === 'Empty' && node.props.title === '선택한 학습 맥락에 저장한 답변이 없어요'), 'missing scoped history shows an honest empty state instead of borrowing a different book');
 check(!nodes(tree).some(node => node.type === 'select'), 'no unrelated answer selector is rendered when the requested publication has no answers');
+
+// Preparation cards link to one observed question, experience or student-record activity.
+// Render the actual destination component to verify all three activityId shapes.
+workflows={versions:[
+ {...base,id:'readiness-q-before',experience_card:{id:'owned-experience'}},
+ {...base,id:'readiness-q-after',created_at:'2026-10-15T10:01:00Z',experience_card:{id:'owned-experience'}},
+ {...base,id:'readiness-other-question',question_id:'q2'},
+ {...base,id:'readiness-other-school',target_id:'other'},
+]};
+for(const activityId of ['question:q1','experience:owned-experience','a1']){
+ query=new URLSearchParams({activityId,targetId:'uos'});tree=records.AnswerComparisons({});
+ const destinationPicks=nodes(tree).filter(node=>node.type==='select'&&node.props['aria-label']?.endsWith('저장 시점'));
+ check(destinationPicks.length===2,`preparation ${activityId} destination renders the matching submitted answers`);
+ for(const pick of destinationPicks)check(nodes(pick).filter(node=>node.type==='option').map(node=>node.props.value).join(',')==='readiness-q-before,readiness-q-after',`preparation ${activityId} destination excludes unrelated questions and schools`);
+}
 
 const savedCommon={questionId:'common_motivation',memoryItemId:'common:memory',target_id:'saved-school',source_type:'general_practice',common_revision:3,contentVersion:6,response:'제가 직접 답한 내용입니다.'};
 tree=records.StudyAnswer({event:{kind:'quiz_response',created_at:'2026-10-15T10:00:00Z',data:savedCommon}});

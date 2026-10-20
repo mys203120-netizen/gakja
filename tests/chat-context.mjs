@@ -13,12 +13,13 @@ const streamModule={exports:{}};
 vm.runInNewContext(ts.transpileModule(streamSource,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{module:streamModule,exports:streamModule.exports,TextDecoder,JSON,Object});
 const deltaModule={exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/lib/assistant-delta-buffer.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{module:deltaModule,exports:deltaModule.exports});
-const state={values:[],hook:0,refs:[],refHook:0,effects:[],effectDependencies:[],mountedEffects:[],params:new URLSearchParams(),pathname:'/on',data:null,calls:[],resources:[],storage:new Map(),sendCalls:[],fetchAdapter:null,apiAdapter:null,refreshAdapter:null,navigations:[],routerNavigations:[],refreshes:0,requestNumber:0,timers:new Map(),timerNumber:0};
+const state={values:[],hook:0,refs:[],refHook:0,effects:[],effectDependencies:[],mountedEffects:[],params:new URLSearchParams(),pathname:'/on',data:null,calls:[],resources:[],storage:new Map(),sendCalls:[],fetchAdapter:null,apiAdapter:null,refreshAdapter:null,navigations:[],routerNavigations:[],refreshes:0,requestNumber:0,timers:new Map(),timerNumber:0,storageFaults:{}};
 const module={exports:{}};
+const durableStorage=new Map(),draftSavers=new Map();
 const personal={id:'personal-question',prompt:'맡은 역할을 설명해 주세요.',support_target_ids:['school-owned'],activity_ids:['activity-owned']};
 const common={id:'common_motivation',prompt:'지원 동기를 설명해 주세요.',source_type:'general_practice'};
 const currentData={user:{id:'synthetic-chat-student',name:'테스트'},package:{active_version:5},targets:[{id:'school-owned',university:'지원 학교'},{id:'school-other',university:'다른 학교'}],learning:{questions:[personal],activities:[],source_refs:[]},answers:[],threads:[]};
-vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Set,JSON,Number,Boolean,AbortController,FormData,requestAnimationFrame:callback=>{callback();return 1;},cancelAnimationFrame:()=>{},setTimeout:callback=>{const id=++state.timerNumber;state.timers.set(id,callback);return id;},clearTimeout:id=>state.timers.delete(id),window:{history:{replaceState(_state,_title,url){const location=new URL(url,'http://local');state.pathname=location.pathname;state.params=location.searchParams;state.navigations.push(url);}}},crypto:{randomUUID:()=>{if(!state.fetchAdapter)throw new Error('Rendering must not send a message');return`synthetic-request-${++state.requestNumber}`;}},fetch:async(url,options)=>{if(!state.fetchAdapter)throw new Error('No automatic AI request is allowed');const call={url,method:options?.method,payload:JSON.parse(options?.body||'{}'),headers:options?.headers,signal:options?.signal};state.sendCalls.push(call);return state.fetchAdapter(call);},sessionStorage:{getItem:key=>state.storage.get(key)||null,setItem:(key,value)=>state.storage.set(key,value),removeItem:key=>state.storage.delete(key)},require(name){
+vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Set,JSON,Number,Boolean,AbortController,FormData,requestAnimationFrame:callback=>{callback();return 1;},cancelAnimationFrame:()=>{},setTimeout:callback=>{const id=++state.timerNumber;state.timers.set(id,callback);return id;},clearTimeout:id=>state.timers.delete(id),window:{history:{replaceState(_state,_title,url){const location=new URL(url,'http://local');state.pathname=location.pathname;state.params=location.searchParams;state.navigations.push(url);}}},crypto:{randomUUID:()=>{if(!state.fetchAdapter)throw new Error('Rendering must not send a message');return`synthetic-request-${++state.requestNumber}`;}},fetch:async(url,options)=>{if(!state.fetchAdapter)throw new Error('No automatic AI request is allowed');const call={url,method:options?.method,payload:JSON.parse(options?.body||'{}'),headers:options?.headers,signal:options?.signal};state.sendCalls.push(call);return state.fetchAdapter(call);},localStorage:{getItem:key=>{if(state.storageFaults.localRead)throw Error('local read blocked');return durableStorage.get(key)??null;},setItem:(key,value)=>{if(state.storageFaults.localWrite)throw Error('local write blocked');durableStorage.set(key,value);},removeItem:key=>{if(state.storageFaults.localRemove)throw Error('local remove blocked');durableStorage.delete(key);}},sessionStorage:{getItem:key=>{if(state.storageFaults.sessionRead)throw Error('session read blocked');return state.storage.get(key)??null;},setItem:(key,value)=>{if(state.storageFaults.sessionWrite)throw Error('session write blocked');state.storage.set(key,value);},removeItem:key=>{if(state.storageFaults.sessionRemove)throw Error('session remove blocked');state.storage.delete(key);}},require(name){
  if(name==='react')return{useState(initial){const index=state.hook++;if(!(index in state.values))state.values[index]=initial;return[state.values[index],value=>{state.values[index]=typeof value==='function'?value(state.values[index]):value;}];},useRef(value){const index=state.refHook++;if(!(index in state.refs))state.refs[index]={current:value};return state.refs[index];},useEffect(callback,dependencies){state.effects.push(callback);state.effectDependencies.push(dependencies);}};
  if(name==='react/jsx-runtime')return{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'Fragment'};
  if(name==='next/link')return{__esModule:true,default:'Link'};
@@ -31,6 +32,8 @@ vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Set,JSO
  if(name==='./chat-history')return{ChatHistory:'ChatHistory'};
  if(name==='@/lib/assistant-stream-model')return streamModule.exports;
  if(name==='@/lib/assistant-delta-buffer')return deltaModule.exports;
+ if(name==='@/lib/client/draft-save')return{registerDraftSaver(userId,save){const savers=draftSavers.get(userId)||new Set();savers.add(save);draftSavers.set(userId,savers);return()=>savers.delete(save);}};
+ if(name==='@/lib/recording-upload-client')return{uploadPrivateFiles:(url,body)=>{const call={method:'POST',url,options:{method:'POST',body}};state.calls.push(call);if(!state.apiAdapter)throw Error('Unexpected upload');return state.apiAdapter(call);}};
  if(name==='./markdown-message')return{MarkdownMessage:'MarkdownMessage'};
  if(name.endsWith('.css'))return{__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
  throw new Error(`Unexpected import: ${name}`);
@@ -357,4 +360,81 @@ tree=repaint({threadId:oldThread.id});
 check(state.values[5]==='보관 해제 연결 실패'&&nodes(tree).some(node=>node.type==='Alert'),'a failed explicit restore is surfaced as an actionable alert rather than an unhandled rejection');
 check(nodes(tree).find(node=>node.type==='ChatComposer').props.disabled,'a failed restore leaves the archived conversation read-only');
 state.apiAdapter=null;
+// Logout invokes the registered production saver, never ChatComposer.onSend.
+function unmountDraftContext(){for(const effect of state.mountedEffects)effect?.cleanup?.();state.mountedEffects=[];}
+function resetDraftContext(){unmountDraftContext();draftSavers.clear();state.storage.clear();durableStorage.clear();state.calls=[];state.storageFaults={};state.fetchAdapter=null;state.apiAdapter=call=>{if(call.url==='/api/chat')return {threads:[]};throw Error('Unexpected draft request '+call.url);};}
+const draftOptions={pathname:'/on',params:'targetId=school-owned',data:currentData};
+const ownerDraftKey=module.exports.chatDraftKey(currentData.user.id,undefined,{targetId:'school-owned',sourceVersion:5},null);
+async function mountDraftContext(options=draftOptions){tree=render(options);commitEffects();await turn();return settleEffects(options);}
+async function saveDraftsFor(userId){for(const save of [...draftSavers.get(userId)||[]])await save();}
+resetDraftContext();tree=await mountDraftContext();
+const sendsBeforeDrafts=state.sendCalls.length;
+nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('로그아웃 직전에 고친 아직 보내지 않은 질문');tree=repaint(draftOptions);commitEffects();
+await saveDraftsFor(currentData.user.id);
+check(JSON.parse(durableStorage.get(ownerDraftKey)).draft==='로그아웃 직전에 고친 아직 보내지 않은 질문','logout callback persists the latest typed draft without a send or debounce');
+check(state.sendCalls.length===sendsBeforeDrafts&&state.calls.every(call=>call.method==='GET'),'draft preservation never posts an AI message or an answer candidate');
+unmountDraftContext();state.storage.clear();tree=await mountDraftContext();
+check(nodes(tree).find(node=>node.type==='ChatComposer').props.value==='로그아웃 직전에 고친 아직 보내지 않은 질문','a new session restores its own durable logout draft after sessionStorage is cleared');
+state.storage.set(ownerDraftKey,JSON.stringify({draft:'오래된 세션 초안',updatedAt:1}));state.storageFaults.sessionWrite=true;
+nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('최신 영구 보관 질문');tree=repaint(draftOptions);commitEffects();await saveDraftsFor(currentData.user.id);
+check(JSON.parse(durableStorage.get(ownerDraftKey)).draft==='최신 영구 보관 질문','sessionStorage failure does not reject a verified persistent copy');
+unmountDraftContext();tree=await mountDraftContext();
+check(nodes(tree).find(node=>node.type==='ChatComposer').props.value==='최신 영구 보관 질문','newer durable text wins over a stale sessionStorage copy');
+unmountDraftContext();state.storageFaults.sessionRead=true;tree=await mountDraftContext();
+check(nodes(tree).find(node=>node.type==='ChatComposer').props.value==='최신 영구 보관 질문','a blocked sessionStorage getter does not hide the persistent recovery copy');
+state.storageFaults.localWrite=true;await assert.rejects(saveDraftsFor(currentData.user.id),/local write blocked/);checks++;
+check(state.sendCalls.length===sendsBeforeDrafts,'durability failure rejects the logout saver without auto-sending');
+nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('');tree=repaint(draftOptions);commitEffects();await saveDraftsFor(currentData.user.id);checks++;
+state.storageFaults={};
+const oldAccountSavers=[...draftSavers.get(currentData.user.id)];
+const otherUser={...currentData,user:{id:'other-draft-student',name:'다른 학생'}};
+const otherOptions={...draftOptions,data:otherUser};tree=repaint(otherOptions);commitEffects();await turn();tree=await settleEffects(otherOptions);
+check(draftSavers.get(currentData.user.id).size===0&&draftSavers.get(otherUser.user.id).size===1,'changing account unregisters the old account writer and registers only the current one');
+check(nodes(tree).find(node=>node.type==='ChatComposer').props.value==='','a different account never restores the old account input');
+const copiesBeforeStale=durableStorage.size;for(const save of oldAccountSavers)await save();
+check(durableStorage.size===copiesBeforeStale,'an old account callback cannot write the current account draft');
+nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('다른 학생의 학교 질문');tree=repaint(otherOptions);commitEffects();await saveDraftsFor(otherUser.user.id);
+const previousSchoolSavers=[...draftSavers.get(otherUser.user.id)];
+const anotherSchool={...otherOptions,params:'targetId=school-other'};tree=repaint(anotherSchool);commitEffects();await turn();tree=await settleEffects(anotherSchool);
+check(nodes(tree).find(node=>node.type==='ChatComposer').props.value==='','changing the selected school uses a separate draft key');
+const copyValuesBeforeStale=[...durableStorage.entries()];for(const save of previousSchoolSavers)await save();assert.deepEqual([...durableStorage.entries()],copyValuesBeforeStale);checks++;
+unmountDraftContext();check(draftSavers.get(otherUser.user.id).size===0,'unmounting removes the active account saver');
+
+resetDraftContext();tree=await mountDraftContext();let finishUpload;
+state.apiAdapter=call=>call.method==='POST'?new Promise(resolve=>{finishUpload=resolve;}):{threads:[]};
+nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('이 파일을 다음에 물어볼 예정');tree=repaint(draftOptions);commitEffects();
+nodes(tree).find(node=>node.type==='input'&&node.props.type==='file').props.onChange({target:{files:[new File(['개인 탐구 메모'],'탐구.md',{type:'text/markdown'})]}});
+let logoutSaved=false;const uploadLogout=saveDraftsFor(currentData.user.id).then(()=>{logoutSaved=true;});await turn();
+check(!logoutSaved,'logout waits for an already-started attachment upload before confirming its draft');
+finishUpload({attachments:[file]});await uploadLogout;
+const attachedDraft=JSON.parse(durableStorage.get(ownerDraftKey));
+check(attachedDraft.attachments.length===1&&attachedDraft.attachments[0].id===file.id&&attachedDraft.attachments[0].name===file.name,'only acknowledged uploaded attachment metadata is preserved with the unsent text');
+check(!Object.hasOwn(attachedDraft.attachments[0],'url'),'cached attachment metadata does not carry an arbitrary or expiring URL');
+unmountDraftContext();state.storage.clear();state.apiAdapter=()=>({threads:[]});tree=await mountDraftContext();
+check(nodes(tree).some(node=>node.props?.className==='chat-attachment-queue')&&textContent(tree).includes(file.name),'the uploaded attachment queue is restored after logout together with the draft');
+check(state.sendCalls.length===sendsBeforeDrafts,'restoring queued uploads never generates an AI request');
+
+// Cache cleanup failure cannot turn an explicitly completed response into an AI error.
+state.storageFaults.localRemove=true;state.storageFaults.sessionRemove=true;
+state.fetchAdapter=()=>jsonResponse({threadId:'logout-recovery-thread',userMessage:{id:'logout-recovery-user',role:'user',content:'명시적으로 보내는 질문'},message:{id:'logout-recovery-answer',role:'assistant',status:'completed',content:'정상 완료한 답변'}});
+await nodes(tree).find(node=>node.type==='ChatComposer').props.onSend('명시적으로 보내는 질문');
+check(state.values[5]===''&&state.values[0].some(message=>message.id==='logout-recovery-answer'&&message.status==='completed'),'blocked cache deletion leaves a completed assistant response successful');
+state.storageFaults={};unmountDraftContext();draftSavers.clear();
+resetDraftContext();tree=await mountDraftContext();let failUpload;
+state.apiAdapter=call=>call.method==='POST'?new Promise((_resolve,reject)=>{failUpload=reject;}):{threads:[]};
+nodes(tree).find(node=>node.type==='input'&&node.props.type==='file').props.onChange({target:{files:[new File(['아직 업로드 중'],'탐구.md',{type:'text/markdown'})]}});
+const failedUploadLogout=saveDraftsFor(currentData.user.id);const failedUploadAssertion=assert.rejects(failedUploadLogout,/upload was not preserved/);failUpload(new Error('upload was not preserved'));await failedUploadAssertion;checks++;
+check(!durableStorage.has(ownerDraftKey),'an unacknowledged upload cannot be represented as safely saved');
+unmountDraftContext();resetDraftContext();tree=await mountDraftContext();let crossScopeUpload;
+state.apiAdapter=call=>call.method==='POST'?new Promise(resolve=>{crossScopeUpload=resolve;}):{threads:[]};
+nodes(tree).find(node=>node.type==='input'&&node.props.type==='file').props.onChange({target:{files:[new File(['이전 학교 첨부'],'이전.md',{type:'text/markdown'})]}});
+const shiftedOptions={...draftOptions,params:'targetId=school-other'};tree=repaint(shiftedOptions);commitEffects();await turn();tree=await settleEffects(shiftedOptions);
+crossScopeUpload({attachments:[file]});await turn();tree=repaint(shiftedOptions);commitEffects();
+check(!nodes(tree).some(node=>node.props?.className==='chat-attachment-queue'),'an old upload acknowledgement cannot attach a previous school file to the new scope');
+check(state.values[16].length===0,'the new scope attachment queue remains empty');
+unmountDraftContext();draftSavers.clear();state.apiAdapter=null;
+for(const enabled of [false,true]){
+ tree=render({params:'questionId=common_motivation&targetId=school-owned',data:{...currentData,preferences:{enterToSend:enabled},package:null},values:commonValues.slice()});
+ check(nodes(tree).find(node=>node.type==='ChatComposer').props.enterToSend===enabled,'AI chat forwards the authenticated account Enter preference to its actual composer');
+}
 console.log(`chat context: ${checks} checks passed; no database changes or paid AI calls`);

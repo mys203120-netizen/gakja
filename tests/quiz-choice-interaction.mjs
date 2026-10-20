@@ -14,6 +14,7 @@ const load = (path, require = () => ({})) => {
   vm.runInNewContext(transpile(path), { module, exports: module.exports, require, Set });
   return module.exports;
 };
+const enterSend = load('../apps/web/src/lib/client/enter-send.ts');
 const view = load('../apps/web/src/lib/quiz-session-view.ts');
 const contracts = load('../packages/content-contracts/src/workflows.ts');
 const componentSource = transpile('../apps/web/src/components/quiz-v3.tsx');
@@ -69,6 +70,7 @@ function harness(initial = fixture(), storage = new Map()) {
       session.deadline_at = session.timed ? new Date(Date.now() + 10_000).toISOString() : null;
       return responseDTO();
     }
+    if(payload.action==='draft'){session.metadata.drafts[String(payload.itemIndex)]={response:payload.response,updatedAt:new Date().toISOString()};return responseDTO();}
     if (payload.action === 'pause') {
       assert.equal(payload.itemIndex, session.current_index, 'pause must not use the already submitted item index');
       if (session.state === 'active') session.state = 'paused';
@@ -85,9 +87,9 @@ function harness(initial = fixture(), storage = new Map()) {
       assert.equal(payload.itemIndex, session.current_index);
       const item = session.items[session.current_index];
       const saved = { id: `response-${session.current_index}`, item_index: session.current_index,
-        memory_item_id: item.id, selected_option_id: payload.selectedOptionId, response: '',
-        outcome: payload.selectedOptionId === item.options[1].id, timed_out: false, rating: 'good',
-        data: { requestId: payload.requestId, prompt: item.prompt, correct_answer: item.options[1].text, assistance_recorded: true } };
+        memory_item_id: item.id, selected_option_id: payload.selectedOptionId, response: session.mode==='choice'?'':payload.response,
+        outcome: session.mode==='choice'?payload.selectedOptionId === item.options[1].id:null, timed_out: false, rating: 'good',
+        data: { requestId: payload.requestId, prompt: item.prompt, correct_answer: session.mode==='choice'?item.options[1].text:undefined, assistance_recorded: true } };
       state.server.responses.push(saved);
       session.current_index++;
       session.state = session.current_index === session.items.length ? 'completed' : 'ready';
@@ -104,9 +106,18 @@ function harness(initial = fixture(), storage = new Map()) {
     state.calls.push({ method: 'GET', url });
     return state.getAdapter ? state.getAdapter(url, responseDTO) : responseDTO();
   };
-  const app = { data: { user: { id: 'synthetic-student' }, targets: [] }, refresh: async () => {},
+  const app = { data: { user: { id: 'synthetic-student' }, targets: [],preferences:{} }, refresh: async () => {},
     toast: message => state.toasts.push(message), openResource() {} };
   const router = { push: path => state.calls.push({ navigate: path }) };
+  const track={stop(){},addEventListener(){},removeEventListener(){}};
+  const device={getTracks:()=>[track],getAudioTracks:()=>[track]};
+  class FakeMediaRecorder{
+    static isTypeSupported(){return true;}state='inactive';mimeType='audio/webm';
+    constructor(){if(!state.allowSyntheticMedia)throw Error('No microphone in choice tests');}
+    start(){this.state='recording';this.onstart?.();}
+    stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['synthetic-audio'])});void this.onstop?.();}
+  }
+
   const actionButton = ({ pending = false, pendingLabel, disabled, children, type = 'button', ...props }) => ({ type: 'button',
     props: { ...props, type, disabled: disabled || pending, 'aria-busy': pending || undefined, children: pending ? pendingLabel ?? children : children } });
   const react = {
@@ -142,9 +153,11 @@ function harness(initial = fixture(), storage = new Map()) {
     setTimeout: (callback, ms) => timer(callback, ms, false), clearTimeout: id => state.timers.delete(id),
     setInterval: (callback, ms) => timer(callback, ms, true), clearInterval: id => state.timers.delete(id),
     localStorage: storageAPI(state.local), sessionStorage: storageAPI(state.storage),
-    window: { addEventListener: addListener, removeEventListener: removeListener },
-    navigator: { sendBeacon(url, payload) { state.calls.push({ method: 'BEACON', url, payload }); return true; } },
+    MediaRecorder:FakeMediaRecorder,window: { MediaRecorder:FakeMediaRecorder,addEventListener: addListener, removeEventListener: removeListener },
+    navigator: {mediaDevices:{async getUserMedia(){if(!state.allowSyntheticMedia)throw Error('No microphone in choice tests');return device;}}, sendBeacon(url, payload) { state.calls.push({ method: 'BEACON', url, payload }); return true; } },
     require(name) {
+      if(name==='@/lib/client/enter-send')return enterSend;
+      if(name==='@/lib/client/draft-save')return {registerDraftSaver:(_userId,save)=>{state.logoutSaver=save;return()=>{if(state.logoutSaver===save)state.logoutSaver=null;};}};
       if (name === 'react') return react;
       if (name === 'react/jsx-runtime') return { jsx: (type, props) => type === actionButton ? actionButton(props) : ({ type, props }), jsxs: (type, props) => type === actionButton ? actionButton(props) : ({ type, props }), Fragment: 'Fragment' };
       if (name === 'next/link') return { __esModule: true, default: 'Link' };
@@ -153,12 +166,12 @@ function harness(initial = fixture(), storage = new Map()) {
       if (name === './app-shell') return { useApp: () => app };
       if (name === './shared') return { ActionButton: actionButton, api, post, PageTitle: 'PageTitle', Breadcrumb: 'Breadcrumb', Alert: 'Alert', Empty: 'Empty', Spinner: 'Spinner' };
       if (name === './practice-writing-help') return {PracticeWritingHelp:'PracticeWritingHelp'};
-      if (name === '@/lib/client/recording-recovery') return {readRecordingRecovery:async()=>null,installRecordingExitGuard:()=>()=>{}};
+      if (name === '@/lib/client/recording-recovery') return {readRecordingRecovery:async()=>state.recovery||null,installRecordingExitGuard:()=>()=>{},beginRecordingRecovery:async()=>{if(!state.allowSyntheticMedia)throw Error('No recording writer in choice tests');return {key:'synthetic-recovery',assertActive:async()=>{},assertFresh(){},append:async()=>{},finish:async()=>({key:'synthetic-recovery'}),cancel:async()=>{}};}};
       if (name === './learning-help') return { LearningHelp: 'LearningHelp' };
       if (name === './audio-level-dot') return { AudioLevelDot: 'AudioLevelDot' };
       if (name === './playful-flow') return { animateStudyReceipt() {} };
-      if (name === '@/lib/client/realtime-transcription') return { connectLiveTranscription() { throw new Error('Choice quiz must not request transcription'); } };
-      if (name === '@/lib/client/speech-recorder') return { startSpeechCapture() { throw new Error('No microphone in choice tests'); } };
+      if (name === '@/lib/client/realtime-transcription') return { connectLiveTranscription() { if(!state.allowSyntheticMedia)throw new Error('Choice quiz must not request transcription');return {ready:Promise.resolve(),start(){},finish(){},close(){}}; } };
+      if (name === '@/lib/client/speech-recorder') return { startSpeechCapture() { if(!state.allowSyntheticMedia)throw new Error('No microphone in choice tests');return {pause(){},resume(){},elapsedMs:()=>1000,finish:()=>({durationMs:1000}),dispose(){}}; } };
       if (name === '@/lib/recording-upload-client') return { uploadRecording() { throw new Error('No media upload in choice tests'); } };
       if (name === '@gakja/content-contracts/workflows') return contracts;
       if (name === '@/lib/quiz-session-view') return view;
@@ -212,7 +225,7 @@ function harness(initial = fixture(), storage = new Map()) {
     await advance(1400);
     assert.equal(state.server.session.state, 'active');
   }
-  return { state, document, FakeElement, settle, advance, button, click, key, begin, dispatch,
+  return { state, app, document, FakeElement, settle, advance, button, click, key, begin, dispatch,
     review: () => nodes(state.tree).find(node => node.props?.['aria-label'] === '선택형 답변 확인'),
     calls: action => state.calls.filter(call => call.payload?.action === action),
     async unmount() { state.unmounted = true; for (const slot of state.slots) slot?.cleanup?.(); await Promise.resolve(); },
@@ -355,6 +368,96 @@ export async function runQuizChoiceInteractionChecks() {
     check(h.calls('answer').length === 1, 'feedback interval blocks another numeric answer');
     await h.advance(650);
     check(h.calls('start').at(-1).payload.itemIndex === 1 && h.state.server.session.state === 'active', 'timed quiz automatically starts the next item');
+  }
+  {
+    const value=fixture(),key='gakja-quiz:synthetic-student:choice-session:0:choice';value.session.state='paused';
+    const storage=new Map([[key,JSON.stringify({studentId:'synthetic-student',sessionId:'choice-session',itemIndex:0,memoryItemId:items[0].id,selectedOptionId:items[0].options[2].id})]]);
+    const h=harness(value,storage);await h.settle();await h.begin();
+    check(h.button(/합성 보기 1-3/).props['aria-pressed']===true,'returning to an unanswered current item restores only its scoped local selection');
+    await h.state.logoutSaver();await h.settle();
+    check(h.calls('answer').length===0&&h.calls('draft').length===0&&h.state.server.responses.length===0,'choice logout never creates a server draft or marks a response');
+    check(h.state.local.has(key)&&h.state.server.session.state==='paused','choice selection is preserved locally while its clock pauses');
+  }
+  {
+    const h=harness();await h.begin();const gate=deferred();
+    h.state.postAdapter=async(url,payload,normal)=>{if(payload.action==='answer')await gate.promise;return normal(url,payload);};
+    const submitted=h.button(/합성 보기 1-2/).props.onClick();await h.settle();
+    let left=false;const leaving=h.state.logoutSaver().then(()=>{left=true;});await h.settle();
+    check(!left&&h.calls('answer').length===1,'logout waits for the already-explicit answer request rather than sending it again');
+    gate.resolve();await submitted;await leaving;await h.settle();
+    check(h.state.server.responses.length===1&&h.calls('end').length===0&&h.calls('answer').length===1,'a confirmed answer receipt permits logout with exactly one submitted response');
+  }
+  {
+    const h=harness(fixture({timed:true}));await h.begin();await h.click(/합성 보기 1-2/);
+    const leaving=h.state.logoutSaver();await h.advance(650);await leaving;await h.settle();
+    check(h.calls('start').length===1&&h.state.server.session.current_index===1&&h.state.server.session.state!=='active','logout suppresses the delayed timed auto-start of the next question');
+  }
+  {
+    const h=harness();await h.begin();h.state.postAdapter=async()=>{throw Error('unknown answer receipt');};
+    await h.click(/합성 보기 1-2/);
+    await assert.rejects(h.state.logoutSaver(),/보낸 답변의 저장/);await h.settle();
+    check(h.calls('answer').length===1&&h.calls('draft').length===0&&h.calls('end').length===0,'unconfirmed submission blocks logout without replaying the answer or ending the quiz');
+    check(h.state.local.has('gakja-quiz:synthetic-student:choice-session:0:choice'),'an uncertain receipt retains the scoped selection for an explicit retry');
+  }
+  {
+    const value=fixture(),key='gakja-quiz:synthetic-student:choice-session:0:choice';value.session.state='paused';
+    const storage=new Map([[key,JSON.stringify({studentId:'other-student',sessionId:'choice-session',itemIndex:0,memoryItemId:items[0].id,selectedOptionId:items[0].options[2].id})]]);
+    const h=harness(value,storage);await h.settle();await h.begin();
+    check(h.button(/합성 보기 1-3/).props['aria-pressed']===false&&h.calls('answer').length===0,'a local selection from another student is never restored or submitted');
+  }
+  {
+    const h=harness();await h.settle();const gate=deferred();
+    h.state.postAdapter=async(url,payload,normal)=>{if(payload.action==='start')await gate.promise;return normal(url,payload);};
+    await h.click('퀴즈 시작');const starting=h.advance(1400);for(let turn=0;turn<12&&!h.calls('start').length;turn++)await h.settle();
+    check(h.calls('start').length===1,'the start request is in flight before logout begins');
+    let left=false;const leaving=h.state.logoutSaver().then(()=>{left=true;});await h.settle();
+    check(!left,'logout waits for an already-sent quiz start before confirming its final pause');
+    gate.resolve();await starting;await leaving;await h.settle();
+    check(h.state.server.session.state==='paused'&&h.calls('answer').length===0,'a late start response cannot leave the quiz clock active after logout saving');
+  }
+
+  const writtenFixture=(mode='answer')=>{const value=fixture({total:1});value.session.mode=mode;value.session.items=value.session.items.map(item=>({...item,kind:'answer'}));return value;};
+  const editor=h=>nodes(h.state.tree).find(node=>node.type==='textarea'&&node.props['aria-label']==='내 답변');
+  const write=async(h,value)=>{editor(h).props.onChange({target:{value}});await h.settle();};
+  const enter=(h,extra={})=>{const event={key:'Enter',nativeEvent:{},shiftKey:false,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},...extra};editor(h).props.onKeyDown(event);return event;};
+  for(const setting of [undefined,true,false]){
+    const h=harness(writtenFixture());h.app.data.preferences.enterToSend=setting;await h.begin();await write(h,'내가 직접 작성한 합성 답변');
+    const event=enter(h);await h.settle();
+    check(h.calls('answer').length===(setting===false?0:1),`answer textarea respects Enter setting ${setting===undefined?'default ON':setting}`);
+    check(event.defaultPrevented===(setting!==false),'disabled Enter sending retains the native newline');
+    if(setting!==false)check(h.calls('answer')[0].payload.response==='내가 직접 작성한 합성 답변'&&h.calls('answer')[0].payload.selectedOptionId===null,'Enter uses the explicit written-answer submit contract');
+  }
+  {
+    const h=harness(writtenFixture());await h.begin();await write(h,'조합 중인 합성 문장');
+    for(const flags of [{shiftKey:true},{nativeEvent:{isComposing:true}},{nativeEvent:{keyCode:229}},{ctrlKey:true},{metaKey:true},{altKey:true},{repeat:true}]){
+      const event=enter(h,flags);await h.settle();check(h.calls('answer').length===0&&!event.defaultPrevented,'Shift, composition and modified Enter neither submit nor swallow typing');
+    }
+    editor(h).props.onCompositionStart();const composing=enter(h);await h.settle();check(h.calls('answer').length===0&&!composing.defaultPrevented,'composition-start ref protects IME confirmation even when native composing is absent');
+    editor(h).props.onCompositionEnd();enter(h);await h.settle();check(h.calls('answer').length===1,'a new Enter after composition-end can explicitly submit');
+  }
+  {
+    const h=harness(writtenFixture());await h.begin();const empty=enter(h);await h.settle();check(h.calls('answer').length===0&&empty.defaultPrevented,'empty Enter cannot create an answer');
+    await write(h,'한 번만 제출할 합성 답변');const gate=deferred();h.state.postAdapter=async(url,payload,normal)=>{if(payload.action==='answer')await gate.promise;return normal(url,payload);};
+    enter(h);enter(h);await h.settle();check(h.calls('answer').length===1,'double Enter before render creates one explicit answer request');
+    enter(h);await h.settle();check(h.calls('answer').length===1&&editor(h).props.disabled,'busy answer field cannot submit again');gate.resolve();await h.settle();
+  }
+  {
+    const h=harness(writtenFixture('oral'));await h.begin();await write(h,'말할 내용을 정리한 선택 메모');const memoEnter=enter(h);await h.settle();
+    check(h.calls('answer').length===0&&!memoEnter.defaultPrevented,'voice-first optional notes keep native newlines and are never submitted by Enter');
+    await h.click('글로 답하기');await write(h,'음성 대신 직접 작성한 합성 답변');enter(h);await h.settle();
+    check(h.calls('answer').length===1&&h.calls('answer')[0].payload.responseMode==='text'&&!h.calls('answer')[0].payload.recordingId,'oral text alternative sends the explicit text-mode answer without inventing a recording');
+  }
+  {
+    const h=harness(writtenFixture());h.state.allowSyntheticMedia=true;await h.begin();await write(h,'녹음 중에도 남아 있는 합성 초안');
+    nodes(h.state.tree).find(node=>node.type==='input'&&node.props.type==='checkbox').props.onChange({target:{checked:true}});await h.settle();await h.click(/답변 녹음/);
+    check(text(h.state.tree).includes('마이크를 확인해 주세요.'),'synthetic device enters the actual preparation UI');enter(h);await h.settle();check(h.calls('answer').length===0,'Enter cannot submit while recording preparation is pending');
+    await h.click('지금 시작');check(!!h.button(/녹음 완료/),'the actual recording handler reached recording state with a synthetic device');enter(h);await h.settle();
+    check(h.calls('answer').length===0,'Enter cannot submit a typed draft while audio capture is active');await h.unmount();
+  }
+  {
+    const h=harness(writtenFixture());h.state.recovery={key:'synthetic-recovery',blob:new Blob(['not-uploaded']),durationMs:1000,itemIndex:0,complete:true};await h.begin();await write(h,'미제출 음성이 남아 있는 합성 초안');
+    check(text(h.state.tree).includes('녹음이 아직 저장되지 않았어요.'),'the actual recovery effect exposes the unsubmitted synthetic recording');enter(h);await h.settle();
+    check(h.calls('answer').length===0,'Enter cannot bypass an unsubmitted recording receipt');await h.unmount();
   }
   console.log(`Choice interaction: ${checks} rendered-handler checks passed; no browser, DB, provider or device calls.`);
 }

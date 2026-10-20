@@ -20,7 +20,7 @@ function harness(count=1){
     async speak(question,generation,signal){log('speak',question.turnId,generation,signal);await state.overrides.speak?.(question,generation,signal);},
     async beforeCapture(question,generation,signal){log('beforeCapture',question,generation,signal);await state.overrides.beforeCapture?.(question,generation,signal);},
     capture(progress){log('capture');const done=deferred<LiveAnswerRecording>();void done.promise.catch(()=>{});const capture={finished:done.promise,pauseCalls:0,resumeCalls:0,disposeCalls:0,stopCalls:[] as any[],resolve:done.resolve,pause(){this.pauseCalls++;},resume(){this.resumeCalls++;},stop(reason='manual'){this.stopCalls.push(reason);done.resolve(recording({reason:reason as any}));return done.promise;},dispose(){this.disposeCalls++;done.reject(new DOMException('disposed','AbortError'));}};state.captures.push(capture);return capture;},
-    async upload(value,question,generation){log('upload',value,question.turnId,generation);return state.overrides.upload?state.overrides.upload(value,question,generation):`media-${question.turnId}`;},
+    async upload(value,question,generation,options){log('upload',value,question.turnId,generation,options);return state.overrides.upload?state.overrides.upload(value,question,generation,options):`media-${question.turnId}`;},
     async transcribe(mediaId){log('transcribe',mediaId);await state.overrides.transcribe?.(mediaId);},
     async answer(mediaId,question,generation){log('answer',mediaId,question,generation);if(state.overrides.answer)return state.overrides.answer(mediaId,question,generation);commit(question);},
     async finish(){log('finish');await state.overrides.finish?.();info.session.state='completed';info.question=null;},
@@ -81,6 +81,15 @@ test('pause mid-answer resumes the same capture without replay or another record
   h.controller.pause();await tick();assert.equal(h.controller.state.phase,'paused');assert.equal(capture.pauseCalls,1);
   await h.controller.start();assert.equal(h.controller.state.phase,'listening');assert.equal(capture.resumeCalls,1);assert.equal(h.state.captures.length,1);assert.equal(h.calls('speak').length,1);
   capture.resolve(recording());await h.until(()=>h.controller.state.phase==='complete');h.controller.dispose();
+});
+test('changing remembered recording settings preserves the current capture and rechecks devices for the next question',async()=>{
+  const h=harness(2);await h.controller.start();await h.until(()=>h.state.captures.length===1);
+  await h.controller.resetDevices();await tick();
+  assert.deepEqual(h.state.captures[0].stopCalls,['manual']);assert.equal(h.calls('release').length,1);assert.equal(h.calls('upload').length,0);assert.equal(h.controller.state.phase,'paused');assert.equal(h.controller.state.error,'');
+  await h.controller.start();await h.until(()=>h.state.captures.length===2);
+  assert.equal(h.calls('upload').length,1);assert.equal(h.calls('upload')[0].args[1],'t1');assert.equal(h.calls('prepare').length,2,'the released device is prepared again before the second recording');
+  assert.equal(h.state.captures[0].resumeCalls,0,'a stopped capture cannot resume with its released tracks');
+  h.state.captures[1].resolve(recording());await h.until(()=>h.controller.state.phase==='complete');h.controller.dispose();
 });
 test('pause during TTS aborts it and replays the whole question before opening the microphone',async()=>{
   const h=harness();h.state.overrides.speak=async(_q,_g,signal)=>{if(h.calls('speak').length===1)await new Promise<void>((_resolve,reject)=>signal.addEventListener('abort',()=>reject(new DOMException('paused','AbortError')),{once:true}));};
@@ -143,6 +152,25 @@ test('retry while the failed loop is still suspending starts exactly one replace
   await h.controller.start();await h.until(()=>h.state.captures.length===1);h.state.captures[0].resolve(recording());await h.until(()=>h.controller.state.phase==='error');
   const retry=h.controller.start();suspend.resolve();await retry;await h.until(()=>h.controller.state.phase==='complete');
   assert.equal(h.calls('upload').length,1);assert.equal(h.calls('transcribe').length,2);assert.equal(h.calls('answer').length,1);assert.equal(h.state.captures.length,1);h.controller.dispose();
+});
+test('explicit exit after no-speech transcription preserves the stored recording and never forces recognition or an answer',async()=>{
+  const h=harness();h.state.overrides.transcribe=async()=>{throw Error('음성을 확인하지 못했어요.');};
+  await h.controller.start();await h.until(()=>h.state.captures.length===1);const saved=recording();h.state.captures[0].resolve(saved);await h.until(()=>h.controller.state.phase==='error');
+  assert.equal(h.calls('upload').length,1);assert.equal(h.calls('transcribe').length,1);assert.equal(h.calls('answer').length,0);
+  h.controller.pause();await h.controller.finish({preserveOnly:true});await h.until(()=>h.controller.state.phase==='complete');
+  assert.equal(h.calls('transcribe').length,1);assert.equal(h.calls('upload').length,1);assert.equal(h.calls('answer').length,0);assert.equal(h.calls('finish').length,1);
+  assert.equal(h.controller.state.recording,saved);assert.equal(h.state.info.turns.length,0);h.controller.dispose();
+});
+test('explicit error exit saves an unuploaded partial recording before finishing without transcription',async()=>{
+  const h=harness();await h.controller.start();await h.until(()=>h.state.captures.length===1);const partial=recording({partial:true,reason:'interrupted',issue:'마이크 연결 끊김'});h.state.captures[0].resolve(partial);await h.until(()=>h.controller.state.phase==='error');
+  assert.equal(h.calls('upload').length,0);await h.controller.finish({preserveOnly:true});await h.until(()=>h.controller.state.phase==='complete');
+  assert.equal(h.calls('upload').length,1);assert.equal(h.calls('upload')[0].args[0],partial);assert.deepEqual(h.calls('upload')[0].args[3],{deferTranscription:true});assert.equal(h.calls('transcribe').length,0);assert.equal(h.calls('answer').length,0);assert.equal(h.calls('finish').length,1);h.controller.dispose();
+});
+test('failed preservation blocks completion but retains local bytes for an explicit exit retry',async()=>{
+  const h=harness();h.state.overrides.upload=async()=>{throw Error('연결 끊김');};await h.controller.start();await h.until(()=>h.state.captures.length===1);const saved=recording();h.state.captures[0].resolve(saved);await h.until(()=>h.controller.state.phase==='error');
+  await h.controller.finish({preserveOnly:true});await h.until(()=>h.calls('upload').length===2&&h.controller.state.phase==='error');
+  assert.equal(h.calls('finish').length,0);assert.equal(h.controller.state.recording,saved);h.state.overrides.upload=async()=> 'durably-preserved-media';
+  await h.controller.finish({preserveOnly:true});await h.until(()=>h.controller.state.phase==='complete');assert.equal(h.calls('upload').length,3);assert.equal(h.calls('transcribe').length,0);assert.equal(h.calls('answer').length,0);assert.equal(h.calls('finish').length,1);h.controller.dispose();
 });
 test('a durable current-turn recording is recovered without another question playback or recording',async()=>{
   const h=harness();h.state.info.media=[{id:'existing-media',metadata:{kind:'answer_recording',turnId:'t1',generation:7}}];

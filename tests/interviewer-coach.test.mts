@@ -62,18 +62,23 @@ test('both provider adapters separate the current denial and raw speech from app
   assert.equal(JSON.stringify(currentContext),frozen);
 });
 
-test('opted-in reaction shares the existing single response with strict structured output', async () => {
+test('current coaching requests grounded feedback without a facial-expression schema', async () => {
   capture.requests.length = 0; capture.output = { content: '대조군과 비교한 이유가 드러났어요.', source_ids: [], reaction: grounded };
-  const result = await coach('unit-student', context, '질문별 피드백', [{ role: 'user', content: reactionInput.answer }], 'interview', 'unit-session', reactionInput);
-  assert.equal(capture.requests.length, 1); assert.equal(result.reaction?.level, 75); assert.equal(result.reaction?.status, 'evaluated');
-  const request = capture.requests[0]; assert.equal(request.text.format.strict, true); assert.equal(request.text.format.schema.additionalProperties, false);
-  assert.ok(request.text.format.schema.required.includes('reaction')); assert.equal(request.text.format.schema.properties.reaction.additionalProperties, false);
-  assert.equal(request.model, 'gpt-5.6-terra'); assert.equal(request.store, false); assert.match(request.instructions, /키워드 유무만으로/);
+  const result = await coach('unit-student', context, '질문별 피드백', [{ role: 'user', content: reactionInput.answer }], 'interview', 'unit-session');
+  assert.equal(capture.requests.length, 1);
+  const request = capture.requests[0];
+  assert.equal(request.text.format.strict, true); assert.equal(request.text.format.schema.additionalProperties, false);
+  assert.equal(request.text.format.schema.required.includes('reaction'), false);
+  assert.equal(request.text.format.schema.properties.reaction, undefined);
+  assert.equal(request.model, 'gpt-5.6-terra'); assert.equal(request.store, false);
+  assert.equal('reaction' in result, false);
+  assert.doesNotMatch(request.instructions, /engagement|호응 표현/);
 });
+
 test('default coaching preserves the previous output contract without requesting reactions', async () => {
   capture.requests.length = 0; capture.output = { content: '기존 코칭 응답', source_ids: [] };
   const result = await coach('unit-student', context, '기존 질문별 피드백', [], 'interview');
-  assert.equal(capture.requests.length, 1); assert.equal(result.reaction, undefined); assert.equal(result.content, capture.output.content);
+  assert.equal(capture.requests.length, 1); assert.equal('reaction' in result, false); assert.equal(result.content, capture.output.content);
   assert.equal(capture.requests[0].text.format.schema.properties.reaction, undefined); assert.doesNotMatch(capture.requests[0].instructions, /reaction은/);
 });
 test('talent coaching receives only the pinned sourced values and permits future plans without inventing student experiences',async()=>{
@@ -82,16 +87,6 @@ test('talent coaching receives only the pinned sourced values and permits future
   const result=await coach('unit-student',talentContext,'인재상 질문 피드백',[],'interview');const request=capture.requests[0];
   assert.equal(capture.requests.length,1);assert.match(request.instructions,/실제 경험이 없는 학생에게 경험을 만들어 요구하지 않는다/);assert.match(request.instructions,/평가 배점을 인재상 정의로 바꾸지 않는다/);
   const input=JSON.parse(request.input[0].content.replace('승인 자료(JSON 데이터): ',''));assert.equal(input.school_talent[0].point.label,'배려와 공학윤리');assert.equal(input.school_talent[0].question_basis,'training');assert.equal(input.school_talent[0].official_past_question,false);assert.deepEqual(input.activities,[]);assert.equal(result.sources[0].source_url,'https://admission.uos.ac.kr/admissionNew/html/susi/total2.do');
-});
-test('unverifiable or uncertain model evidence preserves feedback but neutralizes the expression', async () => {
-  for (const reaction of [{ ...grounded, evidence: '실제 답변에 없는 구절' }, { ...grounded, confidence: 'low' }, { ...grounded, engagement: 999 }]) {
-    capture.output = { content: '피드백은 보관합니다.', source_ids: [], reaction };
-    const result = await coach('unit-student', context, '질문별 피드백', [], 'interview', 'unit-session', reactionInput);
-    assert.equal(result.content, '피드백은 보관합니다.'); assert.equal(result.reaction?.level, 50); assert.equal(result.reaction?.status, 'unavailable');
-  }
-  capture.output = { content: '정정된 전사는 능력 판단에 쓰지 않습니다.', source_ids: [], reaction: grounded };
-  const corrected = await coach('unit-student', context, '질문별 피드백', [], 'interview', 'unit-session', { ...reactionInput, transcriptUncertain: true });
-  assert.equal(corrected.reaction?.level, 50);
 });
 
 test('actual feedback request distinguishes the record from a student claim and forbids invented laboratory procedures',async()=>{

@@ -1,4 +1,4 @@
-const scopeSelector = '.app-shell, .native-modal, .modal';
+const scopeSelector = '.app-shell, .auth-page, .native-modal, .modal';
 const nativeSelector = 'input, textarea, select, option, optgroup, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="combobox"], [role="listbox"], [role="option"], [role="menu"], pre, [data-native-scroll]';
 const boundarySelector = '.sidebar, .native-modal, .modal, dialog[open], [role="dialog"][aria-modal="true"], [role="alertdialog"][aria-modal="true"]';
 const overflowPattern = /^(auto|scroll)$/;
@@ -81,16 +81,25 @@ export function installNestedScrollBehavior(doc: Document): () => void {
   }
 
   function showScrollbar(event: Event) {
-    const element = event.target;
-    if (!isElement(element) || element === doc.scrollingElement || element === doc.body || element === doc.documentElement || !inScope(element)) return;
+    const root=event.target===doc||event.target===doc.scrollingElement||event.target===doc.body||event.target===doc.documentElement;
+    const element = root?doc.scrollingElement:event.target;
+    if (!isElement(element) || (!root&&!inScope(element))) return;
     if (element.scrollHeight <= element.clientHeight && element.scrollWidth <= element.clientWidth) return;
+    const rootStyle=(element as HTMLElement).style;
+    if(root&&typeof rootStyle?.setProperty==='function'){
+      const viewport=win!.innerHeight,range=Math.max(1,element.scrollHeight-element.clientHeight);
+      const height=Math.max(28,viewport*viewport/element.scrollHeight);
+      rootStyle.setProperty('--document-thumb-height',`${height}px`);
+      rootStyle.setProperty('--document-thumb-top',`${Math.max(0,Math.min(1,element.scrollTop/range))*(viewport-height)}px`);
+    }
     const previous = visibilityTimers.get(element);
     if (previous !== undefined) win!.clearTimeout(previous);
+    element.setAttribute('data-scroll-decorated', 'true');
     element.setAttribute('data-scroll-visible', 'true');
     visibilityTimers.set(element, win!.setTimeout(() => {
       element.removeAttribute('data-scroll-visible');
       visibilityTimers.delete(element);
-    }, 700));
+    }, 900));
   }
 
   function wheel(event: WheelEvent) {
@@ -136,7 +145,7 @@ export function installNestedScrollBehavior(doc: Document): () => void {
     doc.removeEventListener('touchend', touchEnd, true);
     doc.removeEventListener('touchcancel', touchEnd, true);
     touch = null;
-    for (const [element, timer] of visibilityTimers) { win!.clearTimeout(timer); element.removeAttribute('data-scroll-visible'); }
+    for (const [element, timer] of visibilityTimers) { win!.clearTimeout(timer); element.removeAttribute('data-scroll-visible'); element.removeAttribute('data-scroll-decorated'); }
     visibilityTimers.clear();
   };
 }

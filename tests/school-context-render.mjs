@@ -10,7 +10,9 @@ const planner = await tsImport('../apps/web/src/lib/planner-model.ts', import.me
 const schedule = await tsImport('../apps/web/src/lib/schedule.ts', import.meta.url);
 const calendarPresentation = await tsImport('../apps/web/src/lib/calendar-presentation.ts', import.meta.url);
 const calendarSourcePresentation = await tsImport('../apps/web/src/lib/calendar-source-presentation.ts', import.meta.url);
-const hooks = { values: [], index: 0 };
+const planSummary = await tsImport('../apps/web/src/lib/training-plan-summary.ts', import.meta.url);
+const hooks = { values: [], index: 0,refs:[],refIndex:0 };
+const browser={mobile:false,reducedMotion:false,scrollPadding:80,frames:new Map(),nextFrame:0};
 let app;
 const actionButton=({pending=false,pendingLabel,disabled,children,type='button',...props})=>({type:'button',props:{...props,type,disabled:disabled||pending,'aria-busy':pending||undefined,children:pending?[{type:'LoaderCircle',props:{size:16,'aria-hidden':true}},pendingLabel??children]:children}});
 const shared = { InfoTip:'InfoTip',ActionButton:actionButton, api: async () => { throw new Error('No API calls in component regression.'); }, post: async () => ({}), Breadcrumb: 'Breadcrumb', PageTitle: 'PageTitle', Alert: 'Alert', Spinner: 'Spinner', Empty: 'Empty', Modal: 'Modal', LinkedRow: 'LinkedRow', targetName: target => target?.university || '지원처 미등록', targetMajor: target => target?.department || target?.major || '', dateLabel: value => String(value) };
@@ -19,8 +21,12 @@ function load(file) {
   const source = fs.readFileSync(new URL(`../apps/web/src/components/${file}`, import.meta.url), 'utf8');
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText, {
     module, exports: module.exports, URLSearchParams, Date, Intl, Set,
+    window:{matchMedia:query=>({matches:query.includes('reduced-motion')?browser.reducedMotion:browser.mobile}),getComputedStyle:()=>({scrollPaddingTop:browser.scrollPadding+'px'})},
+    document:{scrollingElement:{},querySelector:()=>({getBoundingClientRect:()=>({bottom:64})})},
+    requestAnimationFrame(callback){const id=++browser.nextFrame;browser.frames.set(id,callback);return id;},
+    cancelAnimationFrame:id=>browser.frames.delete(id),
     require(name) {
-      if (name === 'react') return { useState(initial) { const index = hooks.index++; if (!(index in hooks.values)) hooks.values[index] = typeof initial === 'function' ? initial() : initial; return [hooks.values[index], value => { hooks.values[index] = typeof value === 'function' ? value(hooks.values[index]) : value; }]; }, useEffect() {} };
+      if (name === 'react') return { useRef(initial){const index=hooks.refIndex++;return hooks.refs[index]??={current:initial};}, useState(initial) { const index = hooks.index++; if (!(index in hooks.values)) hooks.values[index] = typeof initial === 'function' ? initial() : initial; return [hooks.values[index], value => { hooks.values[index] = typeof value === 'function' ? value(hooks.values[index]) : value; }]; }, useEffect() {} };
       if (name === 'react/jsx-runtime') return { jsx: (type, props) => type===actionButton?actionButton(props):({ type, props }), jsxs: (type, props) => type===actionButton?actionButton(props):({ type, props }), Fragment: 'Fragment' };
       if (name === 'next/link') return { __esModule: true, default: 'Link' };
       if (name === 'next/navigation') return { useSearchParams: () => new URLSearchParams(), useRouter: () => ({replace(){}}) };
@@ -33,6 +39,7 @@ function load(file) {
       if (name === '@/lib/schedule') return schedule;
       if (name === '@/lib/calendar-presentation') return calendarPresentation;
       if (name === '@/lib/calendar-source-presentation') return calendarSourcePresentation;
+      if (name === '@/lib/training-plan-summary') return planSummary;
       if (name === '@/lib/interview-flow') return { interviewSetupHref: (kind, _params, updates) => `/interview/${kind}?targetId=${updates.targetId}` };
       if (name === './interview') return { InterviewSetup: 'InterviewSetup', InterviewSession: 'InterviewSession' };
       if (name === './school-registration') return { SchoolRegistration: 'SchoolRegistration' };
@@ -48,7 +55,7 @@ function load(file) {
 const school = load('schools.tsx'), interviews = load('interview-pages.tsx'), calendar = load('dashboard-planner.tsx');
 function nodes(tree) { if (Array.isArray(tree)) return tree.flatMap(nodes); if (!tree || typeof tree !== 'object') return []; return [tree, ...nodes(tree.props?.children)]; }
 function text(tree) { if (Array.isArray(tree)) return tree.map(text).join(' '); if (tree && typeof tree === 'object') return text(tree.props?.children); return tree == null ? '' : String(tree); }
-function render(callback, values) { if (values) hooks.values = values; hooks.index = 0; return callback(); }
+function render(callback, values) { if (values) {hooks.values = values;hooks.refs=[];} hooks.index = 0;hooks.refIndex=0; return callback(); }
 let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
 const target = { id: 'uos', university: '서울시립대학교', admission_year: 2027, campus: '본교', department: '환경공학부', admission_type: '학생부종합Ⅰ', profile: { status: 'official_confirmed', format: 'document_individual', interviewer_count: { min: 2, max: 2 }, applicant_count: { min: 1, max: 1 }, interview_minutes: { min: 12, max: 12 }, source: { source_url: 'https://example.edu/admissions.pdf', checked_at: '2026-10-14' } } };
@@ -237,4 +244,56 @@ tree = calendarAt(orderedFutureTargets, [], today);
 const upcomingOrderRows = eventRows(classNodes(tree, 'calendar-upcoming')[0]);
 const upcomingOrderLinks = upcomingOrderRows.map(row => nodes(row).find(node => node.type === 'a' && /^\/schools\//.test(node.props.href))?.props.href);
 check(JSON.stringify(upcomingOrderLinks) === JSON.stringify([orderEarly, orderLate, orderUnknown].map(item => `/schools/${item.id}`)), 'upcoming interviews on one date show earlier appointments first and unknown times last');
+// The integrated calendar cannot self-check or rewrite an automatic training task.
+const automaticPlan={id:'training-plan',date:today,title:'활동 설명 훈련',revision:1,completed:false,targetAvailable:true,href:'/my',target:{targetId:target.id,automaticPractice:{minutes:25,hybrid:{kind:'focus'}}}};
+const manualPlan={id:'manual-plan',date:today,title:'내 준비물 확인',revision:1,completed:false,targetAvailable:true};
+tree=render(()=>calendar.DashboardPlanner({...props,hybrid:true,plans:[automaticPlan,manualPlan]}),[]);
+const trainingRow=eventRows(agendaOf(tree)).find(row=>text(row).includes(automaticPlan.title));
+const manualRow=eventRows(agendaOf(tree)).find(row=>text(row).includes(manualPlan.title));
+check(!nodes(tree).some(node=>node.type==='AutomaticPracticePlan'),'integrated calendar does not show the legacy time planner');
+check(!classNodes(trainingRow,'plan-check').length&&!classNodes(trainingRow,'plan-edit').length,'automatic training cannot be marked complete or rewritten in the calendar');
+check(text(trainingRow).includes('예정')&&!text(trainingRow).includes('직접 체크')&&!text(trainingRow).includes('완료한 답변으로 반영돼요'),'automatic task has concise real pending state without repeated guidance');
+check(classNodes(manualRow,'plan-check').length===1&&classNodes(manualRow,'plan-edit').length===1,'personal plan completion and editing remain available');
+// A busy training day has a compact month summary; its full agenda remains available on selection.
+const busyPlans=Array.from({length:8},(_,index)=>({...automaticPlan,id:'busy-'+index,title:'세부 훈련 '+index,completed:index<2,target:{...automaticPlan.target,automaticPractice:{minutes:15,hybrid:{kind:index===7?'break':'focus'}}}}));
+tree=render(()=>calendar.DashboardPlanner({...props,hybrid:true,plans:busyPlans,interviewSchedules:[official(target),official(other)]}),[]);
+const busyDay=calendarDay(tree,today),summaryCell=classNodes(busyDay,'calendar-day-summary')[0];
+check(text(summaryCell).replace(/\s/g,'').includes('105분')&&text(summaryCell).replace(/\s/g,'').includes('2/7완료'),'month summary totals planned minutes while submitted progress excludes a break');
+check(classNodes(busyDay,'calendar-task-item').length===0&&classNodes(busyDay,'calendar-interview-item').length===1,'month cell never stacks all training tasks and shows at most one interview chip');
+check(classNodes(busyDay,'calendar-more-events').some(node=>text(node).replace(/\s/g,'').includes('면접+1')),'additional same-day interviews remain discoverable');
+check(busyPlans.filter(plan=>plan.target.automaticPractice.hybrid.kind!=='break').every(plan=>eventRows(agendaOf(tree)).some(row=>text(row).includes(plan.title))),'all individual learning tasks remain in the selected-day agenda');
+const weeklyOutline=classNodes(tree,'hybrid-week-plan')[0],weeklyText=text(weeklyOutline).replace(/\s/g,'');
+check(weeklyText.includes('집중보완')&&weeklyText.includes('7회·105분'),'weekly outline groups learning into category, count and minutes');
+check(!weeklyText.includes('세부훈련')&&!weeklyText.includes('휴식'),'weekly outline omits full question prompts and all break entries');
+check(busyDay.props['aria-label'].includes('계획 105분')&&busyDay.props['aria-label'].includes('훈련 2/7 완료')&&busyDay.props['aria-label'].includes('면접 2개')&&!busyDay.props['aria-label'].includes('세부 훈련'),'hybrid date accessible label summarizes time, submitted progress and interview count rather than every prompt');
+const breakRow=eventRows(agendaOf(tree)).find(row=>text(row).includes('세부 훈련 7'));
+check(!breakRow,'legacy automatic break entries never appear in the calendar agenda');
+const longTitle='긴 탐구 질문과 근거를 연결해 설명해 주세요. '.repeat(8),future=planner.shiftPlanDay(today,1);
+const statePlans=[{...automaticPlan,id:'progress',target:{...automaticPlan.target,automaticPractice:{...automaticPlan.target.automaticPractice,startedAt:today+'T09:00:00+09:00'}}},{...automaticPlan,id:'completed',performedAt:today+'T09:00:00+09:00'},{...automaticPlan,id:'long',title:longTitle,date:future}];
+tree=render(()=>calendar.DashboardPlanner({...props,hybrid:true,plans:statePlans}),[]);
+check(eventRows(agendaOf(tree)).some(row=>text(row).includes('진행 중'))&&eventRows(agendaOf(tree)).some(row=>classNodes(row,'plan-training-meta').some(meta=>text(meta).includes('완료'))),'started current-day work and submitted work retain distinct real states');
+tree=render(()=>calendar.DashboardPlanner({...props,hybrid:true,plans:statePlans}),[future.slice(0,7),future,false,null,'',false]);
+const longRow=eventRows(agendaOf(tree)).find(row=>text(row).includes(longTitle));
+check(classNodes(longRow,'calendar-plan-question').length===1&&text(longRow).includes('예정')&&!text(longRow).includes('오늘 훈련'),'long future title remains fully available in a disclosure without today-only wording');
+// Date clicks reveal the existing detailed agenda on mobile, without moving the calendar during load or month browsing.
+browser.mobile=true;
+tree=calendarAt([timed]);
+const scrollCalls=[],selectedDetail=nodes(tree).find(node=>node.props?.id==='planner-selected-day');
+selectedDetail.props.ref.current={style:{},scrollIntoView:options=>scrollCalls.push(options)};
+check(browser.frames.size===0,'initial calendar render never auto-scrolls');
+nodes(tree).find(node=>node.props?.['aria-label']==='다음 달').props.onClick();
+check(browser.frames.size===0,'browsing another month never auto-scrolls');
+calendarDay(tree,fixedDay).props.onClick();
+for(const callback of browser.frames.values())callback();browser.frames.clear();
+check(scrollCalls.length===1&&scrollCalls[0].behavior==='smooth'&&scrollCalls[0].block==='start','explicit mobile date click smoothly reveals the existing detailed agenda, even for the current day');
+check(selectedDetail.props.ref.current.style.scrollMarginTop==='0px','root scroll padding already clears the header without doubling the agenda offset');
+browser.reducedMotion=true;
+browser.scrollPadding=0;
+calendarDay(tree,fixedDay).props.onClick();
+for(const callback of browser.frames.values())callback();browser.frames.clear();
+check(scrollCalls[1].behavior==='auto','date selection respects reduced motion');
+check(selectedDetail.props.ref.current.style.scrollMarginTop==='80px','without document scroll padding the agenda adds the fixed header offset itself');
+browser.mobile=false;
+calendarDay(tree,fixedDay).props.onClick();
+check(browser.frames.size===0&&scrollCalls.length===2,'desktop date selection retains the existing side-by-side calendar position');
 console.log(`${checks} school/interview/calendar component checks passed`);

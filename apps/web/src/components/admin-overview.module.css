@@ -90,3 +90,35 @@
  .recent :global(.audit-row) { grid-template-columns:6px minmax(0,1fr); column-gap:12px; row-gap:6px; }
  .recent :global(.audit-row time) { grid-column:2; max-width:none; text-align:left; }
 }
+
+.training { min-width:0; padding:24px; margin-bottom:28px; border:1px solid var(--clarity-line); border-radius:18px; background:var(--clarity-surface); }
+.trainingNote { margin:8px 0 0; color:var(--clarity-muted); font-size:12px; line-height:1.75; }
+.trainingHead,.trainingRow { display:grid; grid-template-columns:minmax(100px,1fr) minmax(120px,1.25fr) .7fr 1fr 1fr; align-items:center; gap:18px; }
+.trainingHead { color:var(--clarity-muted); font-size:12px; padding:12px 0; }
+.trainingRow { padding:17px 0; border-top:1px solid var(--clarity-line); color:var(--clarity-ink); font-size:13px; }
+.trainingRow:hover { color:var(--clarity-action); }
+.trainingRow>span { min-width:0; overflow-wrap:anywhere; }
+.trainingRow strong,.trainingTargets strong { display:block; font-size:13px; font-weight:600; }
+.trainingRow small,.trainingTargets small { display:block; color:var(--clarity-muted); font-size:12px; line-height:1.7; margin-top:4px; }
+.trainingRow small.mobileLabel { display:none; }
+.trainingCards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; margin:20px 0; }
+.trainingCards>div { min-width:0; }
+.trainingCards>div>span { display:flex; align-items:center; gap:7px; color:var(--clarity-muted); font-size:12px; }
+.trainingCards strong { display:block; color:var(--clarity-ink); font-size:23px; font-weight:600; margin-top:12px; line-height:1.5; }
+.trainingCards strong small { font-size:12px; font-weight:400; margin-left:6px; color:var(--clarity-muted); }
+.trainingCards p { margin:7px 0 0; color:var(--clarity-muted); font-size:12px; line-height:1.8; }
+.trainingTargets { list-style:none; margin:20px 0 0; padding:0; }
+.trainingTargets>li { display:grid; grid-template-columns:minmax(0,1fr) minmax(100px,.8fr) minmax(0,1fr); gap:18px; padding:16px 0; border-top:1px solid var(--clarity-line); font-size:12px; line-height:1.7; }
+.trainingTargets>li>span { min-width:0; overflow-wrap:anywhere; }
+@media(max-width:767px) {
+ .training { padding:20px 16px; border-radius:16px; }
+ .trainingHead { display:none; }
+ .trainingRow { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px 18px; padding:18px 0; }
+ .trainingRow>span:first-child { grid-column:1 / -1; }
+ .trainingRow>span:last-child { grid-column:1 / -1; }
+ .trainingRow small.mobileLabel { display:block; margin:0 0 3px; }
+ .trainingCards { grid-template-columns:1fr; gap:20px; }
+ .trainingCards>div+div { border-top:1px solid var(--clarity-line); padding-top:20px; }
+ .trainingCards strong { font-size:22px; margin-top:8px; }
+ .trainingTargets>li { grid-template-columns:1fr; gap:8px; }
+}

@@ -19,9 +19,9 @@ const studyLinks = await tsImport('../apps/web/src/lib/study-record-links.ts', i
 const target = { id: 'owned-school', university: '서울시립대학교', department: '환경공학부', admission_year: 2027, campus: '본교', admission_type: '학생부종합Ⅰ' };
 const question = { id: 'q-frozen', prompt: '저장 당시 진행하던 질문', activity_ids: ['a-frozen'], source_type: 'personal' };
 const activity = { id: 'a-frozen', title: '저장 당시 하천 조사', source_ref_ids: ['source-frozen'] };
-const own = { id: 'session-own', student_id: 'student', target_id: target.id, kind: 'video', state: 'active', content_version: 5, created_at: '2026-10-12', updated_at: '2026-10-15', data: { context: { target: { ...target }, targetId: target.id, activities: [activity] }, index: 1, questionCount: 4, currentQuestion: question } };
+const own = { id: 'session-own', student_id: 'student', target_id: target.id, kind: 'video', state: 'active', content_version: 5, created_at: '2026-10-12', updated_at: '2026-10-15', data: { context: { target: { ...target }, targetId: target.id, activities: [activity] }, index: 1, questionCount: 4, currentQuestion: question, trainingPurpose:'diagnostic',trainingPlanId:'training-plan-own' } };
 const previous = { ...own, id: 'session-previous', data: { ...own.data, context: { target: { ...target, department: '이전 학과' }, targetId: target.id, activities: [] }, currentQuestion: { ...question, id: 'q-previous', prompt: '이전 지원 정보의 질문' } } };
-const completed = { ...own, id: 'session-completed', state: 'completed', data: { ...own.data, currentQuestion: null } };
+const completed = { ...own, id: 'session-completed', state: 'completed', data: { ...own.data, currentQuestion: null,trainingPurpose:'focus' } };
 const cancelled = { ...completed, id: 'session-cancelled', state: 'cancelled' };
 const threads = [{ id: 'thread-own', student_id: 'student', target_id: target.id, content_version: 5, title: '하천 조사 질문', created_at: '2026-10-12', updated_at: '2026-10-15', archived_at: null, deleted_at: null }];
 const calls = [];
@@ -32,6 +32,8 @@ const dataModule = { exports: {} };
 vm.runInNewContext(compile(fs.readFileSync(new URL('../apps/web/src/lib/data.ts', import.meta.url), 'utf8')), { module: dataModule, exports: dataModule.exports, require(name) {
   if (name === 'server-only') return {};
   if (name === './school-directory') return { enrichSchoolTarget: value => value };
+  if (name === './admin-training') return {adminTrainingSummary(){throw new Error('Student bootstrap must not read administrative training summaries.');}};
+  if (name === './planner-model') return {koreaToday:()=> '2026-10-15'};
   if (name === './db') return { ApiError: Error, async query(sql, parameters) {
     calls.push({ sql, parameters });
     if (sql.includes('from chat_threads')) return structuredClone(threads);
@@ -49,12 +51,14 @@ check(/archived_at is null and deleted_at is null/.test(threadQuery.sql), 'activ
 check(!interviewQuery.sql.includes('select *') && /where student_id=\$1/.test(interviewQuery.sql), 'interview projection keeps the owning student boundary');
 check(!/\blimit\b/i.test(interviewQuery.sql + threadQuery.sql), 'overview does not silently truncate old learning history');
 check(interviewQuery.sql.includes("'target',data->'context'->'target'") && interviewQuery.sql.includes("'targetId',data->'context'->'targetId'"), 'frozen target identity is selected from the saved session');
+check(interviewQuery.sql.includes("'trainingPurpose',data->'trainingPurpose'") && interviewQuery.sql.includes("'trainingPlanId',data->'trainingPlanId'"), 'the student-owned overview retains the purpose and plan identity required for unified training');
 check(interviewQuery.sql.includes("jsonb_typeof(data->'questionQueue')='array'"), 'legacy missing/non-array question queues do not throw an array-length error');
 check(interviewQuery.sql.includes("'currentQuestion',case when state='active'") && interviewQuery.sql.includes('jsonb_extract_path'), 'only the active queue position is projected as a dashboard preview');
 check(!/questions|answerScripts|studentContext|feedback|draft/.test(interviewQuery.sql), 'bootstrap SQL excludes answer resources, feedback, drafts, and AI processing facts');
 check(interviewQuery.sql.includes("current_question->'activity_ids' ? (value->>'id')"), 'only activities linked to the current question are projected');
 check(calls.every(call => call.parameters?.[0] === 'student'), 'every student bootstrap query remains student scoped');
 check(data.interviews.length === 4 && data.threads.length === 1, 'completed, cancelled, historical and current records keep their counts');
+check(data.interviews.find(row=>row.id==='session-own').data.trainingPurpose==='diagnostic'&&data.interviews.find(row=>row.id==='session-own').data.trainingPlanId==='training-plan-own', 'own-session training metadata survives the compact bootstrap result');
 check(!data.threads[0].context && !data.interviews[1].data.questionQueue, 'render fixtures contain no full thread context or interview queue');
 
 let app = { data, target, targetId: target.id, learningRevision: 0, toast() {} };
@@ -150,4 +154,5 @@ tree = render(() => records.RecordsPages({ slug: ['history'] }), []);
 const retainedRows = nodes(tree).filter(node => node.type === 'LinkedRow' && node.props.href.startsWith('/interview/'));
 check(retainedRows.length === 4, 'actual records history retains all completed, cancelled, previous and active interview links');
 check(retainedRows.some(node => text(node.props.end) === '완료') && retainedRows.some(node => text(node.props.end) === '취소'), 'history completion and cancellation states survive overview compaction');
+check(retainedRows.some(node=>node.props.title==='첫 진단')&&retainedRows.some(node=>node.props.title==='집중 보완'), 'records use the saved training purpose instead of falling back to separate input-mode titles');
 console.log(`${checks} bootstrap overview/query and actual component checks passed.`);

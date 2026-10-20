@@ -24,13 +24,15 @@ vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleK
   if(name==='./shared')return{post:async(url,payload)=>{state.calls.push({url,payload});return state.adapter?state.adapter(url,payload):{};},api:async url=>{state.calls.push({url,method:'GET'});return state.apiAdapter?state.apiAdapter(url):info;},PageTitle:'PageTitle',Breadcrumb:'Breadcrumb',Alert:'Alert',Empty:'Empty',Modal:'Modal',targetName:()=>''};
   if(name==='./interview-setup')return{InterviewSetup:'InterviewSetup'};
   if(name==='./interview-session.module.css')return{__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
+  if(name==='./practice-writing-help')return{PracticeWritingHelp:'PracticeWritingHelp'};
   if(name==='./chat-composer')return{ChatComposer:'ChatComposer'};
   if(name==='./markdown-message')return{MarkdownMessage:'MarkdownMessage'};
   if(name==='./interviewer-character')return{Interviewer:'Interviewer'};
   if(name==='./playful-flow')return{animateStudyReceipt:()=>{}};
   if(name==='./audio-level-dot')return{AudioLevelDot:'AudioLevelDot'};
   if(name==='./live-interview-session')return{LiveInterviewSession:'LiveInterviewSession'};
-  if(name==='@/lib/interview-timer')return timer;
+  if(name==='@/lib/client/draft-save')return {registerDraftSaver:()=>()=>{}};
+      if(name==='@/lib/interview-timer')return timer;
   if(name==='@/lib/recording-upload-client')return{uploadRecording:()=>{throw new Error('No upload in Chat recovery regression');}};
   if(name==='@/lib/client/speech-recorder')return{startSpeechCapture:()=>{throw new Error('No hardware access');}};
   throw new Error(name);
