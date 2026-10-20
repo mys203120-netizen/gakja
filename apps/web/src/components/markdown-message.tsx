@@ -1,3 +1,5 @@
+
+import {ownedClassName} from './owned-class-name';
 import { memo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -66,15 +68,15 @@ const remarkLearningStatusLabels: Plugin<[], Root> = () => tree => {
 const markdownPlugins: PluggableList = [remarkGfm, remarkKoreanQuotedStrong];
 const learningStatusPlugins: PluggableList = [...markdownPlugins, remarkLearningStatusLabels];
 const markdownComponents: Components = {
-  a: ({ href, children }) => href ? <a href={href} target={/^https?:\/\//i.test(href) ? '_blank' : undefined} rel="noopener noreferrer">{children}</a> : <span>{children}</span>,
-  img: ({ alt }) => alt ? <span className={styles.imageAlt}>{alt}</span> : null,
-  table: ({ children }) => <div className={`markdown-table ${styles.tableScroll}`} role="region" aria-label="답변 표" tabIndex={0}><table>{children}</table></div>,
+  a: ({ href, children }) => href ? <a href={href} target={/^https?:\/\//i.test(href) ? '_blank' : undefined} rel="noopener noreferrer" className={ownedClassName(undefined,true)}>{children}</a> : <span className={ownedClassName(undefined,true)}>{children}</span>,
+  img: ({ alt }) => alt ? <span className={ownedClassName(styles.imageAlt,true)}>{alt}</span> : null,
+  table: ({ children }) => <div className={ownedClassName(`markdown-table ${styles.tableScroll}`,true)} role="region" aria-label="답변 표" tabIndex={0}><table className={ownedClassName(undefined,true)}>{children}</table></div>,
 };
 
 /** AI text stays text: no raw HTML, embeds, or active URL schemes.
  * Unchanged history keeps its parsed tree while another message streams. */
 export const MarkdownMessage = memo(function MarkdownMessage({ content, humanizeLearningStatuses = false }: { content: string; humanizeLearningStatuses?: boolean }) {
-  return <div className={`markdown-content ${styles.markdown}`}>
+  return <div className={ownedClassName(`markdown-content ${styles.markdown}`,true)}>
     <ReactMarkdown
       remarkPlugins={humanizeLearningStatuses ? learningStatusPlugins : markdownPlugins}
       skipHtml

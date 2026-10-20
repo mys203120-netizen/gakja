@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import Link from 'next/link';
 import { useEffect, useLayoutEffect, useId, useRef, useState } from 'react';
@@ -31,10 +33,10 @@ export function AccountMenu({ name, admin, compact = false, onLogout }: { name: 
     catch (err) { setError((err as Error).message); lock.current = false; setBusy(false); }
   }
   return <>
-    <button ref={trigger} type="button" className={compact ? 'account-trigger compact' : 'account-trigger'} aria-label={`${name} 계정 메뉴`} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? id : undefined} disabled={busy} onClick={() => setOpen(value => !value)}>
-      <span className="avatar">{name.slice(0, 1)}</span><span className="account-name">{name}</span><Ellipsis className="account-chevron" size={18} aria-hidden="true"/>
+    <button ref={trigger} type="button" className={ownedClassName(compact ? 'account-trigger compact' : 'account-trigger',true)} aria-label={`${name} 계정 메뉴`} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? id : undefined} disabled={busy} onClick={() => setOpen(value => !value)}>
+      <span className={ownedClassName("avatar",true)}>{name.slice(0, 1)}</span><span className={ownedClassName("account-name",true)}>{name}</span><Ellipsis className={ownedClassName("account-chevron")} size={18} aria-hidden="true"/>
     </button>
-    {open && createPortal(<div ref={menu} id={id} role="menu" aria-label="계정 메뉴" aria-busy={busy} className="account-popover" style={position} onKeyDown={event => {
+    {open && createPortal(<div ref={menu} id={id} role="menu" aria-label="계정 메뉴" aria-busy={busy} className={ownedClassName("account-popover",true)} style={position} onKeyDown={event => {
       const items = Array.from(menu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') || []), index = items.indexOf(document.activeElement as HTMLElement);
       if (event.key === 'Escape') { event.preventDefault(); close(true); }
       if (event.key === 'Tab') close(true);
@@ -42,8 +44,8 @@ export function AccountMenu({ name, admin, compact = false, onLogout }: { name: 
     }}>
       {!admin && <Link role="menuitem" href="/account" aria-disabled={busy||undefined} onClick={event => {if(lock.current)event.preventDefault();else close();}}><UserRound size={17}/>내 계정</Link>}
       <Link role="menuitem" href={admin ? '/admin/settings' : '/account/settings'} aria-disabled={busy||undefined} onClick={event => {if(lock.current)event.preventDefault();else close();}}><Settings2 size={17}/>설정</Link>
-      <button type="button" role="menuitem" disabled={busy} onClick={()=>void logout()}><LogOut size={17}/>{busy?'저장하고 로그아웃 중…':'로그아웃'}</button>
-      {error&&<p role="alert" className="logout-error">{error}</p>}
+      <button type="button" role="menuitem" disabled={busy} onClick={()=>void logout()} className={ownedClassName(undefined,true)}><LogOut size={17}/>{busy?'저장하고 로그아웃 중…':'로그아웃'}</button>
+      {error&&<p role="alert" className={ownedClassName("logout-error",true)}>{error}</p>}
     </div>, document.body)}
 
   </>;

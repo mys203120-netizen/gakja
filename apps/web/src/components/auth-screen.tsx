@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -118,38 +120,38 @@ export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'in
   const heading = mode === 'login' || mode === 'signup' ? '나만의 답을 시작해요.' : mode === 'invite' ? '나의 답을 시작해요.' : '비밀번호 재설정';
   const intro = mode === 'login' ? '내 기록에서 시작하는 나만의 면접 준비.' : mode === 'signup' ? '편한 계정으로 시작하세요.' : canSetPassword ? '새 비밀번호를 정해 주세요.' : mode === 'invite' ? '초대 메일의 계정 연결 링크를 열어주세요.' : '가입한 이메일을 입력하세요.';
 
-  return <><main className={'auth-page auth-centered' + (keepsSecret ? ' auth-keeps-secret' : '')} ref={art}>
-    <header className="auth-entry-header">
-      <Link href="/" className="auth-entry-brand" aria-label="각자의답 홈"><Logo size={48}/></Link>
-      {mode !== 'login' && <Link href="/login" className="auth-entry-back"><ChevronLeft size={16}/>로그인으로</Link>}
+  return <><main className={ownedClassName('auth-page auth-centered' + (keepsSecret ? ' auth-keeps-secret' : ''),true)} ref={art}>
+    <header className={ownedClassName("auth-entry-header",true)}>
+      <Link href="/" className={ownedClassName("auth-entry-brand")} aria-label="각자의답 홈"><Logo size={48}/></Link>
+      {mode !== 'login' && <Link href="/login" className={ownedClassName("auth-entry-back")}><ChevronLeft size={16}/>로그인으로</Link>}
     </header>
-    <div className="auth-entry-decoration" aria-hidden="true">
-      <img className="auth-outline-left" src="/auth/brand-outline.svg" alt=""/>
-      <img className="auth-smile-left" src="/auth/brand-smile.svg" alt=""/>
-      <img className="auth-outline-top" src="/auth/brand-outline.svg" alt=""/>
-      <img className="auth-outline-right" src="/auth/brand-outline.svg" alt=""/>
+    <div className={ownedClassName("auth-entry-decoration",true)} aria-hidden="true">
+      <img className={ownedClassName("auth-outline-left",true)} src="/auth/brand-outline.svg" alt=""/>
+      <img className={ownedClassName("auth-smile-left",true)} src="/auth/brand-smile.svg" alt=""/>
+      <img className={ownedClassName("auth-outline-top",true)} src="/auth/brand-outline.svg" alt=""/>
+      <img className={ownedClassName("auth-outline-right",true)} src="/auth/brand-outline.svg" alt=""/>
     </div>
-    <section className="auth-center-main" aria-labelledby="auth-title">
-      <form className="auth-form" method="post" aria-busy={!ready || busy} onSubmit={submit}>
-        <div className="auth-center-mark">
-          <div className="auth-logo-attention"><img className="login-art-logo" src="/brand-logo.svg" alt="" width={82} height={82}/><span className="auth-privacy-cue" aria-hidden="true"><EyeOff size={20} strokeWidth={1.6}/></span></div>
+    <section className={ownedClassName("auth-center-main",true)} aria-labelledby="auth-title">
+      <form className={ownedClassName("auth-form",true)} method="post" aria-busy={!ready || busy} onSubmit={submit}>
+        <div className={ownedClassName("auth-center-mark",true)}>
+          <div className={ownedClassName("auth-logo-attention",true)}><img className={ownedClassName("login-art-logo",true)} src="/brand-logo.svg" alt="" width={82} height={82}/><span className={ownedClassName("auth-privacy-cue",true)} aria-hidden="true"><EyeOff size={20} strokeWidth={1.6}/></span></div>
         </div>
-        <div className="auth-center-intro"><h1 id="auth-title" tabIndex={-1} style={{scrollMarginTop:24,outline:'none'}}>{heading}</h1><p className="auth-intro">{intro}</p></div>
+        <div className={ownedClassName("auth-center-intro",true)}><h1 id="auth-title" tabIndex={-1} style={{scrollMarginTop:24,outline:'none'}} className={ownedClassName(undefined,true)}>{heading}</h1><p className={ownedClassName("auth-intro",true)}>{intro}</p></div>
         {error && <Alert>{error}</Alert>}
         {notice && <FloatingNotice onDismiss={()=>setNotice('')}>{notice}</FloatingNotice>}
         {(mode === 'login' || mode === 'signup') && <>
-          <div className={socialStyles.buttons}>
-            <button type="button" disabled={busy} onClick={()=>socialSignIn('kakao')} className={socialStyles.provider+' '+socialStyles.kakao}><img src="/auth/kakao.svg" alt="" width={24} height={24}/>카카오로 시작</button>
-            <button type="button" disabled={busy} onClick={()=>socialSignIn('google')} className={socialStyles.provider+' '+socialStyles.google}><img src="/auth/google.svg" alt="" width={24} height={24}/>Google로 시작</button>
+          <div className={ownedClassName(socialStyles.buttons,true)}>
+            <button type="button" disabled={busy} onClick={()=>socialSignIn('kakao')} className={ownedClassName(socialStyles.provider+' '+socialStyles.kakao,true)}><img src="/auth/kakao.svg" alt="" width={24} height={24} className={ownedClassName(undefined,true)}/>카카오로 시작</button>
+            <button type="button" disabled={busy} onClick={()=>socialSignIn('google')} className={ownedClassName(socialStyles.provider+' '+socialStyles.google,true)}><img src="/auth/google.svg" alt="" width={24} height={24} className={ownedClassName(undefined,true)}/>Google로 시작</button>
           </div>
-          {mode === 'login' && <div className={socialStyles.divider}>또는 이메일로 로그인</div>}
+          {mode === 'login' && <div className={ownedClassName(socialStyles.divider,true)}>또는 이메일로 로그인</div>}
         </>}
-        {(mode==='login'||!canSetPassword) && mode !== 'signup' && <div className="auth-field"><label htmlFor="auth-email">이메일</label><input id="auth-email" type="email" name="email" autoComplete="email" placeholder="이메일 주소를 입력해 주세요" value={email} onChange={event=>setEmail(event.target.value)} onFocus={()=>setFocused('email')} onBlur={()=>setFocused('')} required/></div>}
-        {(mode === 'login' || canSetPassword) && <div className="auth-field"><div className="auth-field-heading"><label htmlFor="auth-password">비밀번호</label>{mode === 'login' && <Link href="/reset-password">비밀번호 찾기</Link>}</div><div className="password-field"><input id="auth-password" type={show?'text':'password'} name="password" autoComplete={mode==='login'?'current-password':'new-password'} placeholder="비밀번호를 입력해 주세요" value={password} onChange={event=>setPassword(event.target.value)} onFocus={()=>setFocused('password')} onBlur={()=>setFocused('')} required minLength={10}/><button type="button" aria-label={show?'비밀번호 숨기기':'비밀번호 표시'} onClick={()=>setShow(!show)}>{show?<EyeOff size={22}/>:<Eye size={22}/>}</button></div></div>}
-        {mode !== 'signup' && <button disabled={!ready||busy||(mode==='invite'&&!canSetPassword)} className="button primary auth-submit"><span>{!ready?'준비하는 중':busy?'연결하는 중':mode==='login'?'로그인':canSetPassword?'비밀번호 저장':mode==='invite'?'초대 링크로 연결':'재설정 메일 보내기'}</span>{busy?<LoaderCircle size={22} className="spin"/>:<ArrowRight size={23}/>}</button>}
-        <div className="auth-foot">{mode==='login'?<div className={socialStyles.signupFoot}>아직 계정이 없으신가요? <Link href="/signup">회원가입</Link></div>:<Link href="/login">로그인으로 돌아가기</Link>}</div>
+        {(mode==='login'||!canSetPassword) && mode !== 'signup' && <div className={ownedClassName("auth-field",true)}><label htmlFor="auth-email" className={ownedClassName(undefined,true)}>이메일</label><input id="auth-email" type="email" name="email" autoComplete="email" placeholder="이메일 주소를 입력해 주세요" value={email} onChange={event=>setEmail(event.target.value)} onFocus={()=>setFocused('email')} onBlur={()=>setFocused('')} required className={ownedClassName(undefined,true)}/></div>}
+        {(mode === 'login' || canSetPassword) && <div className={ownedClassName("auth-field",true)}><div className={ownedClassName("auth-field-heading",true)}><label htmlFor="auth-password" className={ownedClassName(undefined,true)}>비밀번호</label>{mode === 'login' && <Link href="/reset-password">비밀번호 찾기</Link>}</div><div className={ownedClassName("password-field",true)}><input id="auth-password" type={show?'text':'password'} name="password" autoComplete={mode==='login'?'current-password':'new-password'} placeholder="비밀번호를 입력해 주세요" value={password} onChange={event=>setPassword(event.target.value)} onFocus={()=>setFocused('password')} onBlur={()=>setFocused('')} required minLength={10} className={ownedClassName(undefined,true)}/><button type="button" aria-label={show?'비밀번호 숨기기':'비밀번호 표시'} onClick={()=>setShow(!show)} className={ownedClassName(undefined,true)}>{show?<EyeOff size={22}/>:<Eye size={22}/>}</button></div></div>}
+        {mode !== 'signup' && <button disabled={!ready||busy||(mode==='invite'&&!canSetPassword)} className={ownedClassName("button primary auth-submit",true)}><span className={ownedClassName(undefined,true)}>{!ready?'준비하는 중':busy?'연결하는 중':mode==='login'?'로그인':canSetPassword?'비밀번호 저장':mode==='invite'?'초대 링크로 연결':'재설정 메일 보내기'}</span>{busy?<LoaderCircle size={22} className={ownedClassName("spin")}/>:<ArrowRight size={23}/>}</button>}
+        <div className={ownedClassName("auth-foot",true)}>{mode==='login'?<div className={ownedClassName(socialStyles.signupFoot,true)}>아직 계정이 없으신가요? <Link href="/signup">회원가입</Link></div>:<Link href="/login">로그인으로 돌아가기</Link>}</div>
       </form>
     </section>
-    <footer className="auth-entry-footer"><span>각자의 이야기, 각자의 답이 되도록.</span>{mode==='login'&&<Link href="/invite">초대 계정 연결</Link>}<span>© {new Date().getFullYear()} 각자의답</span></footer>
+    <footer className={ownedClassName("auth-entry-footer",true)}><span className={ownedClassName(undefined,true)}>각자의 이야기, 각자의 답이 되도록.</span>{mode==='login'&&<Link href="/invite">초대 계정 연결</Link>}<span className={ownedClassName(undefined,true)}>© {new Date().getFullYear()} 각자의답</span></footer>
   </main>{mode==='login'&&<LoginIntroSheet disabled={busy}/>}</>;
 }

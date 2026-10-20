@@ -10,7 +10,10 @@ import { recordStudyEvent } from './study-sessions';
 import { answerAssistance, quizAnswerContext } from './learning-record-rules';
 import { commonInterviewQuestions } from './school-learning';
 import { quizSchoolMetadata, schoolQuizItems, schoolQuizTargetIdentity } from './school-quiz';
-import { observedAnswerText } from './transcript-provenance';
+import {readStudentModel} from './student-read-model';
+import {recordMatchesCurrentTarget} from './learning-target-scope';
+import {getLearningHistoryPage,type LearningHistoryOptions} from './learning-history';
+export {getLearningHistoryPage} from './learning-history';
 
 const uuid = z.string().uuid();
 const identifier = z.string().trim().min(1).max(160);
@@ -59,7 +62,7 @@ async function assertStudentScope(user: Profile, studentId: string, staffOnly = 
 const learningAsData = (learning: unknown) => learning as LearningData;
 const currentConfirmationStatus = (row: any) => row.confirmation_status ?? row.data?.confirmation_status
   ?? (({ confirmed:'confirmed_by_student', different:'student_says_different', unknown:'needs_confirmation', cannot_confirm:'cannot_confirm' } as Record<string,string>)[row.state] ?? 'needs_confirmation');
-function safeAssignment(row: any, attempts: any[] = [], events: any[] = [], learning?:LearningData) {
+export function safeAssignment(row: any, attempts: any[] = [], events: any[] = [], learning?:LearningData) {
   return { ...row, items: (row.items as any[]).map(saved => {const item=learning&&!saved.question_snapshot&&row.source_kind!=='common'?personalTaskItem(saved,learning,row.content_version):saved;return {...publicQuizItem(item),...quizSchoolMetadata(item),sourceQuotes:item.sourceQuotes||[],question_snapshot:item.question_snapshot||null,followup_questions:item.followup_questions||[],activity_snapshots:item.activity_snapshots||[],activity_snapshot:item.activity_snapshot||null,activity_content_version:item.activity_content_version||null};}), attempts: attempts.filter(a => a.assignment_id === row.id),
     history:events.filter(e => e.assignment_id === row.id),reviewHistory:events.filter(e => e.assignment_id === row.id && e.state === 'reviewed') };
 }
@@ -84,7 +87,7 @@ export async function getSchoolProfile(studentId: string, targetId: string) {
   return {...profile,stale:false};
 }
 
-export async function getLearningWorkflows(user: Profile, requestedStudentId?: string) {
+async function buildLearningOverview(user: Profile, requestedStudentId?: string) {
   if (user.role !== 'student' && !requestedStudentId) {
     const students = await query("select id,name,email from profiles where role='student' and active=true and ($1::text='admin' or id in(select student_id from staff_assignments where staff_id=$2 and permissions @> '[\"review\"]'::jsonb)) order by name", [user.role,user.id]);
     const ids = students.map(s => s.id);
@@ -101,72 +104,36 @@ export async function getLearningWorkflows(user: Profile, requestedStudentId?: s
   }
   const studentId = requestedStudentId ? parse(uuid,requestedStudentId) : user.id;
   await assertStudentScope(user,studentId);
-  const [content, targets, assignments, attempts, confirmations, confirmationHistory, versions, schoolProfiles, preparation, interviews, events, quizAnswers, archivedContent, preferenceRows] = await Promise.all([
-    getLearning(studentId), query("select * from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null order by id", [studentId]),
-    query('select * from quiz_assignments where student_id=$1 order by created_at desc', [studentId]),
-    query('select * from quiz_submissions where student_id=$1 order by submitted_at desc', [studentId]),
-    query('select * from student_confirmations where student_id=$1 order by updated_at desc', [studentId]),
-    query('select * from fact_confirmation_events where student_id=$1 order by created_at desc', [studentId]),
-    query('select r.*,a.question_id from answer_revisions r join user_answers a on a.id=r.answer_id where a.student_id=$1 order by r.created_at desc,r.revision desc', [studentId]),
-    query('select s.*,p.name as reviewer_name from school_profiles s join profiles p on p.id=s.reviewed_by where s.student_id=$1 order by s.target_id,s.revision desc', [studentId]),
-    query('select * from preparation_states where student_id=$1 order by updated_at desc', [studentId]),
-    query("select t.id,t.session_id,t.question_id,t.data,t.created_at,s.target_id,s.data->'context'->'target' as target_snapshot,s.data->'experienceCard' as experience_card,s.data->'context'->'questions' as context_questions,s.kind,s.content_version,s.data->'context'->>'sourceKind' as source_kind from interview_turns t join interview_sessions s on s.id=t.session_id where t.student_id=$1 and s.state not in ('cancelled','deleted') and coalesce(t.data->>'invalidated','false')<>'true' order by t.created_at desc", [studentId]),
-    query('select e.*,p.name as actor_name from quiz_assignment_events e join profiles p on p.id=e.actor_id where e.student_id=$1 order by e.created_at desc', [studentId]),
-    query('select r.*,s.mode,s.content_version,s.metadata as session_metadata,s.items->r.item_index as item from quiz_responses r join quiz_sessions s on s.id=r.session_id and s.student_id=r.student_id where r.student_id=$1 order by r.created_at desc', [studentId]),
-    query("select v.version,v.data from content_versions v join content_packages p on p.id=v.package_id where p.student_id=$1 and v.status='published' order by v.version", [studentId]),
-    query('select data from student_preferences where student_id=$1',[studentId]),
+  const content=await getLearning(studentId);
+  const entityIds=[...new Set(['activities','questions','source_refs','memory_items'].flatMap(key=>((content.learning as any)[key]||[]).map((entity:any)=>entity.id)))];
+  const [targets, assignments, attempts, confirmations, confirmationHistory, schoolProfiles, preparation, events, archivedContent, practice] = await Promise.all([
+    query("select * from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null order by id",[studentId]),
+    query('select * from quiz_assignments where student_id=$1 order by created_at desc limit 30',[studentId]),
+    query('select * from (select r.*,row_number() over(partition by assignment_id,memory_item_id order by submitted_at desc,id desc) as rn from quiz_submissions r where student_id=$1 and assignment_id in(select id from quiz_assignments where student_id=$1 order by created_at desc limit 30)) r where rn=1',[studentId]),
+    query('select distinct on(entity_id) * from student_confirmations where student_id=$1 and entity_id=any($2::text[]) order by entity_id,updated_at desc',[studentId,entityIds]),
+    query('select * from (select e.*,row_number() over(partition by confirmation_id order by created_at desc,id desc) as rn from fact_confirmation_events e where student_id=$1 and confirmation_id in(select distinct on(entity_id) id from student_confirmations where student_id=$1 and entity_id=any($2::text[]) order by entity_id,updated_at desc)) e where rn<=20',[studentId,entityIds]),
+    query("select distinct on(s.target_id) s.*,p.name as reviewer_name from school_profiles s join profiles p on p.id=s.reviewed_by join support_targets t on t.id=s.target_id and t.student_id=s.student_id where s.student_id=$1 and nullif(t.data->>'archived_at','') is null order by s.target_id,s.revision desc",[studentId]),
+    query('select * from preparation_states where student_id=$1 and entity_id=any($2::text[])',[studentId,entityIds]),
+    query('select * from (select e.*,p.name as actor_name,row_number() over(partition by assignment_id order by e.created_at desc,e.id desc) as rn from quiz_assignment_events e join profiles p on p.id=e.actor_id where e.student_id=$1 and assignment_id in(select id from quiz_assignments where student_id=$1 order by created_at desc limit 30)) e where rn<=10',[studentId]),
+    query("select v.version,v.data from content_versions v join content_packages p on p.id=v.package_id where p.student_id=$1 and v.status='published' and (v.version=p.active_version or v.version in(select content_version from quiz_assignments where student_id=$1 order by created_at desc limit 30))",[studentId]),
+    query(`with facts as (
+      select s.target_id,t.question_id,s.data->'context'->'target' as snapshot,t.created_at
+      from interview_turns t join interview_sessions s on s.id=t.session_id and s.student_id=t.student_id
+      where t.student_id=$1 and s.state not in ('cancelled','deleted') and coalesce(t.data->>'invalidated','false')<>'true' and nullif(btrim(t.data->>'answer'),'') is not null and s.content_version=(select active_version from content_packages where student_id=$1)
+      union all
+      select coalesce(r.data->>'targetId',r.data->>'target_id'),a.question_id,coalesce(r.data->'targetSnapshot',r.data->'target_snapshot'),r.created_at
+      from answer_revisions r join user_answers a on a.id=r.answer_id where a.student_id=$1 and nullif(btrim(r.script),'') is not null and coalesce(r.data->>'contentVersion',r.data->>'content_version')=(select active_version::text from content_packages where student_id=$1)
+    ), scoped as(select target_id,question_id,created_at,jsonb_build_object('university',snapshot->>'university','admission_year',coalesce(snapshot->'admission_year',snapshot->'year'),'campus',snapshot->>'campus','department',coalesce(snapshot->>'department',snapshot->>'major'),'admission_type',coalesce(snapshot->>'admission_type',snapshot->>'track'),'interview_stage',coalesce(snapshot->>'interview_stage',snapshot->>'stage'),'interest_department',snapshot->>'interest_department') as target_snapshot from facts)
+    select target_id,question_id,target_snapshot,max(created_at) as created_at from scoped group by target_id,question_id,target_snapshot`,[studentId]),
   ]);
   const learning = learningAsData(content.learning);
-  const answeredIds = new Set(versions.filter(v => v.script?.trim()).map(v => v.question_id));
-  interviews.filter(t => typeof t.data?.answer === 'string' && t.data.answer.trim()).forEach(t => answeredIds.add(t.question_id));
-  const typedConfirmations = confirmations.map(c => ({...c,confirmation_status:currentConfirmationStatus(c),data:{...c.data,confirmation_status:currentConfirmationStatus(c)},history:confirmationHistory.filter(e => e.confirmation_id === c.id)}));
-  const sourceAt = (version: number | undefined) => archivedContent.find(row=>row.version===version)?.data as LearningData | undefined;
-  const editedVersions = versions.map(v => {
-    const source = sourceAt(v.data?.contentVersion);
-    const question = v.data?.question || source?.questions.find(q=>q.id===v.question_id);
-    const design = v.data?.answerDesign || source?.answer_designs?.find(d=>d.question_id===v.question_id);
-    return {...v,revision_kind:'answer_edit',response_mode:'text',activity_ids:Array.isArray(question?.activity_ids)?question.activity_ids:[],assistance_recorded:v.data?.assistance_recorded===true||v.data?.assisted===true||v.data?.ai_assisted===true,question:question?.prompt,content_version:v.data?.contentVersion ?? null,assisted:v.data?.assisted===true||v.data?.ai_assisted===true,ai_assisted:v.data?.ai_assisted===true,chat_thread_id:v.data?.chatThreadId||null,chat_message_id:v.data?.chatMessageId||null,ai_assistance:v.data?.aiAssistance||null,source_status:question?'saved':'unavailable',comparison:answerComparison(v.script,question,design)};
-  });
-  const interviewVersions = interviews.filter(t => typeof t.data?.answer === 'string' && t.data.answer.trim()).flatMap(t => {
-    const corrections = Array.isArray(t.data.transcriptRevisions) ? t.data.transcriptRevisions : [];
-    const savedRevisions = Array.isArray(t.data.answerRevisions) ? t.data.answerRevisions : [];
-    const original = typeof t.data.originalAnswer === 'string' ? t.data.originalAnswer : corrections.length ? null : t.data.answer;
-    const values = savedRevisions.length ? savedRevisions.filter((r:any) => typeof r.text === 'string' && r.text.trim()).map((r:any,i:number) => ({id:`${t.id}:revision:${r.revision ?? i+1}`,revision:r.revision ?? i+1,script:r.text,revision_kind:r.kind==='transcript_correction'?'transcript_correction':'interview_answer',created_at:r.at ?? t.created_at})) : [
-      ...(original ? [{id:`${t.id}:answer`,revision:1,script:original,revision_kind:'interview_answer',created_at:t.data.answeredAt ?? t.created_at}] : []),
-      ...corrections.filter((r:any) => typeof r.transcript === 'string' && r.transcript.trim()).map((r:any,i:number) => ({id:`${t.id}:transcript:${r.revision ?? i+1}`,revision:i+2,script:r.transcript,revision_kind:'transcript_correction',created_at:r.at ?? t.created_at})),
-      ...(!original && !corrections.length ? [{id:`${t.id}:answer-current`,revision:1,script:t.data.answer,revision_kind:'interview_answer',created_at:t.data.answeredAt ?? t.created_at}] : []),
-    ];
-    const source = sourceAt(t.content_version);
-    const sourceQuestion = t.context_questions?.find((q:any)=>q.id===t.question_id)||source?.questions.find(q=>q.id===t.question_id);
-    const rootQuestionId=t.data.rootQuestionId||t.question_id;
-    const activityQuestion=t.context_questions?.find((q:any)=>q.id===rootQuestionId)||source?.questions.find(q=>q.id===rootQuestionId)||sourceQuestion;
-    const activityIds=Array.isArray(activityQuestion?.activity_ids)?activityQuestion.activity_ids:[];
-    return values.map((v:any) => {
-      const rawScript=v.revision_kind!=='transcript_correction'&&t.data.speechSource?.cleanupStatus==='completed'?t.data.speechSource.rawText:null;
-      return {...v,...(rawScript?{raw_script:rawScript,transcript_formatting:t.data.speechSource}:{}),question_id:t.question_id,question:t.data.question,activity_ids:activityIds,practice_kind:sourceQuestion?.question_types?.includes('concept')?'concept':'personal',session_id:t.session_id,experience_card:t.experience_card?{id:t.experience_card.id,revision:t.experience_card.revision}:null,target_id:t.target_id,target_snapshot:t.target_snapshot||null,turn_id:t.id,assisted:!!t.data.assisted,assistance_recorded:t.data.assistance_recorded===true||t.data.assisted===true,response_mode:t.data.submissionSource==='text'?'text':t.data.submissionSource==='recording'?'audio':t.kind==='chat'?'text':rawScript?'audio':'unknown',structure:'',content_version:t.content_version,source_kind:t.source_kind||'personal',source_type:t.data.sourceType||'personal',common_revision:t.data.commonRevision||null,source_snapshot:t.data.sourceSnapshot||null,practice_label:t.data.practiceLabel||null,source_status:'saved',comparison:answerComparison(observedAnswerText({script:v.script,raw_script:rawScript}),sourceQuestion,source?.answer_designs?.find(d=>d.question_id===t.question_id))};
-    });
-  });
-  const quizVersions = quizAnswers.filter(row=>row.mode!=='choice'&&(row.response.trim()||row.data?.recording_id)).map(row=>{
-    const source=sourceAt(row.content_version),identity=quizAnswerContext(row.item||{},row.data,source),assistance=answerAssistance(row);
-    const sourceQuestion=source?.questions.find(q=>q.id===identity.question_id);
-    return {
-    id:`quiz:${row.id}`,revision:1,...identity,memory_item_id:row.memory_item_id,script:row.response,...(row.data?.speech_source?.cleanupStatus==='completed'?{raw_script:row.data.speech_source.rawText,transcript_formatting:row.data.speech_source}:{}),structure:'',revision_kind:row.mode==='oral'?'quiz_oral':'quiz_answer',created_at:row.created_at,
-    target_id:row.data?.target_id||row.item?.target_id||row.session_metadata?.targetId||null,target_snapshot:row.data?.target_snapshot||row.item?.target_snapshot||row.session_metadata?.targetSnapshot||null,source_kind:row.data?.source_kind||row.item?.source_kind||'personal',source_type:row.data?.source_type||row.item?.source_type||'personal',common_revision:row.data?.common_revision||row.item?.common_revision||null,source_snapshot:row.data?.source_snapshot||row.item?.source_snapshot||null,quiz_session_id:row.session_id,response_mode:row.mode==='oral'&&row.data?.recording_id?'audio':'text',audio_id:row.data?.recording_id||null,assisted:assistance.assisted,ai_assisted:assistance.aiAssisted,hint_used:assistance.hintUsed,assistance_recorded:assistance.assisted||row.data?.assistance_recorded===true,content_version:row.content_version,source_status:'saved',source_ref_ids:row.item?.source_ref_ids||[],outcome:row.mode==='oral'?null:row.outcome,evaluation_method:row.mode==='oral'||row.outcome===null?'ungraded':'reviewed_correct_answer',
-    comparison:answerComparison(observedAnswerText({script:row.response,raw_script:row.data?.speech_source?.cleanupStatus==='completed'?row.data.speech_source.rawText:null}),sourceQuestion,source?.answer_designs?.find(d=>d.question_id===identity.question_id)),
-  }});
-  const assignmentVersions = attempts.filter(row=>typeof row.response?.response==='string'&&row.response.response.trim()).map(row=>{
-    const assignment = assignments.find(a=>a.id===row.assignment_id),item=assignment?.items.find((i:any)=>i.id===row.memory_item_id);
-    const source=sourceAt(assignment?.content_version),identity=quizAnswerContext(item||{}, row.response||{},source);
-    const response=item?.kind==='choice'?item.options?.find((option:any)=>option.id===row.response.selectedOptionId||option.id===row.response.response)?.text||row.response.response:row.response.response;
-    const help=row.response||{},assistance={assisted:help.assisted===true||help.hintUsed===true||help.aiAssisted===true,hintUsed:help.hintUsed===true,aiAssisted:help.aiAssisted===true},question=item?.question_snapshot||source?.questions.find(q=>q.id===identity.question_id);
-    return {id:`assignment:${row.id}`,revision:1,...identity,question:identity.practice_kind!=='concept'&&question?.prompt?question.prompt:identity.question,memory_item_id:row.memory_item_id,script:response,structure:'',revision_kind:'assignment_answer',response_mode:'text',created_at:row.submitted_at,assignment_id:row.assignment_id,target_id:item?.target_id||row.response?.target_id||assignment?.target_id||null,target_snapshot:item?.target_snapshot||row.response?.target_snapshot||assignment?.target_snapshot||null,source_kind:item?.source_kind||row.response?.source_kind||'personal',source_type:item?.source_type||row.response?.source_type||'personal',common_revision:item?.common_revision||row.response?.common_revision||null,source_snapshot:item?.source_snapshot||row.response?.source_snapshot||null,content_version:assignment?.content_version,source_status:item?'saved':'unavailable',outcome:row.result?.correct,evaluation_method:row.result?.evaluation_method,...assistance,ai_assisted:assistance.aiAssisted,hint_used:assistance.hintUsed,assistance_recorded:assistance.assisted||row.response?.assistance_recorded===true,required_meanings:item?.required_meaning_elements||question?.answer_elements||[],comparison:answerComparison(response,question)};
-  });
-  const checks=preferenceRows[0]?.data?.answer_meaning_checks||{};
-  const answerRevisions = [...editedVersions,...interviewVersions,...quizVersions,...assignmentVersions].filter(v=>v.question_id).map(version=>{const saved=checks[version.id],required=version.comparison?.required_meanings.map((m:any)=>m.text)||[];return {...version,self_checked_meanings:Array.isArray(saved?.checkedMeanings)?saved.checkedMeanings.filter((text:unknown)=>typeof text==='string'&&required.includes(text)):[],self_checked_at:saved?.checkedAt||null};}).sort((a,b) => new Date(b.created_at).getTime()-new Date(a.created_at).getTime());
+  const typedConfirmations=confirmations.map(c=>({...c,confirmation_status:currentConfirmationStatus(c),data:{...c.data,confirmation_status:currentConfirmationStatus(c)},history:confirmationHistory.filter(e=>e.confirmation_id===c.id)}));
+  const sourceAt=(version:number|undefined)=>archivedContent.find(row=>row.version===version)?.data as LearningData|undefined;
   const readiness = targets.map(target => {
     const activities = learning.activities.filter(a => a.priority_assignments.some(p => p.support_target_id === target.id && ['S','A'].includes(p.priority)));
     const questions = learning.questions.filter(q => q.support_target_ids.includes(target.id));
-    const targetTurns = interviews.filter(t => t.target_id === target.id && typeof t.data?.answer === 'string' && t.data.answer.trim());
+    const targetTurns=practice.filter(row=>recordMatchesCurrentTarget(row,[{...target.data,id:target.id}])).sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime());
+    const answeredIds=new Set(targetTurns.map(row=>row.question_id));
     const depths = [...new Set(targetTurns.map(t => learning.questions.find(q => q.id === t.question_id)?.depth).filter(Boolean))];
     const needs = typedConfirmations.filter(c => ['needs_confirmation','student_says_different','cannot_confirm'].includes(c.confirmation_status));
     return {target_id:target.id,priority_activity_ids:activities.map(a => a.id),unexplained_activity_ids:activities.filter(a => !questions.some(q => q.activity_ids.includes(a.id) && answeredIds.has(q.id))).map(a => a.id),
@@ -174,8 +141,20 @@ export async function getLearningWorkflows(user: Profile, requestedStudentId?: s
       last_practiced_at:targetTurns[0]?.created_at ?? null,self_checked_activity_ids:preparation.filter(p => p.completed && p.stage === 'speech' && activities.some(a => a.id === p.entity_id)).map(p => p.entity_id)};
   });
   return { students:[],targets:targets.map(t => ({...t.data,id:t.id,student_id:t.student_id})),assignments:assignments.map(a => {const target=targets.find(t=>t.id===a.target_id);return {...safeAssignment(a,attempts,events,sourceAt(a.content_version)),target_unchanged:!a.target_snapshot||!!target&&learningTargetIdentityMatches(schoolQuizTargetIdentity(a.target_snapshot)!,schoolQuizTargetIdentity({...target.data,id:target.id})!)};}), confirmations:typedConfirmations,
-    versions:answerRevisions,answerRevisions,schoolProfiles:latestProfileViews(schoolProfiles,targets),readiness,memoryItems:learning.memory_items.map(m => publicQuizItem(quizSnapshotItem(m,learning))),sources:learning.source_refs,
+    versions:[] as any[],answerRevisions:[] as any[],schoolProfiles:latestProfileViews(schoolProfiles,targets),readiness,memoryItems:learning.memory_items.map(m => publicQuizItem(quizSnapshotItem(m,learning))),sources:learning.source_refs,
   };
+}
+
+/** Lists and bodies are independently paged; the overview contains full-history aggregate observations. */
+export async function getLearningWorkflows(user:Profile,requestedStudentId?:string,options:LearningHistoryOptions={}){
+  if(user.role!=='student'&&!requestedStudentId)return buildLearningOverview(user);
+  const studentId=requestedStudentId?parse(uuid,requestedStudentId):user.id;
+  await assertStudentScope(user,studentId);
+  const [overview,history]=await Promise.all([
+    readStudentModel(studentId,'learning-overview','v2',()=>buildLearningOverview(user,requestedStudentId)),
+    getLearningHistoryPage(user,requestedStudentId,options),
+  ]);
+  return {...overview,versions:history.versions,answerRevisions:history.versions,versionsPage:history.versionsPage};
 }
 
 async function audit(db: PoolClient, actor: string, studentId: string, action: string, data: unknown) {

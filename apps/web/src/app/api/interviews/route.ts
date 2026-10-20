@@ -1,3 +1,4 @@
+import {getStudentRecords} from '@/lib/student-records';
 import { stoppedInterviewTimer, settledInterviewTimer, renewInterviewTimer, INTERVIEW_LEASE_MS } from '@/lib/interview-timer';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -96,7 +97,7 @@ export async function GET(request: Request) {
       return json({experienceCard,question,questions:practice.questions,activities:context.activities,sources:context.sources,contentVersion:context.contentVersion,sourceKind:practice.scope==='personal_record'?'personal':context.sourceKind || 'personal',practiceAllowed:practice.allowed&&!(practice.scope==='personal_record'&&sourceType==='common'),practiceScope:practice.scope,practiceLabel:practice.label,practiceNotice:practice.notice,targetSnapshotStale:Boolean(context.targetSnapshotStale),supportTarget:context.target});
     }
     const sessionId = url.searchParams.get('id');
-    if (!sessionId) return json({ sessions: (await query('select * from interview_sessions where student_id=$1 order by created_at desc limit 80', [user.id])).map(sessionView) });
+    if(!sessionId){const params=new URLSearchParams(url.searchParams);params.set('kind','interviews');const result=await getStudentRecords(user.id,params);return json({sessions:'items' in result?result.items:[],page:'page' in result?result.page:null});}
     z.string().uuid().parse(sessionId);
     const session = await sessionFor(user.id, sessionId);
     if (session.data.processing && Date.now() - Number(session.data.processingAt || 0) > 120000) {

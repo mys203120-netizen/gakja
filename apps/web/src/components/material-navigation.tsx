@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -13,7 +15,7 @@ export function MaterialNavigation() {
   const bookKinds=publishedMaterialBooks(data.documents).map(book=>book.kind);
   if((path!=='/materials'&&!path.startsWith('/materials/'))||section==='briefings')return null;
   const children=sections.filter(([key])=>!['guidebook','handbook'].includes(key)||bookKinds.includes(key));
-  return <div className={styles.materialNavigation}>
-    <nav className={styles.materialChildren} aria-label="내 교재 구성">{children.map(([key,label])=><Link key={key} href={'/materials/'+key} aria-current={key===section?'page':undefined}>{label}</Link>)}</nav>
+  return <div className={ownedClassName(styles.materialNavigation,true)}>
+    <nav className={ownedClassName(styles.materialChildren,true)} aria-label="내 교재 구성">{children.map(([key,label])=><Link key={key} href={'/materials/'+key} aria-current={key===section?'page':undefined}>{label}</Link>)}</nav>
   </div>;
 }

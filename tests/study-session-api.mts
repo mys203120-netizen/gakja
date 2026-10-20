@@ -50,10 +50,16 @@ try{
   check((await db.query('select closing_at from study_sessions where id=$1',[id])).rows[0].closing_at===null,'reload heartbeat cancels pending close');
 
   const quizSource=randomUUID(),oralSource=randomUUID(),turnSource=randomUUID(),interviewId=randomUUID();
+  const quizItem={id:'synthetic-quiz',question_id:'synthetic-question',prompt:'합성 선택형 질문',kind:'choice',category:'experiential',question_snapshot:{id:'synthetic-question',prompt:'합성 선택형 질문'},evaluation_method:'self_check',verification_status:'needs_confirmation',options:[{id:'wrong',text:'합성 오답'},{id:'right',text:'합성 정답'}],correct_option_id:'right'};
+  const oralItem={...quizItem,id:'synthetic-oral',question_id:'synthetic-oral-question',prompt:'합성 말하기 질문',question_snapshot:{id:'synthetic-oral-question',prompt:'합성 말하기 질문'}};
+  const quizSession=(await db.query("insert into quiz_sessions(student_id,mode,content_version,items,state) values($1,'choice',1,$2,'completed') returning id",[students[0],JSON.stringify([quizItem])])).rows[0].id;
+  const oralSession=(await db.query("insert into quiz_sessions(student_id,mode,content_version,items,state) values($1,'oral',1,$2,'completed') returning id",[students[0],JSON.stringify([oralItem])])).rows[0].id;
+  await db.query("insert into quiz_responses(id,session_id,student_id,item_index,memory_item_id,response,selected_option_id,outcome,timed_out,elapsed_ms,rating,data) values($1,$2,$3,0,'synthetic-quiz','합성 오답','wrong',false,true,10000,'again',$4)",[quizSource,quizSession,students[0],JSON.stringify({question_id:'synthetic-question',assistance_recorded:true})]);
+  await db.query("insert into quiz_responses(id,session_id,student_id,item_index,memory_item_id,response,outcome,elapsed_ms,rating,data) values($1,$2,$3,0,'synthetic-oral','합성 녹음 답변',null,8000,'good',$4)",[oralSource,oralSession,students[0],JSON.stringify({question_id:'synthetic-oral-question',assistance_recorded:true})]);
   await db.query("insert into memory_attempts(id,student_id,memory_item_id,rating,data,due_at) values($1,$2,'synthetic-quiz','again',$3,now())",[quizSource,students[0],JSON.stringify({synthetic:true,answer:'합성 오답'})]);
   await db.query("insert into memory_attempts(id,student_id,memory_item_id,rating,data,due_at) values($1,$2,'synthetic-oral','good',$3,now())",[oralSource,students[0],JSON.stringify({synthetic:true,answer:'합성 녹음 답변'})]);
   await db.query("insert into interview_sessions(id,student_id,kind,content_version,data) values($1,$2,'video',1,$3)",[interviewId,students[0],JSON.stringify({synthetic:true})]);
-  await db.query("insert into interview_turns(id,session_id,student_id,question_id,data) values($1,$2,$3,'synthetic-interview',$4)",[turnSource,interviewId,students[0],JSON.stringify({synthetic:true,response:'합성 면접 답변'})]);
+  await db.query("insert into interview_turns(id,session_id,student_id,question_id,data) values($1,$2,$3,'synthetic-interview',$4)",[turnSource,interviewId,students[0],JSON.stringify({synthetic:true,answer:'합성 면접 답변',assisted:true,assistance_recorded:true,submissionSource:'recording'})]);
   const client=await pool.connect();
   try{
     await client.query('begin');
@@ -115,6 +121,7 @@ try{
   await db.query('delete from support_targets where student_id=any($1::uuid[])',[all]);
   await db.query('delete from study_sessions where student_id=any($1::uuid[])',[all]);
   await db.query('delete from memory_attempts where student_id=any($1::uuid[])',[all]);
+  await db.query('delete from quiz_sessions where student_id=any($1::uuid[])',[all]);
   await db.query('delete from interview_sessions where student_id=any($1::uuid[])',[all]);
   await db.query('delete from sessions where user_id=any($1::uuid[])',[all]);
   await db.query("delete from profiles where id=any($1::uuid[]) and email like 'study-session-%@gakja.test'",[all]);

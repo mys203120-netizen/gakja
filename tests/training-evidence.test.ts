@@ -18,6 +18,20 @@ test('drafts, invalidated answers, other target and other publication cannot upd
 test('edited transcription counts as a written submission and formatting is not an extra attempt',()=>{
  const row=fold([turn('one',{speechSource:{rawText:'원래 말',studentEdited:true}})]).items[0];assert.equal(row.textAttempts,1);assert.equal(row.audioAttempts,0);assert.equal(row.mainAnswers,1);
 });
+
+test('an explicit text submission takes priority over retained speech metadata',()=>{
+ const row=fold([turn('typed',{submissionSource:'text',speechSource:{rawText:'이전 녹음',studentEdited:false}})]).items[0];
+ assert.equal(row.textAttempts,1);assert.equal(row.audioAttempts,0);
+});
+
+test('mixed interview common answers follow their own question revision across personal republication',()=>{
+ const common={...question,common_revision:3};
+ const mixed=turn('mixed',{commonRevision:3},{session_data:{context:{target,sourceKind:'mixed',contentVersion:1,questions:[common]}}});
+ const current=fold([mixed],{contentVersion:2,learning:{...learning,questions:[common]}}).items[0];
+ assert.equal(current.mainAnswers,1);
+ const changed=fold([mixed],{contentVersion:1,learning:{...learning,questions:[{...common,common_revision:4}]}}).items[0];
+ assert.equal(changed.mainAnswers,0);
+});
 test('a common-source diagnosis without a personal guidebook still has visible submitted evidence',()=>{
  const common={id:'common1',prompt:'지원 동기는?',common_revision:2,activity_ids:[]};
  const result=foldTrainingEvidence({learning:{activities:[],questions:[common]},cards:[],events:[],target,contentVersion:null,turns:[turn('common',{rootQuestionId:common.id},{question_id:common.id,session_data:{context:{target,sourceKind:'common',contentVersion:2,questions:[common]}}})]});

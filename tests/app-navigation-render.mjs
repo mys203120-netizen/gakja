@@ -14,7 +14,7 @@ const equal=(a,b)=>{assert.deepEqual(a,b);checks++;};
 function load(name,context,environment={}){
  const module={exports:{}};
  const source=ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/'+name,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
- vm.runInNewContext(source,{...environment.globals,module,exports:module.exports,require(name){
+ vm.runInNewContext(source,{...environment.globals,module,exports:module.exports,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name==='react/jsx-runtime')return jsx;
   if(name==='react')return environment.react||React;
   if(name==='next/link')return {__esModule:true,default:({href,children,...props})=>React.createElement('a',{href,...props},children)};

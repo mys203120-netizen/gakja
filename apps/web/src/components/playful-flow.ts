@@ -1,3 +1,4 @@
+import {ownedClassName} from './owned-class-name';
 import gsap from 'gsap';
 
 type Carry = { ghost: HTMLElement; target?: HTMLElement; raf: number; timer: number; born: number };
@@ -23,7 +24,7 @@ export function attachQuestionCarry() {
     if(!source)return;
     const rect=source.getBoundingClientRect(),style=getComputedStyle(source),prompt=normalize(source.textContent||'');
     if(!prompt||rect.bottom<0||rect.top>innerHeight)return;
-    stopCarry();const ghost=document.createElement('div');ghost.className='question-carry';ghost.textContent=source.textContent;ghost.setAttribute('aria-hidden','true');
+    stopCarry();const ghost=document.createElement('div');ghost.className=ownedClassName('question-carry',true)!;ghost.textContent=source.textContent;ghost.setAttribute('aria-hidden','true');
     Object.assign(ghost.style,{left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,fontFamily:style.fontFamily,fontSize:style.fontSize,fontWeight:style.fontWeight,lineHeight:style.lineHeight,letterSpacing:style.letterSpacing,color:style.color});
     document.body.append(ghost);carry={ghost,raf:0,timer:0,born:performance.now()};
     const state=carry;
@@ -50,7 +51,7 @@ export function animateStudyReceipt(origin?: DOMRect) {
   const destination=Array.from(document.querySelectorAll<HTMLElement>('.main-nav a[href="/records"],.mobile-nav a[href="/records"]')).find(element=>{const rect=element.getBoundingClientRect();return rect.height>0&&rect.top>=0&&rect.bottom<=innerHeight;});
   if(!destination)return;
   const end=(destination.querySelector('svg')||destination).getBoundingClientRect(),start=origin||{left:innerWidth/2,top:innerHeight/2,width:0,height:0};
-  const dot=document.createElement('span');dot.className='study-receipt-dot';dot.setAttribute('aria-hidden','true');document.body.append(dot);
+  const dot=document.createElement('span');dot.className=ownedClassName('study-receipt-dot',true)!;dot.setAttribute('aria-hidden','true');document.body.append(dot);
   const x=start.left+start.width/2,y=start.top+start.height/2;
   gsap.set(dot,{x,y,scale:.6});gsap.timeline({onComplete:()=>dot.remove()})
     .to(dot,{scale:1,duration:.1})

@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import {useEffect,useId,useRef,useState} from 'react';
 import {Check,ChevronDown} from 'lucide-react';
@@ -22,7 +24,7 @@ export function SettingsSelect({label,value,options,onChange,disabled=false}:{la
  },[open,selected]);
  useEffect(()=>{if(disabled)setOpen(false);},[disabled]);
  function close(){setOpen(false);trigger.current?.focus({preventScroll:true});}
- return <div className={styles.root} ref={root} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node))setOpen(false);}} onKeyDown={event=>{
+ return <div className={ownedClassName(styles.root,true)} ref={root} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node))setOpen(false);}} onKeyDown={event=>{
   if(event.key==='Escape'&&open){event.preventDefault();event.stopPropagation();close();return;}
   if(!['ArrowDown','ArrowUp','Home','End'].includes(event.key)||disabled)return;
   event.preventDefault();
@@ -32,7 +34,7 @@ export function SettingsSelect({label,value,options,onChange,disabled=false}:{la
   const next=event.key==='Home'?0:event.key==='End'?buttons.length-1:event.key==='ArrowDown'?(current+1)%buttons.length:(current-1+buttons.length)%buttons.length;
   buttons[next]?.focus({preventScroll:true});
  }}>
-  <button type="button" className={styles.trigger} ref={trigger} aria-label={`${label} · ${options[selected]?.label||value}`} aria-haspopup="listbox" aria-expanded={open} aria-controls={open?id:undefined} disabled={disabled} onClick={()=>setOpen(previous=>!previous)}><span>{options[selected]?.label||value}</span><ChevronDown size={15} aria-hidden="true"/></button>
-  {open&&<div className={styles.menu} id={id} role="listbox" aria-label={label}>{options.map(option=><button type="button" role="option" aria-selected={value===option.value} tabIndex={-1} key={option.value} onClick={()=>{close();if(option.value!==value)onChange(option.value);}}><span>{option.label}</span>{value===option.value&&<Check size={16} aria-hidden="true"/>}</button>)}</div>}
+  <button type="button" className={ownedClassName(styles.trigger,true)} ref={trigger} aria-label={`${label} · ${options[selected]?.label||value}`} aria-haspopup="listbox" aria-expanded={open} aria-controls={open?id:undefined} disabled={disabled} onClick={()=>setOpen(previous=>!previous)}><span className={ownedClassName(undefined,true)}>{options[selected]?.label||value}</span><ChevronDown size={15} aria-hidden="true"/></button>
+  {open&&<div className={ownedClassName(styles.menu,true)} id={id} role="listbox" aria-label={label}>{options.map(option=><button type="button" role="option" aria-selected={value===option.value} tabIndex={-1} key={option.value} onClick={()=>{close();if(option.value!==value)onChange(option.value);}} className={ownedClassName(undefined,true)}><span className={ownedClassName(undefined,true)}>{option.label}</span>{value===option.value&&<Check size={16} aria-hidden="true"/>}</button>)}</div>}
  </div>;
 }

@@ -5,6 +5,8 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import * as availability from '../apps/web/src/lib/training-availability.ts';
 import * as hybrid from '../apps/web/src/lib/hybrid-training.ts';
+import * as review from '../apps/web/src/lib/training-review.ts';
+import {shiftPlanDay} from '../apps/web/src/lib/planner-model.ts';
 
 test('read-through replanning retires only owned untouched current/future automatic breaks and preserves their history',async()=>{
  const today='2026-10-21',studentId='synthetic-owner',school={university:'검증대학',department:'검증학과'};
@@ -14,7 +16,7 @@ test('read-through replanning retires only owned untouched current/future automa
  const context={schoolTargets:[{id:'school',data:school}],selectedTargetId:'school',events:[]};
  const query=async(sql:string,args:any[]=[])=>{
   if(sql.includes('pg_advisory_xact_lock'))return {rows:[]};
-  if(sql.startsWith('select data from student_preferences'))return {rows:[{data:{trainingAvailability:{version:2,startDate:'2026-10-01',savedAt:'2026-10-20T00:00:00Z',revision:1,weekdayMinutes:120,weekendMinutes:120,blockedDates:[],overrides:{}}}}]};
+  if(sql.includes('from student_preferences'))return {rows:[{data:{trainingAvailability:{version:2,startDate:'2026-10-01',savedAt:'2026-10-20T00:00:00Z',revision:1,weekdayMinutes:120,weekendMinutes:120,blockedDates:[],overrides:{}}}}]};
   if(sql.startsWith('select id,data from support_targets'))return {rows:[{id:'school',data:school}]};
   if(sql.includes('from study_session_events')||sql.includes('from interview_sessions'))return {rows:[]};
   if(sql.includes('from student_plans'))return {rows:plans};
@@ -23,7 +25,7 @@ test('read-through replanning retires only owned untouched current/future automa
  };
  const module={exports:{} as any};
  const code=ts.transpileModule(readFileSync('apps/web/src/lib/hybrid-training-store.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
- vm.runInNewContext(code,{module,exports:module.exports,Set,Map,Date,JSON,Number,Object,String,require(name:string){
+ vm.runInNewContext(code,{module,exports:module.exports,Set,Map,Date,JSON,Number,Object,String,require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
   if(name==='server-only')return {};
   if(name==='./db')return {ApiError:Error,transaction:async(work:any)=>work({query})};
   if(name==='./planner-context')return {getPlanContext:async()=>context,presentPlan:(plan:any)=>({...plan,href:'/my',targetAvailable:true,performedAt:null})};
@@ -32,9 +34,14 @@ test('read-through replanning retires only owned untouched current/future automa
   if(name==='./school-interview-scope')return {interviewSupportForTarget:()=>({supported:true})};
   if(name==='./learning-target-scope')return {recordMatchesCurrentTarget:()=>true};
   if(name==='./knowledge-flow-model')return {knowledgeTargetKey:(value:any)=>JSON.stringify(value)};
-  if(name==='./planner-model')return {koreaToday:()=>today};
+  if(name==='./planner-model')return {koreaToday:()=>today,shiftPlanDay};
+  if(name==='./training-read-model')return {getTrainingReadModel:async()=>({completedSessionIds:[],targets:[],questions:[],review:{version:1,questions:[]},activeRequests:[],sourceRevision:'1'}),trainingReadContext:()=>context};
+  if(name==='./student-read-model')return {studentModelRevision:async()=> '1'};
   if(name==='./training-availability')return availability;
   if(name==='./hybrid-training')return hybrid;
+  if(name==='./training-review')return review;
+  if(name==='./training-review-evidence-store')return {loadReviewQuestionFacts:async(owner:string)=>{assert.equal(owner,studentId);return {questions:[],targets:new Map()};}};
+  if(name==='./training-review-store')return {synchronizeTrainingReviews:async(_db:any,owner:string,preferences:any,questions:any[])=>{assert.equal(owner,studentId);return review.reconcileTrainingReviews({state:preferences.trainingReview,questions,diagnostics:preferences.trainingDiagnostics||{},now:today+'T00:00:00Z'});}};
   throw Error(name);
  }});
  const result=await module.exports.getHybridTraining(studentId,'school',today);

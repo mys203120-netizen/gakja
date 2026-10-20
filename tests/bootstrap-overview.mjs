@@ -29,27 +29,27 @@ const compile = source => ts.transpileModule(source, { compilerOptions: { module
 let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
 const dataModule = { exports: {} };
-vm.runInNewContext(compile(fs.readFileSync(new URL('../apps/web/src/lib/data.ts', import.meta.url), 'utf8')), { module: dataModule, exports: dataModule.exports, require(name) {
+vm.runInNewContext(compile(fs.readFileSync(new URL('../apps/web/src/lib/data.ts', import.meta.url), 'utf8')), { module: dataModule, exports: dataModule.exports, require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if (name === 'server-only') return {};
   if (name === './school-directory') return { enrichSchoolTarget: value => value };
   if (name === './admin-training') return {adminTrainingSummary(){throw new Error('Student bootstrap must not read administrative training summaries.');}};
+  if (name === './student-read-model') return {readStudentModel:async(_student,_kind,_scope,build)=>build()};
   if (name === './planner-model') return {koreaToday:()=> '2026-10-15'};
   if (name === './db') return { ApiError: Error, async query(sql, parameters) {
     calls.push({ sql, parameters });
-    if (sql.includes('from chat_threads')) return structuredClone(threads);
-    if (sql.includes('from interview_sessions')) return structuredClone([previous, own, completed, cancelled]);
+    if(sql.includes('as unread_notifications'))return [{answers:3,interviews:4,memory:2,confirmations:1,unread_notifications:0}];
+    if (sql.includes('from chat_threads')) throw new Error('History cannot be fetched while loading the shell.');
+    if (sql.includes('from interview_sessions')) return structuredClone([previous,own]);
     if (sql.includes('from support_targets')) return [{ id: target.id, student_id: 'student', data: { ...target } }];
     return [];
   } };
   throw new Error('Unexpected bootstrap import: ' + name);
 } });
 const data = await dataModule.exports.bootstrap({ id: 'student', name: '하린', role: 'student' });
-const threadQuery = calls.find(call => call.sql.includes('from chat_threads'));
-const interviewQuery = calls.find(call => call.sql.includes('from interview_sessions'));
-check(!threadQuery.sql.includes('select *') && !threadQuery.sql.includes('context'), 'thread overview excludes full frozen AI/learning context in SQL');
-check(/archived_at is null and deleted_at is null/.test(threadQuery.sql), 'active thread history retains archive/deletion boundaries');
+const interviewQuery = calls.find(call => call.sql.includes('from interview_sessions')&&!call.sql.includes('as unread_notifications'));
+check(!calls.some(call=>call.sql.includes('from chat_threads')||call.sql.includes('from interview_reports')||/select \* from user_answers/.test(call.sql)), 'the shell never reads history bodies or report JSON');
 check(!interviewQuery.sql.includes('select *') && /where student_id=\$1/.test(interviewQuery.sql), 'interview projection keeps the owning student boundary');
-check(!/\blimit\b/i.test(interviewQuery.sql + threadQuery.sql), 'overview does not silently truncate old learning history');
+check(interviewQuery.sql.includes("state='active'")&&interviewQuery.sql.includes('distinct on(target_id,kind)'), 'active resume is selected independently from recent history pagination');
 check(interviewQuery.sql.includes("'target',data->'context'->'target'") && interviewQuery.sql.includes("'targetId',data->'context'->'targetId'"), 'frozen target identity is selected from the saved session');
 check(interviewQuery.sql.includes("'trainingPurpose',data->'trainingPurpose'") && interviewQuery.sql.includes("'trainingPlanId',data->'trainingPlanId'"), 'the student-owned overview retains the purpose and plan identity required for unified training');
 check(interviewQuery.sql.includes("jsonb_typeof(data->'questionQueue')='array'"), 'legacy missing/non-array question queues do not throw an array-length error');
@@ -57,9 +57,10 @@ check(interviewQuery.sql.includes("'currentQuestion',case when state='active'") 
 check(!/questions|answerScripts|studentContext|feedback|draft/.test(interviewQuery.sql), 'bootstrap SQL excludes answer resources, feedback, drafts, and AI processing facts');
 check(interviewQuery.sql.includes("current_question->'activity_ids' ? (value->>'id')"), 'only activities linked to the current question are projected');
 check(calls.every(call => call.parameters?.[0] === 'student'), 'every student bootstrap query remains student scoped');
-check(data.interviews.length === 4 && data.threads.length === 1, 'completed, cancelled, historical and current records keep their counts');
+check(data.interviews.length===2&&data.threads.length===0&&data.reports.length===0&&data.answers.length===0,'shell contains active resume and no history bodies');
+check(data.summary.interviews===4&&data.summary.memory===2,'full-history counts are represented by compact summary fields');
 check(data.interviews.find(row=>row.id==='session-own').data.trainingPurpose==='diagnostic'&&data.interviews.find(row=>row.id==='session-own').data.trainingPlanId==='training-plan-own', 'own-session training metadata survives the compact bootstrap result');
-check(!data.threads[0].context && !data.interviews[1].data.questionQueue, 'render fixtures contain no full thread context or interview queue');
+check(!data.interviews[1].data.questionQueue, 'render fixtures contain no full thread context or interview queue');
 
 let app = { data, target, targetId: target.id, learningRevision: 0, toast() {} };
 let values = [], cursor = 0, queuedEffects = [];
@@ -67,12 +68,13 @@ const requests = [];
 const shared = { api: async url => { requests.push(url); return { threads: [{ ...threads[0], id: 'archived-own', title: '보관한 질문', archived_at: '2026-10-14' }] }; }, post: async () => ({}), PageTitle: 'PageTitle', LinkedRow: 'LinkedRow', Alert: 'Alert', Empty: 'Empty', Modal: 'Modal', Breadcrumb: 'Breadcrumb', Badge: 'Badge', Spinner: 'Spinner', dateLabel: String, targetName: item => item?.university || '', targetMajor: item => item?.department || item?.major || '' };
 function loadComponent(name) {
   const module = { exports: {} };
-  vm.runInNewContext(compile(fs.readFileSync(new URL('../apps/web/src/components/' + name, import.meta.url), 'utf8')), { module, exports: module.exports, Date, Intl, Set, URLSearchParams, document: { body: { nodeType: 1 } }, require(id) {
+  vm.runInNewContext(compile(fs.readFileSync(new URL('../apps/web/src/components/' + name, import.meta.url), 'utf8')), { module, exports: module.exports, Date, Intl, Set, URLSearchParams, document: { body: { nodeType: 1 } }, require(id) {if(id==='./owned-class-name'||id==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if (id === 'react') return { useState(initial) { const key = cursor++; if (!(key in values)) values[key] = typeof initial === 'function' ? initial() : initial; return [values[key], next => { values[key] = typeof next === 'function' ? next(values[key]) : next; }]; }, useEffect(callback) { queuedEffects.push(callback); }, useLayoutEffect() {}, useId: () => 'overview-menu', useCallback: callback => callback, useRef: current => ({ current }) };
     if (id === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }), Fragment: 'Fragment' };
     if (id === 'react-dom') return ReactDOM;
     if (id === 'next/link') return { __esModule: true, default: 'Link' };
     if (id === 'next/navigation') return { useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push() {} }) };
+    if(id==='./use-record-pages')return {useRecordPages:kind=>({items:kind==='interviews'?[previous,own,completed,cancelled]:[],page:{hasMore:false},loading:false,error:'',more(){}}),useRecordDetail:()=>({item:null,loading:false,error:''})};
     if (id === './app-shell') return { useApp: () => app };
     if (id === './shared') return shared;
     if (id === 'lucide-react') return new Proxy({}, { get: (_, key) => String(key) });
@@ -150,7 +152,7 @@ menu = openedHistoryMenu(tree);
 check(nodes(menu).some(node => node.type === 'button' && text(node).includes('보관 해제')), 'archive restoration remains available');
 
 const records = loadComponent('records.tsx');
-tree = render(() => records.RecordsPages({ slug: ['history'] }), []);
+tree=render(()=>{const route=records.RecordsPages({slug:['history']});return typeof route.type==='function'?route.type(route.props):route;},[]);
 const retainedRows = nodes(tree).filter(node => node.type === 'LinkedRow' && node.props.href.startsWith('/interview/'));
 check(retainedRows.length === 4, 'actual records history retains all completed, cancelled, previous and active interview links');
 check(retainedRows.some(node => text(node.props.end) === '완료') && retainedRows.some(node => text(node.props.end) === '취소'), 'history completion and cancellation states survive overview compaction');

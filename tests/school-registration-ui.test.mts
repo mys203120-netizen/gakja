@@ -15,7 +15,7 @@ function harness(initialTarget?:any){
  const jsx=(type:any,props:any)=>type===actionButton?actionButton(props):({type,props});
  const module={exports:{} as any};
  vm.runInNewContext(source,{module,exports:module.exports,JSON,AbortController,Number,encodeURIComponent,
-  setTimeout(callback:any){callback();return 1;},clearTimeout(){},require(name:string){
+  setTimeout(callback:any){callback();return 1;},clearTimeout(){},require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
    if(name==='react')return {useState(initial:any){const index=stateIndex++;if(!(index in states))states[index]=typeof initial==='function'?initial():initial;return [states[index],(value:any)=>{states[index]=typeof value==='function'?value(states[index]):value;}];},useRef(initial:any){return refs[refIndex++]??={current:initial};},useEffect(callback:any,deps:any[]){const index=effectIndex++,old=effects[index];if(!old||deps.some((value,index)=>!Object.is(value,old.deps[index]))){queue.push(()=>{old?.cleanup?.();effects[index]={deps,cleanup:callback()};});}}};
    if(name==='react/jsx-runtime')return {jsx,jsxs:jsx,Fragment:'Fragment'};
    if(name==='next/link')return {default:'Link'};

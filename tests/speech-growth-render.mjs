@@ -14,7 +14,7 @@ const pending=[],posts=[];
 const module={exports:{}};
 vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,AbortController,Event,
   document:{visibilityState:'visible'},window:{addEventListener(){},removeEventListener(){},dispatchEvent(){}},
-  require(name){
+  require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if(name==='react')return {useState(initial){const index=hooks.stateIndex++;if(!(index in hooks.states))hooks.states[index]=initial;return [hooks.states[index],value=>{hooks.states[index]=typeof value==='function'?value(hooks.states[index]):value;}];},useRef(initial){const index=hooks.refIndex++;return hooks.refs[index]||(hooks.refs[index]={current:initial});},useCallback:callback=>callback,useEffect:callback=>{hooks.effects.push(callback);}};
     if(name==='react/jsx-runtime')return {jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'Fragment'};
     if(name==='next/link')return {__esModule:true,default:'Link'};

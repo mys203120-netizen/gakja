@@ -56,7 +56,8 @@ test('assistance triggers an explicit recheck; unseen questions remain unconfirm
   const allDay={...availability,csatDate:null,weekdayMinutes:120,weekendMinutes:120};
   const base=hybridTrainingDays({today,availability:allDay,deadlines:[deadline()],questions:[q('qa')],diagnostics:{a:{state:'completed'}}})[0];
   const adapted=hybridTrainingDays({today,availability:allDay,deadlines:[deadline()],questions:[q('qa','a',[{at:'2026-10-19T09:00:00Z',assisted:true}])],diagnostics:{a:{state:'completed'}}})[0];
-  assert.ok(adapted.tasks.filter(task=>task.kind==='focus').reduce((sum,task)=>sum+task.minutes,0)>base.tasks.filter(task=>task.kind==='focus').reduce((sum,task)=>sum+task.minutes,0));
+  assert.equal(base.allocation.mode,'foundation');assert.equal(adapted.allocation.mode,'repair');
+  assert.ok(adapted.tasks.some(task=>task.kind==='focus'&&task.questionId==='qa'));
   assert.equal(adapted.tasks[0].kind,'recall');
 });
 
@@ -105,7 +106,7 @@ test('deadline and observed diagnosis change time ratios; D-3 without evidence s
   assert.ok(duration(foundational,'focus')>duration(close,'focus'));
   assert.ok(duration(foundational,'mixed')<duration(close,'mixed'));
   const repair=hybridAllocation(today,[q('qa','a',[{at:'2026-10-19T09:00:00Z',assisted:true}])],[deadline('a','2026-10-23')],diagnostics);
-  assert.equal(repair.mode,'repair');assert.equal(repair.mixedShare,.15);
+  assert.equal(repair.mode,'rehearsal');assert.equal(repair.mixedShare,.4);
 });
 
 test('a date-specific time change reuses a stable task identity while changing its stored minutes',()=>{

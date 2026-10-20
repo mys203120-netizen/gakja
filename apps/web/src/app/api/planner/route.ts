@@ -7,6 +7,8 @@ import {after} from 'next/server';
 import { z } from 'zod';
 import {synchronizeAutomaticPractice} from '@/lib/automatic-practice-store';
 import {presentHybridPlan} from '@/lib/hybrid-training-store';
+import {plannerMonthRange} from '@/lib/planner-range';
+import {calendarPlanEvidence} from '@/lib/calendar-plan-evidence';
 const targetSchema = z.object({kind:z.enum(['question','activity','video','assignment']),id:z.string().min(1).max(200),targetId:z.string().min(1).max(200).optional(),sourceType:z.enum(['personal','common']).optional(),sourceVersion:z.number().int().min(1).max(100000).optional()}).strict();
 const inputSchema = z.discriminatedUnion('action',[
   z.object({action:z.literal('create'),title:z.string().trim().min(1).max(160),date:z.string().refine(validPlanDay),kind:z.enum(['study','quiz','interview','reading']).default('study'),target:targetSchema.nullable().optional()}),
@@ -17,17 +19,22 @@ const columns = "id,title,to_char(planned_date,'YYYY-MM-DD') as date,kind,comple
 export async function GET(request:Request) {
   try {
     const user = await requireUser(); if(user.role!=='student')throw new ApiError(403,'학생의 계획표에서 이용해 주세요.');
-    const targetId=new URL(request.url).searchParams.get('targetId');
-    const [initialPlans,calendar] = await Promise.all([query(`select ${columns} from student_plans where student_id=$1 order by planned_date,created_at`,[user.id]),studentAdmissionCalendar(user.id,targetId)]);
+    const params=new URL(request.url).searchParams,targetId=params.get('targetId');
+    let range;try{range=plannerMonthRange(params.get('month'));}catch(error){throw new ApiError(400,(error as Error).message);}
+    const scopedPlans=()=>query(`select ${columns} from student_plans where student_id=$1 and planned_date between $2::date and $3::date order by planned_date,created_at`,[user.id,range.startDate,range.endDate]);
+    const [initialPlans,calendar] = await Promise.all([scopedPlans(),studentAdmissionCalendar(user.id,targetId)]);
     const context = await getPlanContext(user.id,initialPlans.map(plan=>plan.target).filter(Boolean));
     const automaticPractice=await synchronizeAutomaticPractice(user.id,context);
-    const allPlans=await query(`select ${columns} from student_plans where student_id=$1 order by planned_date,created_at`,[user.id]);
-    const plans=(new URL(request.url).searchParams.get('history')==='1'?allPlans:allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded')).filter(plan=>plan.target?.automaticPractice?.hybrid?.kind!=='break');
-    const hybridSessions=allPlans.some(plan=>plan.target?.automaticPractice?.hybrid)?await query("select id from interview_sessions where student_id=$1 and state='completed' and data ? 'trainingPlanId'",[user.id]):[];
+    const allPlans=await scopedPlans();
+    const plans=(params.get('history')==='1'?allPlans:allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded')).filter(plan=>plan.target?.automaticPractice?.hybrid?.kind!=='break');
+    const evidence=await calendarPlanEvidence(user.id,plans,range,context.sources.filter(source=>source.kind==='question').map(source=>source.id));
+    const hybridIds=plans.filter(plan=>plan.target?.automaticPractice?.hybrid).map(plan=>plan.id);
+    const hybridSessions=hybridIds.length?await query("select id from interview_sessions where student_id=$1 and state='completed' and data->>'trainingPlanId'=any($2::text[])",[user.id,hybridIds]):[];
     const completedSessionIds=new Set(hybridSessions.map(row=>row.id));
-    const presented=plans.map(plan=>presentHybridPlan(plan,context,completedSessionIds));
+    const merged={...context,events:[...evidence,...context.events.filter(event=>event.kind!=='interview_answer'&&!evidence.some(row=>row.id===event.id))]};
+    const presented=plans.map(plan=>presentHybridPlan(plan,merged,completedSessionIds));
     if(calendar.refreshDue)after(()=>refreshAdmissionCalendar());
-    return Response.json({plans:presented,automaticPractice,supersededPlanCount:allPlans.length-allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded').length,targets:context.targets,interviewSchedules:calendar.interviewSchedules,interviewScheduleCoverage:calendar.interviewScheduleCoverage},{headers:privateHeaders});
+    return Response.json({plans:presented,range,automaticPractice,supersededPlanCount:allPlans.length-allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded').length,targets:context.targets,interviewSchedules:calendar.interviewSchedules,interviewScheduleCoverage:calendar.interviewScheduleCoverage},{headers:privateHeaders});
   } catch(error){return errorResponse(error);}
 }
 export async function POST(request: Request) {

@@ -10,7 +10,7 @@ const text=(value:any):string=>typeof value==='string'?value:Array.isArray(value
 function harness(){
   const hooks:any[]=[],effects:any[]=[],pending:Function[]=[];let cursor=0,tree:any,calls=0,complete!:(error?:Error)=>void;
   const mod={exports:{} as any};
-  vm.runInNewContext(code,{module:mod,exports:mod.exports,document:{body:{}},require(name:string){
+  vm.runInNewContext(code,{module:mod,exports:mod.exports,document:{body:{}},require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
     if(name==='react')return {useId:()=> 'account-menu',useRef:(initial:any)=>hooks[cursor++]??={current:initial},useState:(initial:any)=>{const index=cursor++;if(!(index in hooks))hooks[index]=initial;return [hooks[index],(value:any)=>{hooks[index]=typeof value==='function'?value(hooks[index]):value;}];},useEffect:effect,useLayoutEffect:effect};
     if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props})};
     if(name==='next/link')return {default:'Link'};if(name==='next/navigation')return {usePathname:()=>'/my'};

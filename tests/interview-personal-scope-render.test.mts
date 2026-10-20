@@ -14,7 +14,7 @@ const app={data:{user:{id:'owner'},targets:[target],package:{active_version:2},l
 const mod={exports:{} as any};
 vm.runInNewContext(ts.transpileModule(readFileSync('apps/web/src/components/interview-setup.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{
   module:mod,exports:mod.exports,URLSearchParams,crypto:{randomUUID:()=> 'fixture-start-request'},
-  require(name:string){
+  require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
     if(name==='react')return {useState(initial:any){const index=hook++;return [index in values?values[index]:initial,(value:any)=>values[index]=value];},useEffect(){}};
     if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props}),Fragment:'Fragment'};
     if(name==='next/link')return {__esModule:true,default:'Link'};

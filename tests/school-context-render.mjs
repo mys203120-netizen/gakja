@@ -25,7 +25,7 @@ function load(file) {
     document:{scrollingElement:{},querySelector:()=>({getBoundingClientRect:()=>({bottom:64})})},
     requestAnimationFrame(callback){const id=++browser.nextFrame;browser.frames.set(id,callback);return id;},
     cancelAnimationFrame:id=>browser.frames.delete(id),
-    require(name) {
+    require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
       if (name === 'react') return { useRef(initial){const index=hooks.refIndex++;return hooks.refs[index]??={current:initial};}, useState(initial) { const index = hooks.index++; if (!(index in hooks.values)) hooks.values[index] = typeof initial === 'function' ? initial() : initial; return [hooks.values[index], value => { hooks.values[index] = typeof value === 'function' ? value(hooks.values[index]) : value; }]; }, useEffect() {} };
       if (name === 'react/jsx-runtime') return { jsx: (type, props) => type===actionButton?actionButton(props):({ type, props }), jsxs: (type, props) => type===actionButton?actionButton(props):({ type, props }), Fragment: 'Fragment' };
       if (name === 'next/link') return { __esModule: true, default: 'Link' };

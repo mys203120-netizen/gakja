@@ -8,13 +8,13 @@ import {z} from 'zod';
 import * as contracts from '@gakja/content-contracts';
 import {observedAnswerText} from '../apps/web/src/lib/transcript-provenance';
 
-const code=ts.transpileModule(readFileSync(new URL('../apps/web/src/lib/learning-workflows.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const code=ts.transpileModule(readFileSync(new URL('../apps/web/src/lib/learning-history.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const root={id:'root',prompt:'탐구 원리를 설명해 주세요.',question_types:['concept'],activity_ids:['archived-activity'],answer_elements:['본질문의 설명 요소'],support_target_ids:[]};
 const archived={activities:[],questions:[root],answer_designs:[],memory_items:[],source_refs:[]};
 const turn=(overrides:Record<string,any>={})=>({id:randomUUID(),session_id:randomUUID(),question_id:'generated:followup',kind:'video',content_version:1,created_at:'2026-10-20T08:00:00Z',data:{question:'그 방법을 선택한 이유는 무엇인가요?',answer:'같은 조건에서 비교하려고 선택했어요.',rootQuestionId:'root',submissionSource:'text'},...overrides});
 async function workflow(interviews:Record<string,any>[],edits:Record<string,any>[]=[]){
   const module={exports:{}} as {exports:any};
-  vm.runInNewContext(code,{module,exports:module.exports,Date,console,require(name:string){
+  vm.runInNewContext(code,{module,exports:module.exports,Date,console,require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
     if(name==='server-only')return {};
     if(name==='node:crypto')return {randomUUID};
     if(name==='zod')return {z};
@@ -27,10 +27,10 @@ async function workflow(interviews:Record<string,any>[],edits:Record<string,any>
       return [];
     }};
     if(name==='./transcript-provenance')return {observedAnswerText};
-    if(['./study-sessions','./learning-record-rules','./school-learning','./school-quiz'].includes(name))return {};
+    if(['./record-cursor','./learning-record-rules'].includes(name))return {};
     throw Error('Unexpected workflow dependency: '+name);
   }});
-  return (await module.exports.getLearningWorkflows({id:'owner',role:'student'})).answerRevisions as Record<string,any>[];
+  return module.exports.projectLearningHistory({versions:edits,interviews,quizAnswers:[],attempts:[],assignments:[],archivedContent:[{version:1,data:archived}],preferenceRows:[]}) as Record<string,any>[];
 }
 
 test('generated follow-ups join their saved root activity without inheriting the root comparison rubric',async()=>{

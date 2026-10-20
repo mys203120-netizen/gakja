@@ -31,7 +31,7 @@ const module = { exports: {} };
 const actionButton = ({pending=false,pendingLabel,disabled,children,type='button',...props}) => ({type:'button',props:{...props,type,disabled:disabled||pending,'aria-busy':pending||undefined,children:pending?[{type:'LoaderCircle',props:{size:16,'aria-hidden':true}},pendingLabel??children]:children}});
 vm.runInNewContext(output, {
   module, exports: module.exports, URLSearchParams,
-  require(name) {
+  require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if(name==='@/lib/client/draft-save')return {registerDraftSaver:()=>()=>{}};
     if(name==='@/lib/client/enter-send')return {sendOnEnter};
     if (name === 'react') return {

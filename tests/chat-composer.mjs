@@ -12,7 +12,7 @@ const enterModule={exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/lib/client/enter-send.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module:enterModule,exports:enterModule.exports});
 vm.runInNewContext(output, {
   module, exports: module.exports,
-  require(name) {
+  require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if (name === 'react') return { useRef: value => ({ current: value }), useState: value => [value, () => {}], useEffect: () => {} };
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
     if (name === 'lucide-react') return { ArrowUp: 'ArrowUp', LoaderCircle: 'LoaderCircle' };
@@ -41,6 +41,11 @@ let f = fixture();
 equal(enter(f.input), true); equal(f.sends(), 1); equal(f.button.disabled, false); equal(f.input.rows, 1);
 f = fixture(); equal(enter(f.input, { shiftKey: true }), false); equal(f.sends(), 0);
 f = fixture({enterToSend:false}); equal(enter(f.input),false);equal(f.sends(),0);f.form.onSubmit({preventDefault(){}});equal(f.sends(),1);
+f = fixture({enterToSend:false});const field={value:'내 답변',selectionStart:4,selectionEnd:4};
+equal(enter(f.input,{currentTarget:field}),false);field.value='내 답변\n';field.selectionStart=field.selectionEnd=5;
+equal(enter(f.input,{currentTarget:field}),true);equal(f.sends(),1);
+f=fixture({enterToSend:false});const blurred={value:'내 답변',selectionStart:4,selectionEnd:4};
+enter(f.input,{currentTarget:blurred});blurred.value+='\n';blurred.selectionStart=blurred.selectionEnd=5;f.input.onBlur({currentTarget:blurred});equal(enter(f.input,{currentTarget:blurred}),false);equal(f.sends(),0);
 for(const detail of [{repeat:true},{ctrlKey:true},{metaKey:true},{altKey:true},{defaultPrevented:true}]){f=fixture();equal(enter(f.input,detail),false);equal(f.sends(),0);}
 f = fixture(); equal(enter(f.input, { nativeEvent: { isComposing: true, keyCode: 13 } }), false); equal(f.sends(), 0);
 f = fixture(); equal(enter(f.input, { nativeEvent: { isComposing: false, keyCode: 229 } }), false); equal(f.sends(), 0);

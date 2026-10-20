@@ -47,6 +47,7 @@ test('actual admin query keeps assignment scope and sends only summarized additi
   };
   vm.runInNewContext(ts.transpileModule(readFileSync('apps/web/src/lib/data.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,require(name:string){
     if(name==='server-only')return {};if(name==='./db')return {query,ApiError:class extends Error{status:number;constructor(status:number,message:string){super(message);this.status=status;}}};
+    if(name==='./student-read-model')return {readStudentModel:async(_student:string,_kind:string,_scope:string,build:()=>Promise<unknown>)=>build()};
     if(name==='./school-directory')return {enrichSchoolTarget:(value:any)=>value};if(name==='./admin-training')return {adminTrainingSummary};if(name==='./planner-model')return {koreaToday};throw Error(name);
   }});
   const data=await module.exports.getAdminData({id:'assigned-staff',role:'staff'});

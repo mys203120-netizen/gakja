@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 import {useEffect,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {Check} from 'lucide-react';
@@ -15,5 +17,5 @@ export function FloatingNotice({children,duration=3600,onDismiss}:{children:stri
     return()=>{clearTimeout(fade);clearTimeout(remove);};
   },[children,duration]);
   if(!mounted||finished)return null;
-  return createPortal(<div className={styles.notice} data-visible={visible} role="status" aria-live="polite" aria-atomic="true"><Check size={17} aria-hidden="true"/><span>{children}</span></div>,document.body);
+  return createPortal(<div className={ownedClassName(styles.notice,true)} data-visible={visible} role="status" aria-live="polite" aria-atomic="true"><Check size={17} aria-hidden="true"/><span className={ownedClassName(undefined,true)}>{children}</span></div>,document.body);
 }

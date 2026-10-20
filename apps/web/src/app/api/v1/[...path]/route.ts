@@ -1,6 +1,8 @@
 import { requireUser } from '@/lib/auth';
-import { bootstrap } from '@/lib/data';
-import { ApiError, errorResponse } from '@/lib/db';
+import {getStudentRecords} from '@/lib/student-records';
+import {bootstrap,getLearning} from '@/lib/data';
+// Legacy compatibility endpoints still use owned bounded read contracts.
+import { ApiError, errorResponse,query } from '@/lib/db';
 import { GET as chatGet, POST as chatPost } from '@/app/api/chat/route';
 import { GET as interviewsGet, POST as interviewsPost } from '@/app/api/interviews/route';
 import { GET as answersHistory, POST as actionsPost } from '@/app/api/actions/route';
@@ -24,20 +26,23 @@ export async function GET(request: Request, context: Context) {
     if (root === 'chat') return chatGet(withQuery(request, 'threadId', id === 'threads' ? detail : id));
     if (root === 'interviews') return interviewsGet(withQuery(request, 'id', id));
     if (root === 'answers' && id && detail === 'versions') return answersHistory(withQuery(request, 'questionId', id));
-    const data = await bootstrap(user);
-    if ('admin' in data) throw new ApiError(403, '학생 전용 API예요.');
-    if (root === 'dashboard' || root === 'me' && id === 'dashboard') return json(data);
+    if(root==='dashboard'||root==='me'&&id==='dashboard')return json(await bootstrap(user));
+    const recordKinds:Record<string,string>={answers:'answers',reports:'reports',briefings:'briefings',confirmations:'confirmations'};
+    if(recordKinds[root]){
+      const params=new URL(request.url).searchParams;params.set('kind',recordKinds[root]);
+      if(id)params.set(root==='answers'?'questionId':'id',id);
+      const result=await getStudentRecords(user.id,params);
+      const singular:Record<string,string>={answers:'answer',reports:'report',briefings:'briefing',confirmations:'confirmation'};
+      return json(id?{[singular[root]]:'item' in result?result.item:null}:{[root]:'items' in result?result.items:[],page:'page' in result?result.page:null});
+    }
+    if(root==='history'){const params=new URL(request.url).searchParams;params.set('kind','interviews');const result=await getStudentRecords(user.id,params);return json({interviews:'items' in result?result.items:[],page:'page' in result?result.page:null});}
+    if(root==='preferences'){const [row]=await query("select data-array['trainingReview','answer_meaning_checks','trainingActivityNotes','trainingDiagnostics','automaticPractice','briefingThoughts']::text[] as data from student_preferences where student_id=$1",[user.id]);return json({preferences:row?.data||{}});}
+    const data=await getLearning(user.id);
     if (root === 'content') return json({ package: data.package, documents: data.documents });
     if (root === 'documents') return json(id ? { document: own(data.documents, id) } : { documents: data.documents });
     if (root === 'activities') return json(id ? { activity: own(data.learning.activities, id) } : { activities: data.learning.activities });
     if (root === 'questions') return json(id ? { question: own(data.learning.questions, id) } : { questions: data.learning.questions });
-    if (root === 'answers') { if (id && !data.answers.some((a) => a.question_id === id)) own(data.learning.questions, id); return json(id ? { answer: data.answers.find((a) => a.question_id === id) ?? null } : { answers: data.answers }); }
-    if (root === 'memory') return json(id && id !== 'items' ? { item: own(data.learning.memory_items, id) } : { items: data.learning.memory_items, attempts: data.memoryAttempts, history: data.memoryHistory });
-    if (root === 'reports') return json(id ? { report: own(data.reports, id) } : { reports: data.reports });
-    if (root === 'history') return json({ interviews: data.interviews, memoryHistory: data.memoryHistory });
-    if (root === 'briefings') return json(id ? { briefing: own(data.briefings ?? [], id) } : { briefings: data.briefings });
-    if (root === 'preferences') return json({ preferences: data.preferences });
-    if (root === 'confirmations') return json(id ? { confirmation: own(data.confirmations, id) } : { confirmations: data.confirmations });
+    if (root === 'memory') {if(id&&id!=='items')return json({item:own(data.learning.memory_items,id)});const params=new URL(request.url).searchParams;params.set('kind','memory');const records=await getStudentRecords(user.id,params);return json({items:data.learning.memory_items,history:'items' in records?records.items:[],page:'page' in records?records.page:null});}
     throw new ApiError(404, 'API 경로를 확인해 주세요.');
   } catch (error) { return errorResponse(error); }
 }

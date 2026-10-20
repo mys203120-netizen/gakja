@@ -5,27 +5,29 @@ import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
 import * as trainingFlow from '../apps/web/src/lib/training-flow';
+import * as targetScope from '../apps/web/src/lib/learning-target-scope';
 
 const code=ts.transpileModule(readFileSync('apps/web/src/components/training-run.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
 const nodes=(value:any):any[]=>Array.isArray(value)?value.flatMap(nodes):value&&typeof value==='object'?[value,...nodes(value.props?.children)]:[];
 const text=(value:any):string=>typeof value==='string'?value:Array.isArray(value)?value.map(text).join(''):value?.props?text(value.props.children):'';
 function deferred(){let resolve!:(value:any)=>void,reject!:(error:Error)=>void;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};}
 
-function harness({diagnostic=false,existing=false,pendingAction='start',kind='focus',dayTasks=[] as any[],deferNext=false,failNext=false}={}){
+function harness({diagnostic=false,existing=false,pendingAction='start',kind='focus',dayTasks=[] as any[],deferNext=false,failNext=false,diagnostics=undefined as any}={}){
   const hooks:any[]=[],effects:any[]=[],pending:Function[]=[],requests:any[]=[],pushes:string[]=[];
-  let cursor=0,dirty=true,tree:any,target='school-a',student='student-a',plan='plan-a',refreshes=0;
+  let cursor=0,dirty=true,tree:any,target='school-a',student='student-a',plan='plan-a',refreshes=0,department='환경공학과',version=1;
   const deferreds:ReturnType<typeof deferred>[]=[],nextReads:ReturnType<typeof deferred>[]=[];let reads=0;
   const task=()=>({id:plan,minutes:25,kind,targetId:target,questionId:'question-'+target,sourceType:'fixture',sourceVersion:1,title:'집중 보완 · 나의 활동',...(existing?{sessionId:'session-'+target}:{})});
   const react={Suspense:'Suspense',useCallback:(fn:Function)=>fn,useState(initial:any){const index=cursor++;if(!(index in hooks))hooks[index]=initial;return [hooks[index],(value:any)=>{const next=typeof value==='function'?value(hooks[index]):value;if(!Object.is(next,hooks[index])){hooks[index]=next;dirty=true;}}];},useRef(initial:any){return hooks[cursor++]??={current:initial};},useEffect(fn:Function,deps:any[]){const index=cursor++,previous=effects[index];if(!previous||deps.some((value,i)=>!Object.is(value,previous.deps[i]))){effects[index]={deps};pending.push(()=>{previous?.cleanup?.();effects[index].cleanup=fn();});}}};
   const jsx={jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props})};
   const module={exports:{} as any};
-  vm.runInNewContext(code,{module,exports:module.exports,AbortController,URLSearchParams,crypto:{randomUUID},require(name:string){
+  vm.runInNewContext(code,{module,exports:module.exports,AbortController,URLSearchParams,crypto:{randomUUID},require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
     if(name==='react')return react;if(name==='react/jsx-runtime')return jsx;
     if(name==='next/link')return {default:'Link'};if(name==='next/navigation')return {useRouter:()=>({push:(path:string)=>pushes.push(path)}),useSearchParams:()=>new URLSearchParams({planId:plan})};
     if(name==='@/lib/training-flow')return trainingFlow;
+    if(name==='@/lib/learning-target-scope')return targetScope;
     if(name==='lucide-react')return {ArrowRight:'ArrowRight',Check:'Check'};
-    if(name==='./app-shell')return {useApp:()=>({targetId:target,data:{user:{id:student}},refresh:async()=>{refreshes++;},learningRevision:1})};
-    if(name==='./shared')return {Alert:'Alert',Spinner:'Spinner',ActionButton:'ActionButton',InfoTip:'InfoTip',api:async(url:string)=>{if(!new URLSearchParams(url.split('?')[1]).has('planId')){reads++;if(failNext)throw new Error('다음 계획 통신 오류');if(deferNext){const response=deferred();nextReads.push(response);return response.promise;}}return {today:{date:'2026-10-21',tasks:dayTasks},selectedTask:task(),diagnosticInput:{targetId:target,sourceType:'fixture',questionCount:1},diagnosticQuestions:[{id:'question-'+target,title:'진단 질문'}],readiness:{items:[{id:'activity-'+target,title:'활동 '+target}]}};},post:async(url:string,input:any)=>{
+    if(name==='./app-shell')return {useApp:()=>({targetId:target,target:{id:target,university:'시험대학교',department,admission_year:2027,campus:'본교',admission_type:'학생부종합'},data:{user:{id:student},package:{id:'package',active_version:version}},refresh:async()=>{refreshes++;},learningRevision:1})};
+    if(name==='./shared')return {Alert:'Alert',Spinner:'Spinner',ActionButton:'ActionButton',InfoTip:'InfoTip',api:async(url:string)=>{if(!new URLSearchParams(url.split('?')[1]).has('planId')){reads++;if(failNext)throw new Error('다음 계획 통신 오류');if(deferNext){const response=deferred();nextReads.push(response);return response.promise;}}return {today:{date:'2026-10-21',tasks:dayTasks},selectedTask:task(),diagnostics:typeof diagnostics==='function'?diagnostics(target):diagnostics,diagnosticInput:{targetId:target,sourceType:'fixture',questionCount:1},diagnosticQuestions:[{id:'question-'+target,title:'진단 질문'}],readiness:{items:[{id:'activity-'+target,title:'활동 '+target}]}};},post:async(url:string,input:any)=>{
       requests.push({url,input});
       if(input.action===pendingAction){const response=deferred();deferreds.push(response);return response.promise;}
       if(input.action==='task_start')return {task:task()};
@@ -42,7 +44,7 @@ function harness({diagnostic=false,existing=false,pendingAction='start',kind='fo
   const action=(label:string)=>nodes(tree).find(node=>node.type==='ActionButton'&&text(node).includes(label));
   const interview=()=>nodes(tree).find(node=>node.type==='InterviewSession');
   const completion=(school=target)=>({session:{state:'completed',data:{context:{questions:[{id:'question-'+school,activity_ids:['activity-'+school]}]}}},turns:[{id:'turn-'+school,rootQuestionId:'question-'+school,question:'활동 설명 '+school,answer:'저장 답변 '+school}]});
-  return {flush,action,interview,completion,deferreds,nextReads,requests,pushes,get reads(){return reads;},get tree(){return tree;},get refreshes(){return refreshes;},changePlan(value:string){plan=value;dirty=true;},changeScope(school:string,user='student-a'){target=school;student=user;plan='plan-'+school;dirty=true;}};
+  return {flush,action,interview,completion,deferreds,nextReads,requests,pushes,get reads(){return reads;},get tree(){return tree;},get refreshes(){return refreshes;},changePlan(value:string){plan=value;dirty=true;},changeContent(){version++;dirty=true;},changeDepartment(value:string){department=value;dirty=true;},changeScope(school:string,user='student-a'){target=school;student=user;plan='plan-'+school;dirty=true;}};
 }
 
 test('changing school while starting unlocks the new scope and a late old start cannot replace or unlock the next start',async()=>{
@@ -106,6 +108,43 @@ test('diagnostic topic pills support multiple independent choices and save only 
   const saved=h.requests.find(row=>row.input.action==='diagnostic_reflection');
   assert.deepEqual(JSON.parse(JSON.stringify(saved.input.focusCategories)),['major']);
   h.deferreds[0].resolve({});await h.flush();assert.ok(h.action('보완할 부분 저장됨'));assert.equal(h.refreshes,1);
+});
+
+test('diagnostic reflection restores canonical active selections and never revives resolved legacy choices',async()=>{
+  const h=harness({diagnostic:true,existing:true,pendingAction:'diagnostic_reflection',diagnostics:{needsReviewQuestionIds:['question-school-a'],focusCategories:['major'],activeNeedsReviewQuestionIds:[],activeFocusCategories:[]}});
+  await h.flush();h.interview().props.onTrainingUpdate(h.completion());await h.flush();
+  const checkbox=nodes(h.tree).find(node=>node.type==='input'&&node.props.type==='checkbox');
+  const major=nodes(h.tree).find(node=>node.type==='button'&&text(node)==='전공 개념·이유');
+  assert.equal(checkbox.props.checked,false,'empty active selections are authoritative after resolution');assert.equal(major.props['aria-pressed'],false);
+  h.action('선택한 부분').props.onClick();await h.flush();
+  const saved=h.requests.find(row=>row.input.action==='diagnostic_reflection');
+  assert.deepEqual(JSON.parse(JSON.stringify(saved.input.needsReviewQuestionIds)),[]);assert.deepEqual(JSON.parse(JSON.stringify(saved.input.focusCategories)),[]);
+  h.deferreds[0].resolve({});await h.flush();
+});
+
+test('older diagnostic payloads restore legacy choices only while active fields are absent',async()=>{
+  for(const canonical of [false,true]){
+    const h=harness({diagnostic:true,existing:true,diagnostics:{needsReviewQuestionIds:['question-school-a'],focusCategories:['major'],...(canonical?{activeNeedsReviewQuestionIds:['question-school-a'],activeFocusCategories:['talent']}: {})}});
+    await h.flush();h.interview().props.onTrainingUpdate(h.completion());await h.flush();
+    assert.equal(nodes(h.tree).find(node=>node.type==='input'&&node.props.type==='checkbox').props.checked,true);
+    const selected=(label:string)=>nodes(h.tree).find(node=>node.type==='button'&&text(node)===label).props['aria-pressed'];
+    assert.equal(selected('전공 개념·이유'),!canonical);assert.equal(selected('학교·학과와의 연결'),canonical);
+  }
+});
+
+test('switching target or changing its content resets reflection selections and rejects old session callbacks',async()=>{
+  const h=harness({diagnostic:true,existing:true,diagnostics:(school:string)=>({activeNeedsReviewQuestionIds:school==='school-a'?['question-school-a']:[],activeFocusCategories:school==='school-a'?['major']:[]})});
+  await h.flush();const oldUpdate=h.interview().props.onTrainingUpdate;oldUpdate(h.completion());await h.flush();
+  assert.equal(nodes(h.tree).find(node=>node.type==='input'&&node.props.type==='checkbox').props.checked,true);
+  h.changeScope('school-b');await h.flush();const update=h.interview().props.onTrainingUpdate;update(h.completion());await h.flush();
+  assert.equal(nodes(h.tree).find(node=>node.type==='input'&&node.props.type==='checkbox').props.checked,false);
+  assert.ok(nodes(h.tree).filter(node=>node.type==='button'&&node.props['aria-pressed']!==undefined).every(node=>!node.props['aria-pressed']));
+  h.changeContent();await h.flush();update(h.completion());await h.flush();
+  assert.equal(text(h.tree).includes('저장 답변 school-b'),false,'a prior content version cannot restore its completed summary');
+  assert.ok(h.interview(),'the current content opens a fresh active session view');
+  const currentUpdate=h.interview().props.onTrainingUpdate;
+  h.changeDepartment('다른 학과');await h.flush();currentUpdate(h.completion());await h.flush();
+  assert.equal(text(h.tree).includes('저장 답변 school-b'),false,'a changed target identity also invalidates the old callback');
 });
 
 

@@ -16,7 +16,7 @@ function load(relative,mocks={}) {
  if(modules.has(key)&&!Object.keys(mocks).length)return modules.get(key);
  const module={exports:{}};
  const output=ts.transpileModule(fs.readFileSync(url,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
- vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Intl,Date,Set,Map,console,require(name){
+ vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Intl,Date,Set,Map,console,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name in mocks)return mocks[name];
   if(name==='react/jsx-runtime')return runtime;
   if(name==='lucide-react')return icons;

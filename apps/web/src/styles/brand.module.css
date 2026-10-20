@@ -1,0 +1,231 @@
+/* brand: locally owned classes; :global classes are DOM context hooks only.
+   Keep visual state in its owning component, not in unrelated page overrides. */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.brand strong {
+  white-space: nowrap;
+}
+
+.brand-dot {
+  color: var(--accent);
+}
+
+:global(.auth-art) .brand-dot {
+  color: var(--muted);
+}
+
+@media (max-width:960px) {
+  :global(.sidebar-brand) .brand strong {
+    display: none;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.chat-welcome) .brand img {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.landing-nav) .brand strong {
+    font-size: 22px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.landing-footer) .brand strong {
+    font-size: 19px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.landing-footer) .brand img {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+img[src="/brand-logo.svg"]:where(.element) {
+  height: auto;
+  object-fit: contain;
+  filter: none;
+  aspect-ratio: 1776 / 1770;
+}
+
+.brand {
+  color: var(--text);
+}
+
+.brand strong {
+  font-size: 23px;
+}
+
+:global(.auth-art) .brand img {
+  filter: none;
+}
+
+@media (max-width:900px) {
+  :global(.sidebar-brand) .brand strong {
+    display: none;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.landing-nav) .brand img {
+    width: 30px;
+    height: auto;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.landing-end)>.brand img {
+    width: 55px;
+    height: auto;
+  }
+}
+.brand { gap: 10px; }
+.brand strong { color: var(--text); letter-spacing: -.06em; font-weight: 750; }
+.brand img { height: auto; object-fit: contain; filter: none; }
+:global(.sidebar-brand) .brand strong { font-size: 23px; }
+@media (max-width: 1100px) {
+  :global(.sidebar-brand) .brand strong { font-size: 21px; }
+}
+
+:global(.auth-page) .brand {
+  gap: 11px;
+}
+
+:global(.auth-page) .brand strong,
+:global(.landing) .brand strong {
+  font-size: 20px;
+  font-weight: 740;
+  letter-spacing: -.055em;
+}
+
+:global(.auth-page) :global(.auth-art) .brand img {
+  width: 34px;
+  height: auto;
+  filter: none;
+}
+
+:global(.landing) :global(.landing-nav) .brand {
+  gap: 11px;
+}
+
+:global(.landing) :global(.landing-nav) .brand img {
+  width: 34px;
+  height: auto;
+}
+
+:global(.landing) :global(.landing-end) .brand img {
+  width: 70px;
+  height: auto;
+  filter: none;
+}
+
+@media (max-width: 700px) {
+  :global(.auth-page) :global(.auth-mobile-brand) .brand { gap: 12px; }
+}
+
+@media (max-width: 700px) {
+  :global(.auth-page) :global(.auth-mobile-brand) .brand img { width: 40px; height: auto; }
+}
+
+@media (max-width: 700px) {
+  :global(.auth-page) :global(.auth-mobile-brand) .brand strong { font-size: 23px; }
+}
+
+@media (max-width: 700px) {
+  :global(.landing) :global(.landing-nav) .brand img { width: 30px; height: auto; }
+}
+
+@media (max-width: 700px) {
+  :global(.landing) :global(.landing-nav) .brand strong { font-size: 19px; }
+}
+
+@media (max-width: 700px) {
+  :global(.landing) :global(.landing-end) .brand img { width: 58px; height: auto; }
+}:global(.sidebar-brand) .service-wordmark { font-size:25px;letter-spacing:-.06em;font-weight:800;color:#171b18; }
+@media(max-width:1150px){:global(.sidebar-brand) .service-wordmark{font-size:23px;}}
+@media(max-width:950px){:global(.sidebar-brand) .service-wordmark{display:none;}}
+
+.brand-status-page {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 48px 24px;
+  color: var(--text);
+  text-align: center;
+}
+.brand-status-page h1 {
+  max-width: 680px;
+  margin: 0;
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 550;
+  line-height: 1.4;
+  word-break: keep-all;
+  text-wrap: balance;
+}
+:global(.app-shell) .brand-status-page { min-height: 65svh; }
+
+@media(max-width:700px) {
+ :global(.app-shell) nav:global(.mobile-nav) .brand { display:flex; align-items:center; justify-content:center; }
+}
+
+@media(max-width:700px) {
+ :global(.app-shell) nav:global(.mobile-nav) .brand img { width:25px; height:25px; }
+}
+
+.brand-on-image { display:block; width:48px; height:28px; object-fit:contain; flex-shrink:0; }
+:global(.auth-centered) :global(.auth-entry-brand) .brand { gap: 10px; }
+:global(.auth-centered) :global(.auth-entry-brand) .brand img { width: 38px; height: auto; }
+:global(.auth-centered) :global(.auth-entry-brand) .brand strong { color: var(--clarity-ink); font-size: 23px; letter-spacing: -.055em; font-weight: 700; }
+
+@media (max-width: 767px) {
+  :global(.auth-centered) :global(.auth-entry-brand) .brand img { width: 32px; }
+}
+
+@media (max-width: 767px) {
+  :global(.auth-centered) :global(.auth-entry-brand) .brand strong { font-size: 21px; }
+}
+
+@media (min-width: 768px) {
+  :global(.auth-centered) :global(.auth-entry-brand) .brand strong { font-size: 21px; }
+}
+body :global(.app-shell) :global(.sidebar-brand) .service-wordmark,
+body :global(.topbar-context) .service-wordmark,
+body .brand-wordmark,
+body .service-wordmark {
+  display:inline-flex;
+  align-items:baseline;
+  gap:0;
+  color:var(--clarity-ink);
+  font-weight:750;
+  line-height:1.2;
+  letter-spacing:-.05em;
+  white-space:nowrap;
+}
+body :is(.brand-wordmark,.service-wordmark) .brand-on-sup {
+  display:inline-flex;
+  align-self:flex-start;
+  flex-shrink:0;
+  margin:-.06em 0 0 -.2em;
+  padding:0;
+  font-size:.66em;
+  line-height:1;
+}
+body :is(.brand-wordmark,.service-wordmark) .brand-on-sup .brand-on-image {
+  display:block;
+  width:1.8em;
+  height:1.03em;
+  max-width:none;
+  object-fit:contain;
+}

@@ -16,7 +16,7 @@ function harness(today,settings=initial){
  const remote={registeredAt:today+'T01:00:00.000Z',startDate:today,availability:settings?{...settings,version:settings.version||1,revision:1,savedAt:today+'T01:00:00.000Z',startDate:today}:null};
  const state=[today,settings?library.availabilityInput(remote.availability,today):undefined,remote,false,false,'',false,0,'','',120];if(!settings)delete state[1];let index=0;const writes=[];
  const module={exports:{}};
- vm.runInNewContext(source,{module,exports:module.exports,Date,Intl,Set,AbortController,console,require(name){
+ vm.runInNewContext(source,{module,exports:module.exports,Date,Intl,Set,AbortController,console,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name==='react')return {...React,useEffect(){},useId:()=>':availability:',useRef:initial=>({current:initial}),useState(initial){const slot=index++;if(!(slot in state))state[slot]=typeof initial==='function'?initial():initial;return [state[slot],value=>{state[slot]=typeof value==='function'?value(state[slot]):value;}];}};
   if(name==='react/jsx-runtime')return jsx;if(name==='lucide-react')return icons;
   if(name==='next/link')return {default:({children,href,...props})=>React.createElement('a',{href,...props},children)};

@@ -3,7 +3,7 @@ import { ApiError, errorResponse } from '@/lib/db';
 import { getStudySessions, studySessionAction } from '@/lib/study-sessions';
 const headers = {'Cache-Control':'private, no-store'};
 export async function GET(request: Request) {
-  try { return Response.json(await getStudySessions(await requireUser(),new URL(request.url).searchParams.get('id')),{headers}); }
+  try {const params=new URL(request.url).searchParams;return Response.json(await getStudySessions(await requireUser(),params.get('id'),{view:params.get('view'),cursor:params.get('cursor'),limit:params.has('limit')?Number(params.get('limit')):undefined}),{headers}); }
   catch(error) { return errorResponse(error); }
 }
 export async function POST(request: Request) {

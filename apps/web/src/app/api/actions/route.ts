@@ -194,7 +194,8 @@ export async function POST(request: Request) {
       }
       if (JSON.stringify(data).length > 5_000) throw new ApiError(400, '설정 길이를 확인해 주세요.');
       if (data.selectedTargetId) { const [target] = await query("select id from support_targets where id=$1 and student_id=$2 and nullif(data->>'archived_at','') is null", [data.selectedTargetId, user.id]); if (!target) throw new ApiError(404, '지원처를 확인해 주세요.'); }
-      const [preferences] = await query('insert into student_preferences(student_id,data) values($1,$2) on conflict(student_id) do update set data=student_preferences.data||excluded.data,updated_at=now() returning data', [user.id, JSON.stringify(data)]);
+      const projection=allowed.map(key=>`'${key}',student_preferences.data->'${key}'`).join(',');
+      const [preferences] = await query(`insert into student_preferences(student_id,data) values($1,$2) on conflict(student_id) do update set data=student_preferences.data||excluded.data,updated_at=now() returning jsonb_strip_nulls(jsonb_build_object(${projection})) as data`, [user.id, JSON.stringify(data)]);
       return Response.json({ ok: true, preferences: preferences.data });
     }
 

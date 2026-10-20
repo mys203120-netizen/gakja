@@ -11,6 +11,8 @@ export type LiveInterviewServices = {
   suspend():Promise<void>;
   resume():Promise<void>;
   speak(question:LiveInfo,generation:number,signal:AbortSignal):Promise<void>;
+  /** RTC may listen while a question plays only after durable capture owns the microphone. */
+  captureDuringQuestion?():boolean;
   beforeCapture?(question:LiveInfo,generation:number,signal:AbortSignal):Promise<void>;
   capture(onProgress:(value:LiveCaptureProgress)=>void,question:LiveInfo,generation:number):LiveAnswerCapture;
   upload(recording:LiveAnswerRecording,question:LiveInfo,generation:number,options?:{deferTranscription?:boolean}):Promise<string>;
@@ -218,16 +220,25 @@ export class LiveInterviewController {
         if(!this.devicePrepared){await this.services.prepare();this.devicePrepared=true;await this.checkpoint(revision);}
         this.phase('speaking');const speech=new AbortController();this.speech=speech;
         try{
+          if(this.capture){this.emit({phase:'listening'});}
+          else{
+          const earlyCapture=this.services.captureDuringQuestion?.()===true;
+          if(earlyCapture){
+            await this.services.beforeCapture?.(question,generation,speech.signal);
+            await this.checkpoint(revision);if(speech.signal.aborted||this.ending)continue;
+            this.capture=this.services.capture(progress=>{this.emit({progress});if(this.snapshot.phase!=='speaking')this.phase('listening');},question,generation);
+          }
           await this.services.speak(question,generation,speech.signal);
           if(speech.signal.aborted||this.paused||this.ending)continue;
-          await this.services.beforeCapture?.(question,generation,speech.signal);
+          if(!earlyCapture)await this.services.beforeCapture?.(question,generation,speech.signal);
           await this.checkpoint(revision);
           // Pausing can release a prepared recording reservation while this await
           // is pending. Reacquire it before creating a recorder after resume.
           if(speech.signal.aborted||this.ending)continue;
           this.emit({phase:'listening',progress:undefined,recording:undefined});
           if(speech.signal.aborted||this.paused)continue;
-          this.capture=this.services.capture(progress=>{this.emit({progress});this.phase('listening');},question,generation);
+          if(!this.capture)this.capture=this.services.capture(progress=>{this.emit({progress});this.phase('listening');},question,generation);
+          }
         }catch(error){if(speech.signal.aborted||this.paused||this.ending)continue;throw error;}
         finally{if(this.speech===speech)this.speech=undefined;}
         let recording:LiveAnswerRecording;

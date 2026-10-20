@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 import {useEffect,useRef,useState} from 'react';
 import {Live2DController,loadLive2DRuntime} from '@/lib/client/live2d-controller';
 import type {InterviewerAvatarSignal,InterviewerAvatarFrame} from '@/lib/client/interviewer-avatar';
@@ -23,5 +25,5 @@ export function Live2DInterviewer({index,personId,signal}:{index:number;personId
     const node=canvas.current;node.addEventListener('webglcontextlost',lost);
     return()=>{disposed=true;abort.abort();unsubscribe();if(frame)cancelAnimationFrame(frame);node.removeEventListener('webglcontextlost',lost);controller?.dispose();};
   },[index,personId,signal,modelUrl,runtimeUrl]);
-  return <canvas ref={canvas} className={styles.live2d} width={640} height={640} data-live2d-ready={ready||undefined} aria-hidden="true"/>;
+  return <canvas ref={canvas} className={ownedClassName(styles.live2d,true)} width={640} height={640} data-live2d-ready={ready||undefined} aria-hidden="true"/>;
 }

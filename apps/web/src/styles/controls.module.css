@@ -1,0 +1,2578 @@
+/* controls: locally owned classes; :global classes are DOM context hooks only.
+   Keep visual state in its owning component, not in unrelated page overrides. */
+button:where(.element),
+input:where(.element),
+textarea:where(.element),
+select:where(.element) {
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+button:where(.element),
+input:where(.element),
+textarea:where(.element),
+select:where(.element) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:where(.element) {
+  cursor: pointer;
+}
+
+button:where(.element) {
+  color: inherit;
+}
+
+button:where(.element):disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+input:where(.element),
+textarea:where(.element),
+select:where(.element) {
+  border: 1px solid var(--line);
+  padding: 13px 15px;
+  width: 100%;
+  outline: none;
+}
+
+textarea:where(.element) {
+  resize: vertical;
+  min-height: 120px;
+}
+
+select:where(.element) {
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+
+.button {
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  background: none;
+}
+
+.button:global(.dark) {
+  background: var(--surface2);
+  color: var(--accent);
+}
+
+.button:global(.full) {
+  width: 100%;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  padding: 9px;
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.badge:global(.green) {
+  background: var(--surface2);
+  border: 1px solid var(--line);
+}
+
+.badge:global(.red) {
+  background: var(--surface2);
+}
+
+.badge:global(.amber) {
+  background: var(--surface2);
+}
+
+.linked-row {
+  display: flex;
+}
+
+.linked-row:last-child {
+  border-bottom: 0;
+}
+
+.linked-row>svg {
+  color: var(--muted);
+  margin-left: auto;
+}
+
+:global(.empty)>.button {
+  margin-top: 12px;
+}
+
+.spin {
+  animation: var(--gakja-keyframe-spin) 1s linear infinite;
+}
+
+:global(.target-select) select:where(.element) {
+  border: 0;
+  padding: 5px 22px 5px 0;
+  background: none;
+  appearance: none;
+  box-shadow: none;
+}
+
+.notification-button {
+  position: relative;
+}
+
+.notification-button i {
+  position: absolute;
+  right: 8px;
+  top: 7px;
+  border-radius: 6px;
+}
+
+:global(.continue-panel) .button {
+  justify-content: space-between;
+  min-height: 39px;
+  font-size: 12px;
+  padding: 9px 14px;
+}
+
+:global(.quick-practice) .linked-row {
+  padding: 19px 0;
+}
+
+:global(.filter-bar)>select:where(.element) {
+  width: 160px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex: 1;
+  color: var(--muted);
+}
+
+.search-field input:where(.element) {
+  box-shadow: none;
+}
+
+:global(.detail-section) .button:global(.full)+.button:global(.full) {
+  margin-top: 11px;
+}
+
+.script-textarea:focus {
+  box-shadow: none;
+}
+
+:global(.toc-chapter) button:where(.element) {
+  border: 0;
+  display: block;
+  width: 100%;
+  background: none;
+  font-weight: 550;
+}
+
+:global(.toc-chapter) button:where(.element):global(.child) {
+  padding-left: 23px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+:global(.chapter-links) button:where(.element) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 15px;
+}
+
+:global(.chapter-links) button:where(.element):hover {
+  color: var(--accent);
+}
+
+:global(.chat-history) .button {
+  padding: 10px;
+  font-size: 13px;
+  margin-bottom: 29px;
+}
+
+:global(.chat-history)>a:not(.button) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+:global(.chat-history)>a:not(.button)>span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(.chat-context)>span:not(.badge) {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+:global(.prompt-grid) button:where(.element) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+:global(.prompt-grid) button:where(.element):hover {
+  border-color: var(--accent);
+}
+
+.message-save {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+:global(.chat-composer) textarea:where(.element) {
+  min-height: 50px;
+  max-height: 160px;
+  resize: none;
+  background: none;
+  border: 0;
+  padding: 4px;
+  box-shadow: none;
+}
+
+:global(.practice-type)>.button {
+  position: relative;
+  z-index: 1;
+}
+
+:global(.memory-mini-grid) .badge {
+  width: fit-content;
+}
+
+:global(.filter-pills) button:where(.element) {
+  white-space: nowrap;
+}
+
+:global(.filter-pills) button:where(.element):global(.active) {
+  border-color: var(--line);
+}
+
+.timer-select {
+  display: flex;
+  flex-direction: row;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.timer-select select:where(.element) {
+  width: 160px;
+  font-size: 13px;
+  padding: 9px;
+}
+
+:global(.recall-answer-area) textarea:where(.element) {
+  min-height: 130px;
+}
+
+:global(.rating-buttons) .button {
+  font-size: 13px;
+  padding: 12px 16px;
+}
+
+:global(.choice-grid) button:where(.element) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+:global(.choice-grid) button:where(.element):global(.selected) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+:global(.order-items) button:where(.element) {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+}
+
+.flip-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 19px;
+}
+
+.flip-card small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.toggle {
+  width: 38px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 3px;
+}
+
+.toggle i {
+  width: 16px;
+  height: 16px;
+  transition: transform .15s;
+}
+
+.toggle:global(.on) i {
+  background: var(--surface2);
+  transform: translateX(16px);
+}
+
+:global(.answer-panel) textarea:where(.element) {
+  border: 0;
+  background: none;
+  padding: 0;
+  box-shadow: none;
+  line-height: 1.9;
+  margin-bottom: 15px;
+}
+
+:global(.answer-panel) .button {
+  display: flex;
+  margin-left: auto;
+}
+
+.checkbox-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 16px 0;
+}
+
+.checkbox-label input:where(.element) {
+  width: auto;
+  accent-color: var(--accent);
+}
+
+:global(.report-section) .button {
+  margin-top: 20px;
+}
+
+:global(.settings-row) select:where(.element) {
+  width: 140px;
+  font-size: 13px;
+}
+
+:global(.admin-form) .button {
+  justify-self: start;
+}
+
+:global(.admin-table) .button {
+  min-height: 33px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+.import-dropzone {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 15px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.import-dropzone input:where(.element) {
+  font-size: 13px;
+}
+
+.import-dropzone p {
+  font-size: 13px;
+}
+
+:global(.auth-form) input:where(.element) {
+  height: 52px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input:where(.element) {
+  padding-right: 47px;
+}
+
+.password-field button:where(.element) {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+.auth-submit {
+  width: 100%;
+  height: 52px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+:global(.landing-nav) .button {
+  font-size: 13px;
+  min-height: 38px;
+  padding: 9px 19px;
+}
+
+:global(.landing-hero)>.button {
+  align-self: flex-start;
+}
+
+:global(.modal)>.button {
+  margin-top: 24px;
+}
+
+@media (max-width:960px) {
+  :global(.today-actions) .text-link {
+    font-size: 11px;
+  }
+}
+
+@media (max-width:960px) {
+  :global(.setup-settings)>.button {
+    grid-column: 1/-1;
+  }
+}
+
+@media (max-width:960px) {
+  .structure-textarea {
+    min-height: 130px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.filter-bar)>.search-field {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.filter-bar)>select:where(.element) {
+    padding: 10px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.question-row)>.badge {
+    display: none;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.chat-composer) textarea:where(.element) {
+    font-size: 13px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.filter-pills) button:where(.element) {
+    padding: 8px 13px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.choice-grid) button:where(.element) {
+    padding: 15px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.order-items) button:where(.element) {
+    font-size: 13px;
+    padding: 13px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.setup-settings) select:where(.element) {
+    padding: 11px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.camera-controls) .button {
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.recording-playback) .checkbox-label {
+    font-size: 10px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.landing-hero)>.button {
+    font-size: 14px;
+    padding: 15px 22px;
+  }
+}
+
+.form-field small {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+:global(.admin-preview-list)>.linked-row {
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  background: none;
+  text-align: left;
+  width: 100%;
+}
+
+:global(.admin-tabs) button:where(.element) {
+  display: flex;
+  gap: 8px;
+}
+
+:global(.admin-tabs) button:where(.element):global(.active) {
+  border-color: var(--line);
+}
+
+.import-dropzone input:where(.element) {
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.import-dropzone:hover,
+.import-dropzone:focus-within {
+  border-color: var(--accent);
+}
+
+.import-dropzone:global(.selected) {
+  border-style: solid;
+}
+
+.import-dropzone strong {
+  font-size: 17px;
+}
+
+.import-dropzone span {
+  font-size: 12px;
+}
+
+.import-dropzone small {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.checkbox-row>input:where(.element) {
+  width: auto;
+  accent-color: var(--accent);
+}
+
+:global(.report-checks) input:where(.element) {
+  width: auto;
+  accent-color: var(--accent);
+}
+
+@media (max-width:700px) {
+  :global(.admin-tabs) button:where(.element) {
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width:700px) {
+  .import-dropzone strong {
+    font-size: 15px;
+  }
+}
+
+@media (max-width:700px) {
+  .import-dropzone span {
+    font-size: 10px;
+    overflow-wrap: anywhere;
+  }
+}
+
+input:where(.element),
+textarea:where(.element),
+select:where(.element) {
+  min-width: 0;
+}
+
+input:where(.element)[type=checkbox],
+input:where(.element)[type=radio] {
+  accent-color: var(--text);
+}
+
+.button:global(.primary),
+.button:global(.dark) {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
+
+.button:global(.primary):hover,
+.button:global(.dark):hover {
+  background: #40454c;
+  transform: none;
+}
+
+.button:global(.ghost) {
+  border-color: #d5d9de;
+}
+
+.button:global(.danger) {
+  background: #fff;
+  color: #a13333;
+  border-color: #d9b3b3;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.badge,
+.badge:global(.green),
+.badge:global(.amber),
+.badge:global(.red) {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.badge:global(.red) {
+  color: #a13333;
+}
+
+.badge:global(.amber) {
+  color: #875921;
+}
+
+.linked-row {
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+
+:global(.dashboard-focus)>.button {
+  flex-shrink: 0;
+}
+
+:global(.dashboard-continue) .linked-row {
+  padding: 4px 0 0;
+  border: 0;
+}
+
+:global(.dashboard-training) .linked-row {
+  border: 0;
+  padding: 3px 0;
+}
+
+.search-field {
+  border-color: #d5d9de;
+}
+
+:global(.question-row)>.badge {
+  flex-shrink: 0;
+}
+
+.script-textarea {
+  font-size: 17px;
+  line-height: 1.9;
+  padding: 14px;
+  border: 1px solid #d5d9de;
+  background: #fff;
+}
+
+:global(.toc-chapter) button:where(.element) {
+  border-radius: 0;
+  line-height: 1.6;
+  text-align: left;
+}
+
+:global(.toc-chapter) button:where(.element):hover,
+:global(.toc-chapter) button:where(.element):global(.active) {
+  background: none;
+  color: var(--text);
+  font-weight: 650;
+}
+
+:global(.chapter-links) button:where(.element) {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--text);
+  padding: 15px 0;
+  text-align: left;
+}
+
+:global(.chat-history)>a:not(.button) {
+  border-radius: 0;
+  padding: 13px 0;
+  color: var(--muted);
+}
+
+:global(.prompt-grid) button:where(.element) {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+  text-align: left;
+}
+
+:global(.prompt-grid) button:where(.element):hover {
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+:global(.chat-composer) textarea:where(.element) {
+  color: var(--text);
+}
+
+:global(.practice-type)>.text-link {
+  font-size: 15px;
+  margin-top: 0;
+}
+
+:global(.filter-pills) button:where(.element) {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--muted);
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+:global(.filter-pills) button:where(.element):global(.active) {
+  background: none;
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+.timer-select {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+:global(.recall-answer-area) textarea:where(.element) {
+  font-size: 17px;
+}
+
+:global(.choice-grid) button:where(.element) {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 17px 0;
+  background: none;
+  color: var(--text);
+  font-size: 17px;
+  text-align: left;
+}
+
+:global(.choice-grid) button:where(.element):global(.selected) {
+  background: none;
+  border-bottom-color: var(--text);
+  font-weight: 650;
+}
+
+:global(.order-items) button:where(.element) {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 16px 0;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.flip-card {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  min-height: 110px;
+  padding: 20px 0;
+  color: var(--text);
+  font-size: 19px;
+}
+
+:global(.setup-settings)>.button {
+  grid-column: 1/-1;
+}
+
+:global(.setup-settings) .button {
+  margin-top: 6px;
+}
+
+.toggle-row {
+  border-bottom-color: var(--line);
+}
+
+.toggle {
+  background: #dfe3e7;
+}
+
+.toggle:global(.on) {
+  background: var(--text);
+}
+
+.toggle i {
+  background: #fff;
+  border-radius: 50%;
+}
+
+:global(.answer-panel) textarea:where(.element) {
+  font-size: 17px;
+  min-height: 230px;
+}
+
+:global(.admin-tabs) button:where(.element) {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+:global(.admin-tabs) button:where(.element):global(.active) {
+  background: none;
+  border-bottom-color: var(--text);
+}
+
+.import-dropzone {
+  background: #fafafa;
+  border: 1px dashed #b8bec6;
+  border-radius: 6px;
+  padding: 30px 20px;
+}
+
+.import-dropzone:global(.selected) {
+  background: #f6f7f8;
+  border-color: #747d89;
+}
+
+.import-dropzone strong {
+  color: var(--text);
+}
+
+:global(.auth-form) input:where(.element) {
+  background: #fff;
+  color: var(--text);
+  border-color: #d5d9de;
+}
+
+.auth-submit {
+  margin-top: 22px;
+}
+
+@media (max-width:700px) {
+  .icon-button {
+    padding: 8px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.topbar-actions)>.badge {
+    display: none;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.target-select) select:where(.element) {
+    width: 100%;
+    max-width: none;
+    font-size: 12px;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.section-heading)>.text-link {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.dashboard-focus)>.button {
+    margin-top: 18px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.dashboard-training) .linked-row {
+    padding: 15px 0;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width:700px) {
+  :global(.dashboard-training) .linked-row:last-child {
+    border: 0;
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.dashboard-continue) .linked-row {
+    display: block;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.filter-bar)>.search-field {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.filter-bar)>select:where(.element) {
+    flex: 1;
+    width: auto;
+    font-size: 13px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.question-row)>.badge {
+    margin-left: 0;
+  }
+}
+
+@media (max-width:700px) {
+  .structure-textarea {
+    min-height: 120px;
+  }
+}
+
+@media (max-width:700px) {
+  .script-textarea {
+    font-size: 16px;
+    min-height: 310px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.toc-chapter) button:where(.element) {
+    font-size: 14px;
+    line-height: 1.65;
+    padding: 8px 0;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.toc-chapter) button:where(.element):global(.child) {
+    font-size: 13px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.chat-context)>span:not(.badge) {
+    font-size: 13px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.prompt-grid) button:where(.element) {
+    font-size: 16px;
+    padding: 15px 0;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.filter-pills) button:where(.element) {
+    white-space: nowrap;
+    font-size: 13px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.choice-grid) button:where(.element) {
+    font-size: 16px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.rating-buttons) .button {
+    font-size: 13px;
+    padding: 11px 14px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.setup-settings) select:where(.element) {
+    font-size: 15px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.settings-row) select:where(.element) {
+    width: 125px;
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+}
+
+@media (max-width:700px) {
+  :global(.admin-tabs) button:where(.element) {
+    font-size: 13px;
+  }
+}
+
+@media (max-width:700px) {
+  .import-dropzone {
+    padding: 24px 16px;
+  }
+}
+@media (max-width: 700px) {
+  :global(.account-grid) .linked-row { flex-wrap: wrap; }
+}
+@media (max-width: 700px) {
+  :global(.account-grid) .linked-row :global(.muted) { font-size: 13px; white-space: nowrap; }
+}
+button:where(.element).text-link { background: none; border: 0; padding: 0; text-align: left; }
+:global(.practice-type) > .text-link { margin: 0; white-space: nowrap; }
+@media (max-width: 700px) {
+  :global(.practice-type) > .text-link { font-size: 13px; }
+}
+:global(.chat-history) > a:not(.button) > span { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; line-height: 1.65; }
+button:where(.element).linked-row { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; text-align: left; }
+button:where(.element).linked-row:last-child { border-bottom: 0; }
+button:where(.element) { transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease; }
+:where(a, button:where(.element), input:where(.element), select:where(.element), textarea:where(.element)):focus-visible { outline: 2px solid var(--link); outline-offset: 4px; }
+:global(.target-select) select:where(.element) { font-size: 14px; font-weight: 500; max-width: 440px; color: #515157; letter-spacing: -.02em; }
+.icon-button { border-radius: 50%; width: 36px; height: 36px; color: #73737a; }
+.icon-button:hover { background: #f5f5f7; color: var(--text); }
+.notification-button i { background: var(--text); height: 4px; width: 4px; }
+.button { border-radius: 999px; padding: 12px 22px; min-height: 44px; font-weight: 550; font-size: 14px; line-height: 1.25; gap: 9px; }
+.button:global(.primary) { background: #1d1d1f; color: #fff; border: 1px solid #1d1d1f; }
+.button:global(.primary):hover { background: #343437; border-color: #343437; transform: translateY(-1px); }
+.button:global(.ghost) { background: transparent; border: 1px solid #d7d7db; color: var(--text); }
+.button:global(.ghost):hover { background: #f5f5f7; border-color: #b8b8bd; }
+.button:global(.small) { padding: 9px 16px; min-height: 36px; font-size: 13px; }
+.button:global(.large) { padding: 14px 26px; min-height: 49px; font-size: 15px; }
+.text-link { color: #6e6e73; font-size: 13px; font-weight: 500; gap: 6px; }
+.text-link:hover { color: var(--link); }
+.badge { font-size: 12px; line-height: 1.5; color: var(--muted); font-weight: 500; padding: 0; background: none; border: 0; }
+.badge:global(.green) { color: #515159; }
+input:where(.element),
+textarea:where(.element),
+select:where(.element) { border-color: #dcdce0; border-radius: 10px; color: var(--text); background: #fff; font-size: 15px; }
+input:where(.element):focus,
+textarea:where(.element):focus,
+select:where(.element):focus { border-color: #8e8e97; box-shadow: none; }
+textarea:where(.element) { padding: 18px 20px; line-height: 1.8; }
+input:where(.element)::placeholder,
+textarea:where(.element)::placeholder { color: #6e6e73; }
+.linked-row { gap: 22px; padding: 23px 0; }
+.linked-row > svg:last-child { width: 18px; color: #6e6e73; flex-shrink: 0; }
+.linked-row:hover > svg:last-child { transform: translate(2px, -2px); color: var(--text); }
+:global(.editorial-dashboard) :global(.dashboard-continue) .linked-row { padding: 0; gap: 30px; }
+:global(.editorial-dashboard) :global(.dashboard-training) .linked-row { padding: 2px 0 7px; gap: 18px; }
+:global(.editorial-dashboard) :global(.dashboard-training) .linked-row > svg:first-child { color: #777780; width: 26px; flex-shrink: 0; margin: 0; }
+:global(.editorial-dashboard) :global(.dashboard-training) .linked-row > svg:last-child { margin-left: auto; }
+:global(.editorial-dashboard) :global(.dashboard-activities) .linked-row { padding: 17px 0; }
+.search-field { background: #f5f5f7; border: 0; border-radius: 10px; padding: 0 15px; min-height: 43px; }
+.search-field input:where(.element) { border: 0; background: none; padding: 12px 0; font-size: 14px; }
+:global(.filter-bar) > select:where(.element) { font-size: 13px; min-height: 43px; }
+.structure-textarea,
+.script-textarea { background: #fafafc; border-color: #e8e8ec; padding: 22px; font-size: 16px; line-height: 1.85; }
+.script-textarea { min-height: 330px; }
+.structure-textarea { min-height: 145px; }
+:global(.toc-chapter) button:where(.element) { font-size: 14px; color: #6e6e73; padding: 9px 0; }
+:global(.toc-chapter) button:where(.element):global(.child) { font-size: 13px; padding: 7px 0 7px 13px; }
+:global(.toc-chapter) button:where(.element):global(.active) { color: var(--text); font-weight: 650; }
+:global(.prompt-grid) button:where(.element) { padding: 20px 0; font-size: 16px; font-weight: 400; color: #6e6e73; }
+:global(.prompt-grid) button:where(.element):hover { color: var(--text); }
+:global(.chat-composer) textarea:where(.element) { font-size: 16px; line-height: 1.7; }
+:global(.admin-tabs) button:where(.element) { color: #6e6e73; }
+:global(.admin-tabs) button:where(.element):global(.active) { color: var(--text); }
+@media (max-width: 700px) {
+  :global(.target-select) select:where(.element) { font-size: 11px; max-width: 158px; }
+}
+@media (max-width: 700px) {
+  .icon-button { height: 29px; width: 27px; }
+}
+@media (max-width: 700px) {
+  .button { font-size: 13px; padding: 11px 18px; min-height: 41px; }
+}
+@media (max-width: 700px) {
+  .button:global(.small) { font-size: 12px; padding: 8px 13px; min-height: 34px; }
+}
+@media (max-width: 700px) {
+  .button:global(.large) { padding: 13px 22px; }
+}
+@media (max-width: 700px) {
+  .text-link { font-size: 12px; }
+}
+@media (max-width: 700px) {
+  :global(.editorial-dashboard) :global(.dashboard-continue) .linked-row { gap: 14px; flex-wrap: wrap; }
+}
+@media (max-width: 700px) {
+  :global(.editorial-dashboard) :global(.dashboard-training) .linked-row { padding: 17px 0; border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 700px) {
+  :global(.editorial-dashboard) :global(.dashboard-training) .linked-row:last-child { border-bottom: 0; padding-bottom: 0; }
+}
+@media (max-width: 700px) {
+  :global(.editorial-dashboard) :global(.dashboard-activities) .linked-row { padding: 19px 0; }
+}
+@media (max-width: 700px) {
+  .linked-row { padding: 22px 0; gap: 15px; }
+}
+@media (max-width: 700px) {
+  :global(.filter-bar) > select:where(.element) { font-size: 12px; }
+}
+@media (max-width: 700px) {
+  .structure-textarea,
+.script-textarea { padding: 17px; font-size: 16px; }
+}
+@media (max-width: 700px) {
+  :global(.reader-section-select) select:where(.element) { font-size: 14px; }
+}
+@media (max-width: 700px) {
+  :global(.prompt-grid) button:where(.element) { font-size: 15px; padding: 19px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  button:where(.element) { transition: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .button:global(.primary):hover,
+.linked-row:hover > svg:last-child { transform: none; }
+}
+
+:global(.auth-page) :global(.auth-form) input:where(.element) {
+  display: block;
+  height: 56px;
+  width: 100%;
+  margin-top: 8px;
+  background: #f5f5f7;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #1d1d1f;
+  padding: 0 17px;
+  font-size: 15px;
+  font-weight: 400;
+  box-shadow: none;
+  transition: background-color .15s, border-color .15s, box-shadow .15s;
+}
+
+:global(.auth-page) :global(.auth-form) input:where(.element):focus {
+  outline: none;
+  background: #fff;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgb(0 102 204 / 10%);
+}
+
+:global(.auth-page) .password-field input:where(.element) {
+  padding-right: 55px;
+}
+
+:global(.auth-page) .password-field button:where(.element) {
+  width: 40px;
+  height: 40px;
+  right: 7px;
+  border-radius: 50%;
+  color: #6e6e73;
+  cursor: pointer;
+}
+
+:global(.auth-page) .password-field button:where(.element):hover {
+  background: #eaeaee;
+  color: #1d1d1f;
+}
+
+:global(.auth-page) .auth-submit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 54px;
+  height: auto;
+  padding: 15px 23px;
+  border: 1px solid #1d1d1f;
+  border-radius: 999px;
+  background: #1d1d1f;
+  color: #fff;
+  margin-top: 7px;
+  font-size: 15px;
+  font-weight: 570;
+  box-shadow: none;
+  transition: background-color .15s, border-color .15s;
+}
+
+:global(.auth-page) .auth-submit:hover:not(:disabled) {
+  background: #343436;
+  border-color: #343436;
+}
+
+:global(.auth-page) .auth-submit:disabled {
+  opacity: .55;
+}
+
+:global(.landing) .button:global(.primary) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 17px;
+  padding: 16px 27px;
+  min-height: 55px;
+  border-radius: 999px;
+  border: 1px solid #1d1d1f;
+  background: #1d1d1f;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 560;
+  box-shadow: none;
+  transition: background-color .15s;
+}
+
+:global(.landing) .button:global(.primary):hover {
+  background: #343436;
+  border-color: #343436;
+}
+
+:global(.auth-page) :is(a, button:where(.element)):focus-visible,
+:global(.landing) :is(a, button:where(.element)):focus-visible {
+  outline: 2px solid #0066cc;
+  outline-offset: 4px;
+}
+
+@media (max-width: 700px) {
+  :global(.auth-page) :global(.auth-form) input:where(.element) { height: 56px; font-size: 16px; }
+}
+
+@media (max-width: 700px) {
+  :global(.landing) .button:global(.primary) { min-height: 50px; padding: 14px 22px; font-size: 14px; gap: 13px; }
+}
+:global(.training-filters) button:where(.element) { flex-shrink: 0; padding: 15px 0; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: #6e6e73; background: none; font-size: 15px; font-weight: 500; white-space: nowrap; }
+:global(.training-filters) button:where(.element):global(.active) { color: #1d1d1f; border-bottom-color: #1d1d1f; font-weight: 650; }
+:global(.recall-view) .timer-select { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; color: #6e6e73; font-size: 14px; }
+:global(.recall-view) .timer-select select:where(.element) { min-width: 168px; height: 48px; padding: 0 36px 0 14px; border: 1px solid #d2d2d7; border-radius: 10px; color: #1d1d1f; background: #fff; font-size: 16px; }
+:global(.recall-view) :global(.recall-answer-area) textarea:where(.element) { display: block; width: 100%; min-height: 205px; padding: 22px 24px; border: 1px solid #e0e0e0; border-radius: 10px; background: #f5f5f7; color: #1d1d1f; font-size: 18px; line-height: 1.85; resize: vertical; }
+:global(.recall-view) :global(.recall-answer-area) textarea:where(.element)::placeholder { color: #6e6e73; }
+:global(.recall-view) :global(.choice-grid) button:where(.element) { display: flex; align-items: center; gap: 18px; padding: 21px 0; line-height: 1.6; }
+:global(.recall-view) :global(.order-items) button:where(.element) { gap: 14px; padding: 20px 0; line-height: 1.65; }
+:global(.recall-view) .flip-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; width: 100%; min-height: 220px; padding: 30px 24px; border-radius: 10px; background: #f5f5f7; font-size: 20px; }
+:global(.recall-view) .flip-card > small { color: #6e6e73; font-size: 14px; }
+:global(.records-history-section) .linked-row { padding: 22px 0; gap: 22px; }
+:global(.training-view) button:where(.element):focus-visible,
+:global(.training-view) select:where(.element):focus-visible,
+:global(.training-view) textarea:where(.element):focus-visible { outline: 3px solid #b3d7ff; outline-offset: 4px; }
+
+@media (max-width: 700px) {
+  :global(.training-recall-intro) .button { padding: 11px 15px; font-size: 14px; white-space: nowrap; }
+}
+
+@media (max-width: 700px) {
+  :global(.training-filters) button:where(.element) { font-size: 14px; }
+}
+
+@media (max-width: 700px) {
+  :global(.recall-view) .timer-select select:where(.element) { min-width: 156px; font-size: 15px; }
+}
+
+@media (max-width: 700px) {
+  :global(.recall-view) :global(.recall-start) > .button { min-height: 48px; padding: 13px 21px; font-size: 15px; }
+}
+
+@media (max-width: 700px) {
+  :global(.recall-view) :global(.recall-answer-area) textarea:where(.element) { min-height: 185px; padding: 18px; font-size: 17px; }
+}
+
+@media (max-width: 700px) {
+  :global(.recall-view) :global(.rating-buttons) .button { min-width: 0; padding: 12px 8px; font-size: 14px; }
+}
+
+@media (max-width: 700px) {
+  :global(.records-history-section) .linked-row { gap: 14px; padding: 20px 0; }
+}
+
+@media (max-width: 700px) {
+  :global(.records-history-section) .badge { font-size: 12px; flex-shrink: 0; }
+}
+:global(.learning-tabs) button:where(.element) { flex-shrink: 0; padding: 14px 0; color: #6e6e73; font-weight: 600; border: 0; border-bottom: 2px solid transparent; background: transparent; cursor: pointer; }
+:global(.learning-tabs) button:where(.element):global(.active) { color: #1d1d1f; border-bottom-color: #1d1d1f; }
+:global(.learning-inline-links) > a:not(.button) { color: #0066cc; font-size: 14px; }
+:global(.assignment-picker) input:where(.element)[type="checkbox"] { flex-shrink: 0; width: 17px; height: 17px; margin-top: 4px; }
+:global(.assignment-start) .button { flex-shrink: 0; }
+:global(.assignment-item) > textarea:where(.element) { width: 100%; min-height: 160px; padding: 18px 20px; border: 1px solid #cfcfd5; border-radius: 10px; background: #fff; color: #1d1d1f; font: inherit; font-size: 17px; line-height: 1.85; resize: vertical; }
+:global(.assignment-options) > button:where(.element) { display: flex; align-items: center; gap: 16px; width: 100%; padding: 20px 16px; text-align: left; background: #fff; border: 0; border-bottom: 1px solid #dedee3; color: #1d1d1f; font: inherit; font-size: 17px; line-height: 1.6; cursor: pointer; }
+:global(.assignment-options) > button:where(.element):global(.selected) { background: #f5f5f7; box-shadow: inset 3px 0 #1d1d1f; }
+:global(.assignment-order) .icon-button { flex-shrink: 0; }
+:global(.learning-v2) input:where(.element)[type="checkbox"],
+:global(.learning-v2) input:where(.element)[type="radio"],
+:global(.assignment-picker) input:where(.element)[type="checkbox"] { accent-color: #1d1d1f; }
+:global(.assignment-cannot-recall) input:where(.element),
+:global(.assignment-meaning-checks) input:where(.element),
+:global(.assignment-rating) input:where(.element),
+:global(.comparison-meaning-checks) input:where(.element) { flex-shrink: 0; width: 17px; height: 17px; margin: 0; }
+:global(.assignment-meaning-checks) input:where(.element),
+:global(.comparison-meaning-checks) input:where(.element) { margin-top: 4px; }
+.comparison-question-select { display: flex; flex-direction: column; gap: 10px; margin: 0 0 28px; font-size: 13px; color: #6e6e73; }
+.comparison-question-select > select:where(.element) { width: 100%; color: #1d1d1f; font-size: 16px; max-width: 100%; }
+:global(.comparison-column-heading) select:where(.element) { width: 100%; max-width: 100%; font-size: 13px; color: #6e6e73; }
+:global(.briefing-library) .linked-row { padding: 27px 0; }
+:global(.briefing-thought) textarea:where(.element) { width: 100%; min-height: 160px; padding: 18px 20px; font: inherit; font-size: 17px; line-height: 1.85; color: #1d1d1f; border: 1px solid #cfcfd5; border-radius: 10px; background: #fff; resize: vertical; }
+@media (max-width: 700px) {
+  :global(.learning-v2) :global(.page-title) > .button { font-size: 13px; min-height: 40px; }
+}
+@media (max-width: 700px) {
+  :global(.learning-tabs) button:where(.element) { font-size: 14px; }
+}
+@media (max-width: 700px) {
+  :global(.learning-row) .badge { grid-column: 2; grid-row: 2; justify-self: start; }
+}
+@media (max-width: 700px) {
+  :global(.assignment-item) > textarea:where(.element) { padding: 15px; font-size: 16px; min-height: 155px; }
+}
+@media (max-width: 700px) {
+  :global(.assignment-options) > button:where(.element) { padding: 17px 12px; font-size: 16px; }
+}
+@media (max-width: 700px) {
+  :global(.confirmation-row-actions) .button { margin-left: auto; font-size: 13px; }
+}
+@media (max-width: 700px) {
+  :global(.briefing-library) .linked-row { flex-wrap: wrap; gap: 12px; }
+}
+@media (max-width: 700px) {
+  :global(.briefing-thought) textarea:where(.element) { padding: 15px; font-size: 16px; }
+}
+fieldset:global(.comparison-meaning-checks) input:where(.element){margin:0;flex:0 0 17px}
+:global(.learning-toolbar) .learning-field { width: 200px; margin: 0; }
+:global(.learning-toolbar) .search-field { flex: 1; min-width: 180px; }
+.learning-field { display: flex; flex-direction: column; gap: 8px; margin: 0 0 17px; min-width: 0; text-align: left; }
+.learning-field > span { font-size: 14px; color: #424248; font-weight: 620; }
+.learning-field input:where(.element),
+.learning-field select:where(.element),
+.learning-field textarea:where(.element) { font-size: 15px; width: 100%; min-height: 46px; padding: 11px 13px; line-height: 1.5; border: 1px solid #dcdcdf; border-radius: 8px; background: #fff; color: #1d1d1f; }
+.learning-field textarea:where(.element) { resize: vertical; min-height: 80px; }
+.learning-field input:where(.element):focus,
+.learning-field select:where(.element):focus,
+.learning-field textarea:where(.element):focus { outline: 2px solid #0066cc; outline-offset: 1px; }
+.learning-field > small { color: #6e6e73; font-size: 12px; line-height: 1.5; }
+:global(.learning-range) input:where(.element) { min-width: 0; }
+.learning-assignment-row { display: flex; align-items: center; width: 100%; gap: 18px; padding: 23px 0; text-align: left; border: 0; border-top: 1px solid #e5e5e7; background: transparent; color: inherit; }
+.learning-assignment-row:first-child { border-top: 0; }
+.learning-assignment-row > div { flex: 1; min-width: 0; }
+.learning-assignment-row strong { display: block; font-size: 20px; font-weight: 680; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
+.learning-assignment-row > div > span { display: block; margin-top: 5px; font-size: 14px; line-height: 1.6; color: #6e6e73; word-break: keep-all; }
+.learning-assignment-row:hover strong { color: #0066cc; }
+:global(.admin-learning-editor) fieldset:disabled input:where(.element),
+:global(.admin-learning-editor) fieldset:disabled select:where(.element),
+:global(.admin-learning-editor) fieldset:disabled textarea:where(.element) { opacity: 1; color: #424248; background: #f5f5f7; }
+:global(.admin-learning-editor) .search-field { margin-bottom: 8px; }
+.learning-item-option { display: flex; flex-direction: row; gap: 15px; align-items: start; padding: 17px 0; border-bottom: 1px solid #e5e5e7; cursor: pointer; }
+.learning-item-option:last-child { border-bottom: 0; }
+.learning-item-option > input:where(.element) { margin-top: 4px; width: 18px; height: 18px; accent-color: #1d1d1f; flex: 0 0 auto; }
+.learning-item-option strong { display: block; font-size: 16px; line-height: 1.6; font-weight: 620; word-break: keep-all; }
+.learning-item-option span { display: block; margin-top: 3px; font-size: 13px; color: #6e6e73; }
+.learning-checkbox { display: flex; flex-direction: row; align-items: center; gap: 9px; font-size: 15px; }
+:global(.learning-review-options) input:where(.element),
+.learning-checkbox input:where(.element) { width: 17px; height: 17px; accent-color: #1d1d1f; }
+:global(.learning-school-content) > .text-link { margin-top: 12px; font-size: 13px; }
+:global(.learning-weight-row) .learning-field { flex: 1; }
+:global(.learning-weight-row) .learning-field:has(input:where(.element)[type="number"]) { max-width: 105px; }
+:global(.learning-weight-row) .icon-button { margin-bottom: 20px; flex: 0 0 auto; }
+:global(.learning-weight-rows) > .text-link { margin-bottom: 16px; font-size: 14px; }
+:global(.learning-schedule-title) > .text-link { margin-top: 7px; font-size: 12px; }
+@media(max-width:700px) {
+  :global(.learning-toolbar) .learning-field { width: auto; }
+}
+@media(max-width:700px) {
+  :global(.learning-toolbar) .search-field { grid-column: 1 / -1; min-width: 0; }
+}
+@media(max-width:700px) {
+  .learning-assignment-row { display: grid; grid-template-columns: 1fr auto; gap: 9px 10px; padding: 21px 0; }
+}
+@media(max-width:700px) {
+  .learning-assignment-row > div { grid-column: 1; }
+}
+@media(max-width:700px) {
+  .learning-assignment-row > .badge { grid-column: 1; grid-row: 2; justify-self: start; }
+}
+@media(max-width:700px) {
+  .learning-assignment-row > svg { grid-column: 2; grid-row: 1 / 3; }
+}
+@media(max-width:700px) {
+  .learning-assignment-row strong { font-size: 18px; }
+}
+@media(max-width:700px) {
+  .learning-assignment-row > div > span { font-size: 13px; }
+}
+@media(max-width:700px) {
+  :global(.learning-school-row) > button:where(.element) { justify-self: start; }
+}
+@media(max-width:700px) {
+  :global(.learning-weight-row):has(input:where(.element)[placeholder="document"]) > .learning-field:first-child { grid-column: 1 / -1; }
+}
+@media(max-width:700px) {
+  :global(.learning-weight-row) .learning-field > span { font-size: 12px; }
+}
+@media(max-width:700px) {
+  :global(.learning-weight-row) .learning-field input:where(.element) { padding: 10px; }
+}
+@media(max-width:700px) {
+  :global(.learning-submissions) :global(.section-heading) .badge { font-size: 11px; }
+}
+@media(max-width:700px) {
+  :global(.learning-schedule-row) > .badge { justify-self: start; }
+}
+@media(max-width:700px) {
+  :global(.learning-schedule-row) > button:where(.element) { justify-self: end; }
+}
+:global(.interview-preset-list) input:where(.element)[type="radio"] { position: absolute; top: 29px; right: 0; width: 19px; height: 19px; margin: 0; accent-color: #0066cc; cursor: pointer; }
+:global(.interview-setup-settings) select:where(.element) { width: 100%; min-width: 0; }
+:global(.interview-v2) .toggle-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+:global(.interview-setup-settings) > .button { margin-top: 18px; }
+:global(.interview-quick-start) > .button { min-height: 48px; }
+:global(.interview-common-questions) button:where(.element) { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 0; border-bottom: 1px solid var(--interview-rule); background: none; color: #1d1d1f; text-align: left; padding: 16px 0; font-size: 15px; line-height: 1.65; }
+.interview-advanced-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: none; border: 0; border-top: 1px solid var(--interview-rule); padding: 20px 0; font-size: 15px; font-weight: 650; color: #1d1d1f; }
+:global(.interview-advanced) :global(.interview-preset-list) input:where(.element) { top: 20px; }
+:global(.interview-advanced) :global(.interview-preset-list) label:has(input:where(.element):disabled) { opacity: .45; cursor: default; }
+:global(.interview-setup-main) .text-link { gap: 6px; }
+:global(.interview-v2) button:where(.element):focus-visible,
+:global(.interview-v2) input:where(.element):focus-visible,
+:global(.interview-v2) select:where(.element):focus-visible { outline: 2px solid #0066cc; outline-offset: 4px; }
+:global(.interview-live-settings) .toggle-row { margin: 0; }
+:global(.interview-message) .button { margin-top: 14px; }
+:global(.interview-composer) textarea:where(.element) { min-height: 150px; font-size: 17px; line-height: 1.8; width: 100%; resize: vertical; }
+@media (max-width:700px) {:global(.interview-preset-list) input:where(.element)[type="radio"] { top: 20px; } }
+@media (max-width:700px) {:global(.interview-composer) > div > .button:last-child { width: 100%; } }
+@media (max-width:700px) {:global(.interview-composer) textarea:where(.element) { font-size: 16px; } }
+:global(.on-reference-tools) button:where(.element) { display: inline-flex; align-items: center; gap: 5px; border: 0; padding: 0; color: var(--muted); background: transparent; font-size: 12px; }
+:global(.on-reference-tools) button:where(.element):hover { color: var(--text); }
+:global(.on-starter-list) button:where(.element) { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 18px 0; border: 0; border-bottom: 1px solid var(--line); width: 100%; background: transparent; text-align: left; color: var(--text); }
+:global(.on-starter-list) button:where(.element):hover { color: #008744; }
+:global(.message-sources) button:where(.element) { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 0; font-size: 12px; color: #008744; padding: 3px 0; }
+.resource-backdrop { position: absolute; inset: 0; border: 0; background: rgb(17 29 22 / 20%); width: 100%; height: 100%; }
+.resource-link { display: flex; align-items: center; justify-content: space-between; gap: 15px; width: 100%; padding: 16px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; line-height: 1.6; font-size: 14px; }
+.resource-link svg { flex-shrink: 0; }
+:global(.resource-body)>.button { margin-top: 32px; }
+:global(.resource-body) select:where(.element) { width: 100%; }
+@media(max-width:700px) {
+ :global(.on-starter-list) button:where(.element) { font-size: 14px; line-height: 1.65; }
+}.quiz-mode-row{display:flex;align-items:center;gap:26px;padding:38px 4px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text)}.quiz-mode-row>div{flex:1}.quiz-mode-row h2{font-size:29px;margin:0 0 7px;font-weight:750;letter-spacing:-1px}.quiz-mode-row p{margin:0;color:var(--muted);font-size:16px}.quiz-mode-row>span{display:flex;align-items:center;gap:20px;color:var(--muted);font-size:14px}.quiz-mode-row:disabled{opacity:.45;cursor:default}.quiz-mode-row:not(:disabled):hover{background:var(--surface-soft,#f6f8f6)}:global(.quiz-options) button:where(.element){display:flex;gap:22px;align-items:center;min-height:100px;padding:26px;background:#f4f7f4;border:1px solid transparent;border-radius:14px;text-align:left;color:#182b20;transition:background .12s,transform .12s,border-color .12s}:global(.quiz-options) button:where(.element):not(:disabled):hover{border-color:#5cefa1;background:#eaf9ef}:global(.quiz-options) button:where(.element):not(:disabled):active{transform:scale(.985)}:global(.quiz-options) button:where(.element):global(.selected){background:#00ee77;color:#123720}:global(.quiz-options) button:where(.element):disabled{cursor:default}:global(.quiz-answer-workspace) textarea:where(.element){width:100%;min-height:185px;padding:18px 0;font-family:inherit;font-size:19px;line-height:1.8;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;resize:vertical;color:var(--text);outline-offset:4px}.quiz-record-consent{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;font-size:13px;color:var(--muted)}.quiz-record-consent input:where(.element){width:16px!important;min-height:16px!important;margin:0!important;accent-color:#078748}.quiz-record-stop{color:#ba4028!important;border-color:#e6b5a9!important}@media(max-width:700px){.quiz-mode-row{gap:17px}}@media(max-width:700px){.quiz-mode-row h2{font-size:23px}}@media(max-width:700px){.quiz-mode-row p{font-size:13px;line-height:1.55;word-break:keep-all}}@media(max-width:700px){.quiz-mode-row>span{gap:5px;font-size:11px}}@media(max-width:700px){.quiz-mode-row>svg{width:24px}}@media(max-width:700px){.quiz-mode-row>span svg{width:19px}}@media(max-width:700px){:global(.quiz-options) button:where(.element){min-height:72px;padding:18px;gap:16px;border-radius:10px}}@media(max-width:700px){:global(.quiz-answer-workspace) textarea:where(.element){font-size:17px;min-height:160px}}@media(max-width:700px){.quiz-record-consent{font-size:12px;line-height:1.6}}@media(prefers-reduced-motion:reduce){:global(.quiz-options) button:where(.element){transition:none}}:global(.quiz-today) .button{flex-shrink:0}:global(.quiz-time-choice) input:where(.element){width:16px!important;min-height:16px!important;margin:0!important;accent-color:#16894c}:global(.quiz-resume-row)>button:where(.element){flex-shrink:0;font-size:12px}:global(.quiz-result-rows) article>.text-link{font-size:13px}@media(max-width:700px){:global(.quiz-today) .button{width:100%;justify-content:center}}@media(max-width:700px){:global(.quiz-resume-row)>button:where(.element){font-size:11px}}@media(max-width:700px){:global(.quiz-next-step) .button{width:100%;justify-content:center}}@media(max-width:700px){.quiz-mode-row{padding:23px 0}}
+:global(.study-answer) .text-link{margin-top:12px;display:inline-flex}
+@media(max-width:600px){:global(.study-report-actions) .button{width:100%}}
+:global(.growth-summary)>.button{margin-top:10px}
+@media(max-width:600px){:global(.growth-summary) .button{width:100%}}:global(.knowledge-tabs) button:where(.element){border:0;background:none;color:#7b847e;padding:12px 0;font-size:14px;cursor:pointer;white-space:nowrap}.knowledge-search{display:flex;align-items:center;gap:8px;color:#8a938d;min-width:0}.knowledge-search input:where(.element){border:0;outline:0;background:none;min-width:0;max-width:180px;font-size:13px;padding:8px 0}:global(.knowledge-filters) select:where(.element){max-width:190px;border:0;border-left:1px solid #e5eae7;border-radius:0;background:white;font-size:13px;color:#616b64;padding:5px 22px 5px 12px}:global(.knowledge-related) button:where(.element),
+:global(.knowledge-topic-row) button:where(.element){background:none;border:0;color:#4d6556;font-size:12px;display:inline-flex;align-items:center;gap:4px;text-align:left;padding:0;cursor:pointer;line-height:1.6;word-break:keep-all}.knowledge-bookmark{display:flex;align-items:center;gap:7px;background:none;border:0;padding:8px 0;color:#748079;font-size:13px;cursor:pointer}.knowledge-bookmark:global(.selected){color:#13814f}:global(.knowledge-completed) button:where(.element){display:flex;align-items:center;gap:6px;background:none;border:1px solid #dae2dd;border-radius:6px;padding:8px 12px;font-size:13px;color:#64756a;cursor:pointer}:global(.knowledge-completed) button:where(.element).is-done{border-color:#b9dec6;background:#f2fbf5;color:#14834f}:global(.knowledge-note) textarea:where(.element){width:100%;min-height:150px;border:0;border-bottom:1px solid #dce4de;border-radius:0;resize:vertical;background:#fafcfb;padding:18px 0;font-size:14px;line-height:1.8;outline:none}:global(.knowledge-note) textarea:where(.element):focus{border-color:#00c467}:global(.knowledge-page) button:where(.element):disabled{opacity:.55;cursor:default}:global(.knowledge-page) button:where(.element):focus-visible{outline:2px solid #00c467;outline-offset:4px}:global(.knowledge-flow-context) .text-link{align-self:flex-start}.knowledge-question-label{display:flex;flex-direction:column;gap:8px;font-size:12px;color:#75847b;margin:20px 0 16px}.knowledge-question-label select:where(.element){max-width:100%;padding:12px 8px;border:0;border-bottom:1px solid #dce4de;background:#fafcfb;font-size:14px;color:#253a2d}:global(.knowledge-understanding) textarea:where(.element){display:block;width:100%;min-height:110px;border:0;border-bottom:1px solid #dce4de;border-radius:0;background:#fafcfb;padding:14px 0;resize:vertical;font-size:14px;line-height:1.8}:global(.knowledge-understanding) textarea:where(.element):focus{outline:0;border-color:#00c467}:global(.knowledge-self-check) button:where(.element){display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1px solid #dce4de;border-radius:6px;background:white;color:#506458;font-size:13px;cursor:pointer}:global(.knowledge-self-check) button:where(.element)[aria-pressed=true]{background:#f0faf4;border-color:#79c499;color:#147b4b}:global(.knowledge-next-actions) .button{min-width:0;white-space:normal;text-align:center;line-height:1.6}@media(max-width:600px){:global(.knowledge-self-check) button:where(.element){font-size:12px;padding:8px}}@media(max-width:600px){:global(.knowledge-next-actions) .button{width:100%}}
+@media(max-width:600px){:global(.knowledge-tabs) button:where(.element){font-size:13px}}
+@media(max-width:600px){.knowledge-search{flex:1}}
+@media(max-width:600px){.knowledge-search input:where(.element){width:100%;max-width:none;font-size:12px}}
+@media(max-width:600px){:global(.knowledge-filters) select:where(.element){max-width:45%;font-size:12px;padding-left:10px}}
+@media(max-width:600px){:global(.knowledge-note) textarea:where(.element){min-height:150px}}
+@media(max-width:600px){.knowledge-bookmark{font-size:12px}}:global(.knowledge-focus) button:where(.element){border:0;background:none;padding:5px 0;color:#758078;font-size:12px;font-weight:400;cursor:pointer;line-height:1.7}:global(.knowledge-focus) button:where(.element)[aria-pressed=true]{color:#168251;text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:1px}:global(.knowledge-tabs) button:where(.element):global(.active){font-weight:450;color:#168251}
+@media(max-width:600px){:global(.knowledge-related) button:where(.element){font-size:12px}}:global(.knowledge-origins) button:where(.element){border:0;background:none;padding:8px 14px;font-size:13px;color:#6b7970;border-radius:6px;cursor:pointer}:global(.knowledge-origins) button:where(.element)[aria-pressed=true]{background:#edf7f0;color:#167746}:global(.knowledge-context-row)>button:where(.element){border:0;background:none;padding:0;text-align:left;color:#4d6556;display:inline-flex;align-items:center;gap:7px;font-size:13px;line-height:1.8}@media(max-width:600px){:global(.knowledge-origins) button:where(.element){font-size:12px;padding:8px 11px}}:global(.on-dashboard) .linked-row {padding:17px 0;}:global(.dashboard-start-actions) .button{font-size:13px;padding:11px 16px;min-height:42px;}:global(.calendar-heading) .icon-button{width:28px;height:28px;}.calendar-today{border:0;background:transparent;font-size:12px;padding:4px 7px;color:var(--muted);}:global(.calendar-days)>button:where(.element){display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;height:49px;border:0;background:transparent;padding:4px;color:var(--text);font-size:13px;}.plan-check{width:17px;height:17px;border:1px solid #c9d1cc;border-radius:4px;background:transparent;display:flex;align-items:center;justify-content:center;padding:0;margin-top:3px;flex-shrink:0;}:global(.completed) .plan-check{background:var(--clarity-action);border-color:var(--clarity-action);color:var(--clarity-on-action);}.calendar-empty{padding:15px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;background:transparent;color:var(--muted);font-size:12px;text-align:left;}:global(.week-plan-heading) .icon-button{width:26px;height:26px;}
+:global(.week-plan)>button:where(.element){display:flex;gap:16px;align-items:flex-start;width:100%;padding:11px 0;border:0;border-bottom:1px solid #f0f2f0;background:transparent;text-align:left;}:global(.plan-form) input:where(.element),
+:global(.plan-form) select:where(.element){width:100%;}
+.knowledge-search{flex-direction:row;}.knowledge-search>svg{flex-shrink:0;}
+@media(max-width:700px){:global(.calendar-days)>button:where(.element){height:47px;}}:global(.today-focus-action) .button{min-height:48px;white-space:nowrap;}:global(.today-focus-action) .text-link{font-size:12px;color:var(--muted);}
+.learning-preferences-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:23px 0;border-top:1px solid var(--line);}.learning-preferences-row p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.6;}.learning-preferences-row input:where(.element){width:18px;height:18px;accent-color:#008544;}.learning-preferences-row strong{font-size:14px;}:global(.journey-plan) input:where(.element){max-width:220px;min-height:43px;}
+@media(max-width:700px){:global(.today-focus-action) .button{width:100%;justify-content:space-between;}}
+@media(max-width:700px){:global(.journey-steps) .text-link{font-size:12px;}}
+@media(max-width:700px){:global(.journey-intro)>div>.button{width:100%;justify-content:space-between;}}:global(.learning-help-tools) button:where(.element){border:0;background:none;padding:5px 0;font-size:12px;}.learning-help-backdrop{position:absolute;inset:0;border:0;background:rgba(18,25,21,.28);}
+@media(max-width:700px){:global(.learning-help-tools) button:where(.element){font-size:12px;}}:global(.calendar-event) .plan-edit{flex-shrink:0;font-size:11px}:global(.plan-form)>label>select:where(.element){width:100%;max-width:100%;min-width:0}@media(max-width:600px){:global(.calendar-event) .plan-edit{font-size:10px}}
+:global(.app-shell) :global(.dashboard-calendar-panel) :global(.section-heading) > .text-link { font-size: 12px; }
+:global(.app-shell) :global(.dashboard-calendar-panel) :global(.calendar-days) > button:where(.element) { height: auto; align-items: stretch; justify-content: flex-start; gap: 3px; text-align: left; cursor: pointer; }
+:global(.app-shell) :global(.dashboard-calendar-panel) :global(.calendar-days) > button:where(.element):focus-visible { outline: 2px solid #33764d; outline-offset: -2px; }
+:global(.app-shell) :global(.dashboard-calendar-panel) :global(.calendar-days) > button:where(.element):global(.selected) { background: #f3f7f3; }
+:global(.app-shell) :global(.calendar-school-event) .calendar-event-date { color: var(--calendar-school-text); }
+:global(.app-shell) .calendar-event-date { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; font-size: 12px; color: #9b7745; margin-bottom: 4px; cursor: pointer; line-height: 1.7; }
+@media (max-width: 500px) {
+  :global(.app-shell) :global(.dashboard-calendar-panel) :global(.calendar-days) > button:where(.element) { height: auto; min-height: 56px; gap: 3px; padding: 4px 0; font-size: 12px; }
+}
+.account-trigger { display:flex; align-items:center; gap:11px; width:100%; padding:10px 12px; border:0; border-radius:9px; background:transparent; color:#303b34; text-align:left; font-size:14px; font-weight:450; }
+.account-trigger:hover,
+.account-trigger[aria-expanded=true] { background:#e9eeea; }
+.account-trigger:global(.compact) { padding:2px; width:35px; border-radius:50%; }
+:global(.app-shell) :global(.target-select) select:where(.element) { width:auto; max-width:100%; min-height:40px; padding:9px 13px; font-size:14px; font-weight:450; background:#f5f7f5; border:0; border-radius:9px; }
+:global(.account-popover)>button:where(.element) { display:flex; align-items:center; gap:12px; width:100%; padding:13px 12px; background:none; border:0; border-radius:7px; font-size:14px; font-weight:450; color:#39443d; text-align:left; }
+:global(.logout-actions) .button { padding:12px 17px; }
+:global(.app-shell) select:where(.element) { min-width:0; padding:10px 14px; border:1px solid #e3e9e4; font-size:14px; line-height:1.5; }
+:global(.app-shell) select:where(.element):hover { background:#f1f5f1; border-color:#d5ded6; }
+:global(.app-shell) select:where(.element):focus { outline:0; box-shadow:none; border-color:#a4b7a8; }
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element),
+:global(.app-shell) select:where(.element)::picker(select) { appearance:base-select; }
+}
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element) { display:flex; align-items:center; justify-content:space-between; gap:12px; white-space:normal; word-break:keep-all; overflow-wrap:anywhere; }
+}
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element)::picker-icon { content:''; width:18px; height:18px; align-self:center; background:currentColor; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='19' cy='12' r='2'/%3E%3C/svg%3E") center / contain no-repeat; color:#7b897f; flex-shrink:0; }
+}
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element):open::picker-icon { color:var(--clarity-green,#176d46); }
+}
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element)::picker(select) { padding:6px; border:1px solid #e5ebe5; border-radius:11px; background:#fff; color:#35413a; box-shadow:0 12px 40px #1830231a; margin-block:7px; min-width:anchor-size(width); max-width:min(580px,calc(100vw - 28px)); max-height:min(360px,60dvh); overflow:auto; scrollbar-width:thin; scrollbar-color:#c6d0c8 transparent; }
+}
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element) option:where(.element) { display:flex; align-items:center; gap:10px; min-height:43px; padding:11px 13px; border-radius:6px; background:#fff; color:#364239; font:inherit; font-weight:450; line-height:1.6; white-space:normal; word-break:keep-all; overflow-wrap:anywhere; }
+}
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element) option:where(.element):hover,
+:global(.app-shell) select:where(.element) option:where(.element):focus { background:#f2f6f2; outline:0; }
+}
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element) option:where(.element):checked { background:#eaf4ec; color:#264b32; }
+}
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element) option:where(.element)::checkmark { order:2; margin-left:auto; color:#458253; font-size:13px; }
+}
+@supports (appearance:base-select) {
+ :global(.app-shell) select:where(.element) option:where(.element):disabled { color:#9da69e; }
+}
+:global(.app-shell) :global(.main-content) .linked-row { padding:17px 0; }
+:global(.app-shell) :is(:global(.dashboard-bottom-grid),:global(.selected-day-heading),:global(.week-plan-heading),:global(.week-plan)>button:where(.element),:global(.dashboard-video)) { border:0; }
+:global(.app-shell) :global(.journey-steps) .text-link { grid-column:2; grid-row:1 / 3; font-size:13px; }
+:global(.app-shell) :is(:global(.interview-entry-choices),:global(.interview-entry-choices)>a+a,:global(.readiness-row),:global(.schedule-row),:global(.on-activity-list),:global(.on-starter-list),:global(.on-starter-list) button:where(.element),:global(.on-activity-list) a,:global(.knowledge-row),:global(.knowledge-understanding),:global(.knowledge-context),:global(.knowledge-note),:global(.knowledge-context-row),.learning-preferences-row) { border:0; }
+:global(.app-shell) :global(.settings-list) :is(:global(.settings-row) strong,:global(.preparation-note) strong,.learning-preferences-row strong) { font-size:14px; font-weight:450; }
+:global(.app-shell) .learning-preferences-row { flex-direction:row; align-items:center; padding:18px 0; }
+:global(.app-shell) .learning-preferences-row>div { min-width:0; flex:1; }
+:global(.app-shell) .learning-preferences-row input:where(.element)[type="checkbox"] { width:18px; height:18px; flex-shrink:0; }
+:global(.app-shell) .learning-preferences-row .text-link { white-space:nowrap; }
+:global(.app-shell) .quiz-mode-row { padding-block:26px; }
+:global(.app-shell) .interview-advanced-toggle { font-weight:450; }
+:global(.app-shell) :global(.knowledge-tabs) button:where(.element) { border-radius:7px; padding:9px 12px; font-weight:450; }
+:global(.app-shell) :global(.knowledge-tabs) button:where(.element):global(.active) { background:#edf2ee; font-weight:450; }
+:global(.app-shell) :is(:global(.subnav) a,:global(.quiz-paths) a,:global(.learning-tabs) button:where(.element)) { min-height:40px; display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border:0; border-radius:6px; font-size:14px; font-weight:450; color:#66716b; background:transparent; }
+:global(.app-shell) :is(:global(.subnav) a:global(.active),:global(.quiz-paths) a[aria-current="page"],:global(.learning-tabs) button:where(.element):global(.active)) { color:#203b2a; background:#edf2ee; font-weight:450; }
+:global(.app-shell) .quiz-show-ready { margin:10px 0 12px; min-height:36px; }
+:global(.app-shell) .quiz-mode-row { padding:19px 0; gap:20px; }
+:global(.app-shell) .quiz-mode-row h2 { font-size:21px; font-weight:450; }
+:global(.app-shell) .quiz-mode-row p { font-size:14px; }
+
+@media(max-width:1000px) and (min-width:701px) {
+ :global(.sidebar-account) .account-trigger { padding:10px; justify-content:center; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) :is(:global(.subnav) a,:global(.quiz-paths) a,:global(.learning-tabs) button:where(.element)) { font-size:13px; min-height:40px; padding:9px 10px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) :global(.quiz-resume-row)>button:where(.element) { margin-left:auto; min-height:36px; font-size:12px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) .quiz-mode-row { gap:13px; flex-wrap:wrap; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) .quiz-mode-row>div { min-width:200px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) .quiz-mode-row>span { margin-left:43px; font-size:12px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) :global(.knowledge-related) button:where(.element) { font-size:12px; text-align:left; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) :global(.target-select) select:where(.element) { font-size:12px; padding:8px 9px; min-height:37px; gap:6px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) :global(.topbar-actions) .icon-button { width:30px; }
+}
+@media(max-width:700px) {
+ :global(.logout-actions) .button { flex:1; }
+}
+:global(.quiz-v3) :global(.quiz-options) button:where(.element):global(.selected) {
+  background: #edf2ee;
+  color: #243a2c;
+  border-color: #c8d8cd;
+  animation: var(--gakja-keyframe-quiz-option-press) .2s ease-out;
+}
+:global(.quiz-v3) :global(.quiz-options) button:where(.element):not(:disabled):active { transform: translateY(2px); }
+:global(.quiz-v3) :global(.quiz-options) button:where(.element):disabled { opacity:1; }
+:global(.quiz-v3) :global(.quiz-options) button:where(.element)[data-outcome="correct"] { background: #daf9e6; border-color: #89daa9; color: #164a2d; }
+:global(.quiz-v3) :global(.quiz-options) button:where(.element)[data-outcome="incorrect"] { background: #f3eeeb; border-color: #e4d9d2; color: #694d3b; }
+@media (prefers-reduced-motion: reduce) {
+  :global(.quiz-v3) :global(.quiz-options) button:where(.element):global(.selected) { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :global(.quiz-v3) :global(.quiz-options) button:where(.element):not(:disabled):active { transform: none; }
+}
+:global(.comparison-view-switch) button:where(.element) { padding: 9px 15px; color: #707873; background: transparent; border: 0; border-radius: 7px; font-size: 13px; font-weight: 450; cursor: pointer; transition: color .15s, background-color .15s; }
+:global(.comparison-view-switch) button:where(.element)[aria-pressed="true"] { color: #1c2920; background: white; box-shadow: 0 1px 4px #0d25110c; }
+:global(.comparison-view-switch) button:where(.element):focus-visible { outline: 2px solid #64b785; outline-offset: 2px; }
+:global(.comparison-view-switch) button:where(.element):disabled { opacity: .5; cursor: default; }
+:global(.comparison-wipe-controls) input:where(.element)[type="range"] { grid-column: 1 / -1; display: block; width: 100%; height: 28px; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; accent-color: #248d4e; background: transparent; cursor: ew-resize; }
+:global(.comparison-wipe-controls) input:where(.element)[type="range"]:focus-visible { outline: 2px solid #64b785; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  :global(.comparison-view-switch) button:where(.element) { transition: none; }
+}
+:global(.app-shell) :global(.quiz-home) .quiz-mode-row > svg { color:var(--clarity-muted); }
+:global(.app-shell) :global(.on-workspace) :global(.message-sources) button:where(.element) { color:var(--clarity-muted); font-size:12px; padding:4px 0; }
+:global(.app-shell) :global(.on-workspace) .message-save { color:var(--clarity-muted); font-size:12px; margin-top:10px; }
+:global(.app-shell) :global(.on-workspace) :global(.on-starter-list) button:where(.element) { min-height:52px; padding:14px 16px; border:1px solid var(--clarity-line); border-radius:12px; background:transparent; color:var(--clarity-ink); font-size:14px; line-height:1.7; }
+:global(.app-shell) :global(.on-workspace) :global(.on-starter-list) button:where(.element):hover:enabled { background:var(--clarity-soft); border-color:var(--clarity-muted); }
+
+@media(max-width:700px) {
+ :global(.app-shell) :global(.on-workspace) :global(.on-starter-list) button:where(.element) { padding:12px 14px; }
+}
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-next-action) .button { min-height: 45px; font-size: 13px; gap: 8px; white-space: nowrap; box-shadow: none; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-next-action) .text-link { color: #697569; font-size: 12px; line-height: 1.65; text-align: right; word-break: keep-all; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-next-action) .text-link > svg { flex-shrink: 0; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-group-heading) .text-link { font-size: 12px; color: #657169; white-space: nowrap; gap: 4px; }
+:global(.app-shell) :global(.dashboard-compact) .linked-row { border: 0; padding: 12px 0; gap: 13px; }
+:global(.app-shell) :global(.dashboard-compact) .linked-row > svg:last-child { color: #919b94; width: 16px; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-today-plan) .text-link { margin-left: auto; font-size: 12px; color: #758578; white-space: nowrap; flex-shrink: 0; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-calendar-disclosure) :global(.calendar-days) > button:where(.element) { height: auto; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading-switch) > button:where(.element) { display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; font-size: 12px; line-height: 1.5; min-height: 35px; cursor: pointer; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading-switch) > button:where(.element)[aria-pressed="true"] { background: #edf3f9; color: #40658b; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading)[data-view="knowledge"] :global(.dashboard-reading-switch) > button:where(.element)[aria-pressed="true"] { background: #f8eee3; color: #87613e; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading)[data-view="records"] :global(.dashboard-reading-switch) > button:where(.element)[aria-pressed="true"] { background: #f0edf7; color: #706084; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading-content) .linked-row { padding: 13px 0 9px; }
+@media (max-width: 800px) {
+  :global(.app-shell) :global(.dashboard-compact) :global(.dashboard-next-action) .text-link { text-align: left; }
+}
+@media (max-width: 500px) {
+  :global(.app-shell) :global(.dashboard-compact) :global(.dashboard-next-action) .button { width: 100%; justify-content: space-between; min-height: 44px; }
+}
+@media (max-width: 500px) {
+  :global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading-switch) > button:where(.element) { padding: 8px; gap: 5px; font-size: 12px; }
+}
+:global(.quiz-result-screen) :global(.quiz-result-next) .button { white-space:nowrap; min-height:43px; font-size:14px; }
+:global(.quiz-result-screen) :global(.quiz-result-footer) .text-link { font-size:13px; color:#6e7a72; }
+@media(max-width:700px) {
+  :global(.quiz-result-screen) :global(.quiz-result-next) .button { width:100%; justify-content:center; }
+}
+:global(.auth-page) :global(.auth-form) input:where(.element)::placeholder { color: #686870; }
+:global(.chat-attachment-queue) button:where(.element) { display:flex; align-items:center; justify-content:center; flex-shrink:0; min-width:36px; min-height:36px; border:0; background:none; padding:3px; border-radius:8px; color:inherit; }
+:global(.chat-attachment-queue) button:where(.element):hover:not(:disabled) { background:var(--clarity-surface); }
+:global(.on-workspace) :global(.chat-history)>.button { margin-bottom:5px; }
+@media(max-width:700px) { :global(.chat-attachment-queue) button:where(.element) { min-width:44px; min-height:44px; } }
+:global(.speech-next) .button { flex-shrink:0; }
+@media(max-width:740px) {
+ :global(.speech-next) .button { align-self:flex-start; }
+}
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading-switch) > button:where(.element) { position: relative; padding: 8px 0; background: none; border-radius: 0; box-shadow: none; color: #69756d; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading) :global(.dashboard-reading-switch) > button:where(.element)[aria-pressed=true],
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading)[data-view] :global(.dashboard-reading-switch) > button:where(.element)[aria-pressed=true] { background: none; color: #265b40; }
+:global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading-switch) > button:where(.element)[aria-pressed=true]::after { content: ''; display: block; position: absolute; bottom: 0; left: 50%; width: 16px; height: 2px; background: currentColor; transform: translateX(-50%); }
+
+@media(max-width:800px) {
+  :global(.app-shell) :global(.dashboard-compact) :global(.dashboard-next-action) .button { width: auto; justify-content: center; }
+}
+@media(max-width:500px) {
+  :global(.app-shell) :global(.dashboard-compact) :global(.dashboard-reading-switch) > button:where(.element) { gap: 4px; padding: 7px 0; }
+}
+:global(.journey-school-evidence) select:where(.element){width:100%;font-size:15px}
+:global(.app-shell) :global(.topbar) .icon-button { width: 40px; height: 40px; }
+:global(.app-shell) [data-chat-composer] textarea:where(.element) {
+  backdrop-filter: none;
+}
+:global(.app-shell) :is(:global(.topbar) .icon-button, .account-trigger) {
+  color: var(--clarity-muted);
+  transition: background var(--clarity-motion) ease, color var(--clarity-motion) ease;
+}
+:global(.app-shell) :is(:global(.topbar) .icon-button:hover, .account-trigger:hover, .account-trigger[aria-expanded=true]) {
+  background: var(--clarity-soft);
+  color: var(--clarity-green);
+}
+:global(.app-shell) .notification-button i {
+  background: var(--clarity-green);
+  box-shadow: 0 0 0 2px var(--clarity-surface);
+}
+:global(.app-shell) :global(.mobile-nav) > :is(a, button:where(.element)) { color: var(--clarity-muted); }
+:global(.app-shell) :global(.mobile-nav) > :is(a:global(.active), a[aria-current=page], button:where(.element)[data-active=true]) {
+  color: var(--clarity-green);
+  font-weight: 450;
+}
+:global(.app-shell) :global(.mobile-nav) > button:where(.element)[aria-expanded=true] { background: var(--clarity-mint); }
+:global(.app-shell) select:where(.element) {
+  background: var(--clarity-surface);
+  border-color: var(--clarity-line);
+  color: var(--clarity-ink);
+  font-weight: 450;
+  box-shadow: none;
+  transition: border-color var(--clarity-motion) ease, background var(--clarity-motion) ease;
+}
+:global(.app-shell) select:where(.element):hover:not(:disabled) {
+  background: var(--clarity-soft);
+  border-color: var(--clarity-muted);
+}
+:global(.app-shell) :global(.topbar-context) :global(.target-select) select:where(.element) {
+  background: var(--clarity-soft);
+  color: var(--clarity-ink);
+  font-weight: 450;
+}
+:global(.app-shell) select:where(.element):focus-visible {
+  outline: 2px solid var(--clarity-green);
+  outline-offset: 3px;
+}
+:global(.app-shell) select:where(.element):disabled { color: var(--clarity-muted); }
+@supports (appearance: base-select) {
+  :global(.app-shell) select:where(.element)::picker(select) {
+    background: var(--clarity-surface);
+    border-color: var(--clarity-line);
+    border-radius: 10px;
+    color: var(--clarity-ink);
+    box-shadow: 0 6px 22px color-mix(in srgb, var(--clarity-ink) 12%, transparent);
+  }
+}
+@supports (appearance: base-select) {
+  :global(.app-shell) select:where(.element)::picker-icon { color: var(--clarity-muted); }
+}
+@supports (appearance: base-select) {
+  :global(.app-shell) select:where(.element) option:where(.element) {
+    background: var(--clarity-surface);
+    color: var(--clarity-ink);
+    border-radius: 6px;
+    font-weight: 450;
+  }
+}
+@supports (appearance: base-select) {
+  :global(.app-shell) select:where(.element) option:where(.element):is(:hover, :focus) { background: var(--clarity-soft); }
+}
+@supports (appearance: base-select) {
+  :global(.app-shell) select:where(.element) option:where(.element):checked { background: var(--clarity-mint); color: var(--clarity-green); }
+}
+@supports (appearance: base-select) {
+  :global(.app-shell) select:where(.element) option:where(.element)::checkmark { color: var(--clarity-green); }
+}
+@supports (appearance: base-select) {
+  :global(.app-shell) select:where(.element) option:where(.element):disabled { color: var(--clarity-muted); opacity: .65; }
+}
+@supports not (appearance: base-select) {
+  :global(.app-shell) select:where(.element):not([multiple]):not([size]) {
+    appearance: none;
+    padding-inline-end: 40px;
+    background-image: var(--soft-select-arrow) !important;
+    background-position: right 12px center !important;
+    background-size: 18px 18px !important;
+    background-repeat: no-repeat !important;
+  }
+}
+:global(.account-popover) > :is(a, button:where(.element)) { color: var(--clarity-ink); font-weight: 450; }
+:global(.account-popover) > :is(a, button:where(.element)):hover { background: var(--clarity-soft); }
+:global(.account-popover) > :is(a, button:where(.element)):focus-visible {
+  background: var(--clarity-soft);
+  outline: 2px solid var(--clarity-green);
+  outline-offset: -2px;
+}
+:global(.account-popover) > button:where(.element):last-child { color: var(--clarity-danger); }
+:global(.logout-actions) .button { border-radius: 8px; font-weight: 450; }
+:global(.logout-actions) .button:global(.ghost) { background: var(--clarity-soft); color: var(--clarity-ink); }
+:global(.logout-actions) .button:global(.primary) { background: var(--clarity-danger); border-color: var(--clarity-danger); color: var(--clarity-on-action); }
+:global(.logout-actions) .button:global(.primary):hover:not(:disabled) { background: color-mix(in srgb, var(--clarity-danger) 85%, var(--clarity-ink)); border-color: color-mix(in srgb, var(--clarity-danger) 85%, var(--clarity-ink)); }
+:global(.native-modal) :global(.modal) .search-field {
+  border-color: var(--clarity-line);
+  color: var(--clarity-muted);
+}
+:global(.native-modal) :global(.modal) .search-field input:where(.element) { color: var(--clarity-ink); }
+:global(.native-modal) :global(.modal) .search-field:focus-within { outline: 2px solid var(--clarity-green); outline-offset: 3px; }
+:global(.native-modal) :global(.modal) .search-field input:where(.element):focus-visible { outline: none; box-shadow: none; }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element) {
+  border-color: var(--clarity-line);
+  letter-spacing: -.02em;
+}
+:global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element):focus-visible {
+  outline-offset: 3px;
+}
+:global(.auth-page):global(.auth-centered) .auth-submit {
+  border-color: var(--clarity-action);
+}
+:global(.school-registration) :is(input:where(.element), select:where(.element)) {
+  background: var(--clarity-surface);
+  color: var(--clarity-ink);
+  border-color: var(--clarity-line);
+  border-radius: 8px;
+  box-shadow: none;
+}
+:global(.school-registration) :global(.school-calendar-ack) input:where(.element) { accent-color: var(--clarity-green); }
+:global(.app-shell) :global(.preparation-note) textarea:where(.element) { border-color: var(--clarity-line); }
+:global(.admin-shell) :is(:global(.admin-form) input:where(.element), :global(.admin-form) select:where(.element), :global(.admin-form) textarea:where(.element), :global(.filter-bar) input:where(.element)) {
+  background: var(--clarity-surface);
+  color: var(--clarity-ink);
+  border-color: var(--clarity-line);
+  border-radius: 8px;
+}
+:global(.admin-shell) :is(:global(.admin-tabs), :global(.admin-calendar-tabs)) > button:where(.element) {
+  color: var(--clarity-muted);
+  font-weight: 450;
+  border-radius: 8px;
+}
+:global(.admin-shell) :is(:global(.admin-tabs), :global(.admin-calendar-tabs)) > button:where(.element):global(.active) {
+  background: var(--clarity-mint);
+  color: var(--clarity-green);
+  font-weight: 450;
+}
+:global(.admin-shell) :is(:global(.admin-danger-row), :global(.admin-danger-row) .button) { color: var(--clarity-danger); }
+@media (prefers-reduced-motion: reduce) {
+  :global(.app-shell) :is(:global(.main-nav) > a, :global(.topbar) .icon-button, .account-trigger, select:where(.element)),
+:global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element) { transition: none; }
+}
+
+:global(.app-shell) :global(.quiz-v3) :is(:global(.quiz-note),.quiz-mode-row p,:global(.quiz-time-choice),:global(.quiz-choice-footer),.quiz-record-consent) {
+  color:var(--clarity-muted);
+}
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row {
+  color:var(--clarity-ink);
+  transition:background-color var(--clarity-motion);
+}
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row h2 { font-weight:500; }
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row:not(:disabled):hover { background:var(--clarity-soft); }
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row>svg { color:var(--clarity-muted); }
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row:not(:disabled):hover>svg { color:var(--clarity-green); }
+:global(.app-shell) :global(.quiz-v3):global(.quiz-session) :global(.quiz-options) button:where(.element) {
+  background:var(--clarity-surface);
+  border:1px solid var(--clarity-line);
+  border-radius:8px;
+  color:var(--clarity-ink);
+  box-shadow:none;
+  transition:background-color var(--clarity-motion),border-color var(--clarity-motion),color var(--clarity-motion),transform var(--clarity-motion);
+}
+:global(.app-shell) :global(.quiz-v3):global(.quiz-session) :global(.quiz-options) button:where(.element):not(:disabled):hover {
+  background:var(--clarity-soft);
+  border-color:var(--clarity-muted);
+}
+:global(.app-shell) :global(.quiz-v3):global(.quiz-session) :global(.quiz-options) button:where(.element):global(.selected) {
+  background:var(--clarity-mint);
+  border-color:var(--clarity-green);
+  color:var(--clarity-ink);
+  animation-duration:160ms;
+}
+:global(.app-shell) :global(.quiz-v3):global(.quiz-session) :global(.quiz-options) button:where(.element)[data-outcome="correct"] {
+  color:var(--clarity-green);
+  border-color:var(--clarity-green);
+  background:var(--clarity-mint);
+}
+:global(.app-shell) :global(.quiz-v3):global(.quiz-session) :global(.quiz-options) button:where(.element)[data-outcome="incorrect"] {
+  color:var(--clarity-danger);
+  border-color:var(--clarity-danger);
+  background:color-mix(in srgb, var(--clarity-danger) 12%, var(--clarity-bg));
+}
+:global(.app-shell) :global(.quiz-v3) :global(.quiz-answer-workspace) textarea:where(.element) {
+  background:var(--clarity-surface);
+  border:1px solid var(--clarity-line);
+  border-radius:8px;
+  padding:16px 18px;
+  color:var(--clarity-ink);
+}
+:global(.app-shell) :global(.quiz-v3) :global(.quiz-answer-workspace) textarea:where(.element)::placeholder { color:var(--clarity-muted); }
+:global(.app-shell) :global(.interview-v2) .interview-advanced-toggle { background:var(--clarity-soft); color:var(--clarity-ink); border-radius:8px; }
+:global(.app-shell) :global(.interview-v2) .interview-advanced-toggle:hover { background:var(--clarity-mint); }
+:global(.app-shell) :global(.interview-v2) :global(.interview-preset-list)>label:has(input:where(.element):not(:disabled)):hover { background:var(--clarity-soft); }
+:global(.app-shell) :global(.interview-v2) :global(.interview-preset-list) input:where(.element)[type="radio"] { accent-color:var(--clarity-green); right:10px; }
+:global(.app-shell) :global(.interview-v2) :global(.interview-common-questions) button:where(.element) { border:0; padding:14px 10px; border-radius:6px; color:var(--clarity-ink); transition:background-color var(--clarity-motion); }
+:global(.app-shell) :global(.interview-v2) :global(.interview-common-questions) button:where(.element):hover { background:var(--clarity-soft); }
+:global(.app-shell) :global(.interview-v2) :global(.interview-composer) textarea:where(.element) { border-color:var(--clarity-line); background:var(--clarity-surface); color:var(--clarity-ink); }
+:global(.app-shell) :global(.training-view) :global(.training-filters) button:where(.element):global(.active) { border-color:var(--clarity-green); color:var(--clarity-green); font-weight:450; }
+:global(.app-shell) :global(.recall-view) :is(:global(.recall-answer-area) textarea:where(.element),.flip-card) { background:var(--clarity-soft); color:var(--clarity-ink); border-color:var(--clarity-line); box-shadow:none; }
+:global(.app-shell) :is(:global(.practice-home),:global(.quiz-v3),:global(.interview-home),:global(.interview-v2)) :is(a,button:where(.element),textarea:where(.element),input:where(.element),summary):focus-visible {
+  outline:2px solid var(--clarity-green);
+  outline-offset:3px;
+}
+:global(.app-shell) :global(.quiz-v3) :global(.quiz-answer-workspace) textarea:where(.element):focus-visible {
+  box-shadow:0 0 0 4px var(--clarity-mint);
+  border-color:var(--clarity-green);
+  outline-offset:2px;
+}
+
+@media(max-width:700px) {
+  :global(.app-shell) :global(.quiz-v3) .quiz-mode-row { padding:17px 8px; }
+}
+
+@media(max-width:700px) {
+  :global(.app-shell) :global(.quiz-v3) .quiz-mode-row>div { min-width:0; }
+}
+
+@media(max-width:700px) {
+  :global(.app-shell) :global(.quiz-v3) .quiz-mode-row p { line-height:1.65; }
+}
+
+@media(max-width:700px) {
+  :global(.app-shell) :global(.quiz-v3) :global(.quiz-answer-workspace) textarea:where(.element) { padding:14px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  :global(.app-shell) :global(.quiz-v3) .quiz-mode-row,
+:global(.app-shell) :global(.quiz-v3):global(.quiz-session) :global(.quiz-options) button:where(.element),
+:global(.app-shell) :global(.interview-v2) :global(.interview-common-questions) button:where(.element) { transition:none; }
+}
+@media(prefers-reduced-motion:reduce) {
+  :global(.app-shell) :global(.quiz-v3):global(.quiz-session) :global(.quiz-options) button:where(.element):global(.selected) { animation:none; }
+}
+
+@media (min-width: 768px) {
+  :global(.app-shell) :global(.quiz-v3) .quiz-mode-row h2 { font-size: 18px; }
+}
+
+@media (min-width: 768px) {
+  :global(.app-shell) :global(.quiz-v3) :is(:global(.quiz-paths) a, .quiz-mode-row p, :global(.quiz-hint) p, :global(.quiz-answer-workspace) textarea:where(.element)) { font-size: 14px; }
+}
+
+@media (min-width: 768px) {
+  :global(.app-shell) :global(.interview-v2) :is(:global(.interview-message) p, :global(.interview-common-note) p, :global(.interview-common-questions) button:where(.element)) { font-size: 14px; }
+}
+:global(.app-shell) :global(.answer-comparisons) :global(.comparison-view-switch) button:where(.element)[aria-pressed="true"] { color: var(--clarity-ink); background: var(--clarity-surface); box-shadow: none; }
+:global(.app-shell) :global(.answer-comparisons) :global(.comparison-wipe-controls) input:where(.element)[type="range"] { accent-color: var(--clarity-green); }
+:global(.app-shell) :global(.knowledge-page) :is(:global(.knowledge-related) button:where(.element), :global(.knowledge-context-link), :global(.knowledge-context-label)) { color: var(--clarity-muted); font-size: 14px; font-weight: 400; line-height: 1.75; }
+:global(.app-shell) :global(.knowledge-page) :is(:global(.knowledge-related) button:where(.element), :global(.knowledge-context-link), :global(.knowledge-detail-link)):hover:enabled { color: var(--clarity-green); }
+:global(.app-shell) :global(.knowledge-page) :is(:global(.knowledge-tabs) button:where(.element), :global(.knowledge-origins) button:where(.element)) { font-weight: 450; }
+:global(.app-shell) :global(.knowledge-page) :global(.knowledge-tabs) button:where(.element) { position: relative; border-bottom: 2px solid transparent; background: transparent; padding-inline: 0; }
+:global(.app-shell) :global(.knowledge-page) :global(.knowledge-tabs) button:where(.element):global(.active) { border-bottom-color: var(--clarity-green); }
+:global(.app-shell) :global(.knowledge-page) :global(.knowledge-origins) button:where(.element)[aria-pressed="true"] { color: var(--clarity-green); background: var(--clarity-soft); }
+:global(.app-shell) :global(.knowledge-page) :is(:global(.knowledge-history-row) p, :global(.knowledge-note) textarea:where(.element), :global(.knowledge-understanding) textarea:where(.element)) { font-size: 16px; line-height: 1.85; }
+:global(.app-shell) :global(.knowledge-page) :is(:global(.knowledge-note) textarea:where(.element), :global(.knowledge-understanding) textarea:where(.element)) { padding: 14px 16px; background: var(--clarity-bg); border: 1px solid var(--clarity-line); border-radius: 8px; color: var(--clarity-ink); box-shadow: none; }
+:global(.app-shell) :global(.knowledge-page) :global(.knowledge-self-check) button:where(.element)[aria-pressed="true"] { color: var(--clarity-green); border-color: var(--clarity-green); background: var(--clarity-mint); }
+:global(.app-shell) :global(.reader-toc) :global(.toc-chapter) button:where(.element):global(.active) { color: var(--clarity-ink); background: var(--clarity-soft); font-weight: 450; }
+:global(.app-shell) :global(.editor-grid) :is(.script-textarea, .structure-textarea) { font-size: 16px; line-height: 1.85; color: var(--clarity-ink); background: var(--clarity-bg); border: 1px solid var(--clarity-line); border-radius: 8px; box-shadow: none; }
+:global(.app-shell) :global(.department-news-detail) textarea:where(.element) { font-size: 16px; line-height: 1.85; border-color: var(--clarity-line); border-radius: 8px; background: var(--clarity-bg); color: var(--clarity-ink); box-shadow: none; }
+:global(.app-shell) :global(.briefing-detail) :global(.briefing-thought) textarea:where(.element) { font-size: 16px; line-height: 1.85; color: var(--clarity-ink); background: var(--clarity-bg); border-color: var(--clarity-line); border-radius: 8px; box-shadow: none; }
+:global(.app-shell) :global(.assistant-page) :is(:global(.message-author), .message-save) { color: var(--clarity-muted); }
+:global(.app-shell) :global(.assistant-page) :global(.on-starter-list) button:where(.element) { background: var(--clarity-bg); color: var(--clarity-ink); }
+:global(.app-shell) :global(.assistant-page) :global(.on-starter-list) button:where(.element):hover:enabled { background: var(--clarity-soft); color: var(--clarity-green); }
+:global(.app-shell) :is(:global(.records-view), :global(.answer-comparisons), :global(.knowledge-page), :global(.reader-article)) :is(input:where(.element), textarea:where(.element), select:where(.element)):focus-visible { outline: 2px solid var(--clarity-green); outline-offset: 2px; box-shadow: 0 0 0 4px var(--clarity-mint); }
+
+@media (prefers-reduced-motion: reduce) {
+  :global(.app-shell) :is(:global(.records-view), :global(.answer-comparisons), :global(.knowledge-page), :global(.school-learning), :global(.department-news-full), :global(.briefing-detail), :global(.reader-article), :global(.assistant-page)) :is(a, button:where(.element), textarea:where(.element), input:where(.element), select:where(.element)) { transition: none; }
+}
+
+@media (min-width: 768px) {
+  :global(.app-shell) :global(.knowledge-page) :is(:global(.knowledge-reason), :global(.knowledge-stretch), :global(.knowledge-original-title), :global(.knowledge-official-reading) > p, :global(.knowledge-check-prompt), :global(.knowledge-history-row) p, :global(.knowledge-note) textarea:where(.element), :global(.knowledge-understanding) textarea:where(.element)),
+:global(.app-shell) :is(:global(.activity-row-content) > p, :global(.department-news-full) article p, :global(.department-news-detail) > p, :global(.department-news-detail) label, :global(.department-news-detail) textarea:where(.element)),
+:global(.app-shell) :global(.briefing-detail) :is(:global(.briefing-lead), :global(.body-copy), :global(.briefing-facts) p, :global(.briefing-concept) p, :global(.briefing-thought) textarea:where(.element)) { font-size: 14px; line-height: 1.75; }
+}
+:global(.app-shell):not(:global(.admin-shell)) :is(:global(.learning-tabs),:global(.training-filters)) > button:where(.element) { min-height:44px; border:0; border-radius:22px; padding:10px 14px; font-size:14px; }
+:global(.app-shell):not(:global(.admin-shell)) :is(:global(.learning-tabs),:global(.training-filters)) > button:where(.element):global(.active) { background:var(--clarity-mint); color:var(--clarity-action); box-shadow:none; }
+:global(.app-shell) :global(.settings-row) select:where(.element) { background:var(--clarity-surface); min-height:44px; }
+:global(.app-shell) .learning-preferences-row { gap:16px; padding-block:18px; }
+:global(.app-shell):not(:global(.admin-shell)) :is(.text-link,select:where(.element),input:where(.element),textarea:where(.element)):focus-visible,
+:global(.native-modal) :is(button:where(.element),a,select:where(.element),input:where(.element),textarea:where(.element)):focus-visible { outline:2px solid var(--clarity-action); outline-offset:3px; }
+:global(.native-modal) :global(.modal) .icon-button { min-width:44px; min-height:44px; border-radius:50%; flex-shrink:0; }
+:global(.native-modal) :global(.modal) .search-field { border-radius:14px; background:var(--clarity-soft); }
+:global(.native-modal) :global(.modal) .search-field:focus-within { outline-color:var(--clarity-action); }
+:global(.native-modal) :global(.modal) :is(input:where(.element):not([type=checkbox]):not([type=radio]),select:where(.element),textarea:where(.element)) { border-radius:12px; font-size:16px; }
+:global(.native-modal) :global(.modal) select:where(.element) { min-height:48px; padding:10px 40px 10px 14px; }
+:global(.native-modal) select:where(.element):not([multiple]):not([size]) { appearance:none; background-image:var(--soft-select-arrow); background-position:right 12px center; background-size:16px; background-repeat:no-repeat; }
+@media(max-width:700px) {
+ :global(.app-shell) :global(.interview-v2) .toggle { position:relative; width:48px; height:44px; min-width:48px; min-height:44px; padding:0; border:0; background:transparent; flex-shrink:0; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) :global(.interview-v2) .toggle::before { content:''; position:absolute; width:38px; height:22px; top:11px; left:5px; border-radius:20px; background:var(--clarity-line); }
+}
+@media(max-width:700px) {
+ :global(.app-shell) :global(.interview-v2) .toggle:global(.on)::before { background:var(--clarity-action); }
+}
+@media(max-width:700px) {
+ :global(.app-shell) :global(.interview-v2) .toggle i { position:absolute; top:14px; left:8px; width:16px; height:16px; margin:0; background:var(--clarity-surface); transform:none; }
+}
+@media(max-width:700px) {
+ :global(.app-shell) :global(.interview-v2) .toggle:global(.on) i { transform:translateX(16px); }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.topbar) .icon-button,
+:global(.app-shell):not(:global(.admin-shell)) :global(.topbar) .account-trigger:global(.compact) { width:44px; height:44px; min-width:44px; min-height:44px; padding:0; justify-content:center; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.topbar) :global(.target-select) select:where(.element) { min-width:0; min-height:44px; padding-inline:8px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) .button:global(.small),
+:global(.native-modal) .button:global(.small) { min-height:44px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) .text-link,
+:global(.native-modal) .text-link { display:inline-flex; align-items:center; min-height:44px; line-height:1.6; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.main-content) :is(input:where(.element):not([type=checkbox]):not([type=radio]):not([type=range]),textarea:where(.element),select:where(.element)) { font-size:16px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :is(:global(.calendar-heading),:global(.week-plan-heading)) .icon-button { width:44px; height:44px; min-width:44px; min-height:44px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) .calendar-today { min-height:44px; padding-inline:12px; border-radius:22px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) .calendar-event-date { min-height:44px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :is(:global(.dashboard-quick-practice) a,:global(.dashboard-reading-tabs) button:where(.element)) { min-height:44px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.settings-list) .learning-preferences-row > div { flex:1; min-width:180px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.settings-list) input:where(.element)[type=checkbox] { accent-color:var(--clarity-action); }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.settings-list) .learning-preferences-row strong { font-size:15px; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.settings-list) .learning-preferences-row p { font-size:14px; line-height:1.7; }
+}
+@media(max-width:700px) {
+ :global(.native-modal) :global(.modal) :global(.form-actions) .button { flex:1; }
+}
+@media(max-width:700px) {
+ :global(.account-popover) :is(a,button:where(.element)) { min-height:44px; }
+}
+:global(.app-shell) .badge { background:var(--clarity-soft); color:var(--clarity-muted); }
+
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.topbar) :global(.target-select) select:where(.element) { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; }
+}
+
+@media(max-width:700px) {
+ :global(.app-shell) nav:global(.mobile-nav) > :is(a,button:where(.element)) { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; width:100%; height:58px; min-height:44px; padding:7px 2px; color:var(--clarity-muted); border:0; border-radius:30px; background:transparent; font-size:10px; font-weight:550; line-height:1.2; }
+}
+
+@media(max-width:700px) {
+ :global(.app-shell) nav:global(.mobile-nav) > :is(a[aria-current=page],button:where(.element)[data-active=true]) { background:var(--clarity-action); color:var(--clarity-on-action); }
+}
+
+@media(max-width:700px) {
+ :global(.app-shell) :global(.quiz-v3) .quiz-mode-row { padding-block:24px; background:transparent; }
+}
+
+body .button {
+  min-height: 44px;
+  border-radius: var(--clarity-control-radius);
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  border: 0;
+  box-shadow: var(--soft-shadow-small);
+  transition: background-color var(--clarity-motion) ease, border-color var(--clarity-motion) ease, color var(--clarity-motion) ease, transform var(--clarity-motion) ease;
+}
+body .button:global(.primary) { color: var(--clarity-on-brand); background: var(--soft-gradient); border-color: transparent; font-weight:600; }
+body .button:global(.primary):hover:not(:disabled) { color: var(--clarity-on-brand); background: var(--clarity-brand); border-color: transparent; box-shadow: 0 4px 12px rgb(34 13 42 / 10%); }
+body .button:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--soft-shadow-inset); }
+body .button:is(:global(.secondary), :global(.ghost)) { color: var(--clarity-ink); background: var(--clarity-surface); border-color: transparent; }
+body .button:is(:global(.secondary), :global(.ghost)):hover:not(:disabled) { background: var(--clarity-mint); border-color: transparent; }
+body .button:global(.small) { min-height: 36px; padding: 8px 13px; font-size: 13px; }
+body .button:is(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+  opacity: .5;
+  box-shadow: none;
+  transform: none;
+}
+body :is(.button, .text-link):disabled[aria-busy="true"] { opacity: 1; cursor: progress; }
+body .button > svg { flex-shrink: 0; }
+body .button .cta-spinner { flex-shrink: 0; }
+:global(.app-shell) .text-link { color: var(--clarity-green); font-size: 14px; font-weight: 450; }
+:global(.app-shell) .text-link:hover { color: var(--clarity-green-hover); }
+:global(.app-shell) .linked-row { border-color: transparent; padding-block: 17px; }
+:global(.app-shell) :is(input:where(.element), select:where(.element), textarea:where(.element)) { accent-color: var(--clarity-green); }
+body :where(a, button:where(.element), input:where(.element), select:where(.element), textarea:where(.element), summary):focus-visible { outline: 3px solid var(--clarity-green); outline-offset: 3px; }
+
+@media (max-width: 500px) {
+  body .button:global(.small) { min-height: 44px; }
+}
+@media (forced-colors: active) {
+  body :is(.button, input:where(.element):not([type=checkbox]):not([type=radio]):not([type=range]), select:where(.element), textarea:where(.element)) { border: 1px solid ButtonText; }
+}
+@media (forced-colors: active) {
+  body .button:global(.primary) { background: Highlight; color: HighlightText; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body :is(a, button:where(.element), input:where(.element), select:where(.element), textarea:where(.element), summary) { transition-duration: .01ms; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body :is(.button, .text-link) .cta-spinner { animation: none; }
+}
+:global(.app-shell) :global(.topbar) .icon-button { color: var(--clarity-muted); border: 0; border-radius: 50%; background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); }
+:global(.app-shell) :global(.topbar) .icon-button:hover { background: var(--clarity-mint); }
+:global(.app-shell) :global(.topbar-context) :global(.target-select) select:where(.element) { min-height: 44px; max-width: 100%; padding-block: 9px; background-color: var(--clarity-surface); border: 0; border-radius: var(--soft-control-radius); box-shadow: var(--soft-shadow-small); }
+:global(.app-shell) .text-link { min-height: 40px; display: inline-flex; align-items: center; gap: 6px; }
+:global(.app-shell) .linked-row { padding: 18px 12px; border: 0; border-radius: var(--soft-control-radius); }
+:global(.app-shell) .linked-row:hover { background: var(--clarity-mint); }
+:global(.app-shell) .badge { border: 0; border-radius: 999px; padding: 5px 10px; font-size: 12px; }
+:global(.app-shell) .badge:global(.green) { background: var(--clarity-mint); color: var(--soft-accent-ink); }
+body :is(.form-field,:global(.native-modal)) :is(input:where(.element):where(:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file])),textarea:where(.element),select:where(.element)),
+:global(.app-shell) :is(.search-field,:global(.settings-row) input:where(.element),:global(.settings-row) select:where(.element)) {
+  border: 0; border-radius: var(--soft-control-radius); background: var(--clarity-surface); color: var(--clarity-ink); box-shadow: var(--soft-shadow-inset); padding: 13px 16px; font: inherit;
+}
+body :is(.form-field,:global(.native-modal)) :is(input:where(.element):not([type=checkbox]):not([type=radio]),select:where(.element)) { min-height: 46px; }
+body :global(.native-modal) .search-field input:where(.element) { min-height: 44px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+body :global(.native-modal) :global(.modal) .search-field,
+:global(.app-shell) .search-field { border:0; box-shadow:none; }
+body :global(.native-modal) :global(.modal) .search-field:focus-within,
+:global(.app-shell) .search-field:focus-within { outline:0; box-shadow:none; }
+body :global(.native-modal) :global(.modal) .search-field:has(input:where(.element):focus-visible),
+:global(.app-shell) .search-field:has(input:where(.element):focus-visible) { outline:2px solid var(--clarity-green); outline-offset:3px; }
+:global(.app-shell) select:where(.element) { min-height: 44px; border-radius: var(--soft-control-radius); }
+:global(.app-shell) select:where(.element):not([multiple]):not([size]) { appearance: none; padding-right: 40px; background-image: var(--soft-select-arrow); background-repeat: no-repeat; background-position: right 14px center; background-size: 16px; }
+body :is(input:where(.element),textarea:where(.element))::placeholder { color: var(--clarity-muted); opacity: 1; }
+body :is(input:where(.element)[type=checkbox],input:where(.element)[type=radio]) { accent-color: var(--clarity-action); }
+:global(.app-shell) :global(.preparation-note) textarea:where(.element) { padding: 16px; border: 0; border-radius: var(--soft-control-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-inset); line-height: 1.7; }
+:global(.app-shell) .learning-preferences-row { min-height: 72px; border: 0; }
+:global(.admin-shell) :is(:global(.admin-form),:global(.filter-bar)) :is(input:where(.element):where(:not([type=checkbox]):not([type=radio]):not([type=file])),textarea:where(.element),select:where(.element)) { border: 0; border-radius: var(--soft-control-radius); background-color: var(--clarity-surface); color: var(--clarity-ink); box-shadow: var(--soft-shadow-inset); min-height: 44px; }
+:global(.admin-shell) :is(:global(.admin-form),:global(.filter-bar)) .search-field input:where(.element) { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+:global(.admin-shell) :is(:global(.admin-tabs),:global(.admin-calendar-tabs))>button:where(.element) { min-height: 44px; padding: 10px 16px; border: 0; border-radius: 999px; background: transparent; }
+:global(.admin-shell) :is(:global(.admin-tabs),:global(.admin-calendar-tabs))>button:where(.element):global(.active) { background: var(--soft-accent-gradient); color: var(--soft-accent-ink); box-shadow: var(--soft-shadow-small); }
+:global(.app-shell) :global(.dashboard-calendar-panel) :global(.calendar-days) > button:where(.element) { min-height: 56px; border: 0; border-radius: 16px; padding: 6px; }
+:global(.app-shell) :global(.dashboard-calendar-panel) :global(.calendar-days) > button:where(.element):hover { background: var(--clarity-mint); }
+:global(.app-shell) :global(.dashboard-calendar-panel) :global(.calendar-days) > button:where(.element):global(.today) { background: var(--clarity-surface); box-shadow: var(--soft-shadow-inset); }
+:global(.app-shell) :global(.reader-toc) button:where(.element):global(.active) { background: var(--clarity-mint); color: var(--soft-accent-ink); border-radius: 16px; box-shadow: var(--soft-shadow-inset); }
+:global(.app-shell) .interview-advanced-toggle { border: 0; border-radius: var(--soft-control-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); padding: 12px 16px; color: var(--clarity-action); }
+:global(.app-shell) :global(.interview-format-tabs) > button:where(.element) { border: 0; border-radius: 999px; padding: 12px 20px; min-height: 44px; color: var(--clarity-muted); }
+:global(.app-shell) :global(.interview-format-tabs) > button:where(.element):global(.active) { border: 0; background: var(--soft-accent-gradient); color: var(--soft-accent-ink); box-shadow: var(--soft-shadow-small); }
+@media(max-width:700px) {
+  :global(.app-shell) .text-link { min-height: 44px; }
+}
+@media(max-width:700px) {
+  body :is(.form-field,:global(.native-modal)) :is(input:where(.element),select:where(.element),textarea:where(.element)) { font-size: 16px; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :is(:global(.preparation-note) textarea:where(.element),:global(.filter-bar) input:where(.element),:global(.filter-bar) select:where(.element),:global(.settings-row) select:where(.element)) { font-size: 16px; }
+}
+@media(max-width:700px) {
+  :global(.app-shell):not(:global(.admin-shell)) :global(.settings-list) .learning-preferences-row { flex-wrap: nowrap; }
+}
+@media(max-width:700px) {
+  :global(.app-shell):not(:global(.admin-shell)) :global(.settings-list) .learning-preferences-row>div { min-width: 0; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.dashboard-calendar-panel) :global(.calendar-days) > button:where(.element) { min-height: 44px; padding: 4px; }
+}
+:global(.app-shell) :global(.knowledge-page) :global(.knowledge-tabs) button:where(.element) { padding: 11px 18px; min-height: 44px; border: 0; border-radius: 999px; font-size: 14px; color: var(--clarity-muted); white-space: nowrap; }
+:global(.app-shell) :global(.knowledge-page) :global(.knowledge-tabs) button:where(.element):global(.active) { background: var(--soft-accent-gradient); color: var(--soft-accent-ink); border: 0; box-shadow: var(--soft-shadow-small); }
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row { padding: 24px; border: 0; border-radius: var(--soft-radius); background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); gap: 16px; }
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row h2 { font-size: var(--clarity-section-size); line-height: 1.5; }
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row p { font-size: 14px; line-height: 1.7; }
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row > div { min-width: 0; }
+:global(.app-shell) :global(.quiz-v3) .quiz-mode-row > svg { flex-shrink: 0; color: var(--clarity-action); }
+:global(.app-shell) :global(.quiz-session) :global(.quiz-options) > button:where(.element) { border-radius: var(--soft-control-radius); }
+:global(.app-shell) :global(.quiz-session) :global(.quiz-options) > button:where(.element):not(:global(.selected)):not([data-outcome]) { background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); }
+:global(.app-shell) :global(.knowledge-page) :is(.knowledge-bookmark,:global(.knowledge-self-check) button:where(.element),:global(.knowledge-completed) button:where(.element)) { min-height: 44px; border: 0; border-radius: 18px; padding: 11px 16px; font-size: 14px; }
+:global(.app-shell) :global(.knowledge-page) .knowledge-bookmark { background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); }
+:global(.app-shell) :global(.knowledge-page) :is(:global(.knowledge-note),:global(.knowledge-understanding)) textarea:where(.element) { padding: 16px; border: 0; border-radius: 18px; background: var(--clarity-surface); color: var(--clarity-ink); box-shadow: var(--soft-shadow-inset); font-size: var(--clarity-body-size); line-height: var(--clarity-line-height); }
+:global(.app-shell) :global(.knowledge-page) textarea:where(.element):focus-visible { outline: 3px solid var(--clarity-action); outline-offset: 3px; }
+:global(.app-shell) :global(.learning-v2) :global(.learning-tabs)>button:where(.element) { min-height: 44px; padding: 10px 16px; border: 0; border-radius: 999px; background: transparent; color: var(--clarity-muted); }
+:global(.app-shell) :global(.learning-v2) :global(.learning-tabs)>button:where(.element):global(.active) { color: var(--soft-accent-ink); background: var(--soft-accent-gradient); box-shadow: var(--soft-shadow-small); }
+@media(max-width:700px) {
+  :global(.app-shell) :global(.knowledge-page) :global(.knowledge-tabs) button:where(.element) { padding-inline: 14px; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.quiz-v3) .quiz-mode-row { flex-wrap: wrap; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.quiz-v3) .quiz-mode-row > div { flex: 1; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.quiz-v3) .quiz-mode-row > span { margin-left: auto; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.knowledge-page) :is(:global(.knowledge-note),:global(.knowledge-understanding)) textarea:where(.element) { font-size: 16px; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.knowledge-page) .knowledge-question-label select:where(.element) { white-space: normal; line-height: 1.6; font-size: 16px; }
+}
+:global(.app-shell) [data-chat-composer] textarea:where(.element):focus-visible { outline:0; box-shadow:none; }
+:global(.app-shell) :global(.interview-quick-start) > .button { min-height:42px; font-size:14px; padding:10px 18px; }
+:global(.app-shell) :global(.interview-preset-list) input:where(.element)[type=radio] { right:10px; accent-color:var(--clarity-green); }
+:global(.app-shell) :global(.interview-common-questions) button:where(.element) { padding:14px 12px; margin-top:6px; }
+:global(.app-shell) :global(.interview-common-questions) button:where(.element):hover { background:var(--clarity-mint); }
+@media(max-width:1000px) {
+  :global(.app-shell) :global(.interview-quick-start) > .button { white-space:normal; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.interview-v2) .button:global(.small) { min-height:44px; padding:9px 12px; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.interview-quick-start) > .button { min-height:44px; width:100%; justify-content:center; white-space:normal; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.records-view) :global(.page-title) > .button { min-height:44px; padding:8px 12px; font-size:13px; }
+}
+@media(max-width:700px) {
+  :global(.app-shell) :global(.records-view) :global(.inline-actions) > :is(a,button:where(.element)) { min-height:44px; white-space:normal; }
+}
+:global(.app-shell) :global(.interview-common-questions) button:where(.element) { min-height:48px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) button:where(.element):has(> img) { min-height: 54px; gap: 9px; color: var(--clarity-ink); font-size: 15px; font-weight: 600; }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) button:where(.element):has(> img):hover:not(:disabled) { border-color: var(--clarity-action); }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element) { display: block; width: 100%; height: 54px; margin-top: 8px; padding: 0 16px; color: var(--clarity-ink); font-size: 16px; font-weight: 400; transition: border-color .15s, box-shadow .15s, background .15s; }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element)::placeholder { color: var(--clarity-muted); }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element):focus { border-color: var(--clarity-action); }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element):focus-visible { outline: none; }
+:global(.auth-page):global(.auth-centered) .password-field input:where(.element) { padding-right: 58px; }
+:global(.auth-page):global(.auth-centered) .password-field button:where(.element) { width: 44px; height: 44px; right: 6px; color: var(--clarity-muted); }
+:global(.auth-page):global(.auth-centered) .password-field button:where(.element):hover { background: var(--clarity-soft); color: var(--clarity-action); }
+:global(.auth-page):global(.auth-centered) .auth-submit { min-height: 54px; margin-top: 8px; padding: 14px 20px; font-size: 16px; font-weight: 650; transition: background .15s, border-color .15s; }
+:global(.auth-page):global(.auth-centered) .auth-submit:hover:not(:disabled) { border-color: var(--clarity-action); }
+:global(.auth-page):global(.auth-centered) .auth-submit:disabled { border-color: var(--clarity-line); opacity: 1; cursor: not-allowed; }
+:global(.auth-centered) :is(a, button:where(.element)):focus-visible { outline: 3px solid var(--clarity-action); outline-offset: 4px; }
+
+@media (max-width: 767px) {
+  :global(.auth-page):global(.auth-centered) :global(.auth-form) button:where(.element):has(> img) { gap: 7px; font-size: 13px; }
+}
+
+@media (max-width: 767px) {
+  :global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element) { height: 54px; font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(.auth-centered) :is(input:where(.element), a, button:where(.element)) { transition: none; }
+}
+
+@media (min-width: 768px) {
+  :global(.auth-page):global(.auth-centered) :is(:global(.auth-intro), .auth-submit),
+:global(.auth-page):global(.auth-centered) :global(.auth-form) :is(input:where(.element), button:where(.element):has(> img)) { font-size: 14px; }
+}
+
+@media (min-width: 768px) {
+  :global(.auth-page):global(.auth-centered) :global(.auth-form) :is(input:where(.element), button:where(.element):has(> img)),
+:global(.auth-page):global(.auth-centered) .auth-submit { min-height: 48px; height: 48px; border-radius: 10px; }
+}
+:global(.auth-page):global(.auth-centered) :global(.auth-form) button:where(.element):has(> img) { border:0; border-radius:var(--soft-control-radius); background:var(--clarity-bg); box-shadow:var(--soft-shadow-small); }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) button:where(.element):has(> img):hover:not(:disabled) { border:0; background:var(--clarity-soft); }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) button:where(.element):has(> img):active:not(:disabled) { box-shadow:var(--soft-shadow-inset); }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element) { border:0; border-radius:var(--soft-control-radius); background:var(--clarity-bg); box-shadow:var(--soft-shadow-inset); }
+:global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element):focus { border:0; background:var(--clarity-bg); box-shadow:var(--soft-shadow-inset); outline:2px solid var(--clarity-action); outline-offset:3px; }
+:global(.auth-page):global(.auth-centered) .password-field button:where(.element) { border-radius:14px; }
+:global(.auth-page):global(.auth-centered) .auth-submit { border:0; border-radius:var(--soft-control-radius); background:var(--soft-gradient); color:var(--clarity-on-brand); box-shadow:var(--soft-shadow-small); }
+:global(.auth-page):global(.auth-centered) .auth-submit:hover:not(:disabled) { border:0; background:var(--soft-gradient); box-shadow:var(--soft-shadow-raised); }
+:global(.auth-page):global(.auth-centered) .auth-submit:active:not(:disabled) { box-shadow:var(--soft-shadow-inset); }
+:global(.auth-page):global(.auth-centered) .auth-submit:disabled { border:0; background:var(--clarity-soft); color:var(--clarity-muted); box-shadow:none; }
+body :global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element),
+body :global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element):is(:hover,:focus,:focus-visible,:active) {
+  border:0 !important; outline:0 !important; border-radius:18px !important;
+  background:var(--clarity-surface) !important; background-color:var(--clarity-surface) !important;
+  color:var(--clarity-ink); box-shadow:none !important; transition:none;
+}
+body :global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element) { height:54px; min-height:54px; margin-top:10px; padding-inline:18px; font-size:16px; }
+body :global(.auth-page):global(.auth-centered) :global(.auth-form) .password-field,
+body :global(.auth-page):global(.auth-centered) :global(.auth-form) .password-field:focus-within {
+  border:0; outline:0; box-shadow:none !important; background:transparent !important;
+}
+body :global(.auth-page):global(.auth-centered) .password-field input:where(.element) { padding-right:58px; }
+body :global(.auth-page):global(.auth-centered) :global(.auth-form) button:where(.element):has(> img) { min-height:54px; height:54px; gap:10px; border:0; border-radius:18px; background:var(--clarity-surface); box-shadow:0 3px 10px rgb(34 13 42 / 4%); }
+body :global(.auth-page):global(.auth-centered) :global(.auth-form) button:where(.element):has(> img):hover:not(:disabled) { background:var(--clarity-surface); box-shadow:0 6px 16px rgb(34 13 42 / 8%); }
+body :global(.auth-page):global(.auth-centered) .auth-submit { min-height:54px; height:54px; margin-top:8px; border-radius:18px; }
+@media(forced-colors:active) {
+  body :global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element):not([type=checkbox]):not([type=radio]):not([type=range]):focus-visible { outline:2px solid Highlight !important; outline-offset:3px; }
+}
+@media(prefers-reduced-motion:no-preference) {
+  body :global(.auth-page):global(.auth-centered) :global(.auth-form)>div>button:where(.element):has(>img) { animation:var(--gakja-keyframe-auth-float-brand) 12s ease-in-out infinite; }
+}
+@media(prefers-reduced-motion:no-preference) {
+  body :global(.auth-page):global(.auth-centered) :global(.auth-form)>div>button:where(.element):has(>img):nth-child(2) { animation:var(--gakja-keyframe-auth-float-copy) 15s ease-in-out -4s infinite; }
+}
+@media(prefers-reduced-motion:no-preference) {
+  body :global(.auth-page):global(.auth-centered) .auth-submit { animation:var(--gakja-keyframe-auth-float-field) 17s ease-in-out -8s infinite; }
+}
+
+:global(.app-shell) .motion-toggle-field,
+:global(.app-shell) button:where(.element).motion-toggle-button {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 52px;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 44px;
+  min-width: 52px;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:global(.app-shell) input:where(.element).motion-toggle-input[type=checkbox] {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 52px;
+  height: 44px;
+  min-width: 52px;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+:global(.app-shell) .motion-toggle-track {
+  transition: background-color 260ms cubic-bezier(.22,1,.36,1);
+  position: relative;
+  display: block;
+  flex: 0 0 50px;
+  width: 50px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: #dce1e5;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+:global(.app-shell) .motion-toggle-thumb {
+  transition: transform 260ms cubic-bezier(.22,1,.36,1);
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--clarity-surface);
+  box-shadow: none;
+  transform: translateX(0);
+}
+
+:global(.app-shell) button:where(.element).motion-toggle-button[aria-checked=true] .motion-toggle-track,
+:global(.app-shell) .motion-toggle-input:checked + .motion-toggle-track {
+  background: var(--clarity-brand);
+  border-color: transparent;
+}
+:global(.app-shell) button:where(.element).motion-toggle-button[aria-checked=true] .motion-toggle-thumb,
+:global(.app-shell) .motion-toggle-input:checked + .motion-toggle-track .motion-toggle-thumb { transform: translateX(22px); }
+:global(.app-shell) button:where(.element).motion-toggle-button:focus-visible,
+:global(.app-shell) .motion-toggle-input:focus-visible + .motion-toggle-track { outline: 3px solid var(--clarity-action); outline-offset: 4px; }
+:global(.app-shell) button:where(.element).motion-toggle-button:disabled,
+:global(.app-shell) .motion-toggle-input:disabled { cursor: progress; }
+:global(.app-shell) button:where(.element).motion-toggle-button:disabled .motion-toggle-track,
+:global(.app-shell) .motion-toggle-input:disabled + .motion-toggle-track { opacity: .6; }
+
+@media (forced-colors: active) {
+  :global(.app-shell) .motion-toggle-track { forced-color-adjust: none; background: Canvas; border-color: ButtonText; box-shadow: none; }
+}
+
+@media (forced-colors: active) {
+  :global(.app-shell) .motion-toggle-thumb { forced-color-adjust: none; background: ButtonText; box-shadow: none; }
+}
+
+@media (forced-colors: active) {
+  :global(.app-shell) button:where(.element).motion-toggle-button[aria-checked=true] .motion-toggle-track,
+:global(.app-shell) .motion-toggle-input:checked + .motion-toggle-track { background: Highlight; border-color: Highlight; }
+}
+
+@media (forced-colors: active) {
+  :global(.app-shell) button:where(.element).motion-toggle-button[aria-checked=true] .motion-toggle-thumb,
+:global(.app-shell) .motion-toggle-input:checked + .motion-toggle-track .motion-toggle-thumb { background: HighlightText; }
+}
+
+@media (forced-colors: active) {
+  :global(.app-shell) button:where(.element).motion-toggle-button:focus-visible,
+:global(.app-shell) .motion-toggle-input:focus-visible + .motion-toggle-track { outline-color: Highlight; }
+}
+
+body .button:global(.primary),
+body :global(.app-shell) .button:global(.primary),
+body :global(.app-shell) :global(.main-content) .button:global(.primary),
+body :global(.native-modal) .button:global(.primary),
+body :global(.auth-page):global(.auth-centered) .auth-submit {
+  border:0;
+  background:var(--clarity-brand);
+  color:#220D2A;
+  font-weight:600;
+}
+body .button:global(.primary):not(:disabled):hover,
+body :global(.app-shell) .button:global(.primary):not(:disabled):hover,
+body :global(.app-shell) :global(.main-content) .button:global(.primary):not(:disabled):hover,
+body :global(.native-modal) .button:global(.primary):not(:disabled):hover,
+body :global(.auth-page):global(.auth-centered) .auth-submit:not(:disabled):hover {
+  background:var(--clarity-brand);
+  color:#220D2A;
+  box-shadow:0 4px 12px rgb(34 13 42 / 10%);
+}
+body :global(.app-shell) .button:global(.primary):not(:disabled):active,
+body :global(.app-shell) :global(.main-content) .button:global(.primary):not(:disabled):active,
+body :global(.native-modal) .button:global(.primary):not(:disabled):active,
+body :global(.auth-page):global(.auth-centered) .auth-submit:not(:disabled):active { box-shadow:0 1px 4px rgb(34 13 42 / 8%); }
+body .button:global(.primary):is(:disabled,[aria-disabled=true]),
+body :global(.app-shell) .button:global(.primary):is(:disabled,[aria-disabled=true]),
+body :global(.app-shell) :global(.main-content) .button:global(.primary):is(:disabled,[aria-disabled=true]),
+body :global(.native-modal) .button:global(.primary):is(:disabled,[aria-disabled=true]),
+body :global(.auth-page):global(.auth-centered) .auth-submit:is(:disabled,[aria-disabled=true]) {
+  background:var(--clarity-brand);
+  color:#220D2A;
+  font-weight:600;
+  opacity:1;
+  filter:none;
+  box-shadow:none;
+  cursor:not-allowed;
+}
+body :is(:global(.app-shell),:global(.native-modal),:global(.auth-page)) :is(input:where(.element):not([type=checkbox]):not([type=radio]):not([type=range]),textarea:where(.element),select:where(.element)),
+body :global(.app-shell) :is([role=combobox],button:where(.element)[aria-haspopup=listbox],button:where(.element)[aria-haspopup=menu]) {
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+}
+body :is(:global(.app-shell),:global(.native-modal),:global(.auth-page)) :is(input:where(.element):not([type=checkbox]):not([type=radio]):not([type=range]),textarea:where(.element),select:where(.element)):focus,
+body :global(.app-shell) :is([role=combobox],button:where(.element)[aria-haspopup=listbox]):is(:focus,[aria-expanded=true]) {
+  outline:0 !important;
+  border:0;
+  box-shadow:none !important;
+  caret-color:#008747;
+}
+body :global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element):is(:focus,:focus-visible) { background-color:#fff !important; border-radius:18px; }
+body :global(.auth-page):global(.auth-centered) :global(.auth-form) input:where(.element):autofill {
+  box-shadow:0 0 0 1000px #fff inset !important;
+  -webkit-text-fill-color:var(--clarity-ink);
+  border-radius:18px;
+}
+body :is(:global(.app-shell),:global(.native-modal),:global(.auth-page)) :is(div,span):has(> input:where(.element):not([type=checkbox]):not([type=radio]):not([type=range]):focus) {
+  outline:0 !important;
+  box-shadow:none !important;
+}
+body :global(.app-shell) button:where(.element)[aria-haspopup=menu]:focus-visible { outline:2px solid #008747 !important; outline-offset:3px; }
+body :global(.app-shell) :is(button:where(.element)[aria-pressed],button:where(.element)[role=option],button:where(.element)[role=radio],button:where(.element)[role=menuitemradio]) { border-color:transparent; }
+body [data-chat-composer] form:is(:focus-within,:has(textarea:where(.element):focus-visible)) {
+  outline:0 !important;
+  border:0 !important;
+  box-shadow:0 4px 18px rgb(34 13 42 / 4%) !important;
+}
+body [data-chat-composer] textarea:where(.element):is(:focus,:focus-visible) { background:transparent !important; }
+body :global(.app-shell) :is(button:where(.element)[aria-pressed],button:where(.element)[role=option],button:where(.element)[role=radio],button:where(.element)[role=menuitemradio]):is(:focus,:focus-visible,[aria-checked=true],[aria-selected=true],[aria-pressed=true]) { border:0 !important; outline:0; }
+body :is(:global(.app-shell),:global(.native-modal)) :is(:global(.inline-actions),:global(.section-heading),.button,.text-link) { align-items:center; }
+body :is(:global(.app-shell),:global(.native-modal)) :is(.button,.text-link) { gap:8px; line-height:1.5; }
+body :is(:global(.app-shell),:global(.native-modal)) :is(.button,.text-link)>svg { flex-shrink:0; align-self:center; }
+
+@media(hover:hover) and (pointer:fine) {
+  body :is(button:where(.element),.button,a.icon-button):not(:disabled):not([aria-disabled=true]) {
+    transition:scale 180ms cubic-bezier(.22,1,.36,1),background-color 180ms ease,box-shadow 180ms ease,color 180ms ease,left 340ms cubic-bezier(.22,1,.36,1),--scroll-thumb 380ms ease;
+  }
+}
+
+@media(hover:hover) and (pointer:fine) {
+  body :is(button:where(.element),.button,a.icon-button):not(:disabled):not([aria-disabled=true]):hover { scale:1.035; }
+}
+
+@media(hover:hover) and (pointer:fine) {
+  body :is(button:where(.element),.button,a.icon-button):not(:disabled):not([aria-disabled=true]):active { scale:.985; }
+}
+
+@media(hover:hover) and (pointer:fine) {
+  body :is(button:where(.element)[role=switch],button:where(.element)[role=tab],button:where(.element)[role=option],button:where(.element)[role=menuitemradio],button:where(.element)[aria-haspopup],button:where(.element)[aria-label$="안내"],.motion-toggle-button):hover { scale:1; }
+}
+
+@media(max-width:700px) {
+  body :global(.app-shell) textarea:where(.element) { text-align:left; word-break:keep-all; overflow-wrap:break-word; word-spacing:normal; }
+}
+@media(prefers-reduced-motion:reduce) {
+  body :is(button:where(.element),.button,a.icon-button) { transition:none; scale:1!important; }
+}
+@media(forced-colors:active) {
+  body :is(:global(.app-shell),:global(.native-modal),:global(.auth-page)) :is(input:where(.element):not([type=checkbox]):not([type=radio]):not([type=range]),textarea:where(.element),select:where(.element)),
+body :global(.app-shell) :is([role=combobox],button:where(.element)[aria-haspopup=listbox],button:where(.element)[aria-haspopup=menu]) { border:1px solid ButtonText !important; }
+}
+@media(forced-colors:active) {
+  body :global(.app-shell) .button:global(.primary),
+body :global(.native-modal) .button:global(.primary),
+body :global(.auth-page):global(.auth-centered) .auth-submit { color:HighlightText; background:Highlight; }
+}
+@media(forced-colors:active) {
+  body :is(:global(.app-shell),:global(.native-modal),:global(.auth-page)) :is(input:where(.element):not([type=checkbox]):not([type=radio]):not([type=range]),textarea:where(.element),select:where(.element)):focus-visible,
+body :global(.app-shell) :is([role=combobox],button:where(.element)[aria-haspopup=listbox]):focus-visible { outline:2px solid Highlight !important; outline-offset:3px; }
+}
+
+/* Keyboard focus is a control state. Selection keeps its borderless surface. */
+body :is(:global(.app-shell),:global(.native-modal),:global(.auth-page))
+:is(button[aria-pressed],button[role=option],button[role=radio],button[role=menuitemradio],button[aria-haspopup=listbox],[role=combobox]):focus-visible:where(.element) {
+  outline:2px solid var(--clarity-green) !important;
+  outline-offset:3px;
+}
+@media(forced-colors:active) {
+  body :is(:global(.app-shell),:global(.native-modal),:global(.auth-page))
+  :is(button,[role=combobox]):focus-visible:where(.element) { outline-color:Highlight !important; }
+}
+
+@media(prefers-reduced-motion:reduce) { .motion-toggle-track,.motion-toggle-thumb { transition:none; } }
+body [data-chat-composer] form:focus-within:where(.element) {
+  outline:0 !important;
+  box-shadow:none !important;
+}
+body [data-chat-composer] form:where(.element) {
+  outline:0 !important;
+  border:0 !important;
+  box-shadow:0 4px 18px rgb(34 13 42 / 4%) !important;
+}
+body :is(.button, .text-link) > :is(:global(.lucide-arrow-right), :global(.lucide-arrow-up-right)) {
+  transition: transform var(--clarity-motion) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  body :is(.button, .text-link):not(:disabled):not([aria-disabled="true"]):hover > :global(.lucide-arrow-right) { transform: translateX(2px); }
+}
+@media (hover: hover) and (pointer: fine) {
+  body :is(.button, .text-link):not(:disabled):not([aria-disabled="true"]):hover > :global(.lucide-arrow-up-right) { transform: translate(1px, -1px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body :is(.button, .text-link) > :is(:global(.lucide-arrow-right), :global(.lucide-arrow-up-right)) { transition: none; transform: none !important; }
+}

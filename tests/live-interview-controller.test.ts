@@ -18,6 +18,7 @@ function harness(count=1){
     async suspend(){log('suspend');await state.overrides.suspend?.();info.session.data.paused=true;},
     async resume(){log('resume');await state.overrides.resume?.();info.session.data.paused=false;},
     async speak(question,generation,signal){log('speak',question.turnId,generation,signal);await state.overrides.speak?.(question,generation,signal);},
+    captureDuringQuestion:()=>state.overrides.captureDuringQuestion?.()===true,
     async beforeCapture(question,generation,signal){log('beforeCapture',question,generation,signal);await state.overrides.beforeCapture?.(question,generation,signal);},
     capture(progress){log('capture');const done=deferred<LiveAnswerRecording>();void done.promise.catch(()=>{});const capture={finished:done.promise,pauseCalls:0,resumeCalls:0,disposeCalls:0,stopCalls:[] as any[],resolve:done.resolve,pause(){this.pauseCalls++;},resume(){this.resumeCalls++;},stop(reason='manual'){this.stopCalls.push(reason);done.resolve(recording({reason:reason as any}));return done.promise;},dispose(){this.disposeCalls++;done.reject(new DOMException('disposed','AbortError'));}};state.captures.push(capture);return capture;},
     async upload(value,question,generation,options){log('upload',value,question.turnId,generation,options);return state.overrides.upload?state.overrides.upload(value,question,generation,options):`media-${question.turnId}`;},
@@ -41,6 +42,15 @@ test('one start runs spoken questions, silence capture, saved-media answers and 
   assert.deepEqual(h.state.calls.filter(c=>['speak','capture','upload','transcribe','answer','finish'].includes(c.name)).map(c=>c.name),['speak','capture','upload','transcribe','answer','speak','capture','upload','transcribe','answer','finish']);
   assert.deepEqual(h.calls('answer').map(c=>[c.args[0],c.args[1].turnId,c.args[2]]),[['media-t1','t1',7],['media-t2','t2',7]]);
   assert.equal(h.calls('finish').length,1);assert.equal(h.calls('release').length,1);h.controller.dispose();
+});
+
+test('barge-in starts durable recording before RTC question and saves its exact attempt once',async()=>{
+  const h=harness();h.state.overrides.captureDuringQuestion=()=>true;const playback=deferred<void>();h.state.overrides.speak=()=>playback.promise;
+  await h.controller.start();await h.until(()=>h.calls('speak').length===1);
+  assert.equal(h.state.captures.length,1);assert.ok(h.state.calls.findIndex(c=>c.name==='capture')<h.state.calls.findIndex(c=>c.name==='speak'));
+  assert.equal(h.calls('answer').length,0);playback.resolve();await h.until(()=>h.controller.state.phase==='listening');
+  h.state.captures[0].resolve(recording());await h.until(()=>h.controller.state.phase==='complete');
+  assert.equal(h.calls('capture').length,1);assert.equal(h.calls('upload').length,1);assert.equal(h.calls('answer').length,1);h.controller.dispose();
 });
 test('unmount requests a preserving stop and never submits the late final recording',async()=>{
   const h=harness();await h.controller.start();await h.until(()=>h.state.captures.length===1);

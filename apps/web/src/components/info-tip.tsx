@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import {useCallback,useEffect,useId,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
@@ -33,11 +35,11 @@ export function InfoTip({label,children}:{label:string;children:ReactNode}) {
     return()=>{window.removeEventListener('resize',place);window.removeEventListener('scroll',place,true);document.removeEventListener('pointerdown',outside,true);document.removeEventListener('focusin',outside,true);document.removeEventListener('keydown',key,true);};
   },[open,enabled,children,close]);
   if(!enabled)return null;
-  return <span className={styles.tip}>
-    <button ref={trigger} type="button" className={styles.trigger} aria-label={label} aria-expanded={open} aria-controls={open?id:undefined} aria-describedby={open?id:undefined}
+  return <span className={ownedClassName(styles.tip,true)}>
+    <button ref={trigger} type="button" className={ownedClassName(styles.trigger,true)} aria-label={label} aria-expanded={open} aria-controls={open?id:undefined} aria-describedby={open?id:undefined}
       onPointerEnter={event=>{if(event.pointerType!=='touch')show();}} onPointerLeave={leave} onFocus={show} onBlur={event=>{if(event.relatedTarget&&!panel.current?.contains(event.relatedTarget as Node))close();}}
       onClick={()=>{cancelClose();pinned.current=!pinned.current;if(pinned.current)setOpen(true);else close();}}><Info size={17} aria-hidden="true"/></button>
-    {open&&createPortal(<div ref={panel} id={id} role="tooltip" className={styles.panel} style={{top:position?.top??0,left:position?.left??0,visibility:position?'visible':'hidden'}}
+    {open&&createPortal(<div ref={panel} id={id} role="tooltip" className={ownedClassName(styles.panel,true)} style={{top:position?.top??0,left:position?.left??0,visibility:position?'visible':'hidden'}}
       onPointerEnter={cancelClose} onPointerLeave={leave}>{children}</div>,trigger.current?.closest('dialog')||document.body)}
   </span>;
 }

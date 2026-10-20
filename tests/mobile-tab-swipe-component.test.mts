@@ -40,7 +40,7 @@ function harness({initialPath='/my',enabled=true,reduced=false,width=390}={}){
   const win={innerWidth:width,matchMedia:()=>media,setTimeout:(fn:()=>void)=>{timers.set(++timerId,fn);return timerId;}};
   const doc={getElementById:(id:string)=>id==='main-content'?main:null,querySelector:(selector:string)=>selector==='dialog[open]'&&dialog?{}:null,getSelection:()=>({isCollapsed:!selection})};
   const module={exports:{} as any};
-  vm.runInNewContext(source,{module,exports:module.exports,Element:ElementFixture,window:win,document:doc,performance:{now:()=>time},getComputedStyle:(node:ElementFixture)=>({overflowX:node.overflowX}),clearTimeout:(id:number)=>timers.delete(id),require(name:string){
+  vm.runInNewContext(source,{module,exports:module.exports,Element:ElementFixture,window:win,document:doc,performance:{now:()=>time},getComputedStyle:(node:ElementFixture)=>({overflowX:node.overflowX}),clearTimeout:(id:number)=>timers.delete(id),require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
     if(name==='react')return {useRef:(value:any)=>refs[cursor++]??={current:value},useEffect:(fn:Function,deps:any[])=>{
       const index=cursor++,old=effects[index];
       if(!old||deps.some((value,i)=>!Object.is(value,old.deps[i]))){effects[index]={deps};pending.push(()=>{old?.cleanup?.();effects[index].cleanup=fn();});}

@@ -25,7 +25,7 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
  const refs=[],posts=[],pushes=[];let refIndex=0;
  const hooks={...React,useEffect(){},useMemo:callback=>callback(),useCallback:callback=>callback,useRef(initial){return refs[refIndex++]??={current:initial};},useState(initial){const slot=index++;if(!(slot in state))state[slot]=initial;return [state[slot],next=>{state[slot]=typeof next==='function'?next(state[slot]):next;}];}};
  const module={exports:{}};
- vm.runInNewContext(source,{module,exports:module.exports,Date,Intl,Event,AbortController,console,require(name){
+ vm.runInNewContext(source,{module,exports:module.exports,Date,Intl,Event,AbortController,console,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name==='react')return hooks;if(name==='react/jsx-runtime')return jsx;
   if(name==='next/link')return {default:({href,children,...props})=>React.createElement('a',{href,...props},children)};
   if(name==='next/navigation')return {usePathname:()=>'/my',useRouter:()=>({push:href=>pushes.push(href)})};
@@ -136,6 +136,37 @@ for(const kind of ['focus','review']){
  value.needsAvailability=true;assert.ok(h.markup().includes('학습 가능 시간을 설정해요.'));
 }
 console.log('Training hub passed: real period labels, capacity, missing data, manual tasks, server start/complete, stale school guards and unified activity evidence.');
+
+// Today and readiness display the same canonical review state; historical help does not reopen it in the UI.
+{
+ const value=payload(),base={questionCount:1,mainAnswers:1,followupAnswers:1,textAttempts:1,audioAttempts:1,assistedAttempts:3,needsReview:[],unconfirmed:false};
+ const question=(questionId,status,extra={})=>({questionKey:`a:personal:2:${questionId}`,targetId:'a',questionId,sourceType:'personal',sourceVersion:2,activityIds:[questionId],status,needsReview:status==='active',requestIds:['request-'+questionId],resolvedEvidenceIds:status==='resolved'?['answer-'+questionId]:[],reason:status==='active'?'같은 질문에 도움 없이 다시 답하기':'후속 답변으로 재확인했어요.',requestedAtUnknown:false,...extra});
+ const active=question('active','active',{requestedAtUnknown:true}),secondActive=question('same-activity','active',{activityIds:['active']}),resolved=question('resolved','resolved'),other=question('other','active',{targetId:'b',questionKey:'b:personal:2:other',requestedAtUnknown:true});
+ value.review={questions:[active,secondActive,resolved,other],requests:[]};
+ value.readiness={items:[{...base,id:'active',kind:'activity',title:'확인할 탐구',reviewStatus:'active',reviewQuestionKeys:[active.questionKey,secondActive.questionKey],reviewReasons:[active.reason]},{...base,id:'resolved',kind:'activity',title:'재확인한 탐구',reviewStatus:'resolved',reviewQuestionKeys:[resolved.questionKey],reviewReasons:[]}],summary:{total:2,practiced:2,unconfirmed:0}};
+ const today=harness(value).markup(),prep=harness(value,'PreparationOverview'),markup=prep.markup();
+ const reviewSummary=html=>html.match(/<aside[^>]*aria-label="현재 지원처 보완 상태"[^>]*><span>([^<]*)<\/span>/)?.[1];
+ assert.equal(reviewSummary(today),'보완 중 2개 질문 · 재확인 완료 1개 질문');
+ assert.equal(reviewSummary(markup),reviewSummary(today),'both screens count the same selected-target questions, not activities or missing observations');
+ assert.ok(!today.includes('보완 중 3개 질문'),'another support target cannot change this summary');
+ for(const label of ['보완 중','재확인 완료'])assert.ok(today.includes(label)&&markup.includes(label),`${label} has the same meaning on both screens`);
+ assert.equal((markup.match(/data-review-status="active"/g)||[]).length,1);
+ assert.equal((markup.match(/data-review-status="resolved"/g)||[]).length,1);
+ assert.equal((markup.match(/요청 시점 미확인/g)||[]).length,1,'only the linked active item receives the legacy-date note');
+ assert.ok(markup.includes('같은 질문에 도움 없이 다시 답하기'));
+ assert.ok(!markup.includes('숙달')&&!markup.includes('실력 완료'));
+ const controls=nodes(prep.render()).filter(node=>node.type==='button'&&node.props['aria-pressed']!==undefined);
+ assert.ok(renderToStaticMarkup(controls[1]).includes('확인할 항목</span><strong>1</strong>'),'one activity may contain multiple canonical recheck questions');
+ controls[1].props.onClick();
+ const filtered=prep.markup();assert.ok(filtered.includes('확인할 탐구')&&!filtered.includes('재확인한 탐구'),'active review remains filterable without missing-observation notes; old help alone does not include resolved items');
+ value.review.questions=[resolved,{...active,status:'resolved',needsReview:false,requestedAtUnknown:false},{...secondActive,status:'resolved',needsReview:false}];
+ value.readiness.items[0]={...value.readiness.items[0],reviewStatus:'resolved',reviewReasons:[],needsReview:['말하기 미확인']};
+ const refreshedToday=harness(value).markup(),refreshedPrep=harness(value,'PreparationOverview').markup();
+ assert.equal(reviewSummary(refreshedToday),'보완 중 0개 질문 · 재확인 완료 3개 질문');
+ assert.equal(reviewSummary(refreshedPrep),reviewSummary(refreshedToday));
+ assert.ok(!refreshedPrep.includes('data-review-status="active"')&&refreshedPrep.includes('말하기 미확인'),'remaining observation work is separate from the resolved review state');
+ assert.ok(!refreshedPrep.includes('요청 시점 미확인'));
+}
 
 // The whole lesson row is the only interactive control inside the row; rapid taps are one request.
 {

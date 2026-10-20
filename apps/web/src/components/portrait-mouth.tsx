@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 import {useEffect,useRef} from 'react';
 import type {InterviewerAvatarFrame,InterviewerAvatarSignal} from '@/lib/client/interviewer-avatar';
 import {PORTRAIT_MOUTHS,portraitMouthBounds,PortraitMouthRenderer} from '@/lib/client/portrait-mouth';
@@ -16,5 +18,5 @@ export function PortraitMouth({portraitId,src,personId,signal}:{portraitId:strin
     return()=>{disposed=true;unsubscribe();image.onload=null;image.onerror=null;renderer?.dispose();node.hidden=true;delete node.dataset.mouthReady;};
   },[mouth,personId,signal,src]);
   if(!mouth)return null;const bounds=portraitMouthBounds(mouth);
-  return <canvas ref={canvas} className={styles.mouth} hidden aria-hidden="true" data-mouth-person={personId} style={{left:`${bounds.x*100}%`,top:`${bounds.y*100}%`,width:`${bounds.width*100}%`,height:`${bounds.height*100}%`}}/>;
+  return <canvas ref={canvas} className={ownedClassName(styles.mouth,true)} hidden aria-hidden="true" data-mouth-person={personId} style={{left:`${bounds.x*100}%`,top:`${bounds.y*100}%`,width:`${bounds.width*100}%`,height:`${bounds.height*100}%`}}/>;
 }

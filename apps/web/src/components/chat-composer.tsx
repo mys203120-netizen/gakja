@@ -1,8 +1,10 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ArrowUp, LoaderCircle } from 'lucide-react';
-import {sendOnEnter} from '@/lib/client/enter-send';
+import {resetEnterSequence,sendOnEnter} from '@/lib/client/enter-send';
 import styles from './chat-composer.module.css';
 
 type ChatComposerProps = {
@@ -51,12 +53,12 @@ export function ChatComposer({ value, onChange, onSend, label, placeholder = '',
     }
   }
 
-  return <div className={`${styles.composer} ${variant === 'conversation' ? styles.conversation : ''}`} data-chat-composer>
-    <form className={styles.shell} aria-label={label} onSubmit={event => { event.preventDefault(); void submit(); }}>
+  return <div className={ownedClassName(`${styles.composer} ${variant === 'conversation' ? styles.conversation : ''}`,true)} data-chat-composer>
+    <form className={ownedClassName(styles.shell,true)} aria-label={label} onSubmit={event => { event.preventDefault(); void submit(); }}>
       <textarea
         ref={input}
         id={inputId}
-        className={styles.input}
+        className={ownedClassName(styles.input,true)}
         aria-label={label}
         placeholder={placeholder}
         value={value}
@@ -64,18 +66,19 @@ export function ChatComposer({ value, onChange, onSend, label, placeholder = '',
         onCompositionStart={() => { composing.current = true; }}
         onCompositionEnd={() => { composing.current = false; }}
         onKeyDown={event => {sendOnEnter(event,enterToSend,submit,{composing:composing.current,blocked:unavailable});}}
+        onBlur={event=>resetEnterSequence(event.currentTarget)}
         disabled={unavailable}
         maxLength={maxLength}
         rows={1}
       />
-      {variant === 'conversation' && <div className={styles.inlineActions}>{actions}{showCount && <span className={styles.count}>{value.length.toLocaleString()}자</span>}</div>}
-      <button type="submit" className={styles.send} disabled={!value.trim() || unavailable} aria-busy={busy || pending} aria-label={busy || pending ? '전송 중' : sendLabel} title={busy || pending ? '전송 중' : sendLabel}>
-        {busy || pending ? <LoaderCircle size={20} className="spin" aria-hidden="true" /> : <ArrowUp size={20} strokeWidth={2.4} aria-hidden="true" />}
+      {variant === 'conversation' && <div className={ownedClassName(styles.inlineActions,true)}>{actions}{showCount && <span className={ownedClassName(styles.count,true)}>{value.length.toLocaleString()}자</span>}</div>}
+      <button type="submit" className={ownedClassName(styles.send,true)} disabled={!value.trim() || unavailable} aria-busy={busy || pending} aria-label={busy || pending ? '전송 중' : sendLabel} title={busy || pending ? '전송 중' : sendLabel}>
+        {busy || pending ? <LoaderCircle size={20} className={ownedClassName("spin")} aria-hidden="true" /> : <ArrowUp size={20} strokeWidth={2.4} aria-hidden="true" />}
       </button>
     </form>
-    {variant !== 'conversation' && <div className={styles.tools}>
-      {actions && <div className={styles.actions}>{actions}</div>}
-      <div className={styles.helper}>{showCount && <span>{value.length.toLocaleString()}자</span>}<span className={styles.keyboard}>{enterToSend?'Enter로 전송 · Shift+Enter로 줄바꿈':'Enter로 줄바꿈'}</span></div>
+    {variant !== 'conversation' && <div className={ownedClassName(styles.tools,true)}>
+      {actions && <div className={ownedClassName(styles.actions,true)}>{actions}</div>}
+      <div className={ownedClassName(styles.helper,true)}>{showCount && <span className={ownedClassName(undefined,true)}>{value.length.toLocaleString()}자</span>}<span className={ownedClassName(styles.keyboard,true)}>{enterToSend?'Enter로 전송 · Shift+Enter로 줄바꿈':'Enter로 줄바꿈 · 연속 두 번 누르면 전송'}</span></div>
     </div>}
   </div>;
 }

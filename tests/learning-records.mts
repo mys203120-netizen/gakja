@@ -63,7 +63,7 @@ try {
   check((await db.query('select count(*)::int as n from study_imported_events')).rows[0].n===6,'repeat import idempotent');
   check((await db.query("select occurred_at from study_imported_events where source_id=$1",[turn])).rows[0].occurred_at.toISOString()==='2026-01-05T00:00:00.000Z','original occurrence timestamp preserved');
   check((await db.query('select data from answer_revisions where answer_id=$1',[answer.id])).rows[0].data.question.prompt==='원래 질문','historical authored answer prompt recovered from original publication');
-  for(const file of ['202610120009_quiz_learning_flow.sql','202610120010_school_learning.sql','202610130001_school_quiz_assignments.sql','202610130002_school_assignment_source_index.sql'])await db.query(readFileSync(join(projectRoot,'supabase/migrations',file),'utf8'));
+  for(const file of ['202610120009_quiz_learning_flow.sql','202610120010_school_learning.sql','202610130001_school_quiz_assignments.sql','202610130002_school_assignment_source_index.sql','202610210005_student_read_models.sql','202610210006_learning_history_index.sql','202610210007_read_model_scope_invalidation.sql','202610210008_assignment_record_cursor.sql'])await db.query(readFileSync(join(projectRoot,'supabase/migrations',file),'utf8'));
   const summary=await getStudySessions(user);
   check(summary.totals.eventCount===7&&summary.totals.quiz.answered===3&&summary.totals.interviews.answered===1,'historical and current totals unified');
   check(summary.totals.memory.reviewed===1&&summary.totals.assignments.submitted===1&&summary.totals.knowledge.reflections===1,'memory, assignment and video facts remain distinct');

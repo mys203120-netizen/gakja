@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import {z} from 'zod';
 import * as trainingFlow from '../apps/web/src/lib/training-flow';
+import * as targetScope from '../apps/web/src/lib/learning-target-scope';
 
 const compile=(file:string)=>ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
 const routeCode=compile('apps/web/src/app/api/training/route.ts');
@@ -25,7 +26,7 @@ function endpoint(){
   if(sql.startsWith('update student_preferences')){preferences.trainingActivityNotes=JSON.parse(args[1]);return {rows:[]};}
   throw Error('Unexpected SQL: '+sql);
  }};
- vm.runInNewContext(routeCode,{module,exports:module.exports,Date,Request,Response,URL,JSON,require(name:string){
+ vm.runInNewContext(routeCode,{module,exports:module.exports,Date,Request,Response,URL,JSON,require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
   if(name==='node:crypto')return {randomUUID};if(name==='zod')return {z};
   if(name==='@/lib/auth')return {requireUser:async()=>({id:studentId,role:'student'}),checkOrigin:(request:Request)=>assert.equal(request.headers.get('origin'),'http://fixture.test')};
   if(name==='@/lib/db')return {ApiError,query:async(sql:string,args:any[])=> (await db.query(sql,args)).rows,transaction:async(fn:Function)=>fn(db),errorResponse:(error:any)=>Response.json({error:error.message},{status:error.status||500})};
@@ -54,12 +55,13 @@ test('after a committed note loses its response, changing the activity creates a
  const react={Suspense:'Suspense',useCallback:(fn:Function)=>fn,useState(initial:any){const index=cursor++;if(!(index in hooks))hooks[index]=initial;return [hooks[index],(value:any)=>{const next=typeof value==='function'?value(hooks[index]):value;if(!Object.is(next,hooks[index])){hooks[index]=next;dirty=true;}}];},useRef(initial:any){return hooks[cursor++]??={current:initial};},useEffect(fn:Function,deps:any[]){const index=cursor++,previous=effects[index];if(!previous||deps.some((value,i)=>!Object.is(value,previous.deps[i]))){effects[index]={deps};pending.push(()=>{previous?.cleanup?.();effects[index].cleanup=fn();});}}};
  const jsx={jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props})};
  const module={exports:{} as any};
- vm.runInNewContext(uiCode,{module,exports:module.exports,AbortController,URLSearchParams,crypto:{randomUUID},require(name:string){
+ vm.runInNewContext(uiCode,{module,exports:module.exports,AbortController,URLSearchParams,crypto:{randomUUID},require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
   if(name==='react')return react;if(name==='react/jsx-runtime')return jsx;
   if(name==='@/lib/training-flow')return trainingFlow;
+  if(name==='@/lib/learning-target-scope')return targetScope;
   if(name==='next/link')return {default:'Link'};if(name==='next/navigation')return {useRouter:()=>({push(){}}),useSearchParams:()=>new URLSearchParams()};
   if(name==='lucide-react')return {ArrowRight:'ArrowRight',Check:'Check',Mic:'Mic'};
-  if(name==='./app-shell')return {useApp:()=>({targetId:'target',data:{user:{id:studentId}},refresh:async()=>{},learningRevision:1})};
+  if(name==='./app-shell')return {useApp:()=>({targetId:'target',target:{id:'target',university:'검증대학',department:'검증학과',admission_year:2027},data:{user:{id:studentId},package:{id:'fixture-package',active_version:1}},refresh:async()=>{},learningRevision:1})};
   if(name==='./shared')return {Alert:'Alert',Spinner:'Spinner',ActionButton:'ActionButton',InfoTip:'InfoTip',api:async()=>({today:{tasks:[]},selectedTask:{sessionId:'completed-session'},readiness:{items:[{id:'activity-a',title:'활동 A'},{id:'activity-b',title:'활동 B'}]}}),post:async(url:string,input:any)=>{
    assert.equal(url,'/api/training');requests.push(structuredClone(input));const result=await api.post(input);if(result.status!==200)throw Error(result.body.error);if(loseFirstResponse){loseFirstResponse=false;throw Error('응답 유실');}return result.body;
   }};

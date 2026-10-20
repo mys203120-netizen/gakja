@@ -15,6 +15,8 @@ function render(props:Record<string,unknown>){
     if(name==='@/lib/interviewer-portraits')return {interviewerPortrait};
     if(name==='./live2d-interviewer')return {Live2DInterviewer:'Live2DInterviewer'};
     if(name==='./portrait-mouth')return {PortraitMouth:'PortraitMouth'};
+    if(name==='./portrait-expression')return {PortraitExpression:'PortraitExpression'};
+    if(name==='./owned-class-name')return {ownedClassName:(value:any)=>value};
     if(name.endsWith('.module.css'))return {__esModule:true,default:{avatar:'avatar',portrait:'portrait',identity:'identity'}};
     throw new Error(name);
   }});

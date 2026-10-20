@@ -11,6 +11,8 @@ import {tsImport} from 'tsx/esm/api';
 // Execute the real component effects and render their resulting states. Deferred
 // requests deliberately ignore abort, so stale-result guards are exercised too.
 const targetScope=await tsImport('../apps/web/src/lib/learning-target-scope.ts',import.meta.url);
+const plannerModel=await tsImport('../apps/web/src/lib/planner-model.ts',import.meta.url);
+const schedule=await tsImport('../apps/web/src/lib/schedule.ts',import.meta.url);
 const workflow=await tsImport('../packages/content-contracts/src/workflows.ts',import.meta.url);
 const styles=new Proxy({},{get:(_,name)=>String(name)}),cache=new Map();
 const link=({href,children,...props})=>React.createElement('a',{href,...props},children);
@@ -19,12 +21,14 @@ function load(path,mocks={}){
  const url=new URL(path,import.meta.url);if(cache.has(url.href)&&!Object.keys(mocks).length)return cache.get(url.href);
  const module={exports:{}};
  const code=ts.transpileModule(fs.readFileSync(url,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
- vm.runInNewContext(code,{module,exports:module.exports,URLSearchParams,Intl,Date,Set,Map,AbortController,console,require(name){
+ vm.runInNewContext(code,{module,exports:module.exports,URLSearchParams,Intl,Date,Set,Map,AbortController,console,window:{addEventListener(){},removeEventListener(){}},require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name in mocks)return mocks[name];
   if(name==='react/jsx-runtime')return runtime;if(name==='react')return React;if(name==='lucide-react')return icons;
   if(name==='@/lib/learning-target-scope')return targetScope;if(name==='@gakja/content-contracts/workflows')return workflow;
+  if(name==='./planner-model')return plannerModel;if(name==='./schedule')return schedule;
   if(name==='@/lib/learning-growth'||name==='./learning-growth')return load('../apps/web/src/lib/learning-growth.ts');
   if(name==='./transcript-provenance')return load('../apps/web/src/lib/transcript-provenance.ts');
+  if(name.startsWith('./')&&url.pathname.includes('/src/lib/'))return load(new URL(name+'.ts',url).href);
   if(name.startsWith('@/lib/'))return load('../apps/web/src/lib/'+name.slice(6)+'.ts');
   throw new Error(name);
  }});

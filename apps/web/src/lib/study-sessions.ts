@@ -8,6 +8,8 @@ import type { LearningData } from '@gakja/content-contracts';
 import { recordMatchesCurrentTarget } from './learning-target-scope';
 import { nextUnappliedQuestion } from './next-learning-question';
 import { growthContextResolver, type GrowthVersion } from './learning-growth';
+import {parseRecordCursor,recordPage,RECORD_CURSOR_TIMESTAMP} from './record-cursor';
+import {readStudentModel} from './student-read-model';
 
 export type StudyEvent = { kind: 'quiz_response' | 'interview_answer' | 'memory_review' | 'assignment_submission' | 'knowledge_progress'; sourceId: string; data: Record<string, unknown> };
 const requestSchema = z.discriminatedUnion('action', [
@@ -37,6 +39,8 @@ async function lock(db: PoolClient, studentId: string) {
 }
 
 export function studySummary(events: any[]) {
+  // Frozen event rows remain historical evidence; current totals exclude explicitly withdrawn source facts.
+  events=events.filter(event=>event.data?.invalidated!==true);
   const quiz = events.filter(event => event.kind === 'quiz_response');
   const interview = events.filter(event => event.kind === 'interview_answer');
   const memory = events.filter(event => event.kind === 'memory_review');
@@ -95,20 +99,43 @@ async function eventsFor(db: PoolClient, sessionId: string, studentId: string) {
   return normaliseSourceFacts(db,studentId,events);
 }
 /** Correct the read model from owned immutable sources; never rewrite a finalized report or original event. */
-async function normaliseSourceFacts(db:PoolClient,studentId:string,events:any[]) {
-  if(!events.some(event=>['quiz_response','memory_review','assignment_submission'].includes(event.kind)))return events;
-  const archives=(await db.query("select v.version,v.data from content_versions v join content_packages p on p.id=v.package_id where p.student_id=$1 and v.status='published'",[studentId])).rows;
-  const sources=(await db.query(`select 'quiz_response' as kind,r.id::text as source_id,r.data,r.hint_used,s.content_version,s.mode,s.items->r.item_index as item,r.outcome,r.response as answer,r.memory_item_id from quiz_responses r join quiz_sessions s on s.id=r.session_id and s.student_id=r.student_id where r.student_id=$1
-    union all select 'assignment_submission',r.id::text,r.response,false,a.content_version,'assignment',i.value,(r.result->>'correct')::boolean,r.response->>'response',r.memory_item_id from quiz_submissions r join quiz_assignments a on a.id=r.assignment_id and a.student_id=r.student_id left join lateral(select x.value from jsonb_array_elements(a.items) x(value) where x.value->>'id'=r.memory_item_id limit 1)i on true where r.student_id=$1
-    union all select 'memory_review',m.id::text,m.data,false,case when coalesce(m.data->>'content_version','')~'^[0-9]+$' then (m.data->>'content_version')::int else null end,'memory',null::jsonb,null::boolean,null::text,m.memory_item_id from memory_attempts m where m.student_id=$1`,[studentId])).rows;
+export async function normaliseSourceFacts(db:PoolClient,studentId:string,events:any[]) {
+  if(!events.some(event=>['quiz_response','memory_review','assignment_submission','interview_answer'].includes(event.kind)))return events;
+  const sourceIds=(kind:string)=>events.filter(event=>event.kind===kind).map(event=>event.source_id).filter(id=>typeof id==='string'&&/^[0-9a-f-]{36}$/i.test(id));
+  const sources=(await db.query(`select 'quiz_response' as kind,r.id::text as source_id,r.data,r.hint_used,s.content_version,s.mode,s.items->r.item_index as item,r.outcome,r.response as answer,r.memory_item_id,true as source_valid,r.timed_out as source_timed_out,null::text as source_evaluation_method
+      from quiz_responses r join quiz_sessions s on s.id=r.session_id and s.student_id=r.student_id where r.student_id=$1 and r.id=any($2::uuid[])
+    union all select 'assignment_submission',r.id::text,r.response,null::boolean,a.content_version,'assignment',i.value,(r.result->>'correct')::boolean,r.response->>'response',r.memory_item_id,true,null::boolean,r.result->>'evaluation_method' from quiz_submissions r join quiz_assignments a on a.id=r.assignment_id and a.student_id=r.student_id left join lateral(select x.value from jsonb_array_elements(a.items) x(value) where x.value->>'id'=r.memory_item_id limit 1)i on true where r.student_id=$1 and r.id=any($3::uuid[])
+    union all select 'memory_review',m.id::text,m.data,null::boolean,case when coalesce(m.data->>'content_version','')~'^[0-9]+$' then (m.data->>'content_version')::int else null end,'memory',null::jsonb,null::boolean,null::text,m.memory_item_id,true,null::boolean,null::text from memory_attempts m where m.student_id=$1 and m.id=any($4::uuid[])
+    union all select 'interview_answer',t.id::text,t.data,null::boolean,s.content_version,s.kind,null::jsonb,null::boolean,t.data->>'answer',null::text,
+      s.state not in('cancelled','deleted') and coalesce(t.data->>'invalidated','false')!='true' and nullif(btrim(t.data->>'answer'),'') is not null,null::boolean,null::text
+      from interview_turns t join interview_sessions s on s.id=t.session_id and s.student_id=t.student_id where t.student_id=$1 and t.id=any($5::uuid[])
+    `,[studentId,sourceIds('quiz_response'),sourceIds('assignment_submission'),sourceIds('memory_review'),sourceIds('interview_answer')])).rows;
+  const neededVersions=[...new Set(sources.filter(row=>row.kind!=='interview_answer').map(row=>row.content_version).filter(value=>typeof value==='number'&&value>0))];
+  const archives=neededVersions.length?(await db.query("select v.version,v.data from content_versions v join content_packages p on p.id=v.package_id where p.student_id=$1 and v.status='published' and v.version=any($2::int[])",[studentId,neededVersions])).rows:[];
   const bySource=new Map(sources.map(row=>[row.kind+':'+row.source_id,row]));
   return events.map(event=>{
-    const row=bySource.get(event.kind+':'+event.source_id);if(!row)return event;
+    if(!['quiz_response','memory_review','assignment_submission','interview_answer'].includes(event.kind))return event;
+    const row=bySource.get(event.kind+':'+event.source_id);
+    const knownSource=event.data?.provenance||event.kind==='quiz_response'&&event.data?.quizSessionId||event.kind==='assignment_submission'&&event.data?.assignmentId||event.kind==='interview_answer'&&event.data?.sessionId;
+    if(!row)return knownSource?{...event,data:{...event.data,invalidated:true,sourceUnavailable:true}}:event;
+    if(row.source_valid===false)return {...event,data:{...event.data,invalidated:true,sourceUnavailable:true}};
+    const complete=row.data?.assistance_recorded===true||row.data?.assistanceRecorded===true;
+    const sourceBoolean=(names:string[],fallback:boolean)=>{for(const name of names)if(typeof row.data?.[name]==='boolean')return row.data[name];return complete?false:fallback;};
+    const hintUsed=typeof row.hint_used==='boolean'?row.hint_used:sourceBoolean(['hintUsed','hint_used'],event.data?.hintUsed===true);
+    const helped=sourceBoolean(['assisted','aiAssisted','ai_assisted'],event.data?.assisted===true)||(Array.isArray(row.data?.helpKinds)&&row.data.helpKinds.length>0);
+    const recorded=typeof row.data?.assistance_recorded==='boolean'?row.data.assistance_recorded:typeof row.data?.assistanceRecorded==='boolean'?row.data.assistanceRecorded:event.data?.assistance_recorded===true;
+    const assistance=answerAssistance({hint_used:hintUsed,data:{assisted:helped,assistance_recorded:recorded}});
+    if(event.kind==='interview_answer')return {...event,data:{...event.data,invalidated:false,sourceUnavailable:false,answer:row.answer,contentVersion:row.content_version,hintUsed:assistance.hintUsed,assisted:assistance.assisted,assistance_recorded:assistance.assistanceRecorded}};
     const source=archives.find(archive=>archive.version===row.content_version)?.data as LearningData|undefined;
     const item=row.item||source?.memory_items.find(item=>item.id===row.memory_item_id);
     if(!item)return event.kind==='memory_review'?{...event,data:{...event.data,outcome:null,verified:false,evaluationMethod:'self_check'}}:event;
-    const identity=quizAnswerContext(item,row.data,source),assistance=answerAssistance({hint_used:row.hint_used||event.data.hintUsed,data:{...row.data,assisted:row.data?.assisted===true||event.data.assisted===true}});
-    const data={...event.data,questionId:identity.question_id,linkedQuestionId:identity.linked_question_id,practiceKind:identity.practice_kind,practicePrompt:identity.question,contentVersion:row.content_version,hintUsed:assistance.hintUsed,assisted:assistance.assisted,assistance_recorded:assistance.assistanceRecorded};
+    const identity=quizAnswerContext(item,row.data,source);
+    const data={...event.data,invalidated:false,sourceUnavailable:false,questionId:identity.question_id,linkedQuestionId:identity.linked_question_id,practiceKind:identity.practice_kind,practicePrompt:identity.question,contentVersion:row.content_version,hintUsed:assistance.hintUsed,assisted:assistance.assisted,assistance_recorded:assistance.assistanceRecorded};
+    if(event.kind==='quiz_response'||event.kind==='assignment_submission'){
+      data.outcome=row.outcome;data.verified=row.outcome!==null&&(event.kind==='quiz_response'||row.source_evaluation_method==='reviewed_correct_answer');
+      if(row.source_evaluation_method)data.evaluationMethod=row.source_evaluation_method;
+      if(typeof row.source_timed_out==='boolean')data.timedOut=row.source_timed_out;
+    }
     if(event.kind==='memory_review'&&source){
       let outcome=null;try{outcome=memoryReviewOutcome(source,row.memory_item_id,row.data?.answer);}catch{}
       data.outcome=outcome;data.verified=outcome!==null;data.evaluationMethod=outcome===null?'self_check':'reviewed_correct_answer';
@@ -157,8 +184,53 @@ async function view(db: PoolClient, session: any) {
   const events=await eventsFor(db,session.id,session.student_id);
   return {...session,report:{...studySummary(events),events}};
 }
-export async function getStudySessions(user: Profile, id?: string | null) {
+export type StudySessionReadOptions={view?:string|null;cursor?:string|null;limit?:number};
+/** Overview lists stay bounded; counters and frozen report details retain the full evidence. */
+export function compactStudySummary(summary:ReturnType<typeof studySummary>){
+  const recent=(a:any,b:any)=>String(b.lastAttemptAt||b.resolvedAt||b.verifiedAt||'').localeCompare(String(a.lastAttemptAt||a.resolvedAt||a.verifiedAt||''));
+  return {...summary,weakPointCount:summary.weakPoints.length,resolvedPointCount:summary.resolvedPoints.length,
+    weakPoints:[...summary.weakPoints].sort((a,b)=>(b.wrong+b.timedOut)-(a.wrong+a.timedOut)||recent(a,b)).slice(0,30),
+    resolvedPoints:[...summary.resolvedPoints].sort(recent).slice(0,30),
+    independentlyVerified:{...summary.independentlyVerified,questions:[...summary.independentlyVerified.questions].sort(recent).slice(0,30)}};
+}
+async function historyPage(db:PoolClient,studentId:string,options:StudySessionReadOptions={},sessionId?:string){
+  const limit=options.limit??30,scope=JSON.stringify([studentId,'study-history',sessionId||'']);let cursor;
+  try{cursor=parseRecordCursor(options.cursor,scope);}catch(error){throw new ApiError(400,(error as Error).message);}
+  const values:unknown[]=[studentId],where:string[]=[];
+  if(sessionId){values.push(sessionId);where.push(`session_id=$${values.length}::uuid`);}
+  if(cursor){values.push(cursor.anchor.at,cursor.anchor.id,cursor.after.at,cursor.after.id);const start=values.length-3;where.push(`(created_at,id)<=($${start}::timestamptz,$${start+1}::uuid) and (created_at,id)<($${start+2}::timestamptz,$${start+3}::uuid)`);}
+  values.push(limit+1);
+  const rows=(await db.query(`select id,session_id,kind,source_id,data,created_at,historical,${RECORD_CURSOR_TIMESTAMP} as __cursor_at from(
+    select id,session_id,kind,source_id,data,created_at,false as historical from study_session_events where student_id=$1
+    union all select id,null::uuid as session_id,kind,source_id,data,occurred_at as created_at,true as historical from study_imported_events where student_id=$1
+  )events ${where.length?'where '+where.join(' and '):''} order by created_at desc,id desc limit $${values.length}`,values)).rows;
+  const page=recordPage(rows,limit,scope,cursor);
+  return {history:await normaliseSourceFacts(db,studentId,page.items),historyPage:page.page};
+}
+async function sessionsPage(db:PoolClient,studentId:string,options:StudySessionReadOptions={}){
+  const limit=options.limit??30,scope=JSON.stringify([studentId,'study-sessions']);let cursor;
+  try{cursor=parseRecordCursor(options.cursor,scope);}catch(error){throw new ApiError(400,(error as Error).message);}
+  const values:unknown[]=[studentId],where=["student_id=$1","state='finalized'","coalesce((report->>'eventCount')::int,0)>0"];
+  if(cursor){values.push(cursor.anchor.at,cursor.anchor.id,cursor.after.at,cursor.after.id);where.push('(started_at,id)<=($2::timestamptz,$3::uuid) and (started_at,id)<($4::timestamptz,$5::uuid)');}
+  values.push(limit+1);
+  const rows=(await db.query(`select id,student_id,state,started_at,last_seen_at,last_activity_at,closing_at,ended_at,finish_reason,
+    report-'events'-'weakPoints'-'resolvedPoints'-'independentlyVerified' || jsonb_build_object('weakPointCount',jsonb_array_length(coalesce(report->'weakPoints','[]'::jsonb))) as report,
+    ${RECORD_CURSOR_TIMESTAMP.replaceAll('created_at','started_at')} as __cursor_at from study_sessions where ${where.join(' and ')} order by started_at desc,id desc limit $${values.length}`,values)).rows;
+  const page=recordPage(rows,limit,scope,cursor);return {sessions:page.items,sessionsPage:page.page};
+}
+async function studyReadModel(db:PoolClient,studentId:string,current:any){
+  return readStudentModel(studentId,'study','v3',async()=>{
+    const allEvents=await normaliseSourceFacts(db,studentId,(await db.query('select id,session_id,kind,source_id,data,created_at,false as historical from study_session_events where student_id=$1 union all select id,null::uuid as session_id,kind,source_id,data,occurred_at as created_at,true as historical from study_imported_events where student_id=$1 order by created_at,id',[studentId])).rows);
+    const totals=compactStudySummary(studySummary(allEvents));
+    const targets=(await db.query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null",[studentId])).rows.map(row=>({...row.data,id:row.id}));
+    const recent=nextUnappliedQuestion(allEvents.filter(event=>event.data?.invalidated!==true&&recordMatchesCurrentTarget(event.data,targets)));
+    const nextQuestion=recent?{questionId:recent.data.questionId,memoryItemId:recent.data.memoryItemId,practiceKind:recent.data.practiceKind,prompt:recent.data.practicePrompt||recent.data.prompt||recent.data.question,activityIds:recent.data.activityIds||[],targetId:recent.data.targetId||recent.data.target_id||null,targetSnapshot:recent.data.targetSnapshot||recent.data.target_snapshot||null,sourceType:recent.data.sourceType||recent.data.source_type||null,commonRevision:recent.data.commonRevision||recent.data.common_revision||null,assisted:recent.data.assisted===true||recent.data.hintUsed===true}:null;
+    return {totals,nextQuestion,currentSessionId:current?.id||null,currentSummary:current?compactStudySummary(studySummary(allEvents.filter(event=>event.session_id===current.id))):null};
+  },db);
+}
+export async function getStudySessions(user: Profile, id?: string | null,options:StudySessionReadOptions={}) {
   assertStudent(user);
+  if(options.view&&!['history','sessions'].includes(options.view)||!Number.isInteger(options.limit??30)||(options.limit??30)<1||(options.limit??30)>50)throw new ApiError(400,'기록 조회 범위를 확인해 주세요.');
   return transaction(async db=>{
     await lock(db,user.id);
     const current = await reconcile(db,user.id);
@@ -169,15 +241,12 @@ export async function getStudySessions(user: Profile, id?: string | null) {
       const displayed=await view(db,session);
       return {session:displayed,sourceFacts:await normaliseSourceFacts(db,user.id,displayed.report?.events||[])};
     }
-    // Lists stay compact; full saved answers are fetched only through an owned detail ID.
-    const sessions = (await db.query("select id,student_id,state,started_at,last_seen_at,last_activity_at,closing_at,ended_at,finish_reason,report-'events' as report from study_sessions where student_id=$1 and state='finalized' and coalesce((report->>'eventCount')::int,0)>0 order by started_at desc,id desc",[user.id])).rows;
-    const allEvents = await normaliseSourceFacts(db,user.id,(await db.query('select id,kind,source_id,data,created_at,false as historical from study_session_events where student_id=$1 union all select id,kind,source_id,data,occurred_at as created_at,true as historical from study_imported_events where student_id=$1 order by created_at,id',[user.id])).rows);
-    const totals = studySummary(allEvents);
-    const activeTargets=(await db.query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null",[user.id])).rows.map(row=>({...row.data,id:row.id}));
-    // Historical totals remain intact; only owned, currently registered identities can recommend practice.
-    const recent = nextUnappliedQuestion(allEvents.filter(event=>recordMatchesCurrentTarget(event.data,activeTargets)));
-    const nextQuestion = recent?{questionId:recent.data.questionId,memoryItemId:recent.data.memoryItemId,practiceKind:recent.data.practiceKind,prompt:recent.data.practicePrompt||recent.data.prompt||recent.data.question,activityIds:recent.data.activityIds||[],targetId:recent.data.targetId||recent.data.target_id||null,targetSnapshot:recent.data.targetSnapshot||recent.data.target_snapshot||null,sourceType:recent.data.sourceType||recent.data.source_type||null,commonRevision:recent.data.commonRevision||recent.data.common_revision||null,assisted:recent.data.assisted===true||recent.data.hintUsed===true}:null;
-    return {current:await view(db,current),latest:sessions[0]||null,sessions,totals,history:allEvents,nextQuestion};
+    if(options.view==='history')return historyPage(db,user.id,options);
+    if(options.view==='sessions')return sessionsPage(db,user.id,options);
+    const summary=await studyReadModel(db,user.id,current),recent=await historyPage(db,user.id,{limit:options.limit}),past=await sessionsPage(db,user.id,{limit:options.limit});
+    const currentEvents=current?await historyPage(db,user.id,{},current.id):null;
+    const active=current?{...current,report:{...summary.currentSummary,events:currentEvents?.history||[]},eventsPage:currentEvents?.historyPage}:null;
+    return {current:active,latest:past.sessions[0]||null,...past,totals:summary.totals,...recent,nextQuestion:summary.nextQuestion};
   });
 }
 export async function studySessionAction(user: Profile, value: unknown) {

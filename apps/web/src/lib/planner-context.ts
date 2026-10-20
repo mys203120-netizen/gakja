@@ -7,19 +7,22 @@ import { commonInterviewQuestions } from './school-learning';
 import { learningScopeIdentity } from './learning-target-scope';
 import { learningTargetIdentityMatches } from '@gakja/content-contracts/workflows';
 import {growthStage} from './learning-growth';
+import {readStudentModel} from './student-read-model';
+import {knowledgeTargetKey} from './knowledge-flow-model';
+import {koreaToday} from './planner-model';
 
 type Value = Record<string, any>;
 type Source = { kind:'question'|'activity'; id:string; title:string; sourceType:'personal'|'common'; sourceVersion:number; entity:Value; learning?:Value; targetId?:string };
 const sameTarget = (a:Value,b:Value) => learningTargetIdentityMatches({...learningScopeIdentity(a),interview_stage:growthStage(a.interview_stage||a.stage)},{...learningScopeIdentity(b),interview_stage:growthStage(b.interview_stage||b.stage)});
 
-export async function getPlanContext(studentId: string, savedTargets: PlanTarget[] = []) {
+export async function buildPlanContext(studentId: string, savedTargets: PlanTarget[] = []) {
   const [content, assignments, progress, events, common, schoolTargets, archives, preferences] = await Promise.all([
-    getLearning(studentId), query('select id,title from quiz_assignments where student_id=$1 order by created_at desc', [studentId]),
+    getLearning(studentId), query("select id,title from quiz_assignments where student_id=$1 and (id=any($2::uuid[]) or id in(select id from quiz_assignments where student_id=$1 order by case when state in('assigned','in_progress','retry_due') then 0 else 1 end,created_at desc,id desc limit 30)) order by created_at desc", [studentId,savedTargets.filter(target=>target?.kind==='assignment'&&/^[0-9a-f-]{36}$/i.test(target.id)).map(target=>target.id)]),
     query('select video_id from knowledge_bite_progress where student_id=$1', [studentId]),
-    query('select id,source_id,kind,data,created_at from study_session_events where student_id=$1 order by created_at desc', [studentId]),
+    query('select id,source_id,kind,data,created_at from study_session_events where student_id=$1 union all select id,source_id,kind,data,occurred_at as created_at from study_imported_events where student_id=$1 order by created_at desc', [studentId]),
     commonInterviewQuestions(studentId), query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null", [studentId]),
     query("select v.version,v.data from content_versions v join content_packages p on p.id=v.package_id where p.student_id=$1 and v.status='published'", [studentId]),
-    query('select data from student_preferences where student_id=$1', [studentId]),
+    query("select jsonb_build_object('selectedTargetId',data->'selectedTargetId') as data from student_preferences where student_id=$1", [studentId]),
   ]);
   const schoolQuestions = (await Promise.all(schoolTargets.map(async target => (await commonInterviewQuestions(studentId,target.id)).map(question => ({...question,targetId:target.id}))))).flat();
   const currentCommon = [...common.map(question => ({...question,targetId:undefined as string|undefined})),...schoolQuestions];
@@ -45,6 +48,37 @@ export async function getPlanContext(studentId: string, savedTargets: PlanTarget
     ...assignments.map(row => ({ kind: 'assignment' as const, id: row.id as string, title: row.title as string })),
   ];
   return {targets,events,learning:content.learning,contentVersion:content.package?.active_version ?? null,sources,schoolTargets,selectedTargetId:preferences[0]?.data?.selectedTargetId as string|undefined};
+}
+type RawContext=Awaited<ReturnType<typeof buildPlanContext>>;
+
+/** Compact planner facts, rather than serialized historical answers or repeated publication bodies. */
+export function compactPlanContext(context:RawContext,savedTargets:PlanTarget[]=[]) {
+  const versions=new Set([context.contentVersion,...savedTargets.filter(target=>target.sourceType!=='common').map(target=>target.sourceVersion)].filter(Boolean));
+  const sources=context.sources.filter(source=>source.sourceType==='common'||versions.has(source.sourceVersion));
+  const latest=new Map<string,any>();
+  const entities=new Set([...sources.map(source=>source.id),...(context.learning.memory_items||[]).map((item:Value)=>item.id),...context.targets.map(target=>target.id)]);
+  const todayStart=new Date(koreaToday()+'T00:00:00+09:00').getTime();
+  for(const event of context.events){
+    const data=event.data||{},entity=data.questionId||data.memoryItemId||data.videoId||data.assignmentId;
+    if(!entity||!entities.has(entity))continue;
+    if(data.contentVersion&& !data.commonRevision&&!versions.has(Number(data.contentVersion)))continue;
+    const targetId=data.targetId||data.target_id;
+    if(targetId&&!context.schoolTargets.some(target=>target.id===targetId&&learningTargetIdentityMatches(learningScopeIdentity(data.targetSnapshot||data.target_snapshot||{}),learningScopeIdentity(target.data))))continue;
+    const key=knowledgeTargetKey({kind:event.kind,entity,targetId,source:data.commonRevision||data.common_revision||data.contentVersion||data.content_version,trainingPlanId:data.trainingPlanId&&event.created_at&&new Date(event.created_at).getTime()>=todayStart?data.trainingPlanId:null});
+    const previous=latest.get(key);
+    if(previous&&new Date(previous.created_at).getTime()>=new Date(event.created_at).getTime())continue;
+    const compact=Object.fromEntries(['questionId','memoryItemId','videoId','assignmentId','targetId','target_id','sourceType','source_type','commonRevision','common_revision','contentVersion','content_version','trainingPlanId','sessionId','outcome','assisted','hintUsed','timedOut','completed','activityIds','practiceKind','cannotRecall','recall_state','rating'].filter(key=>data[key]!==undefined).map(key=>[key,data[key]]));
+    if(data.targetSnapshot||data.target_snapshot)compact.targetSnapshot=learningScopeIdentity(data.targetSnapshot||data.target_snapshot);
+    latest.set(key,{...event,data:compact});
+  }
+  const archives=Object.fromEntries(sources.filter(source=>source.learning).map(source=>[String(source.sourceVersion),source.learning]));
+  return {context:{...context,events:[...latest.values()],sources:sources.map(({learning:_,...source})=>source)},archives};
+}
+
+export async function getPlanContext(studentId:string,savedTargets:PlanTarget[]=[]):Promise<RawContext>{
+  const identity=[...new Set(savedTargets.map(target=>knowledgeTargetKey({id:target.id,kind:target.kind,targetId:target.targetId,sourceType:target.sourceType,sourceVersion:target.sourceVersion})))].sort();
+  const saved=await readStudentModel(studentId,'plan-context',knowledgeTargetKey({v:1,day:koreaToday(),targets:identity}),async()=>compactPlanContext(await buildPlanContext(studentId,savedTargets),savedTargets));
+  return {...saved.context,sources:saved.context.sources.map(source=>({...source,learning:saved.archives[String(source.sourceVersion)]}))};
 }
 type Context = Awaited<ReturnType<typeof getPlanContext>>;
 function sourceFor(context:Context,target:PlanTarget) {

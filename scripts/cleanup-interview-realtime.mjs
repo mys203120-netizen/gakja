@@ -4,15 +4,16 @@ import {loadProjectEnv} from './load-env.mjs';
 /** Run once per minute in the deployment's task runner; no browser-supplied call IDs. */
 export async function cleanupInterviewRealtime({query,apiKey,request=fetch}){
   if(!apiKey?.trim())throw new Error('Realtime cleanup requires the server API credential.');
-  const result=await query("select id,student_id,context_id from ai_usage_logs where feature='interview_realtime' and status='connected' and created_at<now()-interval '4 minutes' order by created_at limit 100");
+  const result=await query("select id,student_id,context_id from ai_usage_logs where feature='interview_realtime' and (status='cleanup_pending' or (status in ('connected','issued','failed') and created_at<now()-interval '4 minutes')) order by created_at limit 100");
   const rows=Array.isArray(result)?result:result.rows;let completed=0,failed=0,invalid=0;
   for(const row of rows){
     const id=/^interview-rt:[0-9a-f-]+:[0-9a-f-]+:\d+:[0-9a-f-]+:(rtc_[a-zA-Z0-9_-]{1,150})$/.exec(row.context_id)?.[1];
     if(!id){invalid++;continue;}
     try{
+      await query("update ai_usage_logs set status='cleanup_pending' where id=$1 and student_id=$2 and feature='interview_realtime' and status!='completed'",[row.id,row.student_id]);
       const response=await request(`https://api.openai.com/v1/realtime/calls/${encodeURIComponent(id)}/hangup`,{method:'POST',headers:{Authorization:`Bearer ${apiKey.trim()}`},signal:AbortSignal.timeout(8000)});
       if(!response.ok&&![404,409].includes(response.status)){failed++;continue;}
-      await query("update ai_usage_logs set status='completed' where id=$1 and student_id=$2 and feature='interview_realtime' and status='connected'",[row.id,row.student_id]);completed++;
+      await query("update ai_usage_logs set status='completed',realtime_closed_at=coalesce(realtime_closed_at,now()),realtime_usage=realtime_usage||jsonb_build_object('observed_call_ms',greatest(0,extract(epoch from (now()-coalesce(realtime_issued_at,created_at)))*1000)::bigint) where id=$1 and student_id=$2 and feature='interview_realtime' and status in ('connected','issued','cleanup_pending','failed')",[row.id,row.student_id]);completed++;
     }catch{failed++;}
   }
   return {scanned:rows.length,completed,failed,invalid};

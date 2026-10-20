@@ -34,6 +34,7 @@ vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.Mo
     if (name === 'server-only') return {};
     if (name === './school-directory') return { enrichSchoolTarget: target => target };
     if (name === './admin-training') return training;
+    if(name==='./student-read-model')return {readStudentModel:async(_student,_kind,_scope,build)=>build()};
     if (name === './planner-model') return planner;
     if (name === './db') return { ApiError: class ApiError extends Error { constructor(status, message) { super(message); this.status = status; } }, query: productionQuery };
     throw new Error(`Unexpected production import: ${name}`);

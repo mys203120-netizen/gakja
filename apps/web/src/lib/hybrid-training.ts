@@ -1,12 +1,13 @@
 import {koreaToday,shiftPlanDay,validPlanDay} from './planner-model';
 import {personalDate} from './schedule';
 import {availabilityMinutesForDate,normalizeTrainingAvailability} from './training-availability';
+import type {ReviewAttempt,ReviewQuestionStatus} from './training-review';
 
 type Value=Record<string,any>;
 export type HybridTaskKind='diagnostic'|'recall'|'focus'|'mixed'|'review'|'break';
 export type HybridDeadline={targetId:string;university:string;department:string;date:string|null;source:'personal'|'public_day'|'public_period'|'goal'|null;label:string;periodStart:string|null;periodEnd:string|null;status:'ready'|'passed'|'today'|'needs_review'|'no_interview'|'unmatched'|'unsupported';reason:string;daysLeft:number|null;availableMinutes:number};
-export type HybridAttempt={at:string;assisted?:boolean;timedOut?:boolean;outcome?:boolean;inputMode?:string};
-export type HybridQuestion={id:string;title:string;targetId:string;sourceType:'personal'|'common';sourceVersion:number;activityIds:string[];category:'personal'|'major'|'talent';attempts:HybridAttempt[];href?:string};
+export type HybridAttempt=Partial<ReviewAttempt>&{at:string};
+export type HybridQuestion={id:string;title:string;targetId:string;targetKey?:string;sourceType:'personal'|'common';sourceVersion:number;activityIds:string[];category:'personal'|'major'|'talent';attempts:HybridAttempt[];review?:ReviewQuestionStatus;href?:string};
 export type HybridTask={id:string;title:string;kind:HybridTaskKind;minutes:number;reason:string;targetId:string|null;questionId?:string;sourceType?:'personal'|'common';sourceVersion?:number;activityIds:string[];href?:string|null;performedAt?:string|null;completed?:boolean;startedAt?:string|null;status:'pending'|'in_progress'|'completed';manual?:boolean;date?:string;sequence?:number};
 export type HybridAllocation={mode:'foundation'|'repair'|'rehearsal'|'connection';daysLeft:number|null;observedQuestions:number;totalQuestions:number;focusShare:number;mixedShare:number;reason:string};
 export type HybridDay={date:string;capacityMinutes:number;plannedMinutes:number;remainingMinutes:number;unallocatedMinutes:number;tasks:HybridTask[];focus:string;reason:string;allocation:HybridAllocation};
@@ -46,15 +47,14 @@ export function hybridDeadlines(input:{today:string;targets:Value[];schedules:Va
 
 /** These are observations and student-marked review requests, never inferred ability scores. */
 export function hybridQuestionObservation(question:HybridQuestion,diagnostics:Value,today:string){
-  const latest=[...question.attempts].sort((a,b)=>b.at.localeCompare(a.at))[0];
-  const diagnostic=diagnostics?.[question.targetId];
-  const marked=Array.isArray(diagnostic?.needsReviewQuestionIds)&&diagnostic.needsReviewQuestionIds.includes(question.id);
-  const categoryMarked=Array.isArray(diagnostic?.focusCategories)&&diagnostic.focusCategories.includes(question.category);
+  const latest=question.attempts.filter(attempt=>attempt.valid!==false).sort((a,b)=>b.at.localeCompare(a.at)||String(b.id||'').localeCompare(String(a.id||'')))[0];
+  // Legacy diagnostic arrays are migration input only. They must never add a second, permanent weight.
+  const marked=Boolean(question.review?.needsReview&&question.review.requestIds.length),categoryMarked=false;
   const helped=Boolean(latest?.assisted),timedOut=Boolean(latest?.timedOut),incorrect=latest?.outcome===false;
   const lastDay=latest?.at?(latest.at.includes('T')?koreaToday(new Date(latest.at)):latest.at):null;
   const due=Boolean(lastDay&&lastDay<today);
-  return {unseen:!latest,due,marked,categoryMarked,helped,timedOut,incorrect,needsReview:marked||categoryMarked||helped||timedOut||incorrect,
-    reason:marked?'직접 다시 확인할 질문으로 선택했어요.':categoryMarked?'진단에서 더 연습할 영역으로 선택했어요.':helped?'최근 답변에서 도움을 사용해, 도움 없이 다시 답할 시간을 배치했어요.':timedOut?'최근 답변에서 시간이 초과되어 답변을 다시 정리해요.':incorrect?'최근 개념 확인에서 틀린 항목을 다시 확인해요.':!latest?'아직 답변하지 않은 영역을 확인해요.':due?'이전에 답한 내용을 자료 없이 다시 떠올려요.':'활동의 근거와 설명을 더 구체적으로 확인해요.'};
+  return {unseen:!latest,due,marked,categoryMarked,helped,timedOut,incorrect,needsReview:question.review?.needsReview??(helped||timedOut||incorrect),
+    reason:question.review?.needsReview?question.review.reason:helped?'최근 답변에서 도움을 사용해, 도움 없이 다시 답할 시간을 배치했어요.':timedOut?'최근 답변에서 시간이 초과되어 답변을 다시 정리해요.':incorrect?'최근 개념 확인에서 틀린 항목을 다시 확인해요.':!latest?'아직 답변하지 않은 영역을 확인해요.':due?'이전에 답한 내용을 자료 없이 다시 떠올려요.':'활동의 근거와 설명을 더 구체적으로 확인해요.'};
 }
 
 /** Only untouched automatic tasks can be replaced. Past records and started work remain intact. */
@@ -73,10 +73,11 @@ export function hybridAllocation(date:string,questions:HybridQuestion[],deadline
   const days=deadlines.filter(item=>item.date&&item.date>date).map(item=>daysBetween(date,item.date!));
   const daysLeft=days.length?Math.min(...days):null;
   const base={daysLeft,observedQuestions,totalQuestions};
-  if(observations.some(observation=>observation.needsReview))return {...base,mode:'repair',focusShare:0.65,mixedShare:0.15,reason:'실제 도움·시간 초과 기록 또는 직접 고른 보완점이 있어 집중 보완 시간을 늘렸어요.'};
   const diagnosed=questions.length>0&&questions.every(question=>diagnostics[question.targetId]?.state==='completed');
   if(!diagnosed||observedQuestions<Math.ceil(totalQuestions/2))return {...base,mode:'foundation',focusShare:0.6,mixedShare:0.2,reason:'미확인 기록과 질문이 남아 내용 확인 시간을 먼저 확보했어요. 면접이 가까워도 연결 면접만 늘리지 않아요.'};
   if(daysLeft!==null&&daysLeft<=7)return {...base,mode:'rehearsal',focusShare:0.4,mixedShare:0.4,reason:`가장 가까운 준비 마감이 ${daysLeft}일 남았고 실제 답변과 진단이 있어 여러 주제를 연결하는 시간을 늘렸어요.`};
+  const reviewShare=totalQuestions?observations.filter(observation=>observation.needsReview).length/totalQuestions:0;
+  if(reviewShare)return {...base,mode:'repair',focusShare:0.5+0.1*reviewShare,mixedShare:0.3-0.1*reviewShare,reason:'현재 남은 보완 질문의 비중에 맞춰 우선순위를 조정하고 연결 면접 시간을 함께 확보했어요.'};
   if(daysLeft!==null&&daysLeft>21)return {...base,mode:'connection',focusShare:0.55,mixedShare:0.25,reason:`가장 가까운 준비 마감이 ${daysLeft}일 남아 기록·개념 확인과 간격을 둔 답변 연습을 함께 쌓아요.`};
   return {...base,mode:'connection',focusShare:0.5,mixedShare:0.3,reason:'확인한 활동과 개념을 보완하면서 학교·다른 주제에 연결하는 답변을 늘려요.'};
 }

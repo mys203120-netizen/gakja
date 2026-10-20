@@ -16,9 +16,9 @@ function harness(){
     state.queries.push({sql,params});
     if(sql.startsWith('select s.id'))return state.active&&params[1]===studentId?[structuredClone(state.session)]:[];
     if(sql.startsWith('select count(*)')){const rows=state.logs.filter(row=>row.studentId===params[0]&&row.feature===params[1]);return [{count:rows.filter(row=>!row.old).length,attempt_count:rows.filter(row=>row.contextId===params[2]||row.contextId.startsWith(params[2]+':')).length}];}
-    if(sql.startsWith('select id,context_id'))return state.logs.filter(row=>row.studentId===params[0]&&row.feature===params[1]&&row.status==='connected'&&(!sql.includes("interval '4 minutes'")||row.expired)).map(row=>({...row,context_id:row.contextId}));
+    if(sql.startsWith('select id,context_id'))return state.logs.filter(row=>row.studentId===params[0]&&row.feature===params[1]&&(['connected','issued','cleanup_pending'].includes(row.status)||(sql.includes("'failed'")&&row.status==='failed'))&&(!sql.includes("interval '4 minutes'")||row.expired||row.status==='cleanup_pending')).map(row=>({...row,context_id:row.contextId}));
     if(sql.startsWith('select id,status'))return state.logs.filter(row=>row.studentId===params[0]&&row.feature===params[1]&&row.contextId===params[2]);
-    if(sql.startsWith('update ai_usage_logs')){if(state.failAccounting)throw Error('accounting unavailable');const row=state.logs.find(row=>row.id===params[0]&&row.studentId===params[1]);if(row){row.contextId=params[2];row.status=params[3];}return [];}
+    if(sql.startsWith('update ai_usage_logs')){if(state.failAccounting)throw Error('accounting unavailable');const row=state.logs.find(row=>row.id===params[0]&&(!params[1]||row.studentId===params[1]));if(row){if(sql.includes("status='cleanup_pending'"))row.status='cleanup_pending';else if(sql.includes("status='completed'"))row.status='completed';else{row.contextId=params[2];row.status=params[3];}}return [];}
     throw Error('unexpected SQL '+sql);
   };
   const apiModule={exports:{} as any};
@@ -28,6 +28,7 @@ function harness(){
     require(dependency:string){
       if(dependency==='server-only')return {};
       if(dependency==='./db')return {query};
+      if(dependency==='./realtime-interview-observer')return {observeInterviewRealtime:async()=>{},closeInterviewRealtimeObserver:async()=>{},interviewRealtimeObservationState:()=> 'ready'};
       if(dependency==='./recording-transcription')return {withRecordingTranscriptionLock:async(_key:string,work:()=>Promise<unknown>)=>{const result=lock.then(work);lock=result.then(()=>{},()=>{});return result;}};
       if(dependency==='./ai')return {FeatureError,aiEnabled:()=>Boolean(state.env.OPENAI_API_KEY),assertPublishedAccess:async()=>{state.access++;if(!state.published)throw new FeatureError(403,'학교 연결을 확인해 주세요.','ACCESS_DENIED');},reserveUsage:async(id:string,feature:string,contextId:string,model:string)=>{if(state.dailyLimit)throw new FeatureError(429,'한도','AI_DAILY_LIMIT');const usageId=`usage-${state.logs.length}`;state.logs.push({id:usageId,studentId:id,feature,contextId,model,status:'pending',created_at:new Date().toISOString()});return usageId;},completeUsage:async(id:string,status:string)=>{const row=state.logs.find(row=>row.id===id);if(row)row.status=status;}};
       return require(dependency);
@@ -38,7 +39,7 @@ function harness(){
 
 test('interview RTC uses owned current server question, a fixed output model and no browser credential',async()=>{
   const h=harness(),result=await h.start();assert.equal(result.callId,callId);assert.equal(result.question.prompt,h.state.session.turn_data.question);assert.equal(result.question.speakerId,'B');assert.equal(result.question.digest.length,64);assert.ok(!JSON.stringify(result).includes(h.state.env.OPENAI_API_KEY));
-  const request=h.state.fetches[0],session=JSON.parse(request.options.body.get('session'));assert.equal(request.url,'https://api.openai.com/v1/realtime/calls');assert.equal(session.model,'gpt-realtime-2.1');assert.deepEqual(session.output_modalities,['audio']);assert.deepEqual(session.tools,[]);assert.equal(session.audio.input.turn_detection.create_response,false);assert.equal(session.audio.input.turn_detection.interrupt_response,false);assert.equal(session.audio.input.transcription.language,'ko');assert.equal(session.audio.output.voice,'marin');assert.equal(result.responseEvent.response.conversation,'none');assert.deepEqual(JSON.parse(JSON.stringify(result.responseEvent.response.input)),[]);assert.equal(result.responseEvent.response.metadata.turn_id,turnId);assert.equal(result.responseEvent.response.metadata.attempt_id,attemptId);assert.equal(h.state.logs[0].status,'connected');assert.equal(h.state.access,2);
+  const request=h.state.fetches[0],session=JSON.parse(request.options.body.get('session'));assert.equal(request.url,'https://api.openai.com/v1/realtime/calls');assert.equal(session.model,'gpt-realtime-2.1');assert.deepEqual(session.output_modalities,['audio']);assert.deepEqual(session.tools,[]);assert.equal(session.audio.input.turn_detection.create_response,false);assert.equal(session.audio.input.turn_detection.interrupt_response,true);assert.equal(session.audio.input.transcription.language,'ko');assert.equal(session.audio.output.voice,'marin');assert.equal(result.responseEvent.response.conversation,'none');assert.deepEqual(JSON.parse(JSON.stringify(result.responseEvent.response.input)),[]);assert.equal(result.responseEvent.response.metadata.turn_id,turnId);assert.equal(result.responseEvent.response.metadata.attempt_id,attemptId);assert.equal(h.state.logs[0].status,'connected');assert.equal(h.state.access,2);
   assert.ok(h.state.queries[0].sql.includes("p.role='student'"));assert.ok(h.state.queries[0].sql.includes('p.active=true'));assert.ok(h.state.queries[0].sql.includes("data->>'answer' is null"));
 });
 
@@ -71,11 +72,29 @@ test('daily AI and six-per-minute quotas gate paid requests',async()=>{
 });
 
 test('pause-resume within the same generation or question mutation during handshake closes remote call',async()=>{
-  for(const change of [(h:ReturnType<typeof harness>)=>{h.state.session.session_data.activeSince=Date.now()+1;},(h:ReturnType<typeof harness>)=>{h.state.session.turn_data.question='변경된 질문';},(h:ReturnType<typeof harness>)=>{h.state.active=false;}]){const h=harness();h.state.afterFetch=()=>change(h);await assert.rejects(()=>h.start(),(e:any)=>['REALTIME_INTERVIEW_CHANGED','REALTIME_INTERVIEW_NOT_FOUND'].includes(e.code));assert.equal(h.state.logs[0].status,'failed');assert.ok(h.state.fetches.some(call=>call.url.endsWith('/hangup')));}
+  for(const change of [(h:ReturnType<typeof harness>)=>{h.state.session.session_data.activeSince=Date.now()+1;},(h:ReturnType<typeof harness>)=>{h.state.session.turn_data.question='변경된 질문';},(h:ReturnType<typeof harness>)=>{h.state.active=false;}]){const h=harness();h.state.afterFetch=()=>change(h);await assert.rejects(()=>h.start(),(e:any)=>['REALTIME_INTERVIEW_CHANGED','REALTIME_INTERVIEW_NOT_FOUND'].includes(e.code));assert.equal(h.state.logs[0].status,'completed');assert.ok(h.state.fetches.some(call=>call.url.endsWith('/hangup')));}
 });
 
 test('aborted handshake and invalid provider SDP never escape a stale response',async()=>{
-  for(const setup of [(h:ReturnType<typeof harness>,c:AbortController)=>{h.state.afterFetch=()=>c.abort();},(h:ReturnType<typeof harness>)=>{h.state.upstreamSdp='malformed provider secret';},(h:ReturnType<typeof harness>)=>{h.state.failAccounting=true;}]){const h=harness(),c=new AbortController();setup(h,c);await assert.rejects(()=>h.start(input,studentId,c.signal),(e:any)=>e.status===499||e.status===502);assert.ok(h.state.fetches.some(call=>call.url.endsWith('/hangup')));assert.equal(h.state.logs[0].status,'failed');}
+  for(const setup of [(h:ReturnType<typeof harness>,c:AbortController)=>{h.state.afterFetch=()=>c.abort();},(h:ReturnType<typeof harness>)=>{h.state.upstreamSdp='malformed provider secret';},(h:ReturnType<typeof harness>)=>{h.state.failAccounting=true;}]){const h=harness(),c=new AbortController();setup(h,c);await assert.rejects(()=>h.start(input,studentId,c.signal),(e:any)=>e.status===499||e.status===502);assert.ok(h.state.fetches.some(call=>call.url.endsWith('/hangup')));assert.equal(h.state.logs[0].status,h.state.failAccounting?'pending':'completed');}
+});
+
+test('cancelled negotiation persists the issued call before SDP parsing and retries failed remote hangup',async()=>{
+  const h=harness(),abort=new AbortController();h.state.hangupStatus=503;h.state.afterFetch=()=>abort.abort();
+  await assert.rejects(()=>h.start(input,studentId,abort.signal),(error:any)=>error.status===499);
+  assert.equal(h.state.logs[0].contextId,`interview-rt:${sessionId}:${turnId}:2:${attemptId}:${callId}`);
+  assert.equal(h.state.logs[0].status,'cleanup_pending');
+  assert.ok(h.state.queries.find(query=>query.params?.[3]==='issued'));
+  h.state.afterFetch=null;h.state.hangupStatus=200;await h.api.expireInterviewRealtimeCalls(studentId);
+  assert.equal(h.state.logs[0].status,'completed');assert.equal(h.state.fetches.filter(row=>row.url.endsWith('/hangup')).length,2);
+});
+
+test('legacy failed issued calls are swept and clarification responses remain on the frozen question',async()=>{
+  const h=harness(),result=await h.start();h.state.logs[0].status='failed';h.state.logs[0].expired=true;
+  await h.api.expireInterviewRealtimeCalls(studentId);assert.equal(h.state.logs[0].status,'completed');
+  assert.equal(result.reactionEvent.response.metadata.kind,'clarification');assert.equal(result.reactionEvent.response.metadata.turn_id,turnId);
+  assert.ok(result.reactionEvent.response.instructions.includes('without giving any answer content'));
+  assert.ok(result.reactionEvent.response.instructions.includes('Never author a follow-up'));
 });
 
 test('provider errors are sanitized and foreign cleanup URLs are never followed',async()=>{
@@ -89,7 +108,7 @@ test('close belongs to exact student/session/turn/generation/attempt and is idem
 
 test('heartbeat hangs up expired/paused/new activation calls and transient hangup can be retried',async()=>{
   for(const change of [(h:ReturnType<typeof harness>)=>{h.state.logs[0].created_at=new Date(Date.now()-250000).toISOString();},(h:ReturnType<typeof harness>)=>{h.state.session.session_data.paused=true;},(h:ReturnType<typeof harness>)=>{h.state.session.session_data.activeSince=Date.now()+1;}]){const h=harness();await h.start();change(h);await assert.rejects(()=>h.api.heartbeatInterviewRealtime(studentId,{sessionId,turnId,generation:2,attemptId,callId}));assert.equal(h.state.logs[0].status,'completed');}
-  const h=harness();await h.start();h.state.hangupStatus=503;await assert.rejects(()=>h.api.closeInterviewRealtime(studentId,{sessionId,turnId,generation:2,attemptId,callId}),(e:any)=>e.code==='REALTIME_INTERVIEW_CLOSE_FAILED');assert.equal(h.state.logs[0].status,'connected');h.state.hangupStatus=200;await h.api.closeInterviewRealtime(studentId,{sessionId,turnId,generation:2,attemptId,callId});assert.equal(h.state.logs[0].status,'completed');
+  const h=harness();await h.start();h.state.hangupStatus=503;await assert.rejects(()=>h.api.closeInterviewRealtime(studentId,{sessionId,turnId,generation:2,attemptId,callId}),(e:any)=>e.code==='REALTIME_INTERVIEW_CLOSE_FAILED');assert.equal(h.state.logs[0].status,'cleanup_pending');h.state.hangupStatus=200;await h.api.closeInterviewRealtime(studentId,{sessionId,turnId,generation:2,attemptId,callId});assert.equal(h.state.logs[0].status,'completed');
 });
 
 test('a new attempt closes older owned connections and stale leases are swept',async()=>{

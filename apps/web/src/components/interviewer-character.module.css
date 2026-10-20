@@ -1,8 +1,10 @@
 .avatar { position:relative; min-width:0; }
-.avatar>.portraitFrame { display:block; position:relative; width:100%; aspect-ratio:1; margin:0; }
+.avatar>.portraitFrame { display:block; position:relative; width:100%; aspect-ratio:1; margin:0; transform:translateY(var(--portrait-y,0px)) rotate(var(--portrait-tilt,0deg)); transform-origin:50% 78%; }
 .portrait { display:block; width:100%; height:auto; aspect-ratio:1; object-fit:contain; user-select:none; }
 .mouth { position:absolute; display:block; pointer-events:none; }
 .mouth[hidden] { display:none; }
+.expression { position:absolute; inset:0; width:100%; height:auto; pointer-events:none; }
+.expression[hidden] { display:none; }
 .identity { width:100%; text-align:center; }
 .identity strong { font-weight:600; }
 .identity span { color:var(--clarity-muted); }
@@ -10,3 +12,5 @@
 .live2d[data-live2d-ready=true] { opacity:1; }
 .portraitFrame:has(.live2d[data-live2d-ready=true])>.portrait { visibility:hidden; }
 .portraitFrame:has(.live2d[data-live2d-ready=true])>.mouth { display:none; }
+.portraitFrame:has(.live2d[data-live2d-ready=true])>.expression { display:none; }
+@media(prefers-reduced-motion:reduce){.avatar>.portraitFrame{transform:none;}.expression{display:none;}}

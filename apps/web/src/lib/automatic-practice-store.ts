@@ -43,7 +43,7 @@ export async function pauseAutomaticPractice(studentId:string,targetId:string){
     await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+studentId]);
     const school=(await db.query("select id,data from support_targets where student_id=$1 and id=$2 and nullif(data->>'archived_at','') is null for share",[studentId,targetId])).rows[0];
     if(!school)throw new ApiError(404,'현재 등록된 지원 학교를 선택해 주세요.');
-    const previous=(await db.query('select data from student_preferences where student_id=$1',[studentId])).rows[0]?.data?.automaticPractice?.[targetId]||{};
+    const previous=(await db.query("select jsonb_build_object('trainingAvailability',data->'trainingAvailability','automaticPractice',data->'automaticPractice') as data from student_preferences where student_id=$1",[studentId])).rows[0]?.data?.automaticPractice?.[targetId]||{};
     await saveAutomaticPracticeSettings(db,studentId,targetId,{...school.data,id:targetId},{...previous,enabled:false});
   });
 }
@@ -62,9 +62,9 @@ export async function synchronizeAutomaticPractice(studentId:string,context:Cont
     await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+studentId]);
     const registered=(await db.query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null for share",[studentId])).rows;
     if(registered.length!==context.schoolTargets.length||registered.some(row=>!context.schoolTargets.some(saved=>saved.id===row.id&&knowledgeTargetKey(saved.data)===knowledgeTargetKey(row.data))))return [];
-    const rows=(await db.query("select *,to_char(planned_date,'YYYY-MM-DD') as date from student_plans where student_id=$1 order by created_at desc,id for update",[studentId])).rows;
-    const events=(await db.query('select id,kind,data,created_at from study_session_events where student_id=$1 order by created_at desc',[studentId])).rows;
-    const currentPreferences=(await db.query('select data from student_preferences where student_id=$1',[studentId])).rows[0]?.data||{};
+    const rows=(await db.query("select *,to_char(planned_date,'YYYY-MM-DD') as date from student_plans where student_id=$1 and planned_date>=$2::date and planned_date<$3::date order by created_at desc,id for update",[studentId,today,shiftPlanDay(today,7)])).rows;
+    const events=context.events;
+    const currentPreferences=(await db.query("select jsonb_build_object('trainingAvailability',data->'trainingAvailability','automaticPractice',data->'automaticPractice') as data from student_preferences where student_id=$1",[studentId])).rows[0]?.data||{};
     // A concurrent availability save must not be followed by the legacy 20-minute fallback.
     if(normalizeTrainingAvailability(currentPreferences.trainingAvailability))return [];
     const preferences=currentPreferences.automaticPractice||{};

@@ -10,7 +10,7 @@ test('scheduled cleanup hangs up only server-recorded expired interview calls th
 
 test('scheduled cleanup keeps transient failures retryable and rejects arbitrary provider identifiers',async()=>{
   const queries:any[]=[],requests:string[]=[];const result=await cleanupInterviewRealtime({apiKey:'synthetic-key',query:async(sql:string,params:any[])=>{queries.push({sql,params});return sql.startsWith('select')?[{id:'usage-a',student_id:'student-a',context_id:context+'rtc_retry'},{id:'bad',student_id:'student-a',context_id:'https://evil.example/rtc_foreign'}]:[];},request:async(url:string)=>{requests.push(url);return new Response(null,{status:503});}});
-  assert.deepEqual(result,{scanned:2,completed:0,failed:1,invalid:1});assert.equal(requests.length,1);assert.equal(queries.length,1);
+  assert.deepEqual(result,{scanned:2,completed:0,failed:1,invalid:1});assert.equal(requests.length,1);assert.equal(queries.length,2);
 });
 
 test('missing server credential prevents both DB and provider work',async()=>{

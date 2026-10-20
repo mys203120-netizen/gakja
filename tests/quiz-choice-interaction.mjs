@@ -155,7 +155,7 @@ function harness(initial = fixture(), storage = new Map()) {
     localStorage: storageAPI(state.local), sessionStorage: storageAPI(state.storage),
     MediaRecorder:FakeMediaRecorder,window: { MediaRecorder:FakeMediaRecorder,addEventListener: addListener, removeEventListener: removeListener },
     navigator: {mediaDevices:{async getUserMedia(){if(!state.allowSyntheticMedia)throw Error('No microphone in choice tests');return device;}}, sendBeacon(url, payload) { state.calls.push({ method: 'BEACON', url, payload }); return true; } },
-    require(name) {
+    require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
       if(name==='@/lib/client/enter-send')return enterSend;
       if(name==='@/lib/client/draft-save')return {registerDraftSaver:(_userId,save)=>{state.logoutSaver=save;return()=>{if(state.logoutSaver===save)state.logoutSaver=null;};}};
       if (name === 'react') return react;

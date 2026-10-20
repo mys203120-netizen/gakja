@@ -5,6 +5,7 @@ import { learningTargetIdentityMatches } from '@gakja/content-contracts';
 import { schoolQuizTargetIdentity } from '@/lib/school-quiz';
 import { requireUser, checkOrigin } from '@/lib/auth';
 import { query, transaction } from '@/lib/db';
+import {getStudentRecords} from '@/lib/student-records';
 import { getLearning } from '@/lib/data';
 import { ownedInterviewHelpScope, ownedInterviewChatContext, assertInterviewHelpContext, recordInterviewHelp, settleInterviewHelp, lockInterviewHelpScope } from '@/lib/interview-assistance';
 import { recordAssignmentHelp, getAssignmentHelpContext } from '@/lib/learning-workflows';
@@ -52,8 +53,9 @@ export async function GET(request: Request) {
     const params = new URL(request.url).searchParams, threadId = params.get('threadId');
     if (!threadId) {
       const archived = params.get('view') === 'archived';
-      const threads = await query(`select * from chat_threads where student_id=$1 and deleted_at is null and archived_at is ${archived ? 'not null' : 'null'} order by updated_at desc limit 80`, [user.id]);
-      return json({ threads: threads.map(threadView), view: archived ? 'archived' : 'active' });
+      const listParams=new URLSearchParams(params);listParams.set('kind','threads');if(archived)listParams.set('archived','1');
+      const result=await getStudentRecords(user.id,listParams);
+      return json({threads:'items' in result?result.items:[],page:'page' in result?result.page:null,view:archived?'archived':'active'});
     }
     z.string().uuid().parse(threadId);
     const [thread] = await query('select * from chat_threads where id=$1 and student_id=$2 and deleted_at is null', [threadId, user.id]);

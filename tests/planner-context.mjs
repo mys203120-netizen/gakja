@@ -7,6 +7,7 @@ const model=await tsImport('../apps/web/src/lib/planner-model.ts',import.meta.ur
 const identity=await tsImport('../apps/web/src/lib/learning-target-scope.ts',import.meta.url);
 const workflows=await tsImport('../packages/content-contracts/src/workflows.ts',import.meta.url);
 const growth=await tsImport('../apps/web/src/lib/learning-growth.ts',import.meta.url);
+const knowledgeModel=await tsImport('../apps/web/src/lib/knowledge-flow-model.ts',import.meta.url);
 const module={exports:{}};
 class ApiError extends Error{constructor(status,message){super(message);this.status=status;}}
 const output=ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/lib/planner-context.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -18,6 +19,8 @@ vm.runInNewContext(output,{module,exports:module.exports,Set,Map,Date,require(na
   if(name==='./planner-model')return model;
   if(name==='./learning-target-scope')return identity;
   if(name==='./learning-growth')return growth;
+  if(name==='./knowledge-flow-model')return knowledgeModel;
+  if(name==='./student-read-model')return {readStudentModel(){throw new Error('Pure regression must not build a database read model');}};
   if(name==='@gakja/content-contracts/workflows')return workflows;
   throw new Error(name);
 }});

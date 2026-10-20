@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import {useEffect,useRef,type KeyboardEvent} from 'react';
 import {MINUTE_WHEEL_MAX,MINUTE_WHEEL_ROW_HEIGHT,minuteWheelIndex,minuteWheelKey,minuteWheelLabel,minuteWheelOptions} from '@/lib/minute-wheel';
@@ -58,11 +60,11 @@ export function MinuteWheel({label,value,onChange,disabled=false}:Props){
     const next=minuteWheelKey(value,event.key,options);if(next===null)return;
     event.preventDefault();cancelTimer();scrolling.current=false;baseline.current=next;emit(next);position(next,true);
   }
-  return <div className={styles.wheel} data-minute-wheel data-no-tab-swipe data-disabled={disabled||undefined}>
-    <span className={styles.selection} aria-hidden="true"/>
-    <div ref={scroller} className={styles.scroller} role="spinbutton" tabIndex={disabled?-1:0} aria-label={label} aria-valuemin={0} aria-valuemax={MINUTE_WHEEL_MAX} aria-valuenow={value} aria-valuetext={minuteWheelLabel(value)} aria-disabled={disabled||undefined}
+  return <div className={ownedClassName(styles.wheel,true)} data-minute-wheel data-no-tab-swipe data-disabled={disabled||undefined}>
+    <span className={ownedClassName(styles.selection,true)} aria-hidden="true"/>
+    <div ref={scroller} className={ownedClassName(styles.scroller,true)} role="spinbutton" tabIndex={disabled?-1:0} aria-label={label} aria-valuemin={0} aria-valuemax={MINUTE_WHEEL_MAX} aria-valuenow={value} aria-valuetext={minuteWheelLabel(value)} aria-disabled={disabled||undefined}
       onKeyDown={keyDown} onPointerDown={startScroll} onWheel={startScroll} onScroll={handleScroll} onBlur={()=>{if(scrolling.current)settle();}}>
-      <div aria-hidden="true">{options.map(minutes=><div key={minutes} className={styles.option} data-selected={minutes===value} onClick={()=>{if(disabled)return;cancelTimer();scrolling.current=false;baseline.current=minutes;emit(minutes);position(minutes,true);}}><span>{minuteWheelLabel(minutes)}</span></div>)}</div>
+      <div aria-hidden="true" className={ownedClassName(undefined,true)}>{options.map(minutes=><div key={minutes} className={ownedClassName(styles.option,true)} data-selected={minutes===value} onClick={()=>{if(disabled)return;cancelTimer();scrolling.current=false;baseline.current=minutes;emit(minutes);position(minutes,true);}}><span className={ownedClassName(undefined,true)}>{minuteWheelLabel(minutes)}</span></div>)}</div>
     </div>
   </div>;
 }

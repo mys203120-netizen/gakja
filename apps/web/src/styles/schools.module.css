@@ -1,0 +1,132 @@
+/* schools: locally owned classes; :global classes are DOM context hooks only.
+   Keep visual state in its owning component, not in unrelated page overrides. */
+.target-select {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  min-width: 0;
+}
+
+.target-select>svg {
+  position: absolute;
+  right: 0;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+@media (max-width:700px) {
+  .target-select {
+    max-width: 100%;
+  }
+}
+
+@media (max-width:700px) {
+  .target-select {
+    flex: 1;
+    min-width: 0;
+  }
+}
+.target-select { gap: 10px; }
+.target-select > svg { color: #95959b; }
+@media (max-width: 700px) {
+  .target-select > svg { width: 11px; }
+}
+:global(.app-shell) :global(.calendar-chip-school) :is(img,.school-logo-fallback) { margin-top: 1px; }
+:global(.app-shell) :global(.calendar-school-event) > :is(img,.school-logo-fallback) { margin-top: 2px; }
+:global(.app-shell) :global(.dashboard-calendar-panel) .school-calendar-event > svg { color: #a47f4b; }
+@media (max-width: 500px) {
+  :global(.app-shell) :global(.calendar-chip-school) :is(img,.school-logo-fallback) { display: none !important; }
+}
+:global(.app-shell) .target-select { min-width:0; max-width:min(460px,55vw); }
+:global(.app-shell) :global(.main-content) :is(:global(.linked-row),:global(.activity-row),:global(.question-row),:global(.materials-book-row),:global(.resource-link),:global(.settings-row),:global(.confirmation-row),:global(.records-report-row),:global(.records-report-list),:global(.records-history-section),:global(.report-section),:global(.study-answer),.school-target-list,.school-reference-block,.school-first-practice,.school-source-details) { border:0; }
+:global(.app-shell) .school-reference-block { margin-bottom:20px; }
+@media(max-width:700px) {
+ :global(.app-shell) .target-select { max-width:calc(100vw - 185px); }
+}
+:global(.app-shell) .school-learning :is(.school-source-line, .school-input-note) { color: #65726a; }
+:global(.topbar-context) .school-logo { flex-shrink:0; }
+.school-talent-profile+.school-talent-profile{margin-top:36px}
+.school-overview-fold{margin-top:36px;padding:20px 0}
+.school-overview-fold>summary{font-size:18px;line-height:1.7;font-weight:500;cursor:pointer;color:#273b2d}
+.school-overview-fold[open]>summary{margin-bottom:22px}
+.school-registration label { color: var(--clarity-ink); font-weight: 450; }
+.school-onboarding-steps { color: var(--clarity-muted); gap: 20px; }
+.school-onboarding-steps :global(.current) { color: var(--clarity-green); }
+.school-onboarding-steps :global(.current)::before { content: ''; width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: var(--clarity-green); }
+.school-selected-summary,
+.school-calendar-review { background: var(--clarity-soft); border-radius: 8px; box-shadow: none; }
+.school-selected-summary strong,
+.school-review-identity h2 { color: var(--clarity-ink); font-weight: 500; }
+.school-learning :is(.school-input-note, .school-selected-summary span, .school-review-identity span, .school-calendar-review > p, .school-calendar-dates small, .school-calendar-checked, .school-calendar-ack) {
+  color: var(--clarity-muted);
+}
+.school-learning :is(.school-text-action, .school-source-link, .school-admission-button) { color: var(--clarity-green); }
+.school-calendar-review h2 { color: var(--clarity-ink); font-weight: 500; }
+.school-calendar-dates time { color: var(--clarity-green); font-weight: 500; font-variant-numeric: tabular-nums; }
+.school-calendar-dates span { color: var(--clarity-ink); }
+.school-calendar-state { color: var(--clarity-muted); }
+.school-calendar-state[data-status=registered] { color: var(--clarity-green); }
+.school-calendar-state[data-status=no_interview] { color: var(--clarity-blue); }
+.school-calendar-state:is([data-status=pending], [data-status=unconfirmed]) { color: var(--clarity-warning); }
+.school-completion-mark { color: var(--clarity-green); background: var(--clarity-mint); }
+
+@media (max-width: 700px) {
+  .school-onboarding-steps { gap: 10px; }
+}
+:global(.app-shell) .school-learning .school-first-practice strong { font-weight: 500; line-height: 1.6; }
+:global(.app-shell) .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { max-width: 70ch; font-size: 16px; line-height: 1.85; color: var(--clarity-muted); }
+:global(.app-shell) .school-learning .school-quote h3 { font-size: 18px; font-weight: 500; line-height: 1.65; }
+:global(.app-shell) .school-learning .school-talent-points h3 { font-size: 17px; color: var(--clarity-ink); }
+:global(.app-shell) .school-learning .school-talent-points { gap: 22px; }
+:global(.app-shell) .school-learning :is(.school-reference-block, .school-source-details) { border: 0; }
+:global(.app-shell) .school-learning :is(.school-source-line, .school-talent-caption, .school-reference-state, .school-source-details) { color: var(--clarity-muted); font-size: 13px; line-height: 1.75; }
+:global(.app-shell) .school-learning :is(.school-source-link, .school-admission-button) { color: var(--clarity-green); }
+:global(.app-shell) .school-learning .school-table-wrap th { background: var(--clarity-soft); font-weight: 500; }
+:global(.app-shell) .school-learning .school-table-wrap :is(th, td) { border-color: var(--clarity-line); line-height: 1.8; }
+
+@media (max-width: 700px) {
+  :global(.app-shell) .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { font-size: 15px; }
+}
+
+@media (max-width: 700px) {
+  :global(.app-shell) .school-learning .school-first-practice { padding: 18px; }
+}
+
+@media (min-width: 768px) {
+  :global(.app-shell) .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { font-size: 14px; line-height: 1.75; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.topbar-context) > :is(.school-logo,.school-logo-fallback) { display:none!important; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.topbar) .target-select { min-width:0; flex:1; }
+}
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :is(.school-source-link,.school-input-note a) { display:inline-flex; align-items:center; min-height:44px; line-height:1.65; overflow-wrap:anywhere; }
+}
+.target-change-cue { display:none; }
+:global(.app-shell) :is(:global(.calendar-days),:global(.calendar-legend)) i.school { background:var(--clarity-green); }
+
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.topbar) .target-select { position:relative; display:flex; align-items:center; gap:6px; min-height:44px; max-width:none; padding:0; cursor:pointer; }
+}
+
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) .target-change-cue { display:inline-flex; align-items:center; flex-shrink:0; gap:2px; color:var(--clarity-action); font-size:12px; font-weight:600; line-height:1.5; white-space:nowrap; pointer-events:none; }
+}
+
+@media(max-width:700px) {
+ :global(.app-shell):not(:global(.admin-shell)) :global(.topbar) .target-select:focus-within { outline:2px solid var(--clarity-green); outline-offset:4px; border-radius:4px; }
+}
+:global(.app-shell) :global(.topbar-context) .target-select { min-width: 0; }
+:global(.app-shell) .school-learning .school-first-practice { background: var(--clarity-surface); border: 0; border-radius: var(--soft-radius); padding: 24px; box-shadow: var(--soft-shadow-raised); }
+:global(.app-shell) .school-learning .school-first-practice strong { font-size: 20px; }
+@media(max-width:700px) {
+  :global(.app-shell):not(:global(.admin-shell)) :global(.main-content) :is(:global(.quiz-today),:global(.quiz-mode-row),:global(.knowledge-understanding),.school-first-practice) { border: 0; border-radius: 24px; background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); padding: 22px 16px; }
+}
+body :is(:global(.app-shell),:global(.native-modal),:global(.auth-page)) :is(:global(.search-field),.school-picker-search):focus-within {
+  outline:0 !important;
+  box-shadow:none !important;
+}
+body :global(.app-shell) :is(:global(.search-field),:global(.interview-format-tabs),:global(.learning-tabs),[role=listbox],[role=menu],.school-picker-popover) { border:0; }

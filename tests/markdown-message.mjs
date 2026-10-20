@@ -14,7 +14,7 @@ const source=fs.readFileSync(new URL('../apps/web/src/components/markdown-messag
 const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
 function loadMarkdown(markdownRenderer=ReactMarkdown){
 const module={exports:{}};
-vm.runInNewContext(output,{module,exports:module.exports,require(name){
+vm.runInNewContext(output,{module,exports:module.exports,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name==='react')return React;
   if(name==='react/jsx-runtime')return jsx;
   if(name==='react-markdown')return{__esModule:true,default:markdownRenderer};

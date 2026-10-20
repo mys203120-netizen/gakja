@@ -19,7 +19,7 @@ function render({ admin = false, path = '/my', query = '', searchOpen = false, m
   const state = [account, '', account.targets[0]?.id||'', false, searchOpen, query, '', 0, false, null, 0, moreOpen, sidebarCollapsed, schoolSwitchOpen]; let index = 0;
   const hooks = { ...React, useEffect() {}, useState(initial) { return [index < state.length ? state[index++] : initial, () => {}]; } };
   const module = { exports: {} };
-  vm.runInNewContext(source, { module, exports: module.exports, console, Date, Event, require(name) {
+  vm.runInNewContext(source, { module, exports: module.exports, console, Date, Event, require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if (name === 'react') return hooks;
     if (name === 'react/jsx-runtime') return jsx;
     if (name === 'next/link') return { default: link };
@@ -38,6 +38,7 @@ function render({ admin = false, path = '/my', query = '', searchOpen = false, m
     if (name === './mobile-scroll-navigation') return {MobileScrollNavigation:()=>null};
     if (name === './study-session-provider') return { StudySessionProvider: wrapper, finishStudySession() {} };
     if (name === './account-menu') return { AccountMenu: () => React.createElement('span', null, '계정 메뉴') };
+    if(name==='./use-record-pages')return {useRecordPages:()=>({items:[],page:null,loading:false,error:'',more:async()=>{}})};
     if (name === './resource-panel') return { ResourcePanel: wrapper };
     if (name === './school-logo') return { SchoolLogo: () => null };
     if (name === './shared') return { api() { throw new Error('No network during rendering'); }, post() { throw new Error('No writes during rendering'); }, Logo: ({size,wordmark=true}) => React.createElement('span',{'data-logo-size':size,'data-wordmark':String(wordmark)}), Spinner: () => null, Alert: wrapper, Modal: ({ title, children }) => React.createElement('section', { role: 'dialog', 'aria-label': title }, children), targetName: item => item.university, targetMajor: item => item.department };
@@ -153,7 +154,7 @@ function interactiveShell({persisted='true',blocked=false,onboarding=false,admin
  vm.runInNewContext(source,{module,exports:module.exports,console,Date,Event,
   localStorage:{getItem(key){reads++;assert.equal(key,'gakja-sidebar-collapsed');if(blocked)throw Error('Storage blocked');return persisted;},setItem(key,value){if(blocked)throw Error('Storage blocked');writes.push([key,value]);}},
   window:{dispatchEvent(event){events.push(event);if(cancelAssistant)event.preventDefault();return !event.defaultPrevented;}},
-  require(name){
+  require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
    if(name==='react')return hooks;if(name==='react/jsx-runtime')return jsx;
    if(name==='next/link')return {default:'a'};
    if(name==='next/navigation')return {usePathname:()=>admin?'/admin':'/my',useRouter:()=>({replace(){}})};
@@ -166,6 +167,7 @@ function interactiveShell({persisted='true',blocked=false,onboarding=false,admin
    if(name==='./help-preferences')return {HelpPreferencesProvider:wrapper};if(name==='./mobile-tab-swipe')return {MobileTabSwipe:()=>null};
    if(name==='./mobile-scroll-navigation')return {MobileScrollNavigation:()=>null};
    if(name==='./study-session-provider')return {StudySessionProvider:wrapper,finishStudySession(){}};
+   if(name==='./use-record-pages')return {useRecordPages:()=>({items:[],page:null,loading:false,error:'',more:async()=>{}})};
    if(name==='./account-menu')return {AccountMenu:account};if(name==='./resource-panel')return {ResourcePanel:wrapper};
    if(name==='./school-logo')return {SchoolLogo:()=>null};
    if(name==='./shared')return {api:async()=>bootstrap,post:async()=>({}),Logo:()=>null,Spinner:()=>null,Alert:wrapper,Modal:wrapper,targetName:item=>item.university,targetMajor:item=>item.department};

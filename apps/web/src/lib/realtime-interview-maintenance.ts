@@ -11,7 +11,7 @@ export function startInterviewRealtimeMaintenance(){
   const sweep=async()=>{
     if(state.running)return;state.running=true;
     try{
-      const students=await query("select distinct student_id from ai_usage_logs where feature='interview_realtime' and status='connected' and created_at<now()-interval '4 minutes' limit 100");
+      const students=await query("select distinct student_id from ai_usage_logs where feature='interview_realtime' and (status='cleanup_pending' or (status in ('connected','issued','failed') and created_at<now()-interval '4 minutes')) and context_id ~ ':rtc_[a-zA-Z0-9_-]+$' limit 100");
       for(const student of students)try{await expireInterviewRealtimeCalls(student.student_id);}catch{/* Retry this owned call on the next sweep. */}
     }catch{console.warn('Realtime interview maintenance will retry on the next sweep.');}
     finally{state.running=false;}

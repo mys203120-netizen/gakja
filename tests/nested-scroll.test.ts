@@ -250,7 +250,7 @@ test('ScrollBehavior component installs the real effect and returns its cleanup'
   const source = fs.readFileSync(new URL('../apps/web/src/components/scroll-behavior.tsx', import.meta.url), 'utf8');
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
     module, exports: module.exports, document: d.doc,
-    require(name: string) { if (name === 'react') return { useEffect: (effect: () => () => void) => effects.push(effect) }; if (name === '@/lib/client/nested-scroll') return { installNestedScrollBehavior }; throw new Error(name); },
+    require(name: string) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value}; if (name === 'react') return { useEffect: (effect: () => () => void) => effects.push(effect) }; if (name === '@/lib/client/nested-scroll') return { installNestedScrollBehavior }; throw new Error(name); },
   });
   assert.equal(module.exports.ScrollBehavior(), null);
   assert.equal(effects.length, 1);

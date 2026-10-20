@@ -15,7 +15,7 @@ test('login introduction reveals again after leaving and reentering the viewport
   let callback:Function=()=>{},disconnected=0;
   class Observer{constructor(fn:Function){callback=fn;}observe(){}disconnect(){disconnected++;}}
   const module={exports:{} as any};
-  vm.runInNewContext(code,{module,exports:module.exports,IntersectionObserver:Observer,window:{matchMedia:()=>media},require(name:string){
+  vm.runInNewContext(code,{module,exports:module.exports,IntersectionObserver:Observer,window:{matchMedia:()=>media},require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
     if(name==='react')return {...React,useEffect:(fn:Function)=>effects.push(fn),useRef:(value:any)=>({current:value})};
     if(name==='react/jsx-runtime')return jsx;
     if(name==='lucide-react')return new Proxy({},{get:()=>()=>null});

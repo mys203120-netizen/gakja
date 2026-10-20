@@ -1,0 +1,133 @@
+/* dialogs: locally owned classes; :global classes are DOM context hooks only.
+   Keep visual state in its owning component, not in unrelated page overrides. */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(7px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.modal label {
+  margin: 15px 0;
+}
+
+@media (max-width:700px) {
+  .modal-backdrop {
+    padding: 18px;
+  }
+}
+
+@media (max-width:700px) {
+  .modal {
+    max-height: 85dvh;
+  }
+}
+
+.modal-backdrop {
+  background: rgba(25,30,36,.28);
+}
+
+.modal {
+  box-shadow: 0 16px 70px #19202a20;
+  color: var(--text);
+}
+
+@media (max-width:700px) {
+  .modal {
+    padding: 23px;
+    border-radius: 8px;
+  }
+}
+.modal { border-radius: 18px; border: 1px solid #e5e5e8; padding: 32px; background: #fff; }
+@media (max-width: 700px) {
+  .modal { padding: 25px; border-radius: 14px; }
+}
+.logout-dialog { width:min(410px,calc(100vw - 32px)); padding:32px; border:0; border-radius:18px; color:#1d2b22; background:#fff; box-shadow:0 24px 100px #10271929; margin:auto; }
+.logout-dialog::backdrop { background:#1420194d; backdrop-filter:blur(3px); }
+.logout-close { position:absolute; top:13px; right:13px; }
+.logout-symbol { display:inline-flex; margin:2px 0 23px; }
+.logout-dialog h2 { font-size:23px; }
+.logout-dialog p { margin:12px 0 28px; font-size:14px; line-height:1.7; word-break:keep-all; }
+.logout-dialog .logout-error { margin-top:-12px; }
+.logout-actions { display:flex; gap:9px; justify-content:flex-end; }
+.logout-actions :global(.ghost) { border:0; background:#f2f5f2; }
+.native-modal { margin:0; padding:24px; border:0; width:100%; height:100%; max-width:none; max-height:none; color:var(--text); }
+.native-modal:not([open]) { display:none; }
+.native-modal .modal { margin:auto; max-height:calc(100dvh - 48px); overflow:auto; }
+@media(max-width:700px) {
+ .logout-dialog { padding:28px 24px; }
+}
+@media(max-width:700px) {
+ .logout-actions { justify-content:stretch; }
+}
+.modal-backdrop,
+.logout-dialog::backdrop {
+  background: color-mix(in srgb, var(--clarity-ink) 42%, transparent);
+  backdrop-filter: none;
+}
+.native-modal::backdrop { background: transparent; backdrop-filter: none; }
+.native-modal .modal,
+.logout-dialog {
+  background: var(--clarity-surface);
+  color: var(--clarity-ink);
+  border: 1px solid var(--clarity-line);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--clarity-ink) 12%, transparent);
+}
+.native-modal .modal { padding: 28px; }
+.logout-dialog h2 {
+  color: var(--clarity-ink);
+  font-weight: 500;
+  letter-spacing: -.025em;
+  line-height: 1.5;
+}
+.logout-dialog p { color: var(--clarity-muted); }
+.logout-dialog .logout-error { color: var(--clarity-danger); }
+.logout-symbol { color: var(--clarity-muted); }
+.native-modal .modal nav[aria-label="추가 운영 메뉴"] > a[aria-current=page] {
+  background: var(--clarity-mint);
+  color: var(--clarity-green);
+}
+
+@media (max-width: 700px) {
+  .native-modal .modal { padding: 22px; }
+}
+.native-modal .modal { background:var(--clarity-surface); border-radius:20px; border-color:var(--clarity-line); }
+@media(max-width:700px) {
+ .native-modal.modal-backdrop { padding:12px; }
+}
+@media(max-width:700px) {
+ .native-modal .modal { padding:20px; max-height:calc(100dvh - 24px); scroll-padding-block:16px; }
+}
+:is(html,:global(.app-shell) *,:global(.auth-page) *,.native-modal,.native-modal *,.modal,.modal *) {
+  --scroll-thumb:transparent;
+  scrollbar-width:thin !important;
+  scrollbar-color:var(--scroll-thumb) transparent !important;
+}
+:is(html,:global(.app-shell) *,:global(.auth-page) *,.native-modal,.native-modal *,.modal,.modal *)::-webkit-scrollbar { display:block !important; width:6px !important; height:6px !important; }
+:is(html,:global(.app-shell) *,:global(.auth-page) *,.native-modal,.native-modal *,.modal,.modal *)::-webkit-scrollbar-track,
+:is(html,:global(.app-shell) *,:global(.auth-page) *,.native-modal,.native-modal *,.modal,.modal *)::-webkit-scrollbar-corner { background:transparent !important; }
+:is(html,:global(.app-shell) *,:global(.auth-page) *,.native-modal,.native-modal *,.modal,.modal *)::-webkit-scrollbar-thumb { background:var(--scroll-thumb) !important; border:0 !important; border-radius:999px !important; }
+:is(html,:global(.app-shell) *,:global(.auth-page) *,.native-modal,.native-modal *,.modal,.modal *)[data-scroll-visible=true] { --scroll-thumb:#98a29e; }
+@media(forced-colors:active) {
+  :is(html,:global(.app-shell) *,:global(.auth-page) *,.native-modal,.native-modal *,.modal,.modal *) { scrollbar-color:auto !important; }
+}
+@media(forced-colors:active) {
+  :is(html,:global(.app-shell) *,:global(.auth-page) *,.native-modal,.native-modal *,.modal,.modal *)::-webkit-scrollbar-thumb { background:CanvasText !important; }
+}
+body .native-modal { border: 0; border-radius: 30px; background: var(--clarity-surface); color: var(--clarity-ink); box-shadow: 12px 16px 52px #596e5d3d, -5px -5px 20px #ffffff80; }
+body .native-modal::backdrop { background: #303f3859; backdrop-filter: none; }
+@media(max-width:700px) {
+  body .native-modal { border-radius: 24px; }
+}

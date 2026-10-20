@@ -3,6 +3,7 @@ import { ApiError, query } from './db';
 import type { Profile } from './auth';
 import { enrichSchoolTarget } from './school-directory';
 import {adminTrainingSummary} from './admin-training';
+import {readStudentModel} from './student-read-model';
 import {koreaToday} from './planner-model';
 
 export const emptyLearning = { activities: [], questions: [], memory_items: [], source_refs: [], answer_scripts: [], support_targets: [], student_context: { core_keywords: [], representative_activity_ids: [], confirmed_goals: [] } };
@@ -55,14 +56,12 @@ export async function getAdminData(user: Profile) {
 }
 export async function bootstrap(user: Profile) {
   if (user.role !== 'student') return { user, targets: [], package: null, documents: [], learning: emptyLearning, answers: [], memoryAttempts: [], memoryHistory: [], threads: [], interviews: [], reports: [], confirmations: [], notifications: [], admin: await getAdminData(user) };
-  const [content, targets, answers, memoryAttempts, threads, interviews, reports, confirmations, notifications, preferences, readingProgress, briefings, preparationStates, memoryHistory] = await Promise.all([
-    getLearning(user.id), query("select * from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null order by id", [user.id]),
-    query('select * from user_answers where student_id=$1 order by updated_at desc', [user.id]),
-    query('select distinct on(memory_item_id) * from memory_attempts where student_id=$1 order by memory_item_id,created_at desc', [user.id]),
-    // The shell only needs history metadata. Frozen resources and message bodies
-    // remain available through the owning student's existing detail endpoints.
-    query('select id,student_id,target_id,content_version,title,created_at,updated_at,archived_at,deleted_at from chat_threads where student_id=$1 and archived_at is null and deleted_at is null order by updated_at desc', [user.id]),
-    query(`select id,student_id,kind,mode,target_id,content_version,state,created_at,updated_at,completed_at,
+  // Only one current published package and bounded shell state are transported.
+  // Answer bodies, old sessions and report JSON belong to owned list/detail APIs.
+  const [content,targets,interviews,preferences,readingProgress,counts] = await Promise.all([
+    getLearning(user.id),
+    query("select * from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null order by id",[user.id]),
+    query(`select distinct on(target_id,kind) id,student_id,kind,mode,target_id,content_version,state,created_at,updated_at,completed_at,
       jsonb_build_object(
         'context',jsonb_build_object(
           'target',data->'context'->'target','targetId',data->'context'->'targetId',
@@ -80,15 +79,26 @@ export async function bootstrap(user: Profile) {
         'targetName',data->'targetName'
       ) as data
       from interview_sessions cross join lateral (select jsonb_extract_path(data,'questionQueue',coalesce(nullif(data->>'index',''),'0')) as current_question) as overview
-      where student_id=$1 order by created_at desc`, [user.id]),
-    query('select * from interview_reports where student_id=$1 order by created_at desc', [user.id]),
-    query('select * from student_confirmations where student_id=$1 order by created_at desc', [user.id]),
-    query('select * from notifications where student_id=$1 order by created_at desc limit 50', [user.id]),
-    query('select data from student_preferences where student_id=$1', [user.id]),
-    query('select * from reading_progress where student_id=$1', [user.id]),
-    query("select * from briefings where status='published' and (data->>'owner_student_id' is null or data->>'owner_student_id'=$1) order by created_at desc", [user.id]),
-    query('select * from preparation_states where student_id=$1 order by updated_at desc', [user.id]),
-    query('select * from memory_attempts where student_id=$1 order by created_at desc,id desc limit 100', [user.id]),
+      where student_id=$1 and state='active' order by target_id,kind,created_at desc,id desc`, [user.id]),
+    query(`select jsonb_strip_nulls(jsonb_build_object(
+      'answerLength',data->'answerLength','explanationStyle',data->'explanationStyle','selectedTargetId',data->'selectedTargetId',
+      'notificationsEnabled',data->'notificationsEnabled','helpEnabled',data->'helpEnabled','enterToSend',data->'enterToSend',
+      'liveRecordingConsent',data->'liveRecordingConsent','liveCameraEnabled',data->'liveCameraEnabled','displayName',data->'displayName',
+      'schoolCalendarOnboardingCompleted',data->'schoolCalendarOnboardingCompleted','trainingAvailabilityRequired',data->'trainingAvailabilityRequired',
+      'trainingAvailability',case when jsonb_typeof(data->'trainingAvailability')='object' then (data->'trainingAvailability')||'{"blockedDates":[],"overrides":{}}'::jsonb else null end
+    )) as data from student_preferences where student_id=$1`,[user.id]),
+    query('select * from reading_progress where student_id=$1',[user.id]),
+    readStudentModel(user.id,'shell-counts','v1',async()=>{const [row]=await query(`select
+      (select count(*)::int from user_answers where student_id=$1) as answers,
+      (select count(*)::int from interview_sessions where student_id=$1) as interviews,
+      (select count(*)::int from memory_attempts where student_id=$1) as memory,
+      (select count(*)::int from student_confirmations where student_id=$1) as confirmations,
+      (select count(*)::int from notifications where student_id=$1 and read_at is null) as unread_notifications`,[user.id]);return row||{};}),
   ]);
-  return { user, ...content, targets: targets.map((r) => enrichSchoolTarget({ id: r.id, student_id: r.student_id, ...r.data })), answers, memoryAttempts, memoryHistory, threads, interviews, reports, confirmations, notifications, preferences: preferences[0]?.data ?? {}, readingProgress, briefings, preparationStates };
+  return {user,...content,targets:targets.map(row=>enrichSchoolTarget({id:row.id,student_id:row.student_id,...row.data})),
+    interviews,preferences:preferences[0]?.data??{},readingProgress,summary:counts||{},
+    // Empty compatibility slots are never presented as loaded history. Consumers
+    // must use their own loading/error states and cursor APIs.
+    answers:[],memoryAttempts:[],memoryHistory:[],threads:[],reports:[],confirmations:[],notifications:[],briefings:[],preparationStates:[],
+  };
 }

@@ -8,7 +8,7 @@ const state={values:[],hook:0,effects:[],query:'',appTargetId:'current-school'};
 const requests=[];
 const module={exports:{}};
 const source=fs.readFileSync(new URL('../apps/web/src/components/quiz-library.tsx',import.meta.url),'utf8');
-vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,URLSearchParams,AbortController,Set,Map,require(name){
+vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,URLSearchParams,AbortController,Set,Map,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name==='react')return {useState(initial){const index=state.hook++;if(!(index in state.values))state.values[index]=initial;return [state.values[index],value=>state.values[index]=typeof value==='function'?value(state.values[index]):value];},useEffect:callback=>state.effects.push(callback)};
   if(name==='react/jsx-runtime')return {jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'Fragment'};
   if(name==='next/link')return {__esModule:true,default:'Link'};

@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import ts from 'typescript';
+import {tsImport} from 'tsx/esm/api';
+
+const targetScope=await tsImport('../apps/web/src/lib/learning-target-scope.ts',import.meta.url);
 
 // Render the actual components, then invoke their real filter handlers.
 // No server, private student data, paid model, or synthetic browser is involved.
@@ -11,7 +14,7 @@ function load(file,extra='') {
   const source=fs.readFileSync(new URL('../apps/web/src/components/'+file,import.meta.url),'utf8')+extra;
   const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
   const module={exports:{}};
-  vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Intl,require(name){
+  vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Intl,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if(name==='react')return {Suspense:'Suspense',useState(initial){const index=stateIndex++;if(!(index in states))states[index]=initial;return [states[index],value=>{states[index]=typeof value==='function'?value(states[index]):value;}];},useEffect(){},useRef:initial=>({current:initial})};
     if(name==='react/jsx-runtime')return {jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'Fragment'};
     if(name==='next/link')return {__esModule:true,default:'Link'};
@@ -24,6 +27,7 @@ function load(file,extra='') {
     if(name==='@/lib/knowledge-bites-catalog')return {KNOWLEDGE_FOCUS:{science:'과학·환경',society:'공동체·사회'}};
     if(name==='@/lib/knowledge-flow-model')return {knowledgeTargetKey:()=>'',knowledgeCheckPrompt:()=>''};
     if(name==='@/lib/material-learning-flow')return {publishedMaterialBooks:documents=>documents};
+    if(name==='@/lib/learning-target-scope')return targetScope;
     throw new Error('Unexpected import '+name);
   }});
   return module.exports;

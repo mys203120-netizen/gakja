@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import Link from 'next/link';
 import {useEffect,useState} from 'react';
@@ -34,16 +36,16 @@ export function QuizLibrary(){
     return '/quiz?'+query.toString();
   }
   const scopeName=[dto?.target?.university,dto?.target?.department||dto?.target?.major].filter(Boolean).join(' · ');
-  return <div className="training-view memory-library">
+  return <div className={ownedClassName("training-view memory-library",true)}>
     <Breadcrumb items={[{label:'퀴즈',href:quizHref},{label:'전체 복습 항목'}]}/>
-    <PageTitle title="전체 복습 항목" aside={dto&&<span className="training-count">{items.length}개 항목</span>}/>
-    {error&&<><Alert>{error}</Alert><button className="button secondary" onClick={()=>setReload(value=>value+1)}>다시 불러오기</button></>}
+    <PageTitle title="전체 복습 항목" aside={dto&&<span className={ownedClassName("training-count",true)}>{items.length}개 항목</span>}/>
+    {error&&<><Alert>{error}</Alert><button className={ownedClassName("button secondary",true)} onClick={()=>setReload(value=>value+1)}>다시 불러오기</button></>}
     {!dto&&!error?<Spinner/>:dto&&<>
-      {scopeName&&<p className="quiz-note">{scopeName}</p>}
-      {!!items.length&&<section className="training-recall-intro"><div><h2>질문을 골라 복습해요</h2></div><Link className="button primary" href={practiceHref(items[0])}><Play size={15} fill="currentColor"/>복습 시작</Link></section>}
-      {!!items.length&&<div className="training-filters" aria-label="훈련 유형">{[['all','전체'],['choice','10초 퀴즈'],['answer','Q&A']].filter(([key])=>key==='all'||items.some(item=>item.mode===key)).map(([key,label])=><button className={filter===key?'active':''} aria-pressed={filter===key} onClick={()=>setFilter(key)} key={key}>{label}</button>)}</div>}
-      <div className="training-memory-list">{filtered.map(item=><Link className="training-memory-row" key={item.id} href={practiceHref(item)}><span className="training-memory-kind">{item.source_kind==='common'?'학교·공통 질문':'내 교재'}</span><h3>{item.prompt}</h3><span className="training-memory-time">{item.mode==='choice'?<><Clock3 size={15} strokeWidth={1.5}/>10초</>:'Q&A'}</span><ArrowUpRight size={21} strokeWidth={1.5}/></Link>)}</div>
-      {!items.length?<Empty title="지금 복습할 항목이 없어요" href={quizHref} label="퀴즈로 돌아가기"/>:!filtered.length&&<p className="training-empty-filter">해당하는 훈련 항목이 없어요.</p>}
+      {scopeName&&<p className={ownedClassName("quiz-note",true)}>{scopeName}</p>}
+      {!!items.length&&<section className={ownedClassName("training-recall-intro",true)}><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>질문을 골라 복습해요</h2></div><Link className={ownedClassName("button primary")} href={practiceHref(items[0])}><Play size={15} fill="currentColor"/>복습 시작</Link></section>}
+      {!!items.length&&<div className={ownedClassName("training-filters",true)} aria-label="훈련 유형">{[['all','전체'],['choice','10초 퀴즈'],['answer','Q&A']].filter(([key])=>key==='all'||items.some(item=>item.mode===key)).map(([key,label])=><button className={ownedClassName(filter===key?'active':'',true)} aria-pressed={filter===key} onClick={()=>setFilter(key)} key={key}>{label}</button>)}</div>}
+      <div className={ownedClassName("training-memory-list",true)}>{filtered.map(item=><Link className={ownedClassName("training-memory-row")} key={item.id} href={practiceHref(item)}><span className={ownedClassName("training-memory-kind",true)}>{item.source_kind==='common'?'학교·공통 질문':'내 교재'}</span><h3 className={ownedClassName(undefined,true)}>{item.prompt}</h3><span className={ownedClassName("training-memory-time",true)}>{item.mode==='choice'?<><Clock3 size={15} strokeWidth={1.5}/>10초</>:'Q&A'}</span><ArrowUpRight size={21} strokeWidth={1.5}/></Link>)}</div>
+      {!items.length?<Empty title="지금 복습할 항목이 없어요" href={quizHref} label="퀴즈로 돌아가기"/>:!filtered.length&&<p className={ownedClassName("training-empty-filter",true)}>해당하는 훈련 항목이 없어요.</p>}
     </>}
   </div>;
 }

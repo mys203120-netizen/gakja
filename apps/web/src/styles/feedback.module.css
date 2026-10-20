@@ -1,0 +1,141 @@
+/* feedback: locally owned classes; :global classes are DOM context hooks only.
+   Keep visual state in its owning component, not in unrelated page overrides. */
+.alert {
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.success-message {
+  padding: 13px;
+  font-size: 14px;
+}
+
+.inline-notice {
+  padding: 13px 18px;
+  font-size: 13px;
+  margin: 16px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inline-notice a {
+  color: var(--accent);
+}
+
+:global(.chat-main)>.alert {
+  margin: 0 22px 15px;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 35px;
+  transform: translateX(-50%);
+  box-shadow: none;
+  z-index: 200;
+  max-width: calc(100vw - 30px);
+  text-align: center;
+}
+
+.notification-item {
+  border-bottom: 1px solid var(--line);
+}
+
+.notification-item strong {
+  font-size: 15px;
+  font-weight: 550;
+}
+
+.notification-item p {
+  margin-top: 8px;
+  white-space: pre-wrap;
+}
+
+@media (max-width:700px) {
+  .toast {
+    font-size: 12px;
+    width: max-content;
+  }
+}
+
+.alert {
+  border: 0;
+  border-left: 2px solid #bc6250;
+  padding: 14px 16px;
+}
+
+.success-message {
+  background: #f5f7f9;
+  color: var(--text);
+  border-radius: 0;
+}
+
+.inline-notice {
+  background: #faf9f6;
+  color: #726247;
+  border: 0;
+  border-left: 2px solid #b9a77e;
+  border-radius: 0;
+}
+
+.toast {
+  border: 0;
+}
+
+.notification-item {
+  padding: 18px 0;
+  color: var(--text);
+}
+
+.notification-item p {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+@media (max-width:700px) {
+  .toast {
+    bottom: 85px;
+    max-width: calc(100vw - 40px);
+    white-space: normal;
+  }
+}
+.alert { background: #fff7f5; border-color: #eed7d3; color: #9b433b; border-radius: 8px; }
+.toast { background: #1d1d1f; color: #fff; border-radius: 12px; padding: 15px 24px; font-size: 14px; }
+
+:global(.auth-page) .success-message,
+:global(.auth-page) .alert {
+  padding: 14px 0;
+  margin: 0 0 22px;
+  border-radius: 0;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  background: none;
+  line-height: 1.65;
+}
+:global(.interview-quick-start) .alert { margin-top: 18px; }:global(.plan-form)>div:not(:global(.form-actions)):not(.alert){display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+@media(max-width:700px){:global(.plan-form)>div:not(:global(.form-actions)):not(.alert){grid-template-columns:1fr;}}:global(.learning-help)>.alert{margin:10px 0;}:global(.learning-help-panel)>.alert{max-height:120px;overflow:auto;flex-shrink:0;font-size:12px;}
+:global(.native-modal) :global(.modal) .notification-item {
+  padding: 16px 0;
+  border-bottom-color: var(--clarity-line);
+}
+:global(.native-modal) :global(.modal) .notification-item:last-child { border-bottom: 0; }
+:global(.native-modal) :global(.modal) .notification-item strong { color: var(--clarity-ink); font-weight: 500; line-height: 1.6; }
+:global(.native-modal) :global(.modal) .notification-item p { color: var(--clarity-muted); line-height: 1.75; margin-top: 6px; }
+:global(.auth-page):global(.auth-centered) .alert { border-radius: 8px; }
+:global(.auth-page):global(.auth-centered) .success-message { border-radius: 8px; }
+:global(.app-shell):not(:global(.admin-shell)) :is(:global(.page-title) h1,:global(.row-text) strong,:global(.row-text) > span,.notification-item p) { word-break:keep-all; overflow-wrap:anywhere; }
+:global(.native-modal) :global(.plan-form) > div:not(:global(.form-actions)):not(.alert) { gap:16px; }
+:global(.app-shell) :is(.alert,.error-message) { background:#fff0ef; color:var(--clarity-danger); }
+:global(.auth-page):global(.auth-centered) .alert,
+:global(.auth-page):global(.auth-centered) .success-message { margin-bottom: 20px; padding: 13px 16px; font-size: 14px; line-height: 1.7; }
+:global(.auth-page):global(.auth-centered) .alert { border-color: color-mix(in srgb, var(--clarity-danger) 35%, var(--clarity-line)); }
+:global(.auth-page):global(.auth-centered) .success-message { border-color: var(--clarity-line); }
+
+@media (max-width: 767px) {
+  :global(.auth-page):global(.auth-centered) :is(.alert, .success-message) { padding-inline: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+}
+:global(.auth-page):global(.auth-centered) .alert,
+:global(.auth-page):global(.auth-centered) .success-message { border:0; border-radius:var(--soft-control-radius); }
+:global(.auth-page):global(.auth-centered) .alert { background:#fff0ef; color:var(--clarity-danger); }
+:global(.auth-page):global(.auth-centered) .success-message { background:var(--clarity-mint); color:var(--soft-accent-ink); }

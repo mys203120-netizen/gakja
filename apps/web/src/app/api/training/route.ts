@@ -6,10 +6,15 @@ import {getHybridTraining} from '@/lib/hybrid-training-store';
 import {getPlanContext} from '@/lib/planner-context';
 import {automaticQuestionTargets} from '@/lib/automatic-practice-store';
 import {koreaToday} from '@/lib/planner-model';
-import {readTrainingReadiness,refreshTrainingDiagnostics} from '@/lib/training-records';
+import {refreshTrainingDiagnostics} from '@/lib/training-records';
 import {recordMatchesCurrentTarget} from '@/lib/learning-target-scope';
 import {after} from 'next/server';
 import {refreshAdmissionCalendar} from '@/lib/admission-calendar-store';
+import {loadReviewQuestionFacts} from '@/lib/training-review-evidence-store';
+import {reviewDiagnostics} from '@/lib/training-review-store';
+import {applyReviewReflection,reconcileTrainingReviews} from '@/lib/training-review';
+import {diagnosticReviewScope} from '@/lib/training-diagnostic-scope';
+import {getTrainingReadModel,trainingReadContext} from '@/lib/training-read-model';
 
 export const dynamic='force-dynamic';
 const headers={'Cache-Control':'private, no-store'};
@@ -33,13 +38,14 @@ export async function GET(request:Request){
   const params=new URL(request.url).searchParams,targetId=params.get('targetId'),planId=params.get('planId');
   if(planId)z.string().uuid().parse(planId);
   const selectedPlan=planId?await ownedPlan(user.id,planId):null;
-  const context=await getPlanContext(user.id);
-  if(targetId&&!context.schoolTargets.some(row=>row.id===targetId))throw new ApiError(404,'나의 지원 학교를 선택해 주세요.');
   await refreshTrainingDiagnostics(user.id);
+  const snapshot=await getTrainingReadModel(user.id),context=trainingReadContext(snapshot);
+  if(targetId&&!context.schoolTargets.some(row=>row.id===targetId))throw new ApiError(404,'나의 지원 학교를 선택해 주세요.');
   const selectedTargetId=selectedPlan?.target.targetId||targetId||context.selectedTargetId||context.schoolTargets[0]?.id;
-  const hybrid=await getHybridTraining(user.id,selectedTargetId);
+  const hybrid=await getHybridTraining(user.id,selectedTargetId,koreaToday(),snapshot);
   if(hybrid.refreshDue)after(()=>refreshAdmissionCalendar());
-  const [readiness,profile,preferences]=await Promise.all([readTrainingReadiness(user.id,context,selectedTargetId),query('select created_at from profiles where id=$1',[user.id]),query('select data from student_preferences where student_id=$1',[user.id])]);
+  const readiness=snapshot.readiness[selectedTargetId||'']||{items:[],summary:{total:0,practiced:0,unconfirmed:0},observationOnly:true};
+  const [profile,preferences]=await Promise.all([query('select created_at from profiles where id=$1',[user.id]),query("select jsonb_build_object('trainingActivityNotes',coalesce(data->'trainingActivityNotes','[]'::jsonb)) as data from student_preferences where student_id=$1",[user.id])]);
   const targets=selectedTargetId?automaticQuestionTargets(context,selectedTargetId):new Map();
   const candidates=[...targets.values()];
   // Keep a diagnosis within one source/version; the server validates the fixed question list again at session start.
@@ -104,7 +110,9 @@ export async function POST(request:Request){
      const [saved]=(await db.query('select data from student_preferences where student_id=$1 for update',[user.id])).rows;
      // Reconnecting the same session must preserve the student's reflection and original timestamps.
      if(saved?.data?.trainingDiagnostics?.[session!.target_id]?.sessionId===session!.id)return;
-     const diagnostic={state:actual.state==='completed'?'completed':'in_progress',sessionId:session!.id,startedAt:new Date().toISOString(),...(actual.state==='completed'?{completedAt:new Date().toISOString()}:{}),targetSnapshot:context.target,sourceType:context.sourceKind,sourceVersion:context.contentVersion,needsReviewQuestionIds:[],focusCategories:[],observationOnly:true};
+     const scope=diagnosticReviewScope(context);
+     if(!scope)throw new ApiError(409,'같은 자료 버전의 질문으로 진단을 시작해 주세요.');
+     const diagnostic={state:actual.state==='completed'?'completed':'in_progress',sessionId:session!.id,startedAt:new Date().toISOString(),...(actual.state==='completed'?{completedAt:new Date().toISOString()}:{}),targetSnapshot:context.target,...scope,needsReviewQuestionIds:[],focusCategories:[],observationOnly:true};
      await db.query("insert into student_preferences(student_id,data) values($1,jsonb_build_object('trainingDiagnostics',jsonb_build_object($2::text,$3::jsonb))) on conflict(student_id) do update set data=jsonb_set(student_preferences.data,'{trainingDiagnostics}',coalesce(student_preferences.data->'trainingDiagnostics','{}'::jsonb)||jsonb_build_object($2::text,$3::jsonb)),updated_at=now()",[user.id,session!.target_id,JSON.stringify(diagnostic)]);
     }
    });return Response.json({linked:true,sessionId:session!.id},{headers});
@@ -114,8 +122,23 @@ export async function POST(request:Request){
    if(!answered.length)throw new ApiError(409,'답변을 남긴 뒤 다시 연습할 부분을 골라 주세요.');
    const ids=new Set(answered.map(row=>row.data.rootQuestionId||row.question_id));
    if(input.needsReviewQuestionIds.some(id=>!ids.has(id)))throw new ApiError(409,'실제로 답한 질문만 선택해 주세요.');
-   const result=await query("update student_preferences set data=jsonb_set(data,ARRAY['trainingDiagnostics',$2],(data->'trainingDiagnostics'->$2)||$3::jsonb),updated_at=now() where student_id=$1 and data->'trainingDiagnostics'->$2->>'sessionId'=$4 returning student_id",[user.id,session!.target_id,JSON.stringify({needsReviewQuestionIds:input.needsReviewQuestionIds,focusCategories:input.focusCategories,selfReported:true,observationOnly:true}),session!.id]);
-   if(!result.length)throw new ApiError(409,'현재 진단에서 다시 선택해 주세요.');return Response.json({saved:true,selfCheckOnly:true},{headers});
+   const context=await getPlanContext(user.id);
+   await transaction(async db=>{
+    await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+user.id]);
+    const current=(await db.query("select id,data from support_targets where student_id=$1 and id=$2 and nullif(data->>'archived_at','') is null for share",[user.id,session!.target_id])).rows[0];
+    if(!current||!recordMatchesCurrentTarget({targetId:current.id,targetSnapshot:session!.data.context?.target},[{...current.data,id:current.id}]))throw new ApiError(409,'지원 정보가 바뀌었어요. 현재 지원처에서 다시 선택해 주세요.');
+    const preference=(await db.query('select data from student_preferences where student_id=$1 for update',[user.id])).rows[0]?.data||{};
+    const diagnostic=preference.trainingDiagnostics?.[current.id];
+    if(diagnostic?.sessionId!==session!.id)throw new ApiError(409,'현재 진단에서 다시 선택해 주세요.');
+    const events=(await db.query('select id,source_id,kind,data,created_at from study_session_events where student_id=$1 order by created_at desc',[user.id])).rows;
+    const source=await loadReviewQuestionFacts(user.id,{...context,events},db),now=new Date().toISOString();
+    if(!source.questions.some(question=>question.targetId===current.id&&question.sourceType===diagnostic.sourceType&&question.sourceVersion===Number(diagnostic.sourceVersion)))throw new ApiError(409,'진단 자료가 바뀌었어요. 현재 자료로 다시 진단해 주세요.');
+    const previous=reconcileTrainingReviews({state:preference.trainingReview,questions:source.questions,diagnostics:reviewDiagnostics(preference.trainingDiagnostics),now});
+    const updated={...diagnostic,questionIds:[...ids],needsReviewQuestionIds:input.needsReviewQuestionIds,focusCategories:input.focusCategories,reviewSchemaVersion:1,selfReported:true,observationOnly:true};
+    const state=applyReviewReflection({state:previous.state,questions:source.questions,targetId:current.id,diagnostic:reviewDiagnostics({[current.id]:updated})[current.id],needsReviewQuestionIds:input.needsReviewQuestionIds,focusCategories:input.focusCategories,now});
+    await db.query("update student_preferences set data=jsonb_set(jsonb_set(data,ARRAY['trainingDiagnostics',$2],$3::jsonb),'{trainingReview}',$4::jsonb),updated_at=now() where student_id=$1",[user.id,current.id,JSON.stringify(updated),JSON.stringify(state)]);
+   });
+   return Response.json({saved:true,selfCheckOnly:true,reviewSchemaVersion:1},{headers});
   }
   const [turn]=await query("select t.question_id,t.data,s.data as session_data from interview_turns t join interview_sessions s on s.id=t.session_id and s.student_id=t.student_id where t.id=$1 and t.student_id=$2 and s.state not in ('cancelled','deleted')",[input.turnId,user.id]);
   if(!turn?.data.answer||turn.data.invalidated)throw new ApiError(404,'제출한 내 답변을 선택해 주세요.');

@@ -1,3 +1,5 @@
+
+import {ownedClassName} from './owned-class-name';
 import {Check, CircleAlert, LoaderCircle, Mic, Pause, Volume2} from 'lucide-react';
 import {Interviewer} from './interviewer-character';
 import styles from './live-interview-session.module.css';
@@ -40,25 +42,25 @@ export function LiveInterviewerStage({people,speakerId,phase,question,questionNu
   const StatusIcon=busy?LoaderCircle:phase==='listening'?Mic:phase==='speaking'?Volume2:phase==='paused'?Pause:phase==='complete'?Check:phase==='error'?CircleAlert:Mic;
   const questionLabel=questionKind==='generated'?'꼬리질문':questionKind==='verification'?'근거 확인':questionNumber?`질문 ${questionNumber}${questionCount?` / ${questionCount}`:''}`:'현재 질문';
   const seconds=Math.max(0,Math.floor(answerSeconds||0));
-  return <section className={styles.stage} data-phase={phase} aria-label="Live 면접 진행">
-    <div className={styles.stageScene}>
-      <div className={styles.stageTopline}><span className={styles.liveBadge}><span aria-hidden="true"/>Live 면접</span><span>{panelists.length}명의 면접관</span></div>
-      <div className={styles.portraitStack} aria-hidden="true">
-        {panelists.map((person,index)=><div key={person.id} className={styles.portrait} data-current={person.id===current.id}>
+  return <section className={ownedClassName(styles.stage,true)} data-phase={phase} aria-label="Live 면접 진행">
+    <div className={ownedClassName(styles.stageScene,true)}>
+      <div className={ownedClassName(styles.stageTopline,true)}><span className={ownedClassName(styles.liveBadge,true)}><span aria-hidden="true" className={ownedClassName(undefined,true)}/>Live 면접</span><span className={ownedClassName(undefined,true)}>{panelists.length}명의 면접관</span></div>
+      <div className={ownedClassName(styles.portraitStack,true)} aria-hidden="true">
+        {panelists.map((person,index)=><div key={person.id} className={ownedClassName(styles.portrait,true)} data-current={person.id===current.id}>
           <Interviewer person={person} portraitIndex={index} avatarSignal={person.id===current.id?avatarSignal:undefined} compact speaking={person.id===current.id&&phase==='speaking'} listening={person.id===current.id&&phase==='listening'} pending={busy}/>
         </div>)}
       </div>
-      <div className={styles.speakerIdentity}><strong>{current.name}</strong><span>{phase==='speaking'?'질문하고 있어요':phase==='listening'?'답변을 듣고 있어요':'함께 면접을 진행해요'}</span></div>
-      {others.length>0&&<ul className={styles.otherPanelists} aria-label="함께하는 면접관">{others.map(person=><li key={person.id}><div aria-hidden="true"><Interviewer person={person} portraitIndex={panelists.indexOf(person)} compact/></div><span>{person.name}</span></li>)}</ul>}
+      <div className={ownedClassName(styles.speakerIdentity,true)}><strong className={ownedClassName(undefined,true)}>{current.name}</strong><span className={ownedClassName(undefined,true)}>{phase==='speaking'?'질문하고 있어요':phase==='listening'?'답변을 듣고 있어요':'함께 면접을 진행해요'}</span></div>
+      {others.length>0&&<ul className={ownedClassName(styles.otherPanelists,true)} aria-label="함께하는 면접관">{others.map(person=><li key={person.id} className={ownedClassName(undefined,true)}><div aria-hidden="true" className={ownedClassName(undefined,true)}><Interviewer person={person} portraitIndex={panelists.indexOf(person)} compact/></div><span className={ownedClassName(undefined,true)}>{person.name}</span></li>)}</ul>}
     </div>
-    <div className={styles.questionArea}>
-      <div className={styles.questionMeta}><span>{question?questionLabel:phase==='complete'?'연습을 마쳤어요':'질문을 듣고 답해보세요'}</span><span>{current.name}</span></div>
-      <h2 className={styles.question}>{question||(phase==='complete'?'준비한 질문에 모두 답했어요.':'준비되면 면접을 시작해요.')}</h2>
-      <div className={styles.stageStatus}>
-        <p role="status" aria-live="polite" aria-atomic="true"><StatusIcon size={17} className={busy?styles.spinner:undefined} aria-hidden="true"/><strong>{phaseCopy[phase].label}</strong></p>
-        {phase==='listening'&&answerSeconds!==undefined&&<span className={styles.timer} role="timer" aria-live="off" aria-label="답변 녹음 경과 시간">{String(Math.floor(seconds/60)).padStart(2,'0')}:{String(seconds%60).padStart(2,'0')}</span>}
+    <div className={ownedClassName(styles.questionArea,true)}>
+      <div className={ownedClassName(styles.questionMeta,true)}><span className={ownedClassName(undefined,true)}>{question?questionLabel:phase==='complete'?'연습을 마쳤어요':'질문을 듣고 답해보세요'}</span><span className={ownedClassName(undefined,true)}>{current.name}</span></div>
+      <h2 className={ownedClassName(styles.question,true)}>{question||(phase==='complete'?'준비한 질문에 모두 답했어요.':'준비되면 면접을 시작해요.')}</h2>
+      <div className={ownedClassName(styles.stageStatus,true)}>
+        <p role="status" aria-live="polite" aria-atomic="true" className={ownedClassName(undefined,true)}><StatusIcon size={17} className={ownedClassName(busy?styles.spinner:undefined)} aria-hidden="true"/><strong className={ownedClassName(undefined,true)}>{phaseCopy[phase].label}</strong></p>
+        {phase==='listening'&&answerSeconds!==undefined&&<span className={ownedClassName(styles.timer,true)} role="timer" aria-live="off" aria-label="답변 녹음 경과 시간">{String(Math.floor(seconds/60)).padStart(2,'0')}:{String(seconds%60).padStart(2,'0')}</span>}
       </div>
-      <p className={styles.stageHint}>{statusText||phaseCopy[phase].hint}</p>
+      <p className={ownedClassName(styles.stageHint,true)}>{statusText||phaseCopy[phase].hint}</p>
     </div>
   </section>;
 }

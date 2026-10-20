@@ -1,9 +1,12 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Clock3, Sparkles, Mic, ArrowUpRight, Check, RotateCcw, GripVertical, Play, ChevronRight, ListChecks, ArrowUp, ArrowDown } from 'lucide-react';
+import {useRecordPages,useRecordDetail} from './use-record-pages';
 import { useApp } from './app-shell';
 import { action, api, post, PageTitle, Breadcrumb, Empty, Alert, Badge, Modal, Spinner, dateLabel, type Item } from './shared';
 import { InterviewSetup, InterviewSession } from './interview';
@@ -36,29 +39,29 @@ export function PracticePages({ slug = [] }: { slug?: string[] }) {
 
 function PracticeOverview() {
   const { data } = useApp();
-  return <div className="training-view training-overview">
+  return <div className={ownedClassName("training-view training-overview",true)}>
     <PageTitle title="훈련" />
-    <div className="training-paths">
-      <Link className="training-path" href="/quiz/memory">
+    <div className={ownedClassName("training-paths",true)}>
+      <Link className={ownedClassName("training-path")} href="/quiz/memory">
         <Sparkles size={28} strokeWidth={1.5} />
-        <div><h2>암기 훈련</h2><p>회상 · 개념 확인 · 순서 정리</p></div>
-        <span className="training-path-action">복습 시작<ArrowUpRight size={22} strokeWidth={1.5} /></span>
+        <div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>암기 훈련</h2><p className={ownedClassName(undefined,true)}>회상 · 개념 확인 · 순서 정리</p></div>
+        <span className={ownedClassName("training-path-action",true)}>복습 시작<ArrowUpRight size={22} strokeWidth={1.5} /></span>
       </Link>
-      <Link className="training-path" href="/quiz/assignments">
+      <Link className={ownedClassName("training-path")} href="/quiz/assignments">
         <ListChecks size={28} strokeWidth={1.5} />
-        <div><h2>퀴즈 과제</h2><p>학생부 사실 확인 · 경험 복원 · 재훈련</p></div>
-        <span className="training-path-action">과제 보기<ArrowUpRight size={22} strokeWidth={1.5} /></span>
+        <div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>퀴즈 과제</h2><p className={ownedClassName(undefined,true)}>학생부 사실 확인 · 경험 복원 · 재훈련</p></div>
+        <span className={ownedClassName("training-path-action",true)}>과제 보기<ArrowUpRight size={22} strokeWidth={1.5} /></span>
       </Link>
-      <Link className="training-path" href="/interview/new?kind=video">
+      <Link className={ownedClassName("training-path")} href="/interview/new?kind=video">
         <Mic size={28} strokeWidth={1.5} />
-        <div><h2>화상 모의면접</h2><p>질문을 듣고 내 말로 답하기</p></div>
-        <span className="training-path-action">연습 시작<ArrowUpRight size={22} strokeWidth={1.5} /></span>
+        <div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>화상 모의면접</h2><p className={ownedClassName(undefined,true)}>질문을 듣고 내 말로 답하기</p></div>
+        <span className={ownedClassName("training-path-action",true)}>연습 시작<ArrowUpRight size={22} strokeWidth={1.5} /></span>
       </Link>
     </div>
-    <section className="training-keywords">
-      <div className="section-heading"><h2>복습할 키워드</h2><Link className="text-link" href="/quiz/memory">전체 보기<ChevronRight size={16} /></Link></div>
-      <div className="training-keyword-list">
-        {data.learning?.memory_items?.slice(0, 3).map((m: Item) => <Link key={m.id} href={'/quiz/memory/' + m.id}><strong>{memoryTitle(m, data.learning)}</strong><ArrowUpRight size={20} strokeWidth={1.5} /></Link>)}
+    <section className={ownedClassName("training-keywords",true)}>
+      <div className={ownedClassName("section-heading",true)}><h2 className={ownedClassName(undefined,true)}>복습할 키워드</h2><Link className={ownedClassName("text-link")} href="/quiz/memory">전체 보기<ChevronRight size={16} /></Link></div>
+      <div className={ownedClassName("training-keyword-list",true)}>
+        {data.learning?.memory_items?.slice(0, 3).map((m: Item) => <Link key={m.id} href={'/quiz/memory/' + m.id}><strong className={ownedClassName(undefined,true)}>{memoryTitle(m, data.learning)}</strong><ArrowUpRight size={20} strokeWidth={1.5} /></Link>)}
       </div>
       {!data.learning?.memory_items?.length && <Empty title="발행된 훈련 항목이 없어요" />}
     </section>
@@ -106,36 +109,36 @@ function MemorySession({ id }: { id: string }) {
     finally { setBusy(false); }
   }
 
-  return <div className="training-view recall-view">
+  return <div className={ownedClassName("training-view recall-view",true)}>
     <Breadcrumb items={[{ label: '퀴즈', href: '/quiz' }, { label: '암기 훈련', href: '/quiz/memory' }, { label: kindNames[m.kind] || '자기 점검' }]} />
     <PageTitle title={kindNames[m.kind] || '자기 점검'} />
     {error && <Alert>{error}</Alert>}
-    <section className={'recall-card ' + (revealed ? 'revealed' : '')}>
-      <div className="recall-card-header">
-        <span className="recall-state"><i aria-hidden="true" />{completed ? '완료' : started ? '회상 중' : '시작 전'}</span>
-        <div className="recall-timer"><Clock3 size={18} strokeWidth={1.5} /><strong>{!limit ? '∞' : seconds.toString().padStart(2, '0')}</strong>{limit > 0 && <small>초</small>}</div>
+    <section className={ownedClassName('recall-card ' + (revealed ? 'revealed' : ''),true)}>
+      <div className={ownedClassName("recall-card-header",true)}>
+        <span className={ownedClassName("recall-state",true)}><i aria-hidden="true" className={ownedClassName(undefined,true)} />{completed ? '완료' : started ? '회상 중' : '시작 전'}</span>
+        <div className={ownedClassName("recall-timer",true)}><Clock3 size={18} strokeWidth={1.5} /><strong className={ownedClassName(undefined,true)}>{!limit ? '∞' : seconds.toString().padStart(2, '0')}</strong>{limit > 0 && <small className={ownedClassName(undefined,true)}>초</small>}</div>
       </div>
-      <h2>{m.prompt}</h2>
-      {q && q.prompt !== m.prompt && <p className="recall-question">{q.prompt}</p>}
-      {!started ? <div className="recall-start">
-        <label className="timer-select">제한 시간<select value={limit} onChange={e => { setLimit(Number(e.target.value)); setSeconds(Number(e.target.value)); }}><option value={10}>10초</option><option value={20}>20초</option><option value={30}>30초</option>{m.kind === 'short_speech' && <><option value={60}>60초</option><option value={90}>90초</option></>}<option value={0}>시간 제한 없음</option></select></label>
-        <button className="button primary large" onClick={() => setStarted(true)}><Play size={17} />시작</button>
-      </div> : completed ? <div className="recall-completed">
-        <span className="completion-check"><Check size={30} strokeWidth={1.7} /></span>
-        <h3>{rating === 'again' ? '다시 복습할 항목에 담았어요.' : '복습 기록을 저장했어요.'}</h3>
-        <div className="recall-completed-actions"><Link className="button primary" href={'/quiz/memory/' + next.id}>다음 항목<ChevronRight size={17} /></Link><Link className="text-link" href="/quiz/memory">훈련 목록</Link></div>
+      <h2 className={ownedClassName(undefined,true)}>{m.prompt}</h2>
+      {q && q.prompt !== m.prompt && <p className={ownedClassName("recall-question",true)}>{q.prompt}</p>}
+      {!started ? <div className={ownedClassName("recall-start",true)}>
+        <label className={ownedClassName("timer-select",true)}>제한 시간<select value={limit} onChange={e => { setLimit(Number(e.target.value)); setSeconds(Number(e.target.value)); }} className={ownedClassName(undefined,true)}><option value={10} className={ownedClassName(undefined,true)}>10초</option><option value={20} className={ownedClassName(undefined,true)}>20초</option><option value={30} className={ownedClassName(undefined,true)}>30초</option>{m.kind === 'short_speech' && <><option value={60} className={ownedClassName(undefined,true)}>60초</option><option value={90} className={ownedClassName(undefined,true)}>90초</option></>}<option value={0} className={ownedClassName(undefined,true)}>시간 제한 없음</option></select></label>
+        <button className={ownedClassName("button primary large",true)} onClick={() => setStarted(true)}><Play size={17} />시작</button>
+      </div> : completed ? <div className={ownedClassName("recall-completed",true)}>
+        <span className={ownedClassName("completion-check",true)}><Check size={30} strokeWidth={1.7} /></span>
+        <h3 className={ownedClassName(undefined,true)}>{rating === 'again' ? '다시 복습할 항목에 담았어요.' : '복습 기록을 저장했어요.'}</h3>
+        <div className={ownedClassName("recall-completed-actions",true)}><Link className={ownedClassName("button primary")} href={'/quiz/memory/' + next.id}>다음 항목<ChevronRight size={17} /></Link><Link className={ownedClassName("text-link")} href="/quiz/memory">훈련 목록</Link></div>
       </div> : <>
-        <div className="recall-answer-area">
-          {isChoice ? <div className="choice-grid">{options.map((o: any, i: number) => <button key={i} className={selection === i ? 'selected' : ''} disabled={revealed} onClick={() => setSelection(i)}><span>{String.fromCharCode(65 + i)}</span>{typeof o === 'string' ? o : o.label || o.text}</button>)}</div> : isOrder ? <div className="order-items">{order.map((o: any, i: number) => <button key={i} disabled={revealed} onClick={() => { if (i === 0) return; setOrder(prev => { const copy = [...prev]; [copy[i - 1], copy[i]] = [copy[i], copy[i - 1]]; return copy; }); }}><GripVertical size={17} /><span>{i + 1}</span>{typeof o === 'string' ? o : o.label || o.text}<small>눌러서 위로</small></button>)}</div> : m.kind === 'flip_card' ? <button className="flip-card" onClick={() => setRevealed(true)}><span>생각한 답을 말해보세요.</span><RotateCcw size={28} strokeWidth={1.5} /><small>눌러서 확인</small></button> : <textarea aria-label={m.kind === 'short_speech' ? '말한 내용 기록' : '떠오른 키워드 또는 답변 요소'} placeholder={m.kind === 'short_speech' ? '짧게 말해본 뒤, 말한 내용을 기록해주세요.' : m.kind === 'short_answer' ? '기억나는 사실을 적어주세요.' : '떠오른 키워드 또는 답변 요소'} value={answer} onChange={e => setAnswer(e.target.value)} disabled={revealed} />}
+        <div className={ownedClassName("recall-answer-area",true)}>
+          {isChoice ? <div className={ownedClassName("choice-grid",true)}>{options.map((o: any, i: number) => <button key={i} className={ownedClassName(selection === i ? 'selected' : '',true)} disabled={revealed} onClick={() => setSelection(i)}><span className={ownedClassName(undefined,true)}>{String.fromCharCode(65 + i)}</span>{typeof o === 'string' ? o : o.label || o.text}</button>)}</div> : isOrder ? <div className={ownedClassName("order-items",true)}>{order.map((o: any, i: number) => <button key={i} disabled={revealed} onClick={() => { if (i === 0) return; setOrder(prev => { const copy = [...prev]; [copy[i - 1], copy[i]] = [copy[i], copy[i - 1]]; return copy; }); }} className={ownedClassName(undefined,true)}><GripVertical size={17} /><span className={ownedClassName(undefined,true)}>{i + 1}</span>{typeof o === 'string' ? o : o.label || o.text}<small className={ownedClassName(undefined,true)}>눌러서 위로</small></button>)}</div> : m.kind === 'flip_card' ? <button className={ownedClassName("flip-card",true)} onClick={() => setRevealed(true)}><span className={ownedClassName(undefined,true)}>생각한 답을 말해보세요.</span><RotateCcw size={28} strokeWidth={1.5} /><small className={ownedClassName(undefined,true)}>눌러서 확인</small></button> : <textarea aria-label={m.kind === 'short_speech' ? '말한 내용 기록' : '떠오른 키워드 또는 답변 요소'} placeholder={m.kind === 'short_speech' ? '짧게 말해본 뒤, 말한 내용을 기록해주세요.' : m.kind === 'short_answer' ? '기억나는 사실을 적어주세요.' : '떠오른 키워드 또는 답변 요소'} value={answer} onChange={e => setAnswer(e.target.value)} disabled={revealed} className={ownedClassName(undefined,true)} />}
         </div>
-        {!revealed ? <button className="button ghost" onClick={() => setRevealed(true)}>키워드 확인</button> : <div className="recall-feedback">
-          <h3>핵심 확인</h3>
-          <div className="recall-keywords">{keywords.map((k: any, i: number) => <span key={i}>{typeof k === 'string' ? k : k.keyword || k.label}</span>)}</div>
-          {isChoice && <p>{selection !== null && (options[selection]?.id === m.correct_option_id || selection === Number(m.correct_index ?? m.correct_answer_index)) ? '맞았어요.' : '정답: ' + (options.find((o: any) => o.id === m.correct_option_id)?.text || options[Number(m.correct_index ?? m.correct_answer_index)]?.text || options[Number(m.correct_index ?? m.correct_answer_index)] || m.correct_answer || '정답 확인 필요')}</p>}
-          {isOrder && <p className="muted">{(m.ordered_steps || m.sequence || m.answer_order || m.items || m.options || []).map((s: any) => typeof s === 'string' ? s : s.text || s.label).join(' → ')}</p>}
-          {m.kind === 'flip_card' && <p className="body-copy">{m.back}</p>}
-          <p className="muted">{isChoice ? '개념을 다시 확인해 보세요.' : '표현이 달라도 핵심 흐름이 떠올랐다면 괜찮아요.'}</p>
-          <div className="rating-buttons">{[['again', '다시 준비'], ['hard', '어려웠어요'], ['good', '떠올랐어요'], ['easy', '자신 있어요']].map(([key, label]) => <button disabled={busy} onClick={() => finish(key)} key={key} className={key === 'good' ? 'button primary' : 'button ghost'}>{label}</button>)}</div>
+        {!revealed ? <button className={ownedClassName("button ghost",true)} onClick={() => setRevealed(true)}>키워드 확인</button> : <div className={ownedClassName("recall-feedback",true)}>
+          <h3 className={ownedClassName(undefined,true)}>핵심 확인</h3>
+          <div className={ownedClassName("recall-keywords",true)}>{keywords.map((k: any, i: number) => <span key={i} className={ownedClassName(undefined,true)}>{typeof k === 'string' ? k : k.keyword || k.label}</span>)}</div>
+          {isChoice && <p className={ownedClassName(undefined,true)}>{selection !== null && (options[selection]?.id === m.correct_option_id || selection === Number(m.correct_index ?? m.correct_answer_index)) ? '맞았어요.' : '정답: ' + (options.find((o: any) => o.id === m.correct_option_id)?.text || options[Number(m.correct_index ?? m.correct_answer_index)]?.text || options[Number(m.correct_index ?? m.correct_answer_index)] || m.correct_answer || '정답 확인 필요')}</p>}
+          {isOrder && <p className={ownedClassName("muted",true)}>{(m.ordered_steps || m.sequence || m.answer_order || m.items || m.options || []).map((s: any) => typeof s === 'string' ? s : s.text || s.label).join(' → ')}</p>}
+          {m.kind === 'flip_card' && <p className={ownedClassName("body-copy",true)}>{m.back}</p>}
+          <p className={ownedClassName("muted",true)}>{isChoice ? '개념을 다시 확인해 보세요.' : '표현이 달라도 핵심 흐름이 떠올랐다면 괜찮아요.'}</p>
+          <div className={ownedClassName("rating-buttons",true)}>{[['again', '다시 준비'], ['hard', '어려웠어요'], ['good', '떠올랐어요'], ['easy', '자신 있어요']].map(([key, label]) => <button disabled={busy} onClick={() => finish(key)} key={key} className={ownedClassName(key === 'good' ? 'button primary' : 'button ghost',true)}>{label}</button>)}</div>
         </div>}
       </>}
     </section>
@@ -169,6 +172,7 @@ function AssignmentList() {
   const router = useRouter();
   const { workflows, setWorkflows, loading, error, reload } = useLearningWorkflows();
   const [filter, setFilter] = useState('active');
+  const assignmentPages=useRecordPages('assignments','state='+filter,true,data.user.id);
   const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [title, setTitle] = useState('');
@@ -176,7 +180,7 @@ function AssignmentList() {
   const [busy, setBusy] = useState(false);
   const sending = useRef(false);
   const requestId = useRef('');
-  const assignments: Item[] = workflows?.assignments || [];
+  const assignments:Item[]=assignmentPages.items;
   const items: Item[] = workflows?.memoryItems || [];
   const visible = assignments.filter(a => filter === 'all' || (filter === 'completed' ? a.state === 'completed' : a.state !== 'completed'));
   async function create() {
@@ -191,20 +195,21 @@ function AssignmentList() {
     } catch (err) { setSaveError((err as Error).message); }
     finally { sending.current = false; setBusy(false); }
   }
-  return <div className="learning-v2 assignment-library">
+  return <div className={ownedClassName("learning-v2 assignment-library",true)}>
     <Breadcrumb items={[{ label: '퀴즈', href: '/quiz' }, { label: '퀴즈 과제' }]} />
-    <PageTitle title="퀴즈 과제" aside={<button className="button primary" disabled={loading || !items.length} onClick={() => { setCreating(true); setSaveError(''); }}>복습 과제 만들기</button>} />
-    <nav className="learning-tabs" aria-label="과제 상태">{[['active', '해야 할 과제'], ['completed', '완료한 과제'], ['all', '전체']].map(([key, label]) => <button key={key} className={filter === key ? 'active' : ''} aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>)}</nav>
-    {error && <><Alert>{error}</Alert><button className="button ghost" onClick={reload}>다시 불러오기</button></>}
-    {loading && !workflows ? <Spinner /> : visible.length ? <div className="learning-rows">{visible.map(a => <Link className="learning-row" key={a.id} href={'/quiz/assignments/' + a.id}>
-      <ListChecks size={23} strokeWidth={1.5} /><div><h2>{a.title}</h2><p>{a.items?.length || 0}개 항목{a.due_at ? ' · ' + dateLabel(a.due_at) + '까지' : ''}{a.data?.origin === 'report' || a.report_id ? ' · 면접 후 재훈련' : ''}</p></div><Badge tone={a.state === 'completed' ? 'green' : 'neutral'}>{assignmentStates[a.state] || '확인 중'}</Badge><ArrowUpRight size={20} />
-    </Link>)}</div> : !error && <Empty title={filter === 'completed' ? '완료한 과제가 없어요' : '배정된 과제가 없어요'} href={!items.length ? '/my' : undefined} label={!items.length ? '오늘의 학습' : undefined}>{items.length ? '복습할 항목을 골라 과제를 시작할 수 있어요.' : '지원 학교의 질문으로 과제를 시작해 보세요.'}</Empty>}
-    <div className="learning-inline-links"><Link href="/quiz/memory">암기 훈련<ArrowUpRight size={16} /></Link><Link href="/account/confirmations">사실 확인함<ArrowUpRight size={16} /></Link></div>
+    <PageTitle title="퀴즈 과제" aside={<button className={ownedClassName("button primary",true)} disabled={loading || !items.length} onClick={() => { setCreating(true); setSaveError(''); }}>복습 과제 만들기</button>} />
+    <nav className={ownedClassName("learning-tabs",true)} aria-label="과제 상태">{[['active', '해야 할 과제'], ['completed', '완료한 과제'], ['all', '전체']].map(([key, label]) => <button key={key} className={ownedClassName(filter === key ? 'active' : '',true)} aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>)}</nav>
+    {(error||assignmentPages.error) && <><Alert>{error||assignmentPages.error}</Alert><button className={ownedClassName("button ghost",true)} onClick={()=>{void reload();void assignmentPages.reload();}}>다시 불러오기</button></>}
+    {assignmentPages.loading&&!assignments.length ? <Spinner /> : visible.length ? <div className={ownedClassName("learning-rows",true)}>{visible.map(a => <Link className={ownedClassName("learning-row")} key={a.id} href={'/quiz/assignments/' + a.id}>
+      <ListChecks size={23} strokeWidth={1.5} /><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>{a.title}</h2><p className={ownedClassName(undefined,true)}>{a.item_count || 0}개 항목{a.due_at ? ' · ' + dateLabel(a.due_at) + '까지' : ''}{a.data?.origin === 'report' || a.report_id ? ' · 면접 후 재훈련' : ''}</p></div><Badge tone={a.state === 'completed' ? 'green' : 'neutral'}>{assignmentStates[a.state] || '확인 중'}</Badge><ArrowUpRight size={20} />
+    </Link>)}</div> : !error&&!assignmentPages.error && <Empty title={filter === 'completed' ? '완료한 과제가 없어요' : '배정된 과제가 없어요'} href={!items.length ? '/my' : undefined} label={!items.length ? '오늘의 학습' : undefined}>{items.length ? '복습할 항목을 골라 과제를 시작할 수 있어요.' : '지원 학교의 질문으로 과제를 시작해 보세요.'}</Empty>}
+    {assignmentPages.page?.hasMore&&<button className={ownedClassName('button ghost',true)} disabled={assignmentPages.loading} onClick={()=>void assignmentPages.more()}>이전 과제 더 보기</button>}
+    <div className={ownedClassName("learning-inline-links",true)}><Link href="/quiz/memory">암기 훈련<ArrowUpRight size={16} /></Link><Link href="/account/confirmations">사실 확인함<ArrowUpRight size={16} /></Link></div>
     {creating && <Modal title="복습 과제 만들기" onClose={() => { if (!busy) setCreating(false); }}>
       {saveError && <Alert>{saveError}</Alert>}
-      <label>과제 이름<input value={title} maxLength={120} onChange={e => { setTitle(e.target.value); requestId.current = ''; }} placeholder="예: 탐구 활동 다시 떠올리기" /></label>
-      <div className="assignment-picker">{items.map(m => { const q = data.learning?.questions?.find((q: Item) => q.id === m.question_id); const checked = selected.includes(m.memory_item_id || m.id); return <label key={m.memory_item_id || m.id}><input type="checkbox" checked={checked} disabled={!checked && selected.length >= 30} onChange={e => { requestId.current = ''; setSelected(prev => e.target.checked ? [...prev, m.memory_item_id || m.id] : prev.filter(id => id !== (m.memory_item_id || m.id))); }} /><span><strong>{q?.prompt || m.prompt}</strong><small>{categoryNames[m.category] || kindNames[m.kind] || '자기 점검'}</small></span></label>; })}</div>
-      <button className="button primary full" disabled={busy || !selected.length} onClick={create}>{busy ? '저장 중' : selected.length + '개 항목으로 시작'}</button>
+      <label className={ownedClassName(undefined,true)}>과제 이름<input value={title} maxLength={120} onChange={e => { setTitle(e.target.value); requestId.current = ''; }} placeholder="예: 탐구 활동 다시 떠올리기" className={ownedClassName(undefined,true)} /></label>
+      <div className={ownedClassName("assignment-picker",true)}>{items.map(m => { const q = data.learning?.questions?.find((q: Item) => q.id === m.question_id); const checked = selected.includes(m.memory_item_id || m.id); return <label key={m.memory_item_id || m.id} className={ownedClassName(undefined,true)}><input type="checkbox" checked={checked} disabled={!checked && selected.length >= 30} onChange={e => { requestId.current = ''; setSelected(prev => e.target.checked ? [...prev, m.memory_item_id || m.id] : prev.filter(id => id !== (m.memory_item_id || m.id))); }} className={ownedClassName(undefined,true)} /><span className={ownedClassName(undefined,true)}><strong className={ownedClassName(undefined,true)}>{q?.prompt || m.prompt}</strong><small className={ownedClassName(undefined,true)}>{categoryNames[m.category] || kindNames[m.kind] || '자기 점검'}</small></span></label>; })}</div>
+      <button className={ownedClassName("button primary full",true)} disabled={busy || !selected.length} onClick={create}>{busy ? '저장 중' : selected.length + '개 항목으로 시작'}</button>
     </Modal>}
   </div>;
 }
@@ -212,7 +217,8 @@ function AssignmentList() {
 function AssignmentSession({ id }: { id: string }) {
   const { data, refresh } = useApp();
   const router = useRouter();
-  const { workflows, setWorkflows, loading, error, reload } = useLearningWorkflows();
+  const detail=useRecordDetail('assignments','id='+encodeURIComponent(id),true,data.user.id);
+  const {loading,error,reload}=detail;
   const [responses, setResponses] = useState<Item>({});
   const [saveError, setSaveError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -221,7 +227,7 @@ function AssignmentSession({ id }: { id: string }) {
   const restored = useRef(false);
   const activeItem=useRef('');
   const [assistantRequest,setAssistantRequest]=useState<{itemId:string;token:number}>({itemId:'',token:0});
-  const assignment: Item | undefined = workflows?.assignments?.find((a: Item) => a.id === id);
+  const assignment:Item|null=detail.item;
   const draftKey = `gakja-assignment:${data.user.id}:${id}`;
   useEffect(() => { try { const stored = sessionStorage.getItem(draftKey); if (stored) setResponses(JSON.parse(stored)); } catch {} restored.current = true; }, [draftKey]);
   useEffect(() => { if (restored.current && Object.keys(responses).length) sessionStorage.setItem(draftKey, JSON.stringify(responses)); }, [responses, draftKey]);
@@ -254,7 +260,7 @@ function AssignmentSession({ id }: { id: string }) {
     requestIds.current[actionName] ||= crypto.randomUUID();
     try {
       const result = await post('/api/learning', { action: actionName, assignmentId: id, requestId: requestIds.current[actionName], ...extra });
-      if (result.data) setWorkflows(result.data); else await reload();
+      await reload();
       if (actionName === 'assignment_submit') { sessionStorage.removeItem(draftKey); setResponses({}); await refresh(); }
       if (actionName === 'assignment_retry' && result.assignment?.id) router.push('/quiz/assignments/' + result.assignment.id);
       requestIds.current[actionName] = '';
@@ -269,19 +275,19 @@ function AssignmentSession({ id }: { id: string }) {
     });
     return mutate('assignment_submit', { responses: payload });
   }
-  if (loading && !workflows) return <Spinner />;
-  if (!assignment) return <div className="learning-v2"><Breadcrumb items={[{ label: '퀴즈 과제', href: '/quiz/assignments' }, { label: '과제' }]} />{error ? <><Alert>{error}</Alert><button className="button ghost" onClick={reload}>다시 불러오기</button></> : <Empty title="과제를 찾을 수 없어요" href="/quiz/assignments" label="과제 목록" />}</div>;
+  if (loading) return <Spinner />;
+  if (!assignment) return <div className={ownedClassName("learning-v2",true)}><Breadcrumb items={[{ label: '퀴즈 과제', href: '/quiz/assignments' }, { label: '과제' }]} />{error ? <><Alert>{error}</Alert><button className={ownedClassName("button ghost",true)} onClick={reload}>다시 불러오기</button></> : <Empty title="과제를 찾을 수 없어요" href="/quiz/assignments" label="과제 목록" />}</div>;
   const canSubmit = items.length > 0 && items.every(m => { const r = responses[m.memory_item_id] || {}; return r.cannotRecall || (r.rating && (r.response?.trim() || r.selectedOptionId || ['order', 'answer_order'].includes(m.kind))); });
   const pageTitle=schoolAssignment&&items.length===1&&assignment.title===items[0].prompt?(items[0].talent_profile?.point?.label||'학교 질문')+' 복습':assignment.title;
-  return <div className="learning-v2 assignment-session">
+  return <div className={ownedClassName("learning-v2 assignment-session",true)}>
     <Breadcrumb items={[{ label: '퀴즈', href: '/quiz' }, { label: '퀴즈 과제', href: '/quiz/assignments' }, { label: assignment.title }]} />
     <PageTitle title={pageTitle} aside={<Badge tone={assignment.state === 'completed' ? 'green' : 'neutral'}>{assignmentStates[assignment.state] || '확인 중'}</Badge>}>
       {savedTarget && <>{savedTarget?.university} · {savedTarget?.department} · </>}{items.length}개 항목{assignment.due_at ? ' · ' + dateLabel(assignment.due_at) + '까지' : ''}
     </PageTitle>
-    {savedTarget && !targetUnchanged && <p className="confirmation-review-note">당시 학교·학과의 질문과 근거로 다시 말해요. 현재 지원처의 준비 기록과 구분해 보관합니다.</p>}
-    {assignment.review?.note && <p className="confirmation-review-note">담당자 의견 · {assignment.review.note}</p>}
+    {savedTarget && !targetUnchanged && <p className={ownedClassName("confirmation-review-note",true)}>당시 학교·학과의 질문과 근거로 다시 말해요. 현재 지원처의 준비 기록과 구분해 보관합니다.</p>}
+    {assignment.review?.note && <p className={ownedClassName("confirmation-review-note",true)}>담당자 의견 · {assignment.review.note}</p>}
     {(error || saveError) && <Alert>{saveError || error}</Alert>}
-    {assignment.state === 'assigned' ? <section className="assignment-start"><p>{schoolAssignment ? '학교의 기준에 연결할 내 생각이나 경험을 짧게 말해보세요.' : '정답이 있는 사실은 확인하고, 내 경험은 핵심 흐름을 되짚어보세요.'}</p><button className="button primary" disabled={busy} onClick={() => mutate('assignment_start')}><Play size={17} />과제 시작</button></section> : <>
+    {assignment.state === 'assigned' ? <section className={ownedClassName("assignment-start",true)}><p className={ownedClassName(undefined,true)}>{schoolAssignment ? '학교의 기준에 연결할 내 생각이나 경험을 짧게 말해보세요.' : '정답이 있는 사실은 확인하고, 내 경험은 핵심 흐름을 되짚어보세요.'}</p><button className={ownedClassName("button primary",true)} disabled={busy} onClick={() => mutate('assignment_start')}><Play size={17} />과제 시작</button></section> : <>
       {items.map((m, index) => {
         const r = responses[m.memory_item_id] || {};
         const attempt = [...(assignment.attempts || [])].filter((a: Item) => a.memory_item_id === m.memory_item_id).sort((a: Item, b: Item) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())[0];
@@ -303,24 +309,24 @@ function AssignmentSession({ id }: { id: string }) {
         const meanings: string[] = (m.required_meaning_elements || []).map(valueText).filter(Boolean);
         const officialUrl=typeof m.source_snapshot?.url==='string' && /^https?:\/\//.test(m.source_snapshot.url)?m.source_snapshot.url:null;
         const activityUnchanged=!m.activity_ids?.length||m.activity_content_version===data.package?.active_version&&m.activity_ids.every((activityId:string)=>data.learning.activities?.some((activity:Item)=>activity.id===activityId&&['verified','approved','confirmed','synthetic_reviewed','confirmed_from_record','confirmed_by_student'].includes(activity.fact_confirmation)));
-        return <section className="assignment-item" key={m.memory_item_id} onFocusCapture={()=>{activeItem.current=m.memory_item_id;}} onPointerDownCapture={()=>{activeItem.current=m.memory_item_id;}}>
-          <div className="assignment-item-label"><span>{index + 1}</span><strong>{schoolAssignment ? '학교·전공 질문' : categoryNames[m.category] || kindNames[m.kind] || '자기 점검'}</strong></div>
-          <h2>{!isChoice&&!isOrder&&approvedQuestion?.prompt?approvedQuestion.prompt:m.prompt}</h2>
-          {!isChoice&&!isOrder&&approvedQuestion?.prompt&&approvedQuestion.prompt!==m.prompt&&<p className="assignment-response-label">{m.prompt}</p>}
-          <div className="assignment-evidence">{approvedQuestion&&<LearningHelp questionId={m.question_id} targetId={assignment.target_id||undefined} sourceType={schoolAssignment?'common':'personal'} sourceVersion={schoolAssignment?m.common_revision:assignment.content_version} snapshot={evidenceSnapshot} assignmentId={locked?undefined:id} itemId={locked?undefined:m.memory_item_id} openRequest={assistantRequest.itemId===m.memory_item_id?assistantRequest.token:0} onAssisted={()=>update(m,{assisted:true})}/>} {schoolAssignment&&officialUrl&&<a href={officialUrl} target="_blank" rel="noreferrer" onClick={async event=>{if(locked)return;event.preventDefault();try{await post('/api/learning',{action:'assignment_help',assignmentId:id,itemId:m.memory_item_id,helpKind:'evidence',requestId:crypto.randomUUID()});update(m,{assisted:true});window.open(officialUrl,'_blank','noopener,noreferrer');}catch(err){setSaveError((err as Error).message);}}}>공식 근거<ArrowUpRight size={15}/></a>}{locked&&(!schoolAssignment||targetUnchanged&&activityUnchanged)&&<Link href={learningRetryHref(m.question_id,retryContext)+(m.activity_ids?.[0]&&schoolAssignment?'&activityId='+encodeURIComponent(m.activity_ids[0]):'')}>면접으로 이어가기<ArrowUpRight size={15}/></Link>}</div>
-          {m.kind === 'short_speech' && !locked && !r.cannotRecall && <p className="assignment-response-label">말한 내용 기록</p>}
-          {locked ? <div className="assignment-result">
-            <p className="assignment-saved-answer">{submittedAnswer}</p>
-            {result && <><h3>{result.cannot_recall ? schoolAssignment ? '다시 준비할 질문이에요' : '사실 확인함에 담았어요' : result.correct === true ? '검수된 정답과 같아요' : result.correct === false ? '근거를 다시 확인해보세요' : schoolAssignment ? '내 답변을 점검했어요' : '내 경험을 점검했어요'}</h3><p>{result.feedback}</p>{result.reviewed_answer && <p className="assignment-reviewed-answer">검수된 답 · {result.reviewed_answer}</p>}{result.evaluation_method === 'self_check' && result.required_meanings?.length > 0 && <div className="assignment-meaning-results">{result.required_meanings.map((text: string) => <span key={text}><Check size={15} className={result.checked_meanings?.includes(text) ? 'checked' : ''} />{text}{result.checked_meanings?.includes(text) ? ' · 직접 확인' : ' · 다시 확인'}</span>)}</div>}</>}
-            {!!variations.length && <div className="assignment-variations"><h3>이어서 답해볼 질문</h3>{variations.map(q => <Link key={q.id} href={learningRetryHref(q.id,retryContext)}>{q.prompt}<ArrowUpRight size={17} /></Link>)}</div>}
+        return <section className={ownedClassName("assignment-item",true)} key={m.memory_item_id} onFocusCapture={()=>{activeItem.current=m.memory_item_id;}} onPointerDownCapture={()=>{activeItem.current=m.memory_item_id;}}>
+          <div className={ownedClassName("assignment-item-label",true)}><span className={ownedClassName(undefined,true)}>{index + 1}</span><strong className={ownedClassName(undefined,true)}>{schoolAssignment ? '학교·전공 질문' : categoryNames[m.category] || kindNames[m.kind] || '자기 점검'}</strong></div>
+          <h2 className={ownedClassName(undefined,true)}>{!isChoice&&!isOrder&&approvedQuestion?.prompt?approvedQuestion.prompt:m.prompt}</h2>
+          {!isChoice&&!isOrder&&approvedQuestion?.prompt&&approvedQuestion.prompt!==m.prompt&&<p className={ownedClassName("assignment-response-label",true)}>{m.prompt}</p>}
+          <div className={ownedClassName("assignment-evidence",true)}>{approvedQuestion&&<LearningHelp questionId={m.question_id} targetId={assignment.target_id||undefined} sourceType={schoolAssignment?'common':'personal'} sourceVersion={schoolAssignment?m.common_revision:assignment.content_version} snapshot={evidenceSnapshot} assignmentId={locked?undefined:id} itemId={locked?undefined:m.memory_item_id} openRequest={assistantRequest.itemId===m.memory_item_id?assistantRequest.token:0} onAssisted={()=>update(m,{assisted:true})}/>} {schoolAssignment&&officialUrl&&<a href={officialUrl} target="_blank" rel="noreferrer" onClick={async event=>{if(locked)return;event.preventDefault();try{await post('/api/learning',{action:'assignment_help',assignmentId:id,itemId:m.memory_item_id,helpKind:'evidence',requestId:crypto.randomUUID()});update(m,{assisted:true});window.open(officialUrl,'_blank','noopener,noreferrer');}catch(err){setSaveError((err as Error).message);}}} className={ownedClassName(undefined,true)}>공식 근거<ArrowUpRight size={15}/></a>}{locked&&(!schoolAssignment||targetUnchanged&&activityUnchanged)&&<Link href={learningRetryHref(m.question_id,retryContext)+(m.activity_ids?.[0]&&schoolAssignment?'&activityId='+encodeURIComponent(m.activity_ids[0]):'')}>면접으로 이어가기<ArrowUpRight size={15}/></Link>}</div>
+          {m.kind === 'short_speech' && !locked && !r.cannotRecall && <p className={ownedClassName("assignment-response-label",true)}>말한 내용 기록</p>}
+          {locked ? <div className={ownedClassName("assignment-result",true)}>
+            <p className={ownedClassName("assignment-saved-answer",true)}>{submittedAnswer}</p>
+            {result && <><h3 className={ownedClassName(undefined,true)}>{result.cannot_recall ? schoolAssignment ? '다시 준비할 질문이에요' : '사실 확인함에 담았어요' : result.correct === true ? '검수된 정답과 같아요' : result.correct === false ? '근거를 다시 확인해보세요' : schoolAssignment ? '내 답변을 점검했어요' : '내 경험을 점검했어요'}</h3><p className={ownedClassName(undefined,true)}>{result.feedback}</p>{result.reviewed_answer && <p className={ownedClassName("assignment-reviewed-answer",true)}>검수된 답 · {result.reviewed_answer}</p>}{result.evaluation_method === 'self_check' && result.required_meanings?.length > 0 && <div className={ownedClassName("assignment-meaning-results",true)}>{result.required_meanings.map((text: string) => <span key={text} className={ownedClassName(undefined,true)}><Check size={15} className={ownedClassName(result.checked_meanings?.includes(text) ? 'checked' : '')} />{text}{result.checked_meanings?.includes(text) ? ' · 직접 확인' : ' · 다시 확인'}</span>)}</div>}</>}
+            {!!variations.length && <div className={ownedClassName("assignment-variations",true)}><h3 className={ownedClassName(undefined,true)}>이어서 답해볼 질문</h3>{variations.map(q => <Link key={q.id} href={learningRetryHref(q.id,retryContext)}>{q.prompt}<ArrowUpRight size={17} /></Link>)}</div>}
           </div> : <>
-            {!r.cannotRecall && (isChoice ? <div className="assignment-options">{options.map((o, i) => <button key={itemId(o, i)} disabled={busy} className={r.selectedOptionId === itemId(o, i) ? 'selected' : ''} aria-pressed={r.selectedOptionId === itemId(o, i)} onClick={() => update(m, { selectedOptionId: itemId(o, i), response: valueText(o) })}><span>{String.fromCharCode(65 + i)}</span>{valueText(o)}</button>)}</div> : isOrder ? <ol className="assignment-order">{order.map((key, position) => { const o = sequence.find((value, i) => itemId(value, i) === key); function move(direction: number) { const copy = [...order]; const other = position + direction; [copy[position], copy[other]] = [copy[other], copy[position]]; update(m, { order: copy, response: copy.map(k => valueText(sequence.find((v, i) => itemId(v, i) === k))).join(' → ') }); } return <li key={key}><span>{position + 1}</span><strong>{valueText(o)}</strong><button className="icon-button" disabled={busy || position === 0} onClick={() => move(-1)} aria-label={valueText(o) + ' 위로'}><ArrowUp size={17} /></button><button className="icon-button" disabled={busy || position === order.length - 1} onClick={() => move(1)} aria-label={valueText(o) + ' 아래로'}><ArrowDown size={17} /></button></li>; })}</ol> : <textarea aria-label={m.prompt + ' 답변'} disabled={busy} value={r.response || ''} onChange={e => update(m, { response: e.target.value })} placeholder={m.kind === 'short_speech' ? '짧게 말해본 뒤, 말한 내용을 기록해주세요' : m.category === 'factual' ? '기억나는 사실을 적어주세요' : '본인 역할과 과정을 내 말로 적어주세요'} maxLength={10000} />)}
-            <label className="assignment-cannot-recall"><input type="checkbox" disabled={busy} checked={!!r.cannotRecall} onChange={e => update(m, { cannotRecall: e.target.checked })} />{schoolAssignment ? '답변이 떠오르지 않아요 · 다시 준비' : '기억이 안 나요 · 사실 확인함에 남기기'}</label>
-            {!r.cannotRecall && <div className="assignment-self-check">{meanings.length > 0 && <><h3>내가 설명한 요소</h3><div className="assignment-meaning-checks">{meanings.map(text => <label key={text}><input type="checkbox" disabled={busy} checked={(r.checked || []).includes(text)} onChange={e => update(m, { checked: e.target.checked ? [...(r.checked || []), text] : (r.checked || []).filter((value: string) => value !== text) })} />{text}</label>)}</div></>}<fieldset className="assignment-rating"><legend>다시 설명할 수 있나요?</legend>{[['again', '다시 준비'], ['hard', '어려웠어요'], ['good', '설명할 수 있어요'], ['easy', '도움 없이 가능해요']].map(([value, label]) => <label key={value}><input type="radio" name={'rating-' + m.memory_item_id} disabled={busy} checked={r.rating === value} onChange={() => update(m, { rating: value })} />{label}</label>)}</fieldset></div>}
+            {!r.cannotRecall && (isChoice ? <div className={ownedClassName("assignment-options",true)}>{options.map((o, i) => <button key={itemId(o, i)} disabled={busy} className={ownedClassName(r.selectedOptionId === itemId(o, i) ? 'selected' : '',true)} aria-pressed={r.selectedOptionId === itemId(o, i)} onClick={() => update(m, { selectedOptionId: itemId(o, i), response: valueText(o) })}><span className={ownedClassName(undefined,true)}>{String.fromCharCode(65 + i)}</span>{valueText(o)}</button>)}</div> : isOrder ? <ol className={ownedClassName("assignment-order",true)}>{order.map((key, position) => { const o = sequence.find((value, i) => itemId(value, i) === key); function move(direction: number) { const copy = [...order]; const other = position + direction; [copy[position], copy[other]] = [copy[other], copy[position]]; update(m, { order: copy, response: copy.map(k => valueText(sequence.find((v, i) => itemId(v, i) === k))).join(' → ') }); } return <li key={key} className={ownedClassName(undefined,true)}><span className={ownedClassName(undefined,true)}>{position + 1}</span><strong className={ownedClassName(undefined,true)}>{valueText(o)}</strong><button className={ownedClassName("icon-button",true)} disabled={busy || position === 0} onClick={() => move(-1)} aria-label={valueText(o) + ' 위로'}><ArrowUp size={17} /></button><button className={ownedClassName("icon-button",true)} disabled={busy || position === order.length - 1} onClick={() => move(1)} aria-label={valueText(o) + ' 아래로'}><ArrowDown size={17} /></button></li>; })}</ol> : <textarea aria-label={m.prompt + ' 답변'} disabled={busy} value={r.response || ''} onChange={e => update(m, { response: e.target.value })} placeholder={m.kind === 'short_speech' ? '짧게 말해본 뒤, 말한 내용을 기록해주세요' : m.category === 'factual' ? '기억나는 사실을 적어주세요' : '본인 역할과 과정을 내 말로 적어주세요'} maxLength={10000} className={ownedClassName(undefined,true)} />)}
+            <label className={ownedClassName("assignment-cannot-recall",true)}><input type="checkbox" disabled={busy} checked={!!r.cannotRecall} onChange={e => update(m, { cannotRecall: e.target.checked })} className={ownedClassName(undefined,true)} />{schoolAssignment ? '답변이 떠오르지 않아요 · 다시 준비' : '기억이 안 나요 · 사실 확인함에 남기기'}</label>
+            {!r.cannotRecall && <div className={ownedClassName("assignment-self-check",true)}>{meanings.length > 0 && <><h3 className={ownedClassName(undefined,true)}>내가 설명한 요소</h3><div className={ownedClassName("assignment-meaning-checks",true)}>{meanings.map(text => <label key={text} className={ownedClassName(undefined,true)}><input type="checkbox" disabled={busy} checked={(r.checked || []).includes(text)} onChange={e => update(m, { checked: e.target.checked ? [...(r.checked || []), text] : (r.checked || []).filter((value: string) => value !== text) })} className={ownedClassName(undefined,true)} />{text}</label>)}</div></>}<fieldset className={ownedClassName("assignment-rating",true)}><legend className={ownedClassName(undefined,true)}>다시 설명할 수 있나요?</legend>{[['again', '다시 준비'], ['hard', '어려웠어요'], ['good', '설명할 수 있어요'], ['easy', '도움 없이 가능해요']].map(([value, label]) => <label key={value} className={ownedClassName(undefined,true)}><input type="radio" name={'rating-' + m.memory_item_id} disabled={busy} checked={r.rating === value} onChange={() => update(m, { rating: value })} className={ownedClassName(undefined,true)} />{label}</label>)}</fieldset></div>}
           </>}
         </section>;
       })}
-      <div className="assignment-bottom-actions">{locked ? <><button className="button primary" disabled={busy} onClick={() => mutate('assignment_retry')}><RotateCcw size={16} />다시 말하기 과제</button><Link className="button ghost" href={schoolAssignment ? '/reports' : '/account/confirmations'}>{schoolAssignment ? '답변 변화 보기' : '사실 확인함'}</Link></> : <button className="button primary" disabled={busy || !canSubmit} onClick={submit}>{busy ? '제출 중' : '과제 제출'}<Check size={17} /></button>}<Link className="text-link" href="/quiz/assignments">과제 목록</Link></div>
+      <div className={ownedClassName("assignment-bottom-actions",true)}>{locked ? <><button className={ownedClassName("button primary",true)} disabled={busy} onClick={() => mutate('assignment_retry')}><RotateCcw size={16} />다시 말하기 과제</button><Link className={ownedClassName("button ghost")} href={schoolAssignment ? '/reports' : '/account/confirmations'}>{schoolAssignment ? '답변 변화 보기' : '사실 확인함'}</Link></> : <button className={ownedClassName("button primary",true)} disabled={busy || !canSubmit} onClick={submit}>{busy ? '제출 중' : '과제 제출'}<Check size={17} /></button>}<Link className={ownedClassName("text-link")} href="/quiz/assignments">과제 목록</Link></div>
     </>}
   </div>;
 }

@@ -10,7 +10,7 @@ import {renderToStaticMarkup} from 'react-dom/server';
 const source=ts.transpileModule(readFileSync('apps/web/src/components/school-logo.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
 function harness(){
  let failed:string|null=null;const module={exports:{} as any};
- vm.runInNewContext(source,{module,exports:module.exports,Math,require(name:string){if(name==='react')return {useState:()=>[failed,(value:string|null)=>{failed=value;}]};if(name==='react/jsx-runtime')return jsx;if(name==='@/lib/school-logo-fit')return fitLibrary;throw Error(name);}});
+ vm.runInNewContext(source,{module,exports:module.exports,Math,require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};if(name==='react')return {useState:()=>[failed,(value:string|null)=>{failed=value;}]};if(name==='react/jsx-runtime')return jsx;if(name==='@/lib/school-logo-fit')return fitLibrary;throw Error(name);}});
  return {render(school:any,size=34){return module.exports.SchoolLogo({school,size});}};
 }
 

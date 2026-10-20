@@ -8,7 +8,7 @@ test('a receipt floats in the body, fades, dismisses and cancels timers on repla
  const code=ts.transpileModule(readFileSync('apps/web/src/components/floating-notice.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
  const mod={exports:{} as any},state:any[]=[],effects:any[]=[],timers=new Map<number,{fn:Function,delay:number}>();let cursor=0,sequence=0,dismissed=0;
  const body={tag:'body'};
- vm.runInNewContext(code,{module:mod,exports:mod.exports,document:{body},setTimeout(fn:Function,delay:number){timers.set(++sequence,{fn,delay});return sequence;},clearTimeout(id:number){timers.delete(id);},require(name:string){
+ vm.runInNewContext(code,{module:mod,exports:mod.exports,document:{body},setTimeout(fn:Function,delay:number){timers.set(++sequence,{fn,delay});return sequence;},clearTimeout(id:number){timers.delete(id);},require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
   if(name==='react')return {useState(initial:any){const index=cursor++;if(!(index in state))state[index]=initial;return [state[index],(value:any)=>{state[index]=value;}];},useEffect(fn:Function,deps:any[]){const index=cursor++,previous=effects[index];if(!previous||deps.some((value,i)=>!Object.is(value,previous.deps[i]))){previous?.cleanup?.();effects[index]={deps,cleanup:fn()};}}};
   if(name==='react-dom')return {createPortal:(element:any,target:any)=>({element,target})};
   if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props})};

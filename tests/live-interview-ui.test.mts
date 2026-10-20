@@ -46,7 +46,7 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture(),rec
     Audio:class {src='';onended:Function|null=null;onerror:Function|null=null;async play(){calls.push({audio:'unlock'});if(this.src.startsWith('blob:'))this.onended?.();}pause(){}},
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
     fetch:async(_url:string,init:any)=>{calls.push({keepalive:!!init.keepalive,body:JSON.parse(init.body)});return {ok:true,blob:async()=>new Blob(['synthetic interviewer output'],{type:'audio/mpeg'})};},
-    require(name:string){
+    require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
       if(name==='react')return react;
       if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props}),Fragment:'Fragment'};
       if(name==='next/link')return {__esModule:true,default:'Link'};

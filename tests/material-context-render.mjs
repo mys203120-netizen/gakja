@@ -21,13 +21,17 @@ function load(file, exports) {
   const source = fs.readFileSync(new URL('../apps/web/src/components/' + file, import.meta.url), 'utf8') + '\nexport {' + exports.join(',') + '};';
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
   const module = { exports: {} };
-  vm.runInNewContext(output, { module, exports: module.exports, URLSearchParams, Intl, require(name) {
+  vm.runInNewContext(output, { module, exports: module.exports, URLSearchParams, Intl, require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if (name === 'react') return { useState: initial => [stateCursor < renderStates.length ? renderStates[stateCursor++] : typeof initial === 'function' ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {}, useCallback: fn => fn };
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }), Fragment: 'Fragment' };
     if (name === 'next/link') return { __esModule: true, default: 'Link' };
     if (name === 'next/navigation') return { useSearchParams: () => query, useRouter: () => ({}) };
     if (name === './app-shell') return { useApp: () => app };
     if (name === './practice') return { useLearningWorkflows: () => ({ workflows, loading: false, error: '', reload() {} }) };
+    if (name === './use-record-pages') return {
+      useRecordPages: () => ({ items: app.data.answers, loading: false, error: '', reload() {}, more() {}, page: {} }),
+      useRecordDetail: (_kind, selection) => ({ item: app.data.answers.find(answer => answer.question_id === new URLSearchParams(selection).get('questionId')) || null, loading: false, error: '', reload() {} }),
+    };
     if (name === './shared') return new Proxy({}, { get: (_, key) => key === 'dateLabel' ? String : String(key) });
     if (name === '@/lib/material-learning-flow') return material;
     if (name === '@/lib/learning-growth') return growth;
@@ -67,6 +71,7 @@ context(link(tree, '각자ON에서 답변 설계').props.href, 'questionId', 'q1
 context(link(tree, '내 답변의 변화').props.href, 'questionId', 'q1');
 check(label(link(tree, '답변 초안 작성')).includes('답변 초안'), 'authored scripts are labelled drafts instead of actual spoken answers');
 tree = materials.AnswerEditor({ id: 'q1' });
+tree = tree.type(tree.props);
 context(link(tree, '각자ON에서 다듬기').props.href, 'questionId', 'q1');
 context(link(tree, '답변 비교').props.href, 'questionId', 'q1');
 
@@ -77,11 +82,18 @@ workflows = { versions: [
   { ...base, id: 'unknown-school', target_id: null }, { ...base, id: 'common', source_type: 'common', common_revision: 6 },
 ] };
 query = new URLSearchParams('questionId=q1&targetId=uos&sourceType=personal&sourceVersion=6');
-tree = records.AnswerComparisons({});
+function comparisons() {
+  const historyParams = new URLSearchParams();
+  if (query.get('questionId')) historyParams.set('questionId', query.get('questionId'));
+  for (const key of ['targetId', 'sourceType', 'sourceVersion']) if (query.get(key)) historyParams.set(key, query.get(key));
+  renderStates = [{ scope: app.data.user.id + '|' + historyParams, workflows, loading: false, error: '' }]; stateCursor = 0;
+  const result = records.AnswerComparisons({}); renderStates = []; stateCursor = 0; return result;
+}
+tree = comparisons();
 const picks = nodes(tree).filter(node => node.type === 'select' && node.props['aria-label']?.endsWith('저장 시점'));
 check(picks.length === 2, 'the actual comparison component renders two answer pickers for this publication');
 for (const pick of picks) check(nodes(pick).filter(node => node.type === 'option').map(node => node.props.value).join(',') === 'owned-before,owned-after', 'the actual picker excludes unrelated schools, old books, common sources and unknown provenance');
-query.set('sourceVersion', '8'); tree = records.AnswerComparisons({});
+query.set('sourceVersion', '8'); tree = comparisons();
 check(nodes(tree).some(node => node.type === 'Empty' && node.props.title === '선택한 학습 맥락에 저장한 답변이 없어요'), 'missing scoped history shows an honest empty state instead of borrowing a different book');
 check(!nodes(tree).some(node => node.type === 'select'), 'no unrelated answer selector is rendered when the requested publication has no answers');
 
@@ -94,7 +106,7 @@ workflows={versions:[
  {...base,id:'readiness-other-school',target_id:'other'},
 ]};
 for(const activityId of ['question:q1','experience:owned-experience','a1']){
- query=new URLSearchParams({activityId,targetId:'uos'});tree=records.AnswerComparisons({});
+ query=new URLSearchParams({activityId,targetId:'uos'});tree=comparisons();
  const destinationPicks=nodes(tree).filter(node=>node.type==='select'&&node.props['aria-label']?.endsWith('저장 시점'));
  check(destinationPicks.length===2,`preparation ${activityId} destination renders the matching submitted answers`);
  for(const pick of destinationPicks)check(nodes(pick).filter(node=>node.type==='option').map(node=>node.props.value).join(',')==='readiness-q-before,readiness-q-after',`preparation ${activityId} destination excludes unrelated questions and schools`);
@@ -110,7 +122,7 @@ savedHref=new URL(link(tree,'이 질문의 답변 비교').props.href,'http://lo
 check(savedHref.searchParams.get('turnId')==='saved-turn','actual interview-history comparison anchors the saved turn');
 tree=records.StudyAnswer({event:{kind:'quiz_response',created_at:'2026-10-15T10:00:00Z',data:{questionId:'legacy-question',response:'이전 답변'}}});
 check(link(tree,'이 질문의 답변 비교').props.href==='/records/comparisons/legacy-question','legacy history does not invent the currently selected target or publication');
-renderStates=[{session:{id:'study-old',started_at:'2026-10-15T10:00:00Z',state:'finalized',report:{weakPoints:[savedCommon]}},sourceFacts:[]},''];stateCursor=0;
+renderStates=['student:study-old',{session:{id:'study-old',started_at:'2026-10-15T10:00:00Z',state:'finalized',report:{weakPoints:[savedCommon]}},sourceFacts:[]},'',''];stateCursor=0;
 tree=records.StudyReport({id:'study-old'});renderStates=[];stateCursor=0;
 savedHref=new URL(nodes(tree).find(node=>node.type==='LinkedRow').props.href,'http://localhost');
 check(savedHref.searchParams.get('memoryItemId')==='common:memory'&&savedHref.searchParams.get('targetId')==='saved-school','actual frozen study-report retry preserves its memory item and original school');

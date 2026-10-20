@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 
 import { useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
@@ -65,5 +67,5 @@ export function AudioLevelDot({ stream, phase }: { stream: MediaStream | null; p
     return release;
   }, [stream, phase]);
 
-  return <span className={`audio-level-indicator is-${phase}`} aria-hidden="true">{phase === 'saved' ? <Check className="quiz-outcome-check" size={17} strokeWidth={2} /> : <span className="audio-level-dot" ref={dot} />}</span>;
+  return <span className={ownedClassName(`audio-level-indicator is-${phase}`,true)} aria-hidden="true">{phase === 'saved' ? <Check className={ownedClassName("quiz-outcome-check")} size={17} strokeWidth={2} /> : <span className={ownedClassName("audio-level-dot",true)} ref={dot} />}</span>;
 }

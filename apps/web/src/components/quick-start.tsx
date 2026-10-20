@@ -1,4 +1,6 @@
 'use client';
+import {ownedClassName} from './owned-class-name';
+
 import Link from 'next/link';
 import {useEffect,useRef,useState} from 'react';
 import {useSearchParams} from 'next/navigation';
@@ -9,7 +11,7 @@ import {learningScopeIdentity} from '@/lib/learning-target-scope';
 import {learningTargetIdentityMatches} from '@gakja/content-contracts/workflows';
 import {registerDraftSaver} from '@/lib/client/draft-save';
 import {readQuickStartStream} from '@/lib/quick-start-stream';
-import {sendOnEnter} from '@/lib/client/enter-send';
+import {resetEnterSequence,sendOnEnter} from '@/lib/client/enter-send';
 import styles from './quick-start.module.css';
 
 type Entry={question:string;answer:string};
@@ -130,24 +132,24 @@ export function QuickStart(){
  const actionLabel=organizing?(conversation.length?'답변에 이어서 정리':'답변 정리하기'):'답변 확인하고 저장';
  const act=()=>organizing?generate():submit();
  const enter=(event:Parameters<typeof sendOnEnter>[0],value:string)=>{sendOnEnter(event,data.preferences?.enterToSend!==false,act,{composing:composing.current,blocked:busy||aiBusy||!canAct||!value.trim()});};
- if(loaded!==scope)return <section className={styles.page}><p role="status">공통 질문을 불러오고 있어요.</p></section>;
- return <section className={styles.page} aria-labelledby="first-question-heading">
-  <header className={styles.header}><h1 id="first-question-heading" tabIndex={-1} ref={heading}>{done?'완성한 내 답변':'내 말로 답변 만들기'}</h1>{!done&&<p>{started?'떠오르는 생각부터 편하게 적어보세요.':'공통 질문부터 나의 이야기를 시작해요.'}</p>}</header>
+ if(loaded!==scope)return <section className={ownedClassName(styles.page,true)}><p role="status" className={ownedClassName(undefined,true)}>공통 질문을 불러오고 있어요.</p></section>;
+ return <section className={ownedClassName(styles.page,true)} aria-labelledby="first-question-heading">
+  <header className={ownedClassName(styles.header,true)}><h1 id="first-question-heading" tabIndex={-1} ref={heading} className={ownedClassName(undefined,true)}>{done?'완성한 내 답변':'내 말로 답변 만들기'}</h1>{!done&&<p className={ownedClassName(undefined,true)}>{started?'떠오르는 생각부터 편하게 적어보세요.':'공통 질문부터 나의 이야기를 시작해요.'}</p>}</header>
   {success&&<FloatingNotice onDismiss={()=>setSuccess('')}>{success}</FloatingNotice>}
   {error&&<Alert>{error}</Alert>}
-  {done?<><blockquote className={styles.savedAnswer}>{answer}</blockquote><div className={styles.actions}><Link className="button primary" href={data.targets.length?'/my':'/schools/new?onboarding=1'}>{data.targets.length?'오늘 훈련으로':'학교 등록하기'}<ArrowRight size={17}/></Link><button className="text-link" onClick={()=>{try{localStorage.removeItem(key);}catch{}setDone(false);setStarted(false);setSession(null);setAnswer('');setThoughts('');setConversation([]);setFollowup(null);setEdited(false);setAiMode(true);}}>다른 답변 만들기</button></div></>:<>
-   <div className={styles.question}><h2>{question?.prompt}</h2></div>
-   {!started?<div className={styles.actions}><ActionButton className="button primary" pending={busy} disabled={!question} onClick={()=>void start()}>답변 시작하기<ArrowRight size={17}/></ActionButton><Link className={styles.schoolLink} href={data.targets.length?'/my':'/schools/new?onboarding=1'}>{data.targets.length?'오늘로 돌아가기':'학교부터 등록할게요'}</Link></div>:<>
-    <div className={styles.toggleRow}><span>AI와 함께 정리</span><button type="button" role="switch" aria-label="AI와 함께 정리" aria-checked={aiMode} disabled={busy||aiBusy} className="motion-toggle-button" onClick={()=>setAiMode(value=>!value)}><span className="motion-toggle-track" aria-hidden="true"><span className="motion-toggle-thumb"/></span></button></div>
+  {done?<><blockquote className={ownedClassName(styles.savedAnswer,true)}>{answer}</blockquote><div className={ownedClassName(styles.actions,true)}><Link className={ownedClassName("button primary")} href={data.targets.length?'/my':'/schools/new?onboarding=1'}>{data.targets.length?'오늘 훈련으로':'학교 등록하기'}<ArrowRight size={17}/></Link><button className={ownedClassName("text-link",true)} onClick={()=>{try{localStorage.removeItem(key);}catch{}setDone(false);setStarted(false);setSession(null);setAnswer('');setThoughts('');setConversation([]);setFollowup(null);setEdited(false);setAiMode(true);}}>다른 답변 만들기</button></div></>:<>
+   <div className={ownedClassName(styles.question,true)}><h2 className={ownedClassName(undefined,true)}>{question?.prompt}</h2></div>
+   {!started?<div className={ownedClassName(styles.actions,true)}><ActionButton className={ownedClassName("button primary")} pending={busy} disabled={!question} onClick={()=>void start()}>답변 시작하기<ArrowRight size={17}/></ActionButton><Link className={ownedClassName(styles.schoolLink)} href={data.targets.length?'/my':'/schools/new?onboarding=1'}>{data.targets.length?'오늘로 돌아가기':'학교부터 등록할게요'}</Link></div>:<>
+    <div className={ownedClassName(styles.toggleRow,true)}><span className={ownedClassName(undefined,true)}>AI와 함께 정리</span><button type="button" role="switch" aria-label="AI와 함께 정리" aria-checked={aiMode} disabled={busy||aiBusy} className={ownedClassName("motion-toggle-button",true)} onClick={()=>setAiMode(value=>!value)}><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></button></div>
     {aiMode&&<>
-     {conversation.length>0&&<details className={styles.conversation}><summary>앞서 나눈 이야기</summary>{conversation.map((entry,index)=><article key={index}>{index>0&&<p className={styles.priorQuestion}>{entry.question}</p>}<p>{entry.answer}</p></article>)}</details>}
-     {followup&&<div className={styles.followup}><Sparkles size={18}/><p>{followup}</p></div>}
-     <label className={styles.thoughts} htmlFor="first-thoughts">{followup?'내 이야기':conversation.length?'더 떠오른 이야기':'생각나는 대로 적어보세요'}<textarea id="first-thoughts" value={thoughts} maxLength={40000} rows={4} disabled={busy||aiBusy} onChange={event=>{setThoughts(event.target.value);aiRequest.current=null;}} onKeyDown={event=>enter(event,thoughts)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} placeholder="짧거나 매끄럽지 않은 문장도 괜찮아요."/></label>
-     {aiBusy&&<div className={styles.stream} aria-label="정리 중인 미리보기" aria-busy="true"><p>{preview||'이야기를 읽고 있어요.'}</p><span className={styles.cursor} aria-hidden="true"/></div>}
+     {conversation.length>0&&<details className={ownedClassName(styles.conversation,true)}><summary className={ownedClassName(undefined,true)}>앞서 나눈 이야기</summary>{conversation.map((entry,index)=><article key={index} className={ownedClassName(undefined,true)}>{index>0&&<p className={ownedClassName(styles.priorQuestion,true)}>{entry.question}</p>}<p className={ownedClassName(undefined,true)}>{entry.answer}</p></article>)}</details>}
+     {followup&&<div className={ownedClassName(styles.followup,true)}><Sparkles size={18}/><p className={ownedClassName(undefined,true)}>{followup}</p></div>}
+     <label className={ownedClassName(styles.thoughts,true)} htmlFor="first-thoughts">{followup?'내 이야기':conversation.length?'더 떠오른 이야기':'생각나는 대로 적어보세요'}<textarea id="first-thoughts" value={thoughts} maxLength={40000} rows={4} disabled={busy||aiBusy} onChange={event=>{setThoughts(event.target.value);aiRequest.current=null;}} onKeyDown={event=>enter(event,thoughts)} onBlur={event=>resetEnterSequence(event.currentTarget)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} placeholder="짧거나 매끄럽지 않은 문장도 괜찮아요." className={ownedClassName(undefined,true)}/></label>
+     {aiBusy&&<div className={ownedClassName(styles.stream,true)} aria-label="정리 중인 미리보기" aria-busy="true"><p className={ownedClassName(undefined,true)}>{preview||'이야기를 읽고 있어요.'}</p><span className={ownedClassName(styles.cursor,true)} aria-hidden="true"/></div>}
     </>}
-    {(!aiMode||answer||conversation.length>0)&&<label className={styles.answer} htmlFor="first-answer-text">{aiMode?'내가 확인할 답변':'내 답변'}<textarea id="first-answer-text" value={answer} maxLength={10000} rows={6} disabled={busy||aiBusy} onChange={event=>{setAnswer(event.target.value);setEdited(true);}} onKeyDown={event=>enter(event,answer)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} placeholder="내 답변을 적어보세요."/></label>}
-    {draftState&&<p className={styles.status} role="status">{draftState}</p>}
-    <div className={styles.actions} data-quick-start-action><ActionButton className="button primary" pending={busy||aiBusy} pendingLabel={aiBusy?'답변 정리 중':'저장 중'} disabled={busy||aiBusy||!canAct} onClick={()=>void act()}>{actionLabel}{organizing?<Sparkles size={17}/>:<Check size={17}/>}</ActionButton>{aiBusy&&<button type="button" className="text-link" onClick={cancel}><Square size={13}/>멈추기</button>}<Link className={styles.schoolLink} href={data.targets.length?'/my':'/schools/new?onboarding=1'}>{data.targets.length?'오늘로 돌아가기':'학교부터 등록할게요'}<ArrowRight size={15}/></Link></div>
+    {(!aiMode||answer||conversation.length>0)&&<label className={ownedClassName(styles.answer,true)} htmlFor="first-answer-text">{aiMode?'내가 확인할 답변':'내 답변'}<textarea id="first-answer-text" value={answer} maxLength={10000} rows={6} disabled={busy||aiBusy} onChange={event=>{setAnswer(event.target.value);setEdited(true);}} onKeyDown={event=>enter(event,answer)} onBlur={event=>resetEnterSequence(event.currentTarget)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} placeholder="내 답변을 적어보세요." className={ownedClassName(undefined,true)}/></label>}
+    {draftState&&<p className={ownedClassName(styles.status,true)} role="status">{draftState}</p>}
+    <div className={ownedClassName(styles.actions,true)} data-quick-start-action><ActionButton className={ownedClassName("button primary")} pending={busy||aiBusy} pendingLabel={aiBusy?'답변 정리 중':'저장 중'} disabled={busy||aiBusy||!canAct} onClick={()=>void act()}>{actionLabel}{organizing?<Sparkles size={17}/>:<Check size={17}/>}</ActionButton>{aiBusy&&<button type="button" className={ownedClassName("text-link",true)} onClick={cancel}><Square size={13}/>멈추기</button>}<Link className={ownedClassName(styles.schoolLink)} href={data.targets.length?'/my':'/schools/new?onboarding=1'}>{data.targets.length?'오늘로 돌아가기':'학교부터 등록할게요'}<ArrowRight size={15}/></Link></div>
    </>}
   </>}
  </section>;
