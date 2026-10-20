@@ -53,7 +53,7 @@ export function campusForTarget(target:AdmissionCalendarTarget):string|null {
   // Generic public-directory campus numbers have no defensible universal meaning.
   return /^(본교|제\d+캠퍼스)$/.test(raw)?null:raw.replace(/캠퍼스|교정/g,'');
 }
-function departmentInEntry(entry:AdmissionCalendarEntry,major:string) {
+export function departmentInEntry(entry:AdmissionCalendarEntry,major:string) {
   if(entry.sourceKind==='admin'&&!entry.departments.length&&!entry.departmentCount&&major&&major!=='미정')return true;
   if(!major||major==='미정'||!entry.departmentLabel)return null;
   const m=normalized(major);

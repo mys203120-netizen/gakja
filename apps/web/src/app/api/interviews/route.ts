@@ -1,4 +1,6 @@
 import {getStudentRecords} from '@/lib/student-records';
+import {after} from 'next/server';
+import {interviewCompletion} from '@/lib/interview-completion';
 import { stoppedInterviewTimer, settledInterviewTimer, renewInterviewTimer, INTERVIEW_LEASE_MS } from '@/lib/interview-timer';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -20,7 +22,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 const inputSchema = z.object({
-  action: z.enum(['start', 'answer', 'answer_recording', 'finish', 'cancel', 'transcript', 'use_transcript', 'pause', 'resume', 'draft', 'settings', 'help', 'heartbeat', 'suspend']), sessionId: z.string().uuid().optional(),
+  action: z.enum(['start', 'answer', 'answer_recording', 'finish', 'report_feedback', 'cancel', 'transcript', 'use_transcript', 'pause', 'resume', 'draft', 'settings', 'help', 'heartbeat', 'suspend']), sessionId: z.string().uuid().optional(),
   kind: z.enum(['chat', 'video']).default('chat'), mode: z.string().max(40).default('basic'), targetId: z.string().max(160).nullish(), questionId: z.string().max(160).nullish(),
   briefingId: z.string().uuid().nullish(), briefingQuestionIndex: z.number().int().min(0).max(10).optional(),
   experienceCardId:z.string().uuid().optional(), experienceRevision:z.coerce.number().int().positive().optional(),
@@ -39,7 +41,7 @@ function json(value: unknown, status = 200) { return Response.json(value, { stat
 function turnView(turn: Record<string, any>) { return { ...turn, ...turn.data, question_id: turn.question_id }; }
 function sessionView(session: Record<string, any>) {
   const { context, questionQueue: _queue, ...rawData } = session.data || {};
-  const data = {...rawData,...settledInterviewTimer(rawData)};
+  const data = {...rawData,questionCount:Array.isArray(_queue)?_queue.length:0,...settledInterviewTimer(rawData)};
   // Return only the owning student's fixed learning resources; internal student facts,
   // identity, selection history, and AI processing context stay on the server.
   const resources=context ? {sourceKind:context.sourceKind||'personal',contentVersion:context.contentVersion,targetSnapshotStale:Boolean(context.targetSnapshotStale),targetId:context.targetId,activityId:context.activityId,questionId:context.questionId,briefingId:context.briefingId||null,
@@ -110,6 +112,7 @@ export async function GET(request: Request) {
       query('select id,session_id,mime,text,metadata,created_at from media_assets where session_id=$1 and student_id=$2 order by created_at', [sessionId, user.id]),
     ]);
     const current = [...turns].reverse().find((turn) => !turn.data.answer && !turn.data.invalidated);
+    session.data={...session.data,trainingProgress:interviewCompletion(session.data,turns)};
     return json({ session: sessionView(session), turns: turns.map(turnView), question: session.data.processing ? null : questionView(current), report: reportView(reports[0]), media: media.map((item) => ({ ...item, url: `/api/media?id=${item.id}` })), aiAvailable: aiEnabled() });
   } catch (error) { const result = featureError(error); return json({ error: result.error, code: result.code }, result.status); }
 }
@@ -285,7 +288,7 @@ export async function POST(request: Request) {
       });
       return json({ session: sessionView(session), turn: turnView(revised) });
     }
-    if (input.action === 'finish') return json(await finishSession(user.id, session));
+    if (input.action === 'finish'||input.action==='report_feedback') return json(await finishSession(user.id,session,input.action==='report_feedback'));
     const automaticRecording=input.action==='answer_recording';
     if(automaticRecording&&(!input.turnId||!input.mediaId||input.generation===undefined||!input.requestId))throw new FeatureError(400,'제출할 녹음과 현재 질문 정보를 확인해 주세요.','RECORDING_ANSWER_SCOPE_REQUIRED');
     if(automaticRecording&&input.answer!==undefined)throw new FeatureError(400,'녹음 자동 제출에는 답변 글 대신 녹음만 선택해 주세요.','RECORDING_ANSWER_TEXT_FORBIDDEN');
@@ -383,12 +386,22 @@ export async function POST(request: Request) {
   } catch (error) { const result = featureError(error); return json({ error: result.error, code: result.code }, result.status); }
 }
 
-async function finishSession(studentId: string, session: Record<string, any>) {
+async function finishSession(studentId:string,session:Record<string,any>,retryFeedback=false){
+  if(retryFeedback&&!aiEnabled())throw new FeatureError(503,'AI 피드백 연결을 확인한 뒤 다시 시도해 주세요.','AI_UNAVAILABLE');
   const completed = await transaction(async (client) => {
     const selected = await client.query('select * from interview_sessions where id=$1 and student_id=$2 for update', [session.id, studentId]);
     const locked = selected.rows[0];
     const existing = await client.query('select * from interview_reports where session_id=$1 and student_id=$2', [session.id, studentId]);
-    if (existing.rows.length && !existing.rows[0].data.transcriptChanged) return { session: locked, report: existing.rows[0], created: false };
+    if(retryFeedback&&(locked.state!=='completed'||!existing.rows.length))throw new FeatureError(409,'저장한 면접 리포트에서 다시 요청해 주세요.','REPORT_NOT_READY');
+    if(existing.rows.length&&!existing.rows[0].data.transcriptChanged){
+      if(!retryFeedback)return {session:locked,report:existing.rows[0],created:false};
+      const report=existing.rows[0];
+      if(!report.data.sections?.length)return {session:locked,report,created:false};
+      if(report.data.aiStatus==='completed')return {session:locked,report,created:false};
+      if(report.data.aiStatus==='pending'&&Date.now()-Number(report.data.aiAttemptedAt||0)<60000)throw new FeatureError(409,'피드백을 정리하고 있어요. 잠시 뒤 확인해 주세요.','REPORT_FEEDBACK_PENDING');
+      const [claimed]=(await client.query('update interview_reports set data=data || $3::jsonb where session_id=$1 and student_id=$2 returning *',[session.id,studentId,JSON.stringify({aiStatus:'pending',aiAttemptedAt:Date.now()})])).rows;
+      return {session:locked,report:claimed,created:true};
+    }
     if (locked.state === 'cancelled') throw new FeatureError(409, '취소된 면접은 리포트를 만들 수 없어요.', 'SESSION_CANCELLED');
     if (locked.data.processing && Date.now() - Number(locked.data.processingAt || 0) < 120000) throw new FeatureError(409, '답변 저장 후 면접을 종료해 주세요.', 'INTERVIEW_PENDING');
     const turns = await client.query('select * from interview_turns where session_id=$1 and student_id=$2 order by created_at,id', [session.id, studentId]);
@@ -396,21 +409,23 @@ async function finishSession(studentId: string, session: Record<string, any>) {
     const previous = existing.rows[0]?.data;
     const previousSnapshot = previous ? { ...previous, revisions: undefined } : null;
     const timer = stoppedTimer(locked.data);
-    const reportPayload = { ...reportData, experienceCard:locked.data.experienceCard?{id:locked.data.experienceCard.id,revision:locked.data.experienceCard.revision}:null, feedbackKind: 'self_check', practiceScope:locked.data.practiceScope||'school', practiceLabel:locked.data.practiceScope==='personal_record'?'일반 경험 면접':null, practiceNotice:locked.data.practiceNotice||null, mode: locked.mode, kind: locked.kind, targetId: locked.target_id, durationSeconds: Math.floor(timer.elapsedMs / 1000), schoolProfile: locked.data.schoolProfile, questionPlan: locked.data.questionPlan, settings: { followups: locked.data.followups, pressure: locked.data.pressure, feedbackTiming: locked.data.feedbackTiming, interviewerReactions: !!locked.data.interviewerReactions, panelists: locked.data.panelists }, settingsHistory: locked.data.settingsHistory || [], assisted: turns.rows.some(turn => turn.data.answer&&!turn.data.invalidated&&assistanceEvidence(turn.data).assisted), assistance_recorded: turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).every(turn=>assistanceEvidence(turn.data).assistance_recorded), helpKinds:[...new Set(turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).flatMap(turn=>assistanceEvidence(turn.data).helpKinds))], actualRootQuestions: turns.rows.filter(turn => turn.data.answer && !turn.data.followupDepth).length, actualFollowups: turns.rows.filter(turn => turn.data.answer && turn.data.followupDepth > 0).length, promptVersion: PROMPT_VERSION, transcriptRevision: turns.rows.reduce((sum, turn) => sum + (turn.data.transcriptRevisions?.length || 0), 0), reportRevision: previous ? Number(previous.reportRevision || 1) + 1 : 1, revisions: previous ? [...(previous.revisions || []), previousSnapshot] : [] };
+    const trainingProgress=interviewCompletion(locked.data,turns.rows);
+    const reportPayload = { ...reportData,trainingProgress,aiStatus:aiEnabled()&&reportData.sections.length?'pending':'unavailable',aiAttemptedAt:Date.now(), experienceCard:locked.data.experienceCard?{id:locked.data.experienceCard.id,revision:locked.data.experienceCard.revision}:null, feedbackKind: 'self_check', practiceScope:locked.data.practiceScope||'school', practiceLabel:locked.data.practiceScope==='personal_record'?'일반 경험 면접':null, practiceNotice:locked.data.practiceNotice||null, mode: locked.mode, kind: locked.kind, targetId: locked.target_id, durationSeconds: Math.floor(timer.elapsedMs / 1000), schoolProfile: locked.data.schoolProfile, questionPlan: locked.data.questionPlan, settings: { followups: locked.data.followups, pressure: locked.data.pressure, feedbackTiming: locked.data.feedbackTiming, interviewerReactions: !!locked.data.interviewerReactions, panelists: locked.data.panelists }, settingsHistory: locked.data.settingsHistory || [], assisted: turns.rows.some(turn => turn.data.answer&&!turn.data.invalidated&&assistanceEvidence(turn.data).assisted), assistance_recorded: turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).every(turn=>assistanceEvidence(turn.data).assistance_recorded), helpKinds:[...new Set(turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).flatMap(turn=>assistanceEvidence(turn.data).helpKinds))], actualRootQuestions: turns.rows.filter(turn => turn.data.answer && !turn.data.followupDepth).length, actualFollowups: turns.rows.filter(turn => turn.data.answer && turn.data.followupDepth > 0).length, promptVersion: PROMPT_VERSION, transcriptRevision: turns.rows.reduce((sum, turn) => sum + (turn.data.transcriptRevisions?.length || 0), 0), reportRevision: previous ? Number(previous.reportRevision || 1) + 1 : 1, revisions: previous ? [...(previous.revisions || []), previousSnapshot] : [] };
     const inserted = existing.rows.length
       ? await client.query('update interview_reports set data=$3 where session_id=$1 and student_id=$2 returning *', [session.id, studentId, JSON.stringify(reportPayload)])
       : await client.query('insert into interview_reports(student_id,session_id,data) values($1,$2,$3) returning *', [studentId, session.id, JSON.stringify(reportPayload)]);
-    const finished = await client.query("update interview_sessions set state='completed',completed_at=now(),updated_at=now(),data=(data-'processing'-'processingAt') || $3::jsonb where id=$1 and student_id=$2 returning *", [session.id, studentId, JSON.stringify(timer)]);
+    const finished = await client.query("update interview_sessions set state='completed',completed_at=now(),updated_at=now(),data=(data-'processing'-'processingAt') || $3::jsonb where id=$1 and student_id=$2 returning *", [session.id, studentId, JSON.stringify({...timer,trainingProgress})]);
     return { session: finished.rows[0], report: inserted.rows[0], created: true };
   });
-  if (completed.created && aiEnabled() && completed.report.data.sections.length) {
+  const feedbackRevision=String(completed.report.data.reportRevision),feedbackAttempt=String(completed.report.data.aiAttemptedAt);
+  if(completed.created&&completed.report.data.aiStatus==='pending')after(async()=>{
     try {
       const context = completed.session.data.context as LearningContext;
       const reply = await coach(studentId, context, '면접 리포트 내용 피드백을 작성한다. 아래 실제 기록에서 학생이 말한 문장을 그대로 인용해 질문 대응·근거·자기 표현을 관찰한다. 승인 원문과 학생 진술은 별도로 표시한다. 다음 연습은 각 질문에서 명시한 요구를 먼저 확인한다. 학생에게 없던 실험 절차·행동을 넣은 다듬은 답변이나 1인칭 모범답안은 작성하지 않는다. 미확인 내용은 짧은 확인 질문으로 남긴다. 발화 측정값이나 종합 점수는 생성하지 않는다.', [{ role: 'user', content: JSON.stringify(completed.report.data.sections) }], 'interview', session.id);
-      [completed.report] = await query('update interview_reports set data=data || $3::jsonb where session_id=$1 and student_id=$2 returning *', [session.id, studentId, JSON.stringify({ aiStatus: 'completed', aiFeedback: reply, model: reply.model, promptVersion: reply.promptVersion, feedbackKind: 'ai_content_and_self_check' })]);
+      await query("update interview_reports set data=data || $3::jsonb where session_id=$1 and student_id=$2 and data->>'reportRevision'=$4 and data->>'aiStatus'='pending' and data->>'aiAttemptedAt'=$5", [session.id, studentId, JSON.stringify({ aiStatus: 'completed', aiFeedback: reply, model: reply.model, promptVersion: reply.promptVersion, feedbackKind: 'ai_content_and_self_check' }),feedbackRevision,feedbackAttempt]);
     } catch (error) {
-      [completed.report] = await query('update interview_reports set data=data || $3::jsonb where session_id=$1 and student_id=$2 returning *', [session.id, studentId, JSON.stringify({ aiStatus: 'failed', aiError: featureError(error).error })]);
+      await query("update interview_reports set data=data || $3::jsonb where session_id=$1 and student_id=$2 and data->>'reportRevision'=$4 and data->>'aiStatus'='pending' and data->>'aiAttemptedAt'=$5", [session.id, studentId, JSON.stringify({ aiStatus: 'failed', aiError: featureError(error).error }),feedbackRevision,feedbackAttempt]);
     }
-  }
+  });
   return { session: sessionView(completed.session), report: reportView(completed.report) };
 }

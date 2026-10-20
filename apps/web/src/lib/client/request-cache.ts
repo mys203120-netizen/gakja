@@ -7,7 +7,7 @@ type RequestCacheOptions = {
   maxEntries?: number;
 };
 
-const privatePaths = new Set(['/api/learning', '/api/planner', '/api/study-sessions', '/api/knowledge-bites', '/api/quiz', '/api/schools', '/api/schools/catalog']);
+const privatePaths = new Set(['/api/learning', '/api/planner', '/api/study-sessions', '/api/knowledge-bites', '/api/quiz', '/api/schools', '/api/schools/catalog', '/api/training']);
 const quizLibraryParams = new Set(['targetId', 'sourceType', 'sourceVersion', 'activityId', 'questionId', 'memoryItemId', 'mode']);
 const maxValueSize = 512_000;
 const maxTotalSize = 4_000_000;
@@ -52,6 +52,14 @@ export function createClientRequestCache(settings: RequestCacheOptions = {}) {
     identityRevision++;
   }
 
+  /** Server-rendered authentication belongs to this tab, never to server module memory. */
+  function seedIdentity(nextIdentity: string) {
+    if (!enabled() || !nextIdentity || identity === nextIdentity) return;
+    invalidate();
+    identity = nextIdentity;
+    identityRevision++;
+  }
+
   function localUrl(url: string) {
     if (!enabled()) return null;
     try {
@@ -68,7 +76,15 @@ export function createClientRequestCache(settings: RequestCacheOptions = {}) {
     if (url.pathname === '/api/quiz' && [...url.searchParams.keys()].some(key => !quizLibraryParams.has(key))) return 0;
     if (url.pathname === '/api/study-sessions' && url.searchParams.has('id')) return 0;
     if (url.pathname === '/api/knowledge-bites' && url.searchParams.has('videoId')) return 0;
-    return url.pathname.startsWith('/api/schools') ? 60_000 : url.pathname === '/api/study-sessions' ? 5_000 : 15_000;
+    if (url.pathname === '/api/training' && [...url.searchParams.keys()].some(key => key !== 'targetId' && key !== 'viewScope')) return 0;
+    return url.pathname.startsWith('/api/schools') ? 60_000 : url.pathname === '/api/training' ? 3_000 : url.pathname === '/api/study-sessions' ? 5_000 : 15_000;
+  }
+
+  function peek<T = any>(url: string): T | undefined {
+    const parsed = localUrl(url);
+    if (!lifetime(parsed)) return;
+    const entry = values.get(`${identity}:${parsed!.href}`);
+    return entry && entry.expiresAt > now() ? copy(entry.value) as T : undefined;
   }
 
   function store(key: string, value: unknown, ttl: number) {
@@ -175,10 +191,12 @@ export function createClientRequestCache(settings: RequestCacheOptions = {}) {
     return subscribe(work);
   }
 
-  return { request, invalidate, reset };
+  return { request, invalidate, reset, seedIdentity, peek };
 }
 
 const clientRequests = createClientRequestCache();
 export const requestJson = clientRequests.request;
 export const invalidateClientRequestCache = clientRequests.invalidate;
 export const resetClientRequestCache = clientRequests.reset;
+export const seedClientRequestIdentity = clientRequests.seedIdentity;
+export const peekRequestJson = clientRequests.peek;

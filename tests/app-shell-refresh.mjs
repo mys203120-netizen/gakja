@@ -13,8 +13,8 @@ const fixture = marker => ({ user: { id: 'harin', name: '하린' }, marker, targ
 let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
 function all(value) { return Array.isArray(value) ? value.flatMap(all) : value && typeof value === 'object' ? [value, ...all(value.props?.children)] : []; }
-function harness({ storedSidebarPreference = null, storageUnavailable = false, selectionRemovalBlocked=false, draftGate=null, studyGate=null, authGate=null, authLogoutFails=false } = {}) {
-  const slots = [], effects = [], queued = [], requests = [], storageWrites = [],logoutSteps=[],navigations=[];
+function harness({ storedSidebarPreference = null, storageUnavailable = false, selectionRemovalBlocked=false, draftGate=null, studyGate=null, authGate=null, authLogoutFails=false, initialData } = {}) {
+  const slots = [], effects = [], queued = [], requests = [], storageWrites = [],logoutSteps=[],navigations=[],seededIdentities=[];
   let cursor = 0, disposed = false, disposedWrites = 0;
   const hooks = {
     createContext: () => ({ Provider: 'AppContextProvider' }), useContext: () => null,
@@ -47,7 +47,7 @@ function harness({ storedSidebarPreference = null, storageUnavailable = false, s
     if (name === 'gsap') return { __esModule: true, default: {} };
     if (name === './use-record-pages') return { useRecordPages: () => ({ items: [], page: { nextCursor: null, hasMore: false }, loading: false, error: '', reload: async () => {}, more: async () => {} }) };
     if (name.endsWith('.module.css')) return styles;
-    if (name === './shared') return { api, post: async(url,input) => {check(url==='/api/auth'&&input.action==='logout','logout callback only sends the auth logout mutation');logoutSteps.push('auth_logout');if(authGate)await authGate;if(authLogoutFails)throw Error('auth offline');return {ok:true};}, Logo: 'Logo', Spinner: 'Spinner', Alert: 'Alert', Modal: 'Modal', Badge: 'Badge', FloatingNotice:'FloatingNotice', targetName: () => '', targetMajor: () => '' };
+    if (name === './shared') return { api, seedClientRequestIdentity:id=>seededIdentities.push(id), post: async(url,input) => {check(url==='/api/auth'&&input.action==='logout','logout callback only sends the auth logout mutation');logoutSteps.push('auth_logout');if(authGate)await authGate;if(authLogoutFails)throw Error('auth offline');return {ok:true};}, Logo: 'Logo', Spinner: 'Spinner', Alert: 'Alert', Modal: 'Modal', Badge: 'Badge', FloatingNotice:'FloatingNotice', targetName: () => '', targetMajor: () => '' };
     if(name==='@/lib/client/draft-save')return {flushPendingDrafts:async user=>{check(user==='harin','logout flush uses the current fixture owner');logoutSteps.push('drafts');if(draftGate)await draftGate;}};
     if(name==='./study-session-provider')return {StudySessionProvider:'StudySessionProvider',finishStudySession:async reason=>{check(reason==='logout','study time ends for logout');logoutSteps.push('study_finish');if(studyGate)await studyGate;}};
     if (name === '@/lib/student-onboarding') return { studentOnboardingDestination: () => null };
@@ -55,9 +55,65 @@ function harness({ storedSidebarPreference = null, storageUnavailable = false, s
     if (name === '@/lib/app-navigation') return { STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], MOBILE_STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], mobileStudentActive: (path, href) => path === href, studentSection: () => 'today' };
     return new Proxy({}, { get: (_, key) => String(key) });
   } });
-  const render = () => { cursor = 0; queued.length = 0; const tree = module.exports.AppShell({ children: 'Student screen' }); while (queued.length) queued.shift()(); return tree; };
+  const render = () => { cursor = 0; queued.length = 0; const tree = module.exports.AppShell({ children: 'Student screen', initialData }); while (queued.length) queued.shift()(); return tree; };
   const state = () => { const tree = render(), nodes = all(tree), sidebarToggle = nodes.find(node => node.props?.['aria-controls'] === 'desktop-navigation'); return { provider: nodes.find(node => node.type === 'AppContextProvider')?.props.value, alert: nodes.find(node => node.type === 'Alert')?.props.children, sidebarCollapsed: tree.props['data-sidebar-collapsed'],inert:tree.props.inert,ariaBusy:tree.props['aria-busy'], sidebarToggle: sidebarToggle.props,notice:nodes.find(node=>node.type==='FloatingNotice'),accountMenus:nodes.filter(node=>node.type==='AccountMenu') };  };
-  return { requests, render, state, storageWrites, logoutSteps,navigations, strictReplay() { effects.forEach(effect => effect?.cleanup?.()); effects.forEach(effect => { if (effect) effect.cleanup = effect.effect(); }); }, dispose() { effects.forEach(effect => effect?.cleanup?.()); disposed = true; }, get disposedWrites() { return disposedWrites; } };
+  return { requests, render, state, storageWrites, logoutSteps,navigations,seededIdentities, strictReplay() { effects.forEach(effect => effect?.cleanup?.()); effects.forEach(effect => { if (effect) effect.cleanup = effect.effect(); }); }, dispose() { effects.forEach(effect => effect?.cleanup?.()); disposed = true; }, get disposedWrites() { return disposedWrites; } };
+}
+
+// Server-authenticated data renders the real student screen immediately. It is
+// an initial value only; explicit refreshes still own ordering and invalidation.
+{
+  const initialData={...fixture('server initial'),targets:[{id:'first'},{id:'saved'}],preferences:{selectedTargetId:'saved'}};
+  const h=harness({initialData}),first=h.render();
+  check(all(first).some(node=>node.type==='AppContextProvider'),'SSR bootstrap renders the provider on its very first render without a shell spinner');
+  check(h.requests.length===0,'server bootstrap prevents the duplicate mount-time /api/bootstrap request');
+  check(h.seededIdentities.join(',')==='harin','the verified server owner seeds only this client shell initializer');
+  check(h.state().provider.data===initialData&&h.state().provider.targetId==='saved','initial content and selected support target are available together');
+  check(h.state().provider.learningRevision===0,'an SSR seed is not recorded as an extra completed client refresh');
+  h.strictReplay();
+  check(h.requests.length===0,'StrictMode effect replay does not fetch bootstrap for a seeded shell');
+  const refresh=h.state().provider.refresh,older=refresh(),newer=refresh();
+  check(h.requests.length===2,'explicit refresh remains available after the SSR initializer');
+  h.requests[1].resolve({...initialData,marker:'freshest server state'});await newer;
+  h.requests[0].resolve({...initialData,marker:'stale refresh'});await older;
+  check(h.state().provider.data.marker==='freshest server state','reverse refresh completion cannot overwrite seeded-shell data');
+  check(h.state().provider.learningRevision===1,'only the latest explicit refresh advances a seeded shell revision');
+  check(h.state().provider.targetId==='saved','successful refresh preserves a still-valid selected target');
+  for(let pass=0;pass<5;pass++)h.state();
+  check(h.requests.length===2&&h.seededIdentities.length===1,'ordinary rerenders neither loop bootstrap nor reseed cache ownership');h.dispose();
+}
+{
+  const initialData={...fixture('server fallback'),preferences:{selectedTargetId:'removed'}};
+  const h=harness({initialData});h.render();
+  check(h.state().provider.targetId==='uos','an invalid stored target falls back to the first owned support target on the first render');
+  const pending=h.state().provider.refresh;const flight=pending();h.dispose();h.requests[0].resolve(fixture('after seeded unmount'));await flight;
+  check(h.disposedWrites===0,'a seeded shell also ignores refresh completion after unmount');
+}
+
+// Exercise the actual async student layout: authorization precedes bootstrap,
+// and React keys force actor changes to create a new client shell/cache boundary.
+{
+  const layoutCode=ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/app/(student)/layout.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
+  const module={exports:{}},calls=[];let actor=null;
+  vm.runInNewContext(layoutCode,{module,exports:module.exports,require(name){
+    if(name==='@/components/owned-class-name')return {ownedClassName:value=>value};
+    if(name==='react')return {Suspense:'Suspense'};
+    if(name==='react/jsx-runtime')return {jsx:(type,props,key)=>({type,props,key})};
+    if(name==='next/navigation')return {redirect:path=>{throw Object.assign(Error('redirect'),{path});}};
+    if(name==='@/lib/auth')return {getUser:async()=>actor};
+    if(name==='@/components/app-shell')return {AppShell:'AppShell'};
+    if(name==='@/lib/data')return {bootstrap:async user=>{calls.push(user.id);return {...fixture(user.id),user};}};
+    throw Error(name);
+  }});
+  const render=async()=>{const suspense=module.exports.default({children:'Student page'});return suspense.props.children.type(suspense.props.children.props);};
+  await assert.rejects(render(),error=>error.path==='/login');checks++;
+  actor={id:'admin-fixture',role:'admin'};await assert.rejects(render(),error=>error.path==='/admin');checks++;
+  check(calls.length===0,'anonymous and non-student requests never load a student bootstrap');
+  actor={id:'student-one',role:'student'};const first=await render();
+  actor={id:'student-two',role:'student'};const second=await render();
+  check(first.type==='AppShell'&&first.key==='student-one'&&second.key==='student-two','each authenticated actor gets its own keyed shell instance');
+  check(first.props.initialData.user.id==='student-one'&&second.props.initialData.user.id==='student-two','SSR payloads remain bound to the user authorized for that request');
+  check(calls.join(',')==='student-one,student-two','the server layout performs its own bootstrap for each authorized render');
 }
 
 // New students see icons and names. Only a stored explicit collapse hides labels.

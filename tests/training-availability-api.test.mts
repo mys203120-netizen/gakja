@@ -14,6 +14,7 @@ const modules:Record<string,string>={
   '@/lib/db':`exports.ApiError=class ApiError extends Error{constructor(status,message){super(message);this.status=status;}};
     exports.errorResponse=error=>Response.json({error:error.message},{status:error.status||500});
     async function run(sql,args=[]){const s=globalThis.__trainingAvailabilityTest;
+      if(sql.startsWith('select p.created_at,'))return s.profiles.has(args[0])?[{created_at:s.profiles.get(args[0]),availability:structuredClone(s.preferences.get(args[0])?.trainingAvailability)}]:[];
       if(sql.startsWith('select created_at from profiles'))return s.profiles.has(args[0])?[{created_at:s.profiles.get(args[0])}]:[];
       if(sql.startsWith('select data from student_preferences'))return s.preferences.has(args[0])?[{data:structuredClone(s.preferences.get(args[0]))}]:[];
       if(sql.startsWith('insert into student_preferences')){if(!s.preferences.has(args[0])){s.preferences.set(args[0],{});s.writes++;}return [];}

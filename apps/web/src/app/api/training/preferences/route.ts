@@ -11,11 +11,10 @@ export async function GET(){
   try{
     const user=await requireUser();
     if(user.role!=='student')throw new ApiError(403,'학생 계정에서 학습 시간을 설정해 주세요.');
-    const [profile]=await query('select created_at from profiles where id=$1 and active=true',[user.id]);
+    const [profile]=await query("select p.created_at,sp.data->'trainingAvailability' as availability from profiles p left join student_preferences sp on sp.student_id=p.id where p.id=$1 and p.active=true",[user.id]);
     if(!profile)throw new ApiError(404,'가입 정보를 찾을 수 없어요.');
-    const [preferences]=await query('select data from student_preferences where student_id=$1',[user.id]);
     const registeredAt=new Date(profile.created_at).toISOString();
-    return Response.json({availability:normalizeTrainingAvailability(preferences?.data?.trainingAvailability),registeredAt,startDate:koreaDay(new Date(registeredAt))},{headers});
+    return Response.json({availability:normalizeTrainingAvailability(profile.availability),registeredAt,startDate:koreaDay(new Date(registeredAt))},{headers});
   }catch(error){return errorResponse(error);}
 }
 

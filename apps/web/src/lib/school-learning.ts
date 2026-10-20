@@ -15,6 +15,11 @@ import {departmentPracticeQuestions,departmentQuestionMatchesTarget} from './dep
 import {normalizeTrainingAvailability} from './training-availability';
 export const schoolLearningIdentityMatches=learningTargetIdentityMatches;
 
+/** Registration needs owned selections, not the whole reference book or question bank. */
+export async function studentSchoolRegistrations(studentId:string){
+  return (await query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null order by created_at,id",[studentId])).map(row=>enrichSchoolTarget({...row.data,id:row.id}));
+}
+
 /** Public department metadata is a learning lens, not a confirmed admissions rule. */
 function schoolMajorContext(target:Record<string,any>) {
   const school=schoolDirectoryForTarget(target);

@@ -62,10 +62,36 @@ try{
  const startInput={action:'start',kind:'video',...diagnostic,trainingPlanId:task.id,trainingPurpose:'diagnostic',experienceCardId:cardId,experienceRevision:card.card.revision,followups:false,feedbackTiming:'end',requestId:startedTask.requestId||randomUUID()};
  await request('/api/interviews',{...startInput,sourceVersion:Number(diagnostic.sourceVersion)+999,requestId:randomUUID()},0,409);
  await request('/api/interviews',{...startInput,requestId:randomUUID()},1,409);
- const session=await request('/api/interviews',startInput);check(session.aiAvailable===false,'The QA server disables external AI before any answer or report is generated');
+ // Ending a room is allowed before the frozen diagnostic list is exhausted;
+ // its real first answer is evidence, but cannot complete the lesson or diagnosis.
+ check(diagnostic.questionIds.length>1,'The partial-diagnostic fixture contains more than one frozen root question');
+ const partial=await request('/api/interviews',{...startInput,experienceCardId:undefined,experienceRevision:undefined,requestId:randomUUID()});
+ check(partial.aiAvailable===false,'The interrupted diagnostic also runs without external AI');
+ const partialId=partial.session.id;
+ await request('/api/training',{action:'link_session',planId:task.id,sessionId:partialId,diagnostic:true});
+ await request('/api/interviews',{action:'resume',sessionId:partialId});
+ const partialAnswer=await request('/api/interviews',{action:'answer',sessionId:partialId,turnId:partial.question.turnId,answer:'저는 측정 조건을 기록하고 같은 시간에 다시 측정하자고 제안했습니다.',requestId:randomUUID()});
+ check(Boolean(partialAnswer.nextQuestion),'An unanswered frozen diagnostic root remains after the first real answer');
+ const partialFinish=await request('/api/interviews',{action:'finish',sessionId:partialId});
+ check(partialFinish.session.state==='completed'&&partialFinish.session.data.trainingProgress.allRootsAnswered===false&&partialFinish.session.data.trainingProgress.answeredRootCount===1,'Ending an interrupted room preserves its one-answer progress without claiming every root was answered');
+ await request('/api/training',{action:'link_session',planId:task.id,sessionId:partialId,diagnostic:true});
+ const immediatePartial=(await db.query("select data->'trainingDiagnostics'->$2 as diagnostic from student_preferences where student_id=$1",[ids[0],target.id])).rows[0].diagnostic;
+ check(immediatePartial.sessionId===partialId&&immediatePartial.state==='partial'&&immediatePartial.completedAt===null,'Relinking an interrupted diagnostic immediately stores partial status before a correcting GET can run');
+ const partialTraining=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ check(partialTraining.diagnostics.state==='partial'&&partialTraining.today.tasks.find((item:Value)=>item.id===task.id)?.status!=='completed','Today and persisted diagnosis both keep a one-answer interrupted lesson incomplete');
+ const partialHistory=await request('/api/interviews?id='+partialId);
+ check(partialHistory.turns.filter((turn:Value)=>turn.answer).length===1,'The interrupted lesson retains its submitted answer in history');
+ const retryTask=(await request('/api/training',{action:'task_start',planId:task.id})).task;
+ check(retryTask.sessionId===null&&retryTask.requestId!==startedTask.requestId,'Restarting a partial lesson clears only its ended-session pointer and creates a fresh interview request identity');
+ const repeatedRetry=(await request('/api/training',{action:'task_start',planId:task.id})).task;
+ check(repeatedRetry.requestId===retryTask.requestId&&repeatedRetry.sessionId===null,'Retrying task start before the replacement interview is linked reuses the fresh request rather than creating duplicate sessions');
+
+ const session=await request('/api/interviews',{...startInput,requestId:retryTask.requestId});check(session.aiAvailable===false,'The QA server disables external AI before any answer or report is generated');
  const sessionId=session.session.id;
  await request('/api/training',{action:'link_session',planId:task.id,sessionId,diagnostic:true});
  await request('/api/training',{action:'link_session',planId:task.id,sessionId,diagnostic:true},1,404);
+ const activeTask=(await request('/api/training',{action:'task_start',planId:task.id})).task;
+ check(activeTask.sessionId===sessionId&&activeTask.requestId===retryTask.requestId,'An active lesson keeps its current session and request identity for ordinary resume');
  await request('/api/interviews',{action:'resume',sessionId});
  let question=session.question;const turns:Value[]=[];
  while(question){
@@ -75,15 +101,35 @@ try{
  check(turns.length===diagnostic.questionIds.length,'Every fixed diagnostic question stores a real submitted text answer');
  const unfinished=await request('/api/training?targetId='+encodeURIComponent(target.id));
  check(unfinished.today.tasks.find((item:Value)=>item.id===task.id)?.status!=='completed','An unfinished interview cannot complete its daily task');
- await request('/api/interviews',{action:'finish',sessionId});
+ const fullFinish=await request('/api/interviews',{action:'finish',sessionId});
+ check(fullFinish.session.data.trainingProgress.allRootsAnswered===true&&fullFinish.session.data.trainingProgress.expectedRootCount===diagnostic.questionIds.length&&fullFinish.session.data.trainingProgress.answeredRootCount===diagnostic.questionIds.length,'Only answering every frozen root produces complete diagnostic progress');
  const noteId=randomUUID(),note={action:'activity_note',turnId:turns[0].id,activityId:'experience:'+cardId,body:'재측정을 제안한 본인 역할을 다시 확인했습니다.',requestId:noteId};
  await request('/api/training',note,1,404);await request('/api/training',{...note,activityId:'unrelated-activity'},0,409);await request('/api/training',note);await request('/api/training',note);
  training=await request('/api/training?targetId='+encodeURIComponent(target.id));
  check(training.diagnostics?.state==='completed','Finishing the owned diagnostic updates its durable status');
  check(training.today.tasks.find((item:Value)=>item.id===task.id)?.status==='completed','Completed session evidence marks only its actual daily task as performed');
+ await request('/api/training',{action:'task_start',planId:task.id},0,409);
  const evidence=training.readiness.items.find((item:Value)=>item.id==='experience:'+cardId);
  check(evidence?.mainAnswers===turns.length&&evidence.textAttempts===turns.length&&evidence.audioAttempts===0,'Live-screen text replies update the same activity as text evidence, without inventing audio attempts');
  check(evidence.notes.length===1&&training.activityNotes.filter((item:Value)=>item.id===noteId).length===1,'Confirmed activity notes are linked and retry-idempotent');
+ // Corrected source evidence is authoritative even if the old finish receipt
+ // and report still contain an all-roots-complete progress snapshot.
+ await db.query("update interview_turns set data=data||'{\"invalidated\":true}'::jsonb where id=$1 and session_id=$2 and student_id=$3",[turns[0].id,sessionId,ids[0]]);
+ await request('/api/training',{action:'link_session',planId:task.id,sessionId,diagnostic:true});
+ const invalidatedImmediate=(await db.query("select data->'trainingDiagnostics'->$2 as diagnostic from student_preferences where student_id=$1",[ids[0],target.id])).rows[0].diagnostic;
+ check(invalidatedImmediate.state==='partial'&&invalidatedImmediate.completedAt===null,'Relinking recomputes an existing completed diagnosis immediately when one source answer becomes invalid');
+ const invalidatedTraining=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ check(invalidatedTraining.diagnostics.state==='partial'&&invalidatedTraining.today.tasks.find((item:Value)=>item.id===task.id)?.status!=='completed','Invalidating one root reopens both diagnosis and lesson despite the cached complete finish receipt');
+ await db.query("update interview_turns set data=data||'{\"invalidated\":true}'::jsonb where session_id=$1 and student_id=$2",[sessionId,ids[0]]);
+ await request('/api/training',{action:'link_session',planId:task.id,sessionId,diagnostic:true});
+ const allInvalidated=(await db.query("select data->'trainingDiagnostics'->$2 as diagnostic from student_preferences where student_id=$1",[ids[0],target.id])).rows[0].diagnostic;
+ check(allInvalidated.state==='partial'&&allInvalidated.answers===0,'The already-linked diagnosis remains partial even when all of its original answers become invalid');
+ const noValidTraining=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ check(noValidTraining.diagnostics.state==='partial'&&noValidTraining.diagnostics.answers===0&&noValidTraining.today.tasks.find((item:Value)=>item.id===task.id)?.status!=='completed','Today cannot revive a completed lesson from a finish receipt after every original answer is invalidated');
+ await db.query("update interview_turns set data=data-'invalidated' where session_id=$1 and student_id=$2",[sessionId,ids[0]]);
+ await request('/api/training',{action:'link_session',planId:task.id,sessionId,diagnostic:true});
+ const restoredTraining=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ check(restoredTraining.diagnostics.state==='completed'&&restoredTraining.today.tasks.find((item:Value)=>item.id===task.id)?.status==='completed','Restoring every valid root resolves both diagnosis and lesson again without resubmitting or duplicating history');
  await request('/api/training',{action:'diagnostic_reflection',sessionId,needsReviewQuestionIds:[diagnostic.questionIds[0]],focusCategories:['major']});
  await request('/api/training',{action:'diagnostic_reflection',sessionId,needsReviewQuestionIds:['unanswered-question'],focusCategories:[]},0,409);
  const reflected=await request('/api/training?targetId='+encodeURIComponent(target.id));check(reflected.diagnostics.needsReviewQuestionIds.includes(diagnostic.questionIds[0]),'Student reflection is recorded for subsequent adaptive planning');

@@ -6,7 +6,7 @@ import gsap from 'gsap';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, LayoutGrid, BookOpen, MessagesSquare, Sparkles, ChartNoAxesCombined, Settings2, Bell, LogOut, Users, Upload, History, ListChecks, Library, ChevronLeft, ChevronRight, Search, Check, X, Ellipsis, ChevronDown, LockKeyhole } from 'lucide-react';
-import { api, post, Logo, Spinner, Alert, Modal, Badge, FloatingNotice, targetName, targetMajor, type Bootstrap, type Item } from './shared';
+import { api, post, seedClientRequestIdentity, Logo, Spinner, Alert, Modal, Badge, FloatingNotice, targetName, targetMajor, type Bootstrap, type Item } from './shared';
 import { PageMotion } from './motion';
 import { AccountMenu } from './account-menu';
 import { ResourcePanel, type Resource } from './resource-panel';
@@ -28,8 +28,8 @@ export function useApp() { const ctx = useContext(Context); if (!ctx) throw new 
 const studentIcons={today:ListChecks,preparation:Library,records:History};
 const studentNav=STUDENT_NAVIGATION.map(item=>({...item,short:item.label,icon:studentIcons[item.id]}));
 const adminNav = [{href:'/admin',label:'운영 현황',short:'현황',icon:LayoutGrid},{href:'/admin/students',label:'학생 관리',short:'학생',icon:Users},{href:'/admin/assignments',label:'학습 과제',short:'과제',icon:ListChecks},{href:'/admin/schools',label:'대학별 면접 기준',short:'면접',icon:Library},{href:'/admin/schedules',label:'면접 일정',short:'일정',icon:History},{href:'/admin/imports',label:'콘텐츠 등록',short:'등록',icon:Upload},{href:'/admin/content',label:'콘텐츠 이력',short:'이력',icon:History},{href:'/admin/reviews',label:'검수·확인',short:'검수',icon:ListChecks},{href:'/admin/knowledge',label:'공용 자료',short:'자료',icon:BookOpen},{href:'/admin/settings',label:'운영 설정',short:'설정',icon:Settings2}];
-export function AppShell({children,admin=false}:{children:React.ReactNode;admin?:boolean}) {
- const path = usePathname(); const router = useRouter(); const [data,setData]=useState<Bootstrap|null>(null); const [error,setError]=useState(''); const [targetId,setTarget]=useState(''); const [notification,setNotification]=useState(false); const [search,setSearch]=useState(false); const [term,setTerm]=useState(''); const [toastMessage,setToastState]=useState(''); const [toastRevision,setToastRevision]=useState(0); const setToastMessage=useCallback((message:string)=>{setToastState(message);setToastRevision(value=>value+1);},[]);
+export function AppShell({children,admin=false,initialData}:{children:React.ReactNode;admin?:boolean;initialData?:Bootstrap}) {
+ const path = usePathname(); const router = useRouter(); const [data,setData]=useState<Bootstrap|null>(()=>{if(initialData)seedClientRequestIdentity(initialData.user.id);return initialData||null;}); const [error,setError]=useState(''); const [targetId,setTarget]=useState<string>(()=>initialData?.targets.find(target=>target.id===initialData.preferences?.selectedTargetId)?.id||initialData?.targets[0]?.id||''); const [notification,setNotification]=useState(false); const [search,setSearch]=useState(false); const [term,setTerm]=useState(''); const [toastMessage,setToastState]=useState(''); const [toastRevision,setToastRevision]=useState(0); const setToastMessage=useCallback((message:string)=>{setToastState(message);setToastRevision(value=>value+1);},[]);
  const [loggingOut,setLoggingOut]=useState(false); const [resource,setResource]=useState<Resource|null>(null); const [learningRevision,setLearningRevision]=useState(0); const [moreNavigation,setMoreNavigation]=useState(false); const [sidebarCollapsed,setSidebarCollapsed]=useState(false); const searchInput=useRef<HTMLInputElement>(null);
  const [schoolSwitchOpen,setSchoolSwitchOpen]=useState(false); const schoolSwitch=useRef<HTMLDivElement>(null);
  const sidebarNavigation=useRef<HTMLDivElement>(null); const sidebarSelection=useRef<HTMLSpanElement>(null); const selectionPositioned=useRef(false); const selectionDestination=useRef<{x:number;y:number;width:number;height:number}|null>(null);
@@ -41,7 +41,7 @@ export function AppShell({children,admin=false}:{children:React.ReactNode;admin?
  useEffect(()=>{if(onboardingDestination)router.replace(onboardingDestination);},[onboardingDestination,router]);
  const refreshSequence=useRef(0);
  const refresh=useCallback(async()=>{ const sequence=++refreshSequence.current; try { const next=await api<Bootstrap>('/api/bootstrap'); if(sequence!==refreshSequence.current)return; setData(next); setLearningRevision(value=>value+1); setTarget(prev => {const saved=prev||next.preferences?.selectedTargetId||sessionStorage.getItem(`gakja-target:${next.user.id}`);return next.targets?.some(t=>t.id===saved) ? saved : next.targets?.[0]?.id || '';}); setError(''); } catch(err) { if(sequence===refreshSequence.current)setError((err as Error).message); } },[]);
- useEffect(()=>{void refresh();return()=>{refreshSequence.current++;};},[refresh]); useEffect(()=>{setSearch(false);setNotification(false);setMoreNavigation(false);setSchoolSwitchOpen(false);},[path]);
+ useEffect(()=>{if(!initialData)void refresh();return()=>{refreshSequence.current++;};},[refresh,initialData]); useEffect(()=>{setSearch(false);setNotification(false);setMoreNavigation(false);setSchoolSwitchOpen(false);},[path]);
  useEffect(()=>{if(!schoolSwitchOpen)return;const close=(event:PointerEvent)=>{if(!schoolSwitch.current?.contains(event.target as Node))setSchoolSwitchOpen(false);};document.addEventListener('pointerdown',close);return()=>document.removeEventListener('pointerdown',close);},[schoolSwitchOpen]);
  useEffect(()=>{
   const navigation=sidebarNavigation.current; const selection=sidebarSelection.current;

@@ -56,7 +56,7 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture(),rec
       if(name==='@/lib/client/draft-save')return {registerDraftSaver:(userId:string,save:()=>Promise<void>)=>{calls.push({draftSaver:'registered',userId});const remove=registerDraftSaver(userId,save);return()=>{calls.push({draftSaver:'removed',userId});remove();};}};
       if(name==='@/lib/client/live-interview-controller')return {LiveInterviewController:Controller};
       if(name==='@/lib/client/interviewer-avatar')return {InterviewerAvatarSignal};
-      if(name==='@/lib/client/interviewer-audio-output')return {InterviewerAudioOutput:class{constructor(public element:any,private signal:InterviewerAvatarSignal){}async unlock(){}select(id:string){this.signal.state('thinking',id);}stop(){this.element.pause();this.signal.silence();}clear(){this.stop();}dispose(){this.stop();}}};
+      if(name==='@/lib/client/interviewer-audio-output')return {InterviewerAudioOutput:class{constructor(public element:any,private signal:InterviewerAvatarSignal){}async unlock(){}syncState(state:any,id:string){this.signal.state(state,id);}select(id:string){this.signal.state('thinking',id);}stop(){this.element.pause();this.signal.silence();}clear(){this.stop();}dispose(){this.stop();}}};
       if(name==='@/lib/client/realtime-interview')return {connectRealtimeInterview:(stream:any,scope:any,question:any,output:any,update:Function)=>{if(!rtcFaults.enabled)throw Error('Unexpected RTC access while the flag is off');calls.push({rtc:'connect',stream,scope,question,output});return {async playQuestion(){calls.push({rtc:'playQuestion'});if(rtcFaults.playError)throw rtcFaults.playError;},startInput(){calls.push({rtc:'startInput'});update({phase:'listening',preview:'자막 미리보기 원문'});},finishInput(){calls.push({rtc:'finishInput'});},async close(){calls.push({rtc:'close'});await rtcFaults.closePending;return rtcFaults.closeResult;}};}};
       if(name==='@/lib/client/live-interview-recorder')return {createLiveAnswerCapture:(_stream:any,options:any)=>{calls.push({recorder:true});if(!rtcFaults.capture)throw Error('Unexpected recorder access');rtcFaults.captureOptions=options;return {stop(){}};}};
       if(name==='@/lib/client/recording-recovery')return {
@@ -87,6 +87,13 @@ test('the Live room is silent before consent and has no editable answer composer
   assert.ok(nodes(tree).filter(node=>node.type==='input').every(node=>node.props.type==='checkbox'));
   consent(tree).props.onChange({target:{checked:true}});await h.flush();tree=h.render();assert.equal(button(tree,'면접 시작').props.disabled,false);button(tree,'면접 시작').props.onClick();
   assert.equal(h.calls.filter(call=>call.controller==='start').length,1);assert.ok(h.calls.some(call=>call.audio==='unlock'));h.cleanup();
+});
+
+test('a first diagnostic opens its question and typed answer without a device or simulated panel',async()=>{
+ const info=fixture();info.session.data.trainingPurpose='diagnostic';info.session.data.trainingPlanId='diagnostic-plan';
+ const h=harness('live-interview-session.tsx',info);h.render();await h.flush();const tree=h.render();
+ assert.ok(nodes(tree).some(node=>node.type==='ChatComposer'));assert.equal(nodes(tree).find(node=>node.type==='LiveInterviewerStage').props.diagnostic,true);
+ assert.equal(h.calls.some(call=>call.mockDevice||call.audio||call.controller==='start'),false);assert.match(text(tree),/첫 진단/);assert.ok(button(tree,'음성으로 답하기'));h.cleanup();
 });
 test('saved account consent and camera choice reopen collapsed without device access until the student starts',async()=>{
   const h=harness();h.faults.appData.preferences={liveRecordingConsent:true,liveCameraEnabled:false};h.render();await h.flush();let tree=h.render();
@@ -203,7 +210,7 @@ test('finishing a typed Live interview removes its composer even when the last q
   button(tree,'면접 종료').props.onClick();tree=h.render();
   const final=fixture();final.session.state='completed';final.report={id:'saved-report'};h.faults.apiInfo=final;
   button(tree,'저장 후 종료').props.onClick();await h.flush();tree=h.render();
-  assert.match(text(tree),/면접을 마쳤어요/);
+  assert.match(text(tree),/여기까지 저장했어요/);
   assert.ok(!nodes(tree).some(node=>node.type==='ChatComposer'));
   assert.ok(!nodes(tree).some(node=>node.type==='button'&&text(node)==='면접 종료'));
   h.cleanup();

@@ -90,6 +90,14 @@ NEXT_PUBLIC_LIVE2D_MODEL_B=/licensed-live2d/b/model.model3.json
 
 증거는 Git에 포함하지 않는 `.local/interaction-polish-2026-10-21/`의 `mouth-speaking-a.png`~`mouth-speaking-e.png`, `mouth-c-proof.json`, `mouth-d-proof.json`, `mouth-e-proof.json`, `mouth-stopped.png`에 남겼다. 임시 QA route와 공개 WAV는 검증 후 삭제했다. 이 추가 검증은 **실제 브라우저의 앱 음성 출력 → RMS → 인물 입 렌더링** 범위이며, 실시간 AI 면접·학생 마이크 입력을 새로 수행한 검증으로 간주하지 않는다.
 
+## 2026-10-21 진단·종료·입 출력 회귀 보강
+
+- 첫 진단은 질문과 글 답변을 먼저 보여주며 음성으로 전환할 수 있다. 면접관 무대는 실전 Live에만 표시한다. 음성·글 모두 기존의 같은 질문/활동/지원처 근거 저장 경로를 사용한다.
+- 면접 방 종료와 차시 전체 응답을 구분한다. 고정된 `questionQueue`가 비어 있거나 중복되거나, 한 root라도 유효한 제출 답변이 없으면 진단·혼합 차시를 완료로 표시하지 않는다. 초안·공백·무효 답변·꼬리질문만의 답변은 누락된 본질문을 대신하지 못한다. 답변의 짧음만으로 실력 점수나 준비 완료를 추정하지 않는다.
+- 저장 후 종료는 원본/답변의 DB 저장 영수증을 확보한 뒤 응답하고 AI 리포트는 Next `after`에서 정리한다. 실패하거나 60초 넘게 중단된 피드백은 소유한 리포트에서 다시 요청할 수 있다. 최근 실행의 중복 요청은 차단하며, 이전 리포트 revision/실행의 늦은 결과는 새 기록을 덮지 못한다.
+- 실제 Chromium에서 파일 오디오는 입이 움직였으나 RTC 형태의 `srcObject` MediaStream은 기존 MediaElementAudioSource 분석값이 계속 0인 문제를 재현했다. RTC는 MediaStreamAudioSource로 관찰하고, 관찰 노드는 출력 destination에 연결하지 않아 중복 재생을 만들지 않는다. UI 단계나 늦은 자막은 실제 재생 중인 발화 상태를 덮지 않는다.
+- `node tests/interviewer-output-browser.mjs`는 실제 오디오 요소→RMS→기존 PNG 캔버스 픽셀 변화를 검증했다. 최종 로컬 검증에서 파일 오디오 184프레임 중 118프레임, RTC 형태 MediaStream 44프레임에 입 움직임을 측정했고, 비발화자는 0, 재생 종료 후 입 값도 0이었다. 마이크·사용자 계정·외부 AI 호출은 사용하지 않았다. 실제 모바일 기기의 권한/출력 조건을 새로 검증한 결과는 아니다.
+
 ## 확인한 공식 자료
 
 - [OpenAI Realtime WebRTC](https://developers.openai.com/api/docs/guides/voice-webrtc?voice-api=realtime)

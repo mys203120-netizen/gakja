@@ -7,6 +7,7 @@ import type { ReactNode, RefObject, ButtonHTMLAttributes } from 'react';
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { requestJson } from '@/lib/client/request-cache';
+export {seedClientRequestIdentity,peekRequestJson as peekApi} from '@/lib/client/request-cache';
 import modalStyles from './modal.module.css';
 import {InfoTip} from './info-tip';
 import tooltipStyles from './tooltip.module.css';

@@ -43,7 +43,7 @@ function harness({diagnostic=false,existing=false,pendingAction='start',kind='fo
   async function flush(){for(let i=0;i<16;i++){if(dirty){dirty=false;cursor=0;tree=run.type(run.props);while(pending.length)pending.shift()!();}await new Promise(resolve=>setImmediate(resolve));if(!dirty)return;}throw Error('Render loop');}
   const action=(label:string)=>nodes(tree).find(node=>node.type==='ActionButton'&&text(node).includes(label));
   const interview=()=>nodes(tree).find(node=>node.type==='InterviewSession');
-  const completion=(school=target)=>({session:{state:'completed',data:{context:{questions:[{id:'question-'+school,activity_ids:['activity-'+school]}]}}},turns:[{id:'turn-'+school,rootQuestionId:'question-'+school,question:'활동 설명 '+school,answer:'저장 답변 '+school}]});
+  const completion=(school=target)=>({session:{state:'completed',data:{trainingProgress:{allRootsAnswered:true},context:{questions:[{id:'question-'+school,activity_ids:['activity-'+school]}]}}},turns:[{id:'turn-'+school,rootQuestionId:'question-'+school,question:'활동 설명 '+school,answer:'저장 답변 '+school}]});
   return {flush,action,interview,completion,deferreds,nextReads,requests,pushes,get reads(){return reads;},get tree(){return tree;},get refreshes(){return refreshes;},changePlan(value:string){plan=value;dirty=true;},changeContent(){version++;dirty=true;},changeDepartment(value:string){department=value;dirty=true;},changeScope(school:string,user='student-a'){target=school;student=user;plan='plan-'+school;dirty=true;}};
 }
 
@@ -154,6 +154,18 @@ test('a completed lesson refreshes the real plan and opens its next lesson rathe
  h.interview().props.onTrainingUpdate(h.completion());await h.flush();
  assert.equal(h.reads,1);const next=nodes(h.tree).find(node=>node.type==='a'&&node.props.href==='/my/train?planId=next-focus');
  assert.ok(next);assert.ok(text(next).includes('학교와 활동 연결'));assert.equal(h.requests.some(row=>['task_complete','start'].includes(row.input.action)),false,'suggestion does not fabricate completion or create another interview');
+});
+
+test('ending after one diagnostic response preserves the record but does not skip the unfinished lesson',async()=>{
+ const h=harness({diagnostic:true,existing:true,dayTasks:[{id:'plan-a',kind:'diagnostic',title:'남은 진단 질문',minutes:20},{id:'next',kind:'focus',title:'다음 훈련',minutes:25}]});await h.flush();
+ const info=h.completion();info.session.data.trainingProgress={allRootsAnswered:false};h.interview().props.onTrainingUpdate(info);await h.flush();
+ assert.match(text(h.tree),/차시는 완료로 표시하지 않고/);assert.ok(nodes(h.tree).some(node=>node.type==='a'&&node.props.href==='/my/train?planId=plan-a'));
+ assert.equal(text(h.tree).includes('오늘 계획을 모두 마쳤어요.'),false);assert.equal(text(h.tree).includes('훈련 완료'),false);
+ const restart=nodes(h.tree).find(node=>node.type==='button'&&text(node)==='진단 다시 답하기');assert.ok(restart);restart.props.onClick();await h.flush();assert.ok(h.action('진단 질문에 답하기'));assert.equal(h.interview(),undefined,'retry returns to a fresh start instead of reopening the ended room');
+});
+
+test('a partial diagnostic from a previous visit opens a fresh start instead of looping its ended room',async()=>{
+ const h=harness({diagnostic:true,existing:true,diagnostics:{state:'partial',sessionId:'session-school-a'}});await h.flush();assert.equal(h.interview(),undefined);assert.ok(h.action('진단 질문에 답하기'));
 });
 
 test('the final lesson leads to daily reflection and reflection confirmation ends the day without a blank interview',async()=>{

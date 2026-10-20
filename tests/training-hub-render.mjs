@@ -20,12 +20,12 @@ const nodes=value=>Array.isArray(value)?value.flatMap(nodes):value&&typeof value
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/my/train?planId=plan'})){
  const context={data:{user:{id:'student',name:'민서'},targets:[target],interviews:[]},target,targetId:target.id,learningRevision:0,refresh:async()=>{}};
- const identity=()=>JSON.stringify([context.data.user.id,context.target?.id,scopeLibrary.learningScopeIdentity(context.target||{}),context.data.package?.id,context.data.package?.active_version]);
+ const identity=()=>JSON.stringify([context.data.user.id,context.target?.id,scopeLibrary.learningScopeIdentity(context.target||{}),context.data.package?.id,context.data.package?.active_version,new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())]);
  const state=[{scope:identity(),value},'',false,0,page==='TodayTraining'?'':'all',''];let index=0;
  const refs=[],posts=[],pushes=[];let refIndex=0;
  const hooks={...React,useEffect(){},useMemo:callback=>callback(),useCallback:callback=>callback,useRef(initial){return refs[refIndex++]??={current:initial};},useState(initial){const slot=index++;if(!(slot in state))state[slot]=initial;return [state[slot],next=>{state[slot]=typeof next==='function'?next(state[slot]):next;}];}};
  const module={exports:{}};
- vm.runInNewContext(source,{module,exports:module.exports,Date,Intl,Event,AbortController,console,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+ vm.runInNewContext(source,{module,exports:module.exports,Date,Intl,Event,AbortController,URLSearchParams,console,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name==='react')return hooks;if(name==='react/jsx-runtime')return jsx;
   if(name==='next/link')return {default:({href,children,...props})=>React.createElement('a',{href,...props},children)};
   if(name==='next/navigation')return {usePathname:()=>'/my',useRouter:()=>({push:href=>pushes.push(href)})};

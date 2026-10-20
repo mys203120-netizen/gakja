@@ -35,6 +35,7 @@ export function interviewSupportForTarget(target:Target):InterviewSupport{
   if(academicYear!==2027)return result(false,'needs_selection','현재 준비 범위는 2027학년도예요. 다른 학년도는 면접 방식을 확인한 뒤 제공해요.');
   const whole=excluded[university];
   if(whole)return result(false,whole.format,whole.reason,whole.url);
+  if(/서류형|서류100|면접미실시|면접없음|면접미반영/.test(track))return result(false,'no_interview','면접을 실시하지 않는 전형은 면접 준비 목록에 포함하지 않아요.');
   if(/제시문|교과형|창의성면접/.test(track))return result(false,'passage','제시문·교과 문제 풀이 면접은 이 앱에서 다루지 않아요.');
   if(university==='고려대학교'){
     const url='https://oku.korea.ac.kr/';

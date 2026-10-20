@@ -15,14 +15,14 @@ import { SchoolRegistration } from './school-registration';
 import { SchoolLogo } from './school-logo';
 import {visibleCalendarSourceUrl} from '@/lib/calendar-source-presentation';
 import {interviewSupportForTarget} from '@/lib/school-interview-scope';
+import registrationSchools from '@/data/school-registration-summary.json';
 
 export function SchoolPages({slug=[]}:{slug?:string[]}) {
   const {data,refresh,setTargetId}=useApp();const params=useSearchParams();const router=useRouter();
-  const [catalog,setCatalog]=useState<Item[]>([]);const [targets,setTargets]=useState<Item[]>([]);const [error,setError]=useState('');const [loading,setLoading]=useState(true);
+  const [catalog,setCatalog]=useState<Item[]>(registrationSchools);const [targets,setTargets]=useState<Item[]>(data.targets);const [error,setError]=useState('');const [loading,setLoading]=useState(true);
   const [deleting,setDeleting]=useState<Item|null>(null),[deleteBusy,setDeleteBusy]=useState(false),[deleteError,setDeleteError]=useState(''),[pendingTargetId,setPendingTargetId]=useState('');
   const isNew=slug[0]==='new',isEditing=slug[1]==='edit';const selected=targets.find(target=>target.id===slug[0]);
-  async function load(){setLoading(true);setError('');try{const result=await api('/api/schools');setCatalog(result.catalog);setTargets(result.targets);}catch(err){setError((err as Error).message);}finally{setLoading(false);}}
-  useEffect(()=>{void load();},[slug[0],isEditing]);
+  useEffect(()=>{let active=true;setLoading(true);setError('');void api('/api/schools'+(isNew||isEditing?'?scope=registration':'')).then(result=>{if(active){if(result.catalog)setCatalog(result.catalog);setTargets(result.targets);}}).catch(err=>{if(active)setError((err as Error).message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[slug[0],isEditing,data.user.id]);
   useEffect(()=>{if(selected && data.targets.some(target=>target.id===selected.id))setTargetId(selected.id);},[selected?.id,data.targets.length]);
   useEffect(()=>{if(pendingTargetId&&data.targets.some(target=>target.id===pendingTargetId)){setTargetId(pendingTargetId);setPendingTargetId('');}},[pendingTargetId,data.targets]);
   async function saved(target:Item){setTargets(previous=>previous.some(item=>item.id===target.id)?previous.map(item=>item.id===target.id?target:item):[...previous,target]);setPendingTargetId(target.id);await refresh();}
@@ -36,7 +36,7 @@ export function SchoolPages({slug=[]}:{slug?:string[]}) {
       await refresh();if(selected?.id===removedId)router.replace('/schools');
     }catch(err){setDeleteError((err as Error).message);}finally{setDeleteBusy(false);}
   }
-  if(isNew)return <SchoolRegistration onboarding={params.get('onboarding')==='1'} catalog={catalog} registeredTargets={targets} loading={loading} error={error} onSaved={saved}/>;
+  if(isNew)return <SchoolRegistration onboarding={params.get('onboarding')==='1'} catalog={registrationSchools} registeredTargets={targets} loading={false} error={error} onSaved={saved}/>;
   if(isEditing)return loading?<Spinner/>:selected?<SchoolRegistration key={selected.id} initialTarget={selected} registeredTargets={targets} onboarding={false} catalog={catalog} loading={false} error={error} onSaved={saved}/>:<Empty title="지원 학교를 찾을 수 없어요" href="/schools" label="지원 학교 보기"/>;
   return <div className={ownedClassName("school-learning",true)}>
     <Breadcrumb items={[{label:'자료',href:'/knowledge'},{label:'지원 학교',href:selected?'/schools':undefined},...(selected?[{label:targetName(selected)}]:[])]}/>

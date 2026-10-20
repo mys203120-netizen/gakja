@@ -40,6 +40,7 @@ function load(file) {
       if (name === '@/lib/calendar-presentation') return calendarPresentation;
       if (name === '@/lib/calendar-source-presentation') return calendarSourcePresentation;
       if (name === '@/lib/training-plan-summary') return planSummary;
+      if (name === '@/data/school-registration-summary.json') return {__esModule:true,default:JSON.parse(fs.readFileSync(new URL('../apps/web/src/data/school-registration-summary.json',import.meta.url),'utf8'))};
       if (name === '@/lib/interview-flow') return { interviewSetupHref: (kind, _params, updates) => `/interview/${kind}?targetId=${updates.targetId}` };
       if (name === './interview') return { InterviewSetup: 'InterviewSetup', InterviewSession: 'InterviewSession' };
       if (name === './school-registration') return { SchoolRegistration: 'SchoolRegistration' };
@@ -60,7 +61,9 @@ let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
 const target = { id: 'uos', university: '서울시립대학교', admission_year: 2027, campus: '본교', department: '환경공학부', admission_type: '학생부종합Ⅰ', profile: { status: 'official_confirmed', format: 'document_individual', interviewer_count: { min: 2, max: 2 }, applicant_count: { min: 1, max: 1 }, interview_minutes: { min: 12, max: 12 }, source: { source_url: 'https://example.edu/admissions.pdf', checked_at: '2026-10-14' } } };
 const other = { ...target, id: 'other', university: '다른대학교' };
-app = { data: { targets: [target, other], interviews: [], package: {} }, targetId: target.id, setTargetId() {} };
+app = { data: { user:{id:'fixture-student'},targets: [target, other], interviews: [], package: {} }, targetId: target.id, setTargetId() {} };
+const initialRegistration=nodes(render(()=>school.SchoolPages({slug:['new']}),[[],[],'',true])).find(node=>node.type==='SchoolRegistration');
+check(initialRegistration.props.catalog.length===80&&initialRegistration.props.loading===false,'eighty trusted school choices remain usable while owned registrations load independently');
 let tree = render(() => school.SchoolPages({ slug: [target.id] }), [[], [target], '', false]);
 const overviewNode = nodes(tree).find(node => node.type?.name === 'SchoolOverview');
 tree = render(() => overviewNode.type(overviewNode.props), []);

@@ -5,7 +5,7 @@ import {featureError,requireStudent} from '@/lib/ai';
 import {ApiError} from '@/lib/db';
 import {schoolRegistrationSchema} from '@/lib/school-learning';
 import {normalizeSchoolSelection,SchoolSelectionError} from '@/lib/school-directory';
-import {previewSchoolAdmissionCalendar} from '@/lib/school-onboarding-calendar';
+import {previewSchoolRegistrationCalendars} from '@/lib/school-onboarding-calendar';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 export async function POST(request:Request){
@@ -17,9 +17,9 @@ export async function POST(request:Request){
     let selection:ReturnType<typeof normalizeSchoolSelection>;
     try{selection=normalizeSchoolSelection(input);}catch(error){if(error instanceof SchoolSelectionError)throw new ApiError(400,error.message);throw error;}
     if(!selection.university)throw new ApiError(400,'지원 대학을 먼저 선택해 주세요.');
-    const calendar=await previewSchoolAdmissionCalendar({university:selection.university,school_reference_id:selection.school?.id||null,
+    const result=await previewSchoolRegistrationCalendars({university:selection.university,school_reference_id:selection.school?.id||null,
       admission_year:input.admissionYear,campus:selection.campus,department:selection.major,admission_type:input.track||'미정'});
-    if(calendar.stale)after(()=>refreshAdmissionCalendar());
-    return Response.json({calendar},{headers:{'Cache-Control':'private, no-store'}});
+    if(result.calendar.stale)after(()=>refreshAdmissionCalendar());
+    return Response.json(result,{headers:{'Cache-Control':'private, no-store'}});
   }catch(error){const result=featureError(error);return Response.json({error:result.error,code:result.code},{status:result.status,headers:{'Cache-Control':'private, no-store'}});}
 }

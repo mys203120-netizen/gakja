@@ -18,7 +18,81 @@ function fixture(settings = {}) {
   return { ...cache, calls, setHandler(value) { handler = value; }, setOwner(value) { owner = value; }, advance(value) { time += value; }, async ready() { await cache.request('/api/bootstrap'); calls.length = 0; } };
 }
 
-// No student data may be reused until the uncached bootstrap establishes its owner.
+// A verified server render may establish a tab owner without a duplicate bootstrap.
+// Replayed initializers/remounts must not discard fresh same-actor values or work.
+{
+  const c = fixture(); c.seedIdentity('harin');
+  const url = '/api/training?targetId=uos&viewScope=personal-v6-2026-10-21';
+  equal(c.peek(url), undefined, 'a seed sets ownership without inventing a cached training payload');
+  const first = await c.request(url);
+  equal(c.calls.length, 1, 'SSR-seeded first read needs no client bootstrap request');
+  c.seedIdentity('harin'); c.seedIdentity('harin');
+  equal(c.peek(url), first, 'StrictMode initializer replay preserves same-actor cached training');
+  const snapshot = c.peek(url); snapshot.nested.saved = false;
+  equal(c.peek(url).nested.saved, true, 'synchronous peek returns an independent deep copy');
+  equal(c.calls.length, 1, 'peek itself performs no network work');
+  c.advance(2_999);
+  equal(c.peek(url).owner, 'harin', 'training is reusable immediately before its three-second expiry');
+  c.advance(1);
+  equal(c.peek(url), undefined, 'training expires at exactly three seconds, including synchronous render reads');
+  const second = await c.request(url);
+  equal(c.calls.length, 2, 'an expired training read reaches the server again');
+  ok(second.sequence !== first.sequence, 'expiry cannot silently return the previous plan');
+
+  const gate = deferred(); c.setHandler(path => path === '/api/planner' ? gate.promise : null);
+  const pending = c.request('/api/planner'); c.seedIdentity('harin');
+  const joined = c.request('/api/planner');
+  equal(c.calls.filter(call => call.url === '/api/planner').length, 1, 'same-actor reseeding retains inflight subscriptions');
+  gate.resolve(json({ owner: 'harin', pending: true }));
+  equal(await joined, await pending, 'replayed seeds do not abort a valid subscriber');
+}
+
+// Actor, target, publication identity and Korea day are independent cache scopes.
+{
+  const c = fixture(); c.seedIdentity('harin');
+  const base = '/api/training?targetId=uos&viewScope=';
+  const paths = [base + 'environment-v6-2026-10-21', base + 'environment-v7-2026-10-21', base + 'chemistry-v7-2026-10-21', base + 'chemistry-v7-2026-10-22', '/api/training?targetId=other&viewScope=chemistry-v7-2026-10-22'];
+  await Promise.all(paths.map(url => c.request(url)));
+  equal(c.calls.length, paths.length, 'school edits, publication versions, targets and Korea days never borrow another URL snapshot');
+  await Promise.all(paths.map(url => c.request(url)));
+  equal(c.calls.length, paths.length, 'each exact training view still reuses its own fresh payload');
+  const gate = deferred(); c.setHandler(url => url === '/api/training?targetId=pending' ? gate.promise : null);
+  const old = c.request('/api/training?targetId=pending').catch(error => error.name);
+  c.setOwner('second-student'); c.seedIdentity('second-student');
+  equal(c.peek(paths[0]), undefined, 'a different SSR actor immediately loses all previous student peeks');
+  const next = await c.request(paths[0]); gate.resolve(json({ owner: 'harin' }));
+  equal(await old, 'AbortError', 'an old actor response cannot reach a subscriber after a new SSR seed');
+  equal(next.owner, 'second-student', 'new actor receives only its own server result');
+  c.seedIdentity('second-student');
+  equal(c.peek(paths[0]).owner, 'second-student', 'repeated new-actor seed keeps its own cache warm');
+  c.reset(); equal(c.peek(paths[0]), undefined, 'logout reset removes synchronous private views too');
+  await c.request(paths[0]); await c.request(paths[0]);
+  equal(c.calls.slice(-2).map(call => call.url), [paths[0], paths[0]], 'after reset there is no cache until ownership is established again');
+}
+
+// Explicit refresh and writes invalidate training even while its short TTL is fresh.
+{
+  const c = fixture(); c.seedIdentity('harin'); const url = '/api/training?targetId=uos';
+  await c.request(url); ok(c.peek(url), 'training is warm before explicit refresh');
+  const bootstrap = c.request('/api/bootstrap');
+  equal(c.peek(url), undefined, 'explicit bootstrap immediately invalidates an SSR-seeded view');
+  await bootstrap; await c.request(url);
+  equal(c.calls.map(call => call.url), [url, '/api/bootstrap', url], 'explicit shell refresh still performs one fresh bootstrap and dependent read');
+  const write = deferred(); c.setHandler(path => path === '/api/actions' ? write.promise : null);
+  const mutation = c.request('/api/actions', { method: 'POST', body: '{}' });
+  equal(c.peek(url), undefined, 'a write removes the training view before its response settles');
+  await c.request(url); ok(c.peek(url), 'a concurrent read can temporarily warm the in-progress generation');
+  write.resolve(json({ saved: true })); await mutation;
+  equal(c.peek(url), undefined, 'write completion clears any snapshot obtained before that completion');
+  c.setHandler(null); await c.request(url); ok(c.peek(url), 'a completed write can be followed by fresh reusable training');
+  c.invalidate(); equal(c.peek(url), undefined, 'manual invalidation also clears render-time peeks');
+  const server = fixture({ enabled: () => false }); server.seedIdentity('server-student');
+  await server.request(url); await server.request(url);
+  equal(server.peek(url), undefined, 'server seed never establishes module-level private cache ownership');
+  equal(server.calls.length, 2, 'SSR cannot share data through the tab cache');
+}
+
+// No student data may be reused until bootstrap or verified SSR establishes its owner.
 {
   const c = fixture(); await c.request('/api/learning'); await c.request('/api/learning');
   equal(c.calls.length, 2, 'unknown identity is never cached');
@@ -47,7 +121,7 @@ function fixture(settings = {}) {
   const paths = ['/api/quiz?targetId=uos&sourceType=personal&sourceVersion=6', '/api/quiz?targetId=uos&sourceType=personal&sourceVersion=7', '/api/quiz?targetId=other&sourceType=personal&sourceVersion=6', '/api/quiz?targetId=uos&sourceType=common&sourceVersion=6', '/api/quiz?targetId=uos&sourceType=personal&sourceVersion=6&activityId=a1'];
   await Promise.all(paths.map(path => c.request(path))); await Promise.all(paths.map(path => c.request(path)));
   equal(c.calls.length, paths.length, 'target and source versions never borrow another combination');
-  const alwaysFresh = ['/api/quiz?sessionId=active', '/api/quiz?recordingId=private-audio', '/api/quiz?unrecognized=future-state', '/api/study-sessions?id=frozen-report', '/api/knowledge-bites?videoId=history', '/api/interviews?id=live', '/api/reports?id=report', '/api/chat?threadId=chat', '/api/learning-help?questionId=q1'];
+  const alwaysFresh = ['/api/quiz?sessionId=active', '/api/quiz?recordingId=private-audio', '/api/quiz?unrecognized=future-state', '/api/study-sessions?id=frozen-report', '/api/knowledge-bites?videoId=history', '/api/training?planId=mutable-detail', '/api/training?unknown=future-scope', '/api/interviews?id=live', '/api/reports?id=report', '/api/chat?threadId=chat', '/api/learning-help?questionId=q1'];
   await Promise.all(alwaysFresh.flatMap(path => [c.request(path), c.request(path)]));
   equal(c.calls.length, paths.length + alwaysFresh.length * 2, 'sessions, media, report detail, chat and evidence bypass caching');
   await c.request('/api/schools/catalog?schoolId=uos'); await c.request('/api/schools/catalog?schoolId=uos');

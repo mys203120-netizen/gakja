@@ -1,11 +1,12 @@
 import { requireUser,checkOrigin } from '@/lib/auth';
 import { featureError,requireStudent } from '@/lib/ai';
-import { studentSchoolContext,commonInterviewQuestions,registerStudentSchool,updateStudentSchool,archiveStudentSchool } from '@/lib/school-learning';
+import { studentSchoolContext,studentSchoolRegistrations,commonInterviewQuestions,registerStudentSchool,updateStudentSchool,archiveStudentSchool } from '@/lib/school-learning';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 function json(value:unknown,status=200) { return Response.json(value,{status,headers:{'Cache-Control':'private, no-store'}}); }
 export async function GET(request:Request) {
   try { const user=await requireUser();requireStudent(user);const params=new URL(request.url).searchParams,targetId=params.get('targetId');
+    if(params.get('scope')==='registration')return json({targets:await studentSchoolRegistrations(user.id)});
     const [{catalog,targets},commonQuestions]=await Promise.all([studentSchoolContext(user.id,{compact:params.get('scope')==='learning'}),commonInterviewQuestions(user.id,targetId)]);
     return json({catalog,targets,commonQuestions,commonAvailable:commonQuestions.length>0});
   } catch(error) { const result=featureError(error);return json({error:result.error,code:result.code},result.status); }

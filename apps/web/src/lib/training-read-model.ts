@@ -7,6 +7,7 @@ import {reviewQuestionKey,reviewDiagnosticKey} from './training-review';
 import {foldTrainingEvidence} from './training-evidence';
 import {readStudentModel,studentModelRevision} from './student-read-model';
 import {koreaToday} from './planner-model';
+import {allInterviewRootsAnsweredSql} from './interview-completion';
 
 /** Full evidence is folded when its source revision changes; screen changes read this compact projection. */
 export async function getTrainingReadModel(studentId:string,today=koreaToday()){
@@ -34,7 +35,7 @@ export async function getTrainingReadModel(studentId:string,today=koreaToday()){
     return [target.id,foldTrainingEvidence({learning:{...context.learning,questions:[...(context.learning.questions||[]),...common]},cards:cards.rows,turns:turns.rows,events:context.events,target:{...target.data,id:target.id},contentVersion:context.contentVersion,notes:preference.trainingActivityNotes||[],reviewQuestions:reconciled.questions})];
    }));
    const sessions=[...new Set(packed.context.events.map(event=>event.data?.sessionId).filter(Boolean))];
-   const completed=sessions.length?(await db.query("select id from interview_sessions where student_id=$1 and id=any($2::uuid[]) and state='completed'",[studentId,sessions])).rows.map(row=>row.id):[];
+   const completed=sessions.length?(await db.query(`select s.id from interview_sessions s where s.student_id=$1 and s.id=any($2::uuid[]) and s.state='completed' and ${allInterviewRootsAnsweredSql('s')}`,[studentId,sessions])).rows.map(row=>row.id):[];
    return {packed,readiness,completedSessionIds:completed,targets:[...source.targets],questions:source.questions.map(question=>({...question,attempts:question.attempts.filter(attempt=>attempt.valid!==false).sort((a,b)=>b.at.localeCompare(a.at)).slice(0,1),review:byKey.get(reviewQuestionKey(question))})),review:{version:1,questions:reviewQuestions},activeRequests:reconciled.state.requests.filter(request=>request.origin==='student'&&request.status==='active'&&diagnosticKeys.has(request.diagnosticKey||'')).map(request=>({diagnosticKey:request.diagnosticKey,selectionKey:request.selectionKey})),sourceRevision:await studentModelRevision(db,studentId)};
   },db);
  });

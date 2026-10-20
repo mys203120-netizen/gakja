@@ -4,7 +4,7 @@ import type {PoolClient} from 'pg';
 import {ApiError,transaction} from './db';
 
 // Bump when a projection contract or its source-folding rules change.
-const READ_MODEL_FORMAT='2026-10-21:3';
+const READ_MODEL_FORMAT='2026-10-21:4';
 
 export async function studentModelRevision(db:PoolClient,studentId:string){
   const row=(await db.query("select coalesce((select revision from student_learning_revisions where student_id=$1),0)::text||':'||(select revision::text from learning_catalog_revision where singleton=true) as revision",[studentId])).rows[0];

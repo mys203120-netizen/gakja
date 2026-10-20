@@ -4,5 +4,15 @@ import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { getUser } from '@/lib/auth';
 import { AppShell } from '@/components/app-shell';
+import { bootstrap } from '@/lib/data';
 export const dynamic = 'force-dynamic';
-export default async function StudentLayout({children}:{children:React.ReactNode}) { const user = await getUser(); if(!user)redirect('/login'); if(user.role!=='student')redirect('/admin'); return <Suspense fallback={<div className={ownedClassName("loading",true)}>불러오는 중</div>}><AppShell>{children}</AppShell></Suspense>; }
+async function AuthenticatedShell({children}:{children:React.ReactNode}) {
+ const user=await getUser();
+ if(!user)redirect('/login');
+ if(user.role!=='student')redirect('/admin');
+ const initialData=await bootstrap(user);
+ return <AppShell key={user.id} initialData={initialData}>{children}</AppShell>;
+}
+export default function StudentLayout({children}:{children:React.ReactNode}) {
+ return <Suspense fallback={<div className={ownedClassName("loading",true)}>불러오는 중</div>}><AuthenticatedShell>{children}</AuthenticatedShell></Suspense>;
+}

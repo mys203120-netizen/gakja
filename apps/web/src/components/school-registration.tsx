@@ -16,6 +16,15 @@ import {TrainingAvailability} from './training-availability';
 type Props={catalog:Item[];loading:boolean;error:string;onSaved:(target:Item)=>Promise<void>;onboarding:boolean;initialTarget?:Item;registeredTargets?:Item[]};
 const stepLabels=['학교 선택','학과·전형','일정 등록'];
 const dateRange=(item:SchoolCalendarPreview['matched'][number])=>item.startDate===item.endDate?scheduleDateLabel(item.startDate):`${scheduleDateLabel(item.startDate)}–${scheduleDateLabel(item.endDate)}`;
+const schoolDetails=new Map<string,{at:number;school:Item}>(),schoolRequests=new Map<string,Promise<Item>>();
+function loadSchoolDetails(id:string,force=false){
+  if(force)schoolDetails.delete(id);
+  const cached=schoolDetails.get(id);if(!force&&cached&&Date.now()-cached.at<3_600_000)return Promise.resolve({school:cached.school});
+  if(!force&&schoolRequests.has(id))return schoolRequests.get(id)!;
+  const request=api(`/api/schools/catalog?schoolId=${encodeURIComponent(id)}&view=registration`,force?{cache:'no-store'}:undefined).then(result=>{if(schoolRequests.get(id)===request)schoolDetails.set(id,{at:Date.now(),school:result.school});return result;});
+  schoolRequests.set(id,request);void request.finally(()=>{if(schoolRequests.get(id)===request)schoolRequests.delete(id);}).catch(()=>{});return request;
+}
+function prefetchSchool(id:string){void loadSchoolDetails(id).catch(()=>{});}
 
 export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,initialTarget,registeredTargets=[]}:Props){
   // The parent mounts the editor only once its target has loaded. Refreshes must not overwrite edits.
@@ -33,6 +42,8 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   const [trackChoices,setTrackChoices]=useState<string[]>([]),[calendarError,setCalendarError]=useState(''),[retry,setRetry]=useState(0);
   const [acknowledged,setAcknowledged]=useState(false),[registered,setRegistered]=useState<Item|null>(null);
   const [sessionTargets,setSessionTargets]=useState<Item[]>([]);
+  const calendarCache=useRef(new Map<string,{at:number;calendar:SchoolCalendarPreview}>());
+  const calendarRequests=useRef(new Map<string,Promise<Item>>());
   const heading=useRef<HTMLHeadingElement>(null),completionHeading=useRef<HTMLHeadingElement>(null),previousStep=useRef(step);
   const selected=catalog.find(item=>item.id===referenceId),currentSchool=school?.id===referenceId?school:null;
   const departments:Item[]=currentSchool?.departments||[],department=departments.find(item=>item.id===departmentId);
@@ -58,7 +69,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   useEffect(()=>{
     if(!referenceId||other){setSchool(null);setDepartmentLoading(false);return;}
     const controller=new AbortController();setDepartmentLoading(true);setSchool(null);
-    api(`/api/schools/catalog?schoolId=${encodeURIComponent(referenceId)}`,{signal:controller.signal})
+    loadSchoolDetails(referenceId,departmentRetry>0)
       .then(result=>{if(!controller.signal.aborted){
         setSchool(result.school);
         if(initialDepartmentPending.current&&referenceId===initialReference){
@@ -73,12 +84,15 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   useEffect(()=>{
     setCalendar(null);setCalendarKey('');setAcknowledged(false);setCalendarError('');
     if(!completeSelection){setCalendarLoading(false);return;}
+    const cached=calendarCache.current.get(selectionKey);
+    if(cached&&Date.now()-cached.at<30_000){setCalendar(cached.calendar);setCalendarKey(selectionKey);setTrackChoices(cached.calendar.tracks);setCalendarLoading(false);return;}
     const controller=new AbortController();setCalendarLoading(true);
-    const timer=setTimeout(()=>{api<{calendar:SchoolCalendarPreview}>('/api/schools/onboarding-calendar',{method:'POST',body:selectionKey,signal:controller.signal})
-      .then(result=>{if(!controller.signal.aborted){setCalendar(result.calendar);setCalendarKey(selectionKey);setTrackChoices(result.calendar.tracks);}})
+    const run=()=>{let request=calendarRequests.current.get(selectionKey);if(!request){request=api('/api/schools/onboarding-calendar',{method:'POST',body:selectionKey});calendarRequests.current.set(selectionKey,request);void request.finally(()=>{if(calendarRequests.current.get(selectionKey)===request)calendarRequests.current.delete(selectionKey);}).catch(()=>{});}
+      void request.then(result=>{if(!controller.signal.aborted){calendarCache.current.set(selectionKey,{at:Date.now(),calendar:result.calendar});if(result.suggestedCalendar){const suggestedKey=JSON.stringify({...JSON.parse(selectionKey),track:result.suggestedCalendar.track});calendarCache.current.set(suggestedKey,{at:Date.now(),calendar:result.suggestedCalendar});}setCalendar(result.calendar);setCalendarKey(selectionKey);setTrackChoices(result.calendar.tracks);}})
       .catch(err=>{if(!controller.signal.aborted)setCalendarError((err as Error).message);})
-      .finally(()=>{if(!controller.signal.aborted)setCalendarLoading(false);});},180);
-    return()=>{clearTimeout(timer);controller.abort();};
+      .finally(()=>{if(!controller.signal.aborted)setCalendarLoading(false);});};
+    const timer=other||manualMajor?setTimeout(run,180):null;if(timer===null)run();
+    return()=>{if(timer!==null)clearTimeout(timer);controller.abort();};
   },[selectionKey,completeSelection,retry]);
 
   function goTo(next:number){setStep(next);setAcknowledged(false);setSaveError('');}
@@ -88,7 +102,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
     setTrackChoices([]);setCalendar(null);setCalendarKey('');setCalendarError('');setAcknowledged(false);setSaveError('');
   }
   function chooseSchool(id:string){
-    if(other||referenceId!==id){clearDetails();setOther(false);setReferenceId(id);}
+    if(other||referenceId!==id){clearDetails();setDepartmentRetry(0);setOther(false);setReferenceId(id);}
     goTo(1);
   }
   function chooseDepartment(id:string){
@@ -100,7 +114,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
   function toggleManualMajor(){
     setManualMajor(value=>!value);setDepartmentId('');setMajor('');setInterestDepartment('');setTrack('');setTrackChoices([]);setAcknowledged(false);
   }
-  function retryCalendar(){setCalendar(null);setCalendarKey('');setAcknowledged(false);setRetry(value=>value+1);}
+  function retryCalendar(){calendarCache.current.delete(selectionKey);calendarRequests.current.delete(selectionKey);setCalendar(null);setCalendarKey('');setAcknowledged(false);setRetry(value=>value+1);}
   function addAnotherSchool(){
     clearDetails();setReferenceId('');setOther(false);setUniversity('');setSearch('');setRegistered(null);goTo(0);
   }
@@ -147,7 +161,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
           {step===0&&<>{other?<div className={ownedClassName(styles.manualSchool,true)}><label className={ownedClassName(undefined,true)}>지원 학교 이름<input value={university} onChange={event=>setUniversity(event.target.value)} maxLength={100} required placeholder="학교 이름을 입력해 주세요" className={ownedClassName(undefined,true)}/></label><p className={ownedClassName(undefined,true)}>목록에 없는 학교도 등록할 수 있어요. 면접 일정은 입학처 확인이 필요해요.</p><button type="button" className={ownedClassName(styles.linkButton,true)} onClick={toggleManualSchool}>학교 목록에서 선택</button><div className={ownedClassName(styles.actions,true)}><span className={ownedClassName(undefined,true)}/><button className={ownedClassName("button primary",true)} disabled={!university.trim()}>학과·전형 선택<ArrowRight size={17}/></button></div></div>:<>
             <label className={ownedClassName(styles.search,true)}><Search size={19}/><input type="search" aria-label="지원 대학 검색" placeholder="학교 이름으로 검색" value={search} autoComplete="off" onChange={event=>setSearch(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();if(!event.nativeEvent.isComposing&&filtered.length===1)chooseSchool(filtered[0].id);}}} className={ownedClassName(undefined,true)}/>{search&&<button type="button" aria-label="학교 검색어 지우기" onClick={()=>setSearch('')} className={ownedClassName(undefined,true)}><X size={17}/></button>}</label>
             <div className={ownedClassName(styles.listHeading,true)}><span className={ownedClassName(undefined,true)}>{normalizedSearch?'검색한 학교':'지원 대학'}</span><span aria-live="polite" className={ownedClassName(undefined,true)}>{filtered.length}개 대학</span></div>
-            {loading?<Spinner/>:filtered.length?<ul className={ownedClassName(styles.schoolList,true)} aria-label="지원할 학교">{filtered.map(item=><li key={item.id} className={ownedClassName(undefined,true)}><button type="button" data-selected={referenceId===item.id} onClick={()=>chooseSchool(item.id)} className={ownedClassName(undefined,true)}><SchoolLogo school={item} size={34} loading="lazy"/><span className={ownedClassName(undefined,true)}>{item.university}</span><ChevronRight size={16}/></button></li>)}</ul>:<div className={ownedClassName(styles.noResults,true)}><GraduationCap size={28}/><p className={ownedClassName(undefined,true)}>검색한 학교가 없어요.</p><span className={ownedClassName(undefined,true)}>학교 이름을 다시 확인해 주세요. 제시문·교과 구술 면접만 있는 학교는 목록에 없어요.</span></div>}
+            {loading?<Spinner/>:filtered.length?<ul className={ownedClassName(styles.schoolList,true)} aria-label="지원할 학교">{filtered.map(item=><li key={item.id} className={ownedClassName(undefined,true)}><button type="button" data-selected={referenceId===item.id} onPointerEnter={()=>prefetchSchool(item.id)} onFocus={()=>prefetchSchool(item.id)} onPointerDown={()=>prefetchSchool(item.id)} onClick={()=>chooseSchool(item.id)} className={ownedClassName(undefined,true)}><SchoolLogo school={item} size={34} loading="lazy"/><span className={ownedClassName(undefined,true)}>{item.university}</span><ChevronRight size={16}/></button></li>)}</ul>:<div className={ownedClassName(styles.noResults,true)}><GraduationCap size={28}/><p className={ownedClassName(undefined,true)}>검색한 학교가 없어요.</p><span className={ownedClassName(undefined,true)}>학교 이름을 다시 확인해 주세요. 제시문·교과 구술 면접만 있는 학교는 목록에 없어요.</span></div>}
           </>}</>}
           {step===1&&<>
             <div className={ownedClassName(styles.selectedSchool,true)}><SchoolLogo school={selected||{university:universityName}} size={40}/><span className={ownedClassName(undefined,true)}>{universityName}</span><button type="button" className={ownedClassName(styles.linkButton,true)} onClick={()=>goTo(0)}>변경</button></div>
@@ -158,7 +172,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
               </div>
               {!manualMajor&&department&&department.programs?.length>0&&<label className={ownedClassName(undefined,true)}>관심 세부 전공<select value={interestDepartment} onChange={event=>setInterestDepartment(event.target.value)} className={ownedClassName(undefined,true)}><option value="" className={ownedClassName(undefined,true)}>광역 모집단위 전체로 준비할게요</option>{department.programs.map((name:string)=><option key={name} value={name} className={ownedClassName(undefined,true)}>{name}</option>)}</select><small className={ownedClassName(undefined,true)}>실제 지원 모집단위는 {department.name}로 유지해요. 관심 전공은 지식한입과 면접 질문에 반영하며, 입학 후 전공 배정을 보장하지 않아요. {department.programSourceUrl&&<a href={department.programSourceUrl} target="_blank" rel="noreferrer" className={ownedClassName(undefined,true)}>{department.programSourceYear}학년도 공식 전공 안내</a>}</small></label>}
               <div className={ownedClassName(styles.field,true)} aria-busy={calendarLoading}>
-                <SchoolPicker label="학생부형 지원 전형" choices={tracks.map(item=>({id:item,label:item}))} value={hasKnownTrack?track:''} onChange={setTrack} placeholder={!completeSelection?'학과를 먼저 선택해 주세요':calendarLoading?'전형 확인 중':tracks.length?'지원 전형을 선택해 주세요':'확인된 학생부형 전형 없음'} disabled={!completeSelection||busy||calendarLoading||!tracks.length}/>
+                <SchoolPicker label="학생부형 지원 전형" choices={tracks.map(item=>({id:item,label:item,detail:currentCalendar?.trackOptions?.find(option=>option.label===item)?.scope==='school_reference'?'학과 범위 확인 전':undefined}))} value={hasKnownTrack?track:''} onChange={setTrack} placeholder={!completeSelection?'학과를 먼저 선택해 주세요':calendarLoading?'전형 확인 중':tracks.length?'지원 전형을 선택해 주세요':'확인된 학생부형 전형 없음'} disabled={!completeSelection||busy||calendarLoading||!tracks.length}/>
                 {completeSelection&&!calendarLoading&&currentCalendar&&(!tracks.length||track&&!ready)&&<p className={ownedClassName(styles.sourceNote,true)}>{!tracks.length?'이 학과에서 확인된 학생부형 면접 전형이 없어요. 다른 학과를 선택해 주세요.':'지원할 전형을 위 목록에서 다시 선택해 주세요.'}{editing?' 기존 지원 정보와 학습 기록은 저장 전까지 그대로 유지돼요.':''}</p>}
                 {calendarError&&<div className={ownedClassName(styles.error,true)}><Alert>{calendarError}</Alert><button type="button" className={ownedClassName(styles.linkButton,true)} onClick={retryCalendar}>전형 다시 확인</button></div>}
                 {ready&&currentCalendar&&<p className={ownedClassName(styles.sourceNote,true)}>{currentCalendar.matched.length?'면접일 · '+currentCalendar.matched.map(dateRange).join(' · '):currentCalendar.statusLabel}{tracks.length===1?' · 해당 학생부형 전형을 선택했어요.':''}</p>}

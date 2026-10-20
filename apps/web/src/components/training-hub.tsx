@@ -7,7 +7,7 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {usePathname,useRouter} from 'next/navigation';
 import {ArrowRight,ArrowUpRight,BookOpen,CalendarDays,Check,ChevronDown,Clock3,History,Play,RefreshCw,Settings2} from 'lucide-react';
 import {useApp} from './app-shell';
-import {ActionButton,Alert,Spinner,InfoTip,api,post,targetName,type Item} from './shared';
+import {ActionButton,Alert,Spinner,InfoTip,api,peekApi,post,targetName,type Item} from './shared';
 import {learningScopeIdentity,splitInterviewsByLearningTarget} from '@/lib/learning-target-scope';
 import {scheduleTrainingDayRefresh} from '@/lib/training-day-refresh';
 import {TrainingCalendar} from './training-calendar';
@@ -41,16 +41,23 @@ function deadlineCountdown(item:Deadline){
 /** Refresh on answer saves, school changes and browser history restoration. */
 function useTrainingData(){
   const {data,target,learningRevision}=useApp(),path=usePathname();
-  const scope=JSON.stringify([data.user.id,target?.id,learningScopeIdentity(target||{}),data.package?.id,data.package?.active_version]);
-  const [loaded,setLoaded]=useState<{scope:string;value:TrainingData}|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[revision,setRevision]=useState(0);
+  const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const sourceScope=JSON.stringify([learningScopeIdentity(target||{}),data.package?.id,data.package?.active_version,day]);
+  const scope=JSON.stringify([data.user.id,target?.id,learningScopeIdentity(target||{}),data.package?.id,data.package?.active_version,day]);
+  // Even a fresh snapshot belongs to its exact school/content and Korea calendar day.
+  const url='/api/training?'+new URLSearchParams({...(target?.id?{targetId:String(target.id)}:{}),viewScope:sourceScope});
+  const [loaded,setLoaded]=useState<{scope:string;value:TrainingData}|null>(()=>{
+    const value=peekApi?.<TrainingData>(url);
+    return value?.today?.date===day?{scope,value}:null;
+  }),[error,setError]=useState(''),[loading,setLoading]=useState(true),[revision,setRevision]=useState(0);
   const reload=useCallback(()=>setRevision(value=>value+1),[]);
   useEffect(()=>scheduleTrainingDayRefresh(reload),[reload]);
   useEffect(()=>{const visible=()=>{if(document.visibilityState==='visible')reload();};window.addEventListener('focus',reload);window.addEventListener('pageshow',reload);document.addEventListener('visibilitychange',visible);return()=>{window.removeEventListener('focus',reload);window.removeEventListener('pageshow',reload);document.removeEventListener('visibilitychange',visible);};},[reload]);
   useEffect(()=>{
     const controller=new AbortController();let disposed=false;setLoading(true);setError('');
-    void api<TrainingData>('/api/training'+(target?.id?'?targetId='+encodeURIComponent(target.id):''),{signal:controller.signal,cache:'no-store'}).then(value=>{if(!disposed)setLoaded({scope,value});}).catch(err=>{if(!disposed&&!controller.signal.aborted)setError((err as Error).message);}).finally(()=>{if(!disposed)setLoading(false);});
+    void api<TrainingData>(url,{signal:controller.signal,...(revision?{cache:'no-store' as const}:{})}).then(value=>{if(!disposed)setLoaded({scope,value});}).catch(err=>{if(!disposed&&!controller.signal.aborted)setError((err as Error).message);}).finally(()=>{if(!disposed)setLoading(false);});
     return()=>{disposed=true;controller.abort();};
-  },[scope,learningRevision,revision,path,target?.id]);
+  },[scope,learningRevision,revision,path,target?.id,url]);
   return {value:loaded?.scope===scope?loaded.value:null,error,loading:loading||loaded?.scope!==scope,reload};
 }
 

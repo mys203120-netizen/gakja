@@ -171,13 +171,16 @@ function Report({ id }: { id: string }) {
   const report=detail.item?{...detail.item,...detail.item.data}:null;
   const [error, setError] = useState('');
   const [retraining, setRetraining] = useState('');
+  const [feedbackBusy,setFeedbackBusy]=useState(false);
   const sending = useRef(false);
   const requestIds = useRef<Item>({});
+  useEffect(()=>{if(report?.aiStatus!=='pending')return;let remaining=40;const timer=setInterval(()=>{if(--remaining<=0)clearInterval(timer);void detail.reload();},3000);return()=>clearInterval(timer);},[report?.aiStatus,detail.reload]);
   if(detail.loading)return <Spinner/>;
   if(detail.error)return <Alert>{detail.error}</Alert>;
   if (!report) return <Empty title="리포트를 찾을 수 없어요" />;
   const sections: Item[] = report.sections || [];
   const experienceCard=report.experienceCard||detail.session?.data?.experienceCard;
+  async function retryFeedback(){if(feedbackBusy)return;setFeedbackBusy(true);setError('');try{await post('/api/interviews',{action:'report_feedback',sessionId:report.session_id});await detail.reload();}catch(cause){setError((cause as Error).message);}finally{setFeedbackBusy(false);}}
   async function retrain(questionId: string) {
     if (sending.current) return;
     sending.current = true; setRetraining(questionId); setError('');
@@ -199,7 +202,7 @@ function Report({ id }: { id: string }) {
     <SpeechGrowth reportId={id}/>
     {report.session_id && <RecordMedia sessionId={report.session_id} />}
     {report.aiFeedback && <section className={ownedClassName("report-feedback-section",true)}><h2 className={ownedClassName(undefined,true)}>AI 피드백</h2><p className={ownedClassName("muted small",true)}>표현 제안은 내 답변·원문과 확인해 사용해 주세요. 내가 하지 않은 행동은 답변에 넣지 않아요.</p><MarkdownMessage content={report.aiFeedback.content}/></section>}
-    {report.aiStatus !== 'completed' && <div className={ownedClassName("inline-notice",true)}>내용 피드백 {report.aiStatus === 'failed' ? '처리 실패' : '대기'} · 아래 기록으로 직접 점검할 수 있어요.</div>}
+    {report.aiStatus !== 'completed' && <div className={ownedClassName("inline-notice",true)}>내용 피드백 {report.aiStatus === 'failed' ? '처리 실패' : '대기'} · 아래 기록으로 직접 점검할 수 있어요.{sections.length>0&&report.session_id&&<button className={ownedClassName("text-link",true)} disabled={feedbackBusy||report.aiStatus==='pending'&&Date.now()-Number(report.aiAttemptedAt||0)<60000} onClick={()=>void retryFeedback()}>{feedbackBusy?'다시 요청하는 중':'피드백 다시 요청'}</button>}</div>}
     {sections.map((s, i) => <section className={ownedClassName("report-section",true)} key={s.turnId || i}>
       <span className={ownedClassName("question-index",true)}>질문 {i + 1}</span>
       <h2 className={ownedClassName(undefined,true)}>{s.question}</h2>

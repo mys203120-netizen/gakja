@@ -15,6 +15,7 @@ import {reviewDiagnostics} from '@/lib/training-review-store';
 import {applyReviewReflection,reconcileTrainingReviews} from '@/lib/training-review';
 import {diagnosticReviewScope} from '@/lib/training-diagnostic-scope';
 import {getTrainingReadModel,trainingReadContext} from '@/lib/training-read-model';
+import {allInterviewRootsAnsweredSql} from '@/lib/interview-completion';
 
 export const dynamic='force-dynamic';
 const headers={'Cache-Control':'private, no-store'};
@@ -69,10 +70,18 @@ export async function POST(request:Request){
    const plan=await transaction(async db=>{
     await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+user.id]);
     const row=await ownedPlan(user.id,input.planId,db),ap=row.target.automaticPractice;
-    if(ap.status==='superseded'||row.date!==koreaToday())throw new ApiError(409,'오늘의 새 계획에서 시작해 주세요.');
+    if(row.completed||ap.status==='superseded'||row.date!==koreaToday())throw new ApiError(409,'오늘의 새 계획에서 시작해 주세요.');
     const school=(await db.query("select data from support_targets where id=$1 and student_id=$2 and nullif(data->>'archived_at','') is null",[row.target.targetId,user.id])).rows[0];
     if(!school||!recordMatchesCurrentTarget({targetId:row.target.targetId,targetSnapshot:row.target.targetSnapshot},[{...school.data,id:row.target.targetId}]))throw new ApiError(409,'지원 정보가 바뀌었어요. 오늘 계획을 다시 확인해 주세요.');
-    if(!ap.startedAt){ap.startedAt=new Date().toISOString();ap.hybrid.startedAt=ap.startedAt;ap.hybrid.requestId='training-'+randomUUID();await db.query("update student_plans set target=jsonb_set(target,'{automaticPractice}',$3::jsonb),revision=revision+1,updated_at=now() where id=$1 and student_id=$2",[row.id,user.id,JSON.stringify(ap)]);}
+    let restart=false;
+    if(ap.hybrid.sessionId){
+     const [linked]=(await db.query(`select s.state,${allInterviewRootsAnsweredSql('s')} as fully_answered from interview_sessions s where s.id=$1 and s.student_id=$2 and s.data->>'trainingPlanId'=$3 for share`,[ap.hybrid.sessionId,user.id,row.id])).rows;
+     if(linked?.state==='completed'){
+      if(linked.fully_answered)throw new ApiError(409,'이미 마친 훈련이에요. 다음 훈련을 선택해 주세요.');
+      delete ap.hybrid.sessionId;ap.hybrid.requestId='training-'+randomUUID();restart=true;
+     }
+    }
+    if(!ap.startedAt||restart){ap.startedAt||=new Date().toISOString();ap.hybrid.startedAt||=ap.startedAt;ap.hybrid.requestId||='training-'+randomUUID();await db.query("update student_plans set target=jsonb_set(target,'{automaticPractice}',$3::jsonb),revision=revision+1,updated_at=now() where id=$1 and student_id=$2",[row.id,user.id,JSON.stringify(ap)]);}
     return row;
    });return Response.json({task:taskView(plan),href:'/my/train?planId='+plan.id},{headers});
   }
@@ -101,18 +110,23 @@ export async function POST(request:Request){
      if(!session!.target_id)throw new ApiError(409,'진단할 지원 학교를 선택해 주세요.');
      const [current]=(await db.query("select data from support_targets where id=$1 and student_id=$2 and nullif(data->>'archived_at','') is null",[session!.target_id,user.id])).rows;
      if(!current||!recordMatchesCurrentTarget({targetId:session!.target_id,targetSnapshot:context.target},[{...current.data,id:session!.target_id}]))throw new ApiError(409,'지원 정보가 바뀌었어요. 현재 지원처에서 진단을 다시 시작해 주세요.');
-     const [actual]=(await db.query('select state from interview_sessions where id=$1 and student_id=$2 for share',[session!.id,user.id])).rows;
+     const [actual]=(await db.query(`select s.state,${allInterviewRootsAnsweredSql('s')} as fully_answered from interview_sessions s where s.id=$1 and s.student_id=$2 for share`,[session!.id,user.id])).rows;
      if(!actual||!['active','completed'].includes(actual.state))throw new ApiError(409,'진행 중이거나 답변을 마친 진단을 선택해 주세요.');
+     let answers:number|undefined;
      if(actual.state==='completed'){
-      const [evidence]=(await db.query("select count(*)::int as answers from interview_turns where session_id=$1 and student_id=$2 and nullif(data->>'answer','') is not null and coalesce(data->>'invalidated','false')<>'true'",[session!.id,user.id])).rows;
-      if(!evidence?.answers)throw new ApiError(409,'실제로 답변한 진단만 완료로 연결할 수 있어요.');
+      const [evidence]=(await db.query("select count(*)::int as answers from interview_turns where session_id=$1 and student_id=$2 and nullif(btrim(data->>'answer'),'') is not null and coalesce(data->>'invalidated','false')<>'true'",[session!.id,user.id])).rows;
+      answers=Number(evidence?.answers||0);
      }
      const [saved]=(await db.query('select data from student_preferences where student_id=$1 for update',[user.id])).rows;
      // Reconnecting the same session must preserve the student's reflection and original timestamps.
-     if(saved?.data?.trainingDiagnostics?.[session!.target_id]?.sessionId===session!.id)return;
+     const previous=saved?.data?.trainingDiagnostics?.[session!.target_id];
+     const sameSession=previous?.sessionId===session!.id;
+     if(actual.state==='completed'&&!answers&&!sameSession)throw new ApiError(409,'실제로 답변한 진단만 완료로 연결할 수 있어요.');
      const scope=diagnosticReviewScope(context);
      if(!scope)throw new ApiError(409,'같은 자료 버전의 질문으로 진단을 시작해 주세요.');
-     const diagnostic={state:actual.state==='completed'?'completed':'in_progress',sessionId:session!.id,startedAt:new Date().toISOString(),...(actual.state==='completed'?{completedAt:new Date().toISOString()}:{}),targetSnapshot:context.target,...scope,needsReviewQuestionIds:[],focusCategories:[],observationOnly:true};
+     const fullyCompleted=actual.state==='completed'&&actual.fully_answered;
+     const diagnostic={...(sameSession?previous:{}),state:fullyCompleted?'completed':actual.state==='completed'?'partial':'in_progress',sessionId:session!.id,startedAt:sameSession&&previous.startedAt||new Date().toISOString(),completedAt:fullyCompleted?(sameSession&&previous.completedAt||new Date().toISOString()):null,...(answers===undefined?{}:{answers}),targetSnapshot:context.target,...scope,...(sameSession?{}:{needsReviewQuestionIds:[],focusCategories:[]}),observationOnly:true};
+     if(sameSession&&JSON.stringify(previous)===JSON.stringify(diagnostic))return;
      await db.query("insert into student_preferences(student_id,data) values($1,jsonb_build_object('trainingDiagnostics',jsonb_build_object($2::text,$3::jsonb))) on conflict(student_id) do update set data=jsonb_set(student_preferences.data,'{trainingDiagnostics}',coalesce(student_preferences.data->'trainingDiagnostics','{}'::jsonb)||jsonb_build_object($2::text,$3::jsonb)),updated_at=now()",[user.id,session!.target_id,JSON.stringify(diagnostic)]);
     }
    });return Response.json({linked:true,sessionId:session!.id},{headers});

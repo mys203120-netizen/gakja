@@ -16,7 +16,7 @@ const modules:Record<string,string>={
   'server-only':'module.exports={};',
   '@/lib/db':`exports.ApiError=class ApiError extends Error{constructor(status,message){super(message);this.status=status;}};
     async function run(sql,args){const s=globalThis.__onboardingTest;s.queries.push({sql,args});
-      if(sql.includes('school_reference_catalog'))return [{id:'${school.id}',university:'${school.university}',revision:1,status:'historical_reference',data:{},source:{}}];
+      if(sql.includes('school_reference_catalog'))return ${JSON.stringify(schoolDirectory.map(row=>({id:row.id,university:row.university,revision:1,status:'historical_reference',data:{},source:{}})))}.filter(row=>row.id===args[0]);
       if(sql.startsWith('select')&&sql.includes('support_targets'))return s.targets.filter(row=>row.student_id===args[0]&&(!args[1]||String(row.data.admission_year)===args[1]));
       if(sql.startsWith('insert into support_targets')){s.writeCount++;const row={id:args[0],student_id:args[1],data:JSON.parse(args[2])};s.targets.push(row);return [{id:row.id,data:structuredClone(row.data)}];}
       if(sql.startsWith('update support_targets')){s.writeCount++;const row=s.targets.find(row=>row.id===args[1]&&row.student_id===args[2]);if(!row)return [];row.data=sql.includes('data=data ||')?{...row.data,...JSON.parse(args[0])}:JSON.parse(args[0]);return [{id:row.id,data:structuredClone(row.data)}];}
@@ -50,6 +50,19 @@ test('the public preview route rejects absent users and administrators',async()=
 test('the preview route resolves an owned university department without accepting supplied student IDs',async()=>{
   reset();const result=await previewRoute(new Request('http://fixture.test/api/schools/onboarding-calendar',{method:'POST',headers:{origin:'http://fixture.test'},body:JSON.stringify({...input,studentId:'foreign-student',personal_at:'2026-11-29T10:00'})}));
   assert.equal(result.status,200);assert.match(result.headers.get('cache-control')!,/no-store/);const {calendar}=await result.json();assert.equal(calendar.matched[0].startDate,'2026-11-29');assert.equal(state.writeCount,0);assert.equal(calendar.personal_at,undefined);assert.equal(calendar.sourceUrl,'');assert.equal(calendar.matched[0].sourceUrl,'');assert.equal(calendar.matched[0].sourceLabel,'');assert.doesNotMatch(JSON.stringify(calendar),/아컨|acon\.io\.kr/i);
+});
+test('UNIST POSTECH Seoul Education and SeoulTech register known interviews as unconfirmed department references',async()=>{
+ for(const name of ['울산과학기술원','포항공과대학교','서울교육대학교','서울과학기술대학교']){
+  reset();const selected=schoolDirectory.find(row=>row.canonicalName===name)!,major=selected.departments.find(row=>/새내기학부\(경영계열\)|단일계열|초등교육학과|MSDE학과/.test(row.name))||selected.departments[0];
+  const target={university:selected.university,school_reference_id:selected.id,admission_year:2027,campus:selected.campusLabel||major.campus,department:major.name,admission_type:'미정'};
+  const initial=await previewSchoolAdmissionCalendar(target);assert.ok(initial.tracks.length,`${name} has a usable known interview`);
+  const track=initial.tracks[0],calendar=await previewSchoolAdmissionCalendar({...target,admission_type:track});
+  assert.equal(calendar.canReview,true);assert.equal(calendar.status,'school_reference');assert.equal(calendar.registrationScope,'school_reference');assert.equal(calendar.matched.length,0);
+  const result=await registerStudentSchool(state.user.id,{referenceId:selected.id,departmentId:major.id,admissionYear:2027,track,onboarding:true,calendarReview:{fingerprint:calendar.fingerprint,acknowledged:true}});
+  assert.equal(result.university,selected.university);assert.equal(result.department,major.name);assert.equal(result.information_status,'needs_confirmation');
+  assert.equal(result.admission_calendar_registration.status,'school_reference');assert.equal(result.admission_calendar_registration.department_scope_confirmed,false);assert.deepEqual(result.admission_calendar_registration.matched_entry_ids,[]);
+  assert.equal(result.interview_date,undefined);assert.equal(result.school_interview_date,undefined);assert.equal(state.targets.length,1);
+ }reset();
 });
 test('first registration cannot skip the calendar review using a missing onboarding flag',async()=>{
   reset();await assert.rejects(registerStudentSchool(state.user.id,{...input,onboarding:undefined}),(error:any)=>error.status===400);assert.equal(state.writeCount,0);assert.equal(state.preferences.size,0);

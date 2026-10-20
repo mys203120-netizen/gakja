@@ -9,20 +9,37 @@ import {overlayOfficialCalendar,validateOfficialCalendarSupplement,type Official
 import {applyCalendarAdminEdits} from './admin-admission-calendar-model';
 import {projectAdmissionCalendar} from './admission-calendar-projection';
 
+// Verify tiny revision metadata on every read. Large source JSON and validation
+// are reused only while both published sources and every admin edit are unchanged.
+type ManagedCalendar={catalogue:AdmissionCalendarCatalogue;official:OfficialCalendarSupplement;officialSchools:number};
+const calendarCache=new Map<string,Promise<ManagedCalendar>>();
 export async function readAdmissionCalendar(includeAdmin=true){
-  const [baseRows,officialRows]=await Promise.all([
-    query('select v.data,s.checked_at,s.retry_after,s.last_error from admission_calendar_sync_state s left join admission_calendar_versions v on v.id=s.latest_version_id where s.source_key=$1',[ADMISSION_CALENDAR_SOURCE_KEY]),
-    query('select v.data,s.checked_at from admission_calendar_sync_state s join admission_calendar_versions v on v.id=s.latest_version_id where s.source_key=$1',['official-susi-supplement'])
+  const [states,editRevisions]=await Promise.all([
+    query('select source_key,latest_version_id,checked_at,retry_after,last_error from admission_calendar_sync_state where source_key=any($1::text[])',[[ADMISSION_CALENDAR_SOURCE_KEY,'official-susi-supplement']]),
+    includeAdmin?query('select count(*)::int as count,coalesce(sum(revision),0)::text as revision,max(updated_at)::text as updated_at from admission_calendar_admin_edits where admission_year=$1',[2027]):Promise.resolve([]),
   ]);
-  const row=baseRows[0],catalogue=validateCalendarSnapshot((row?.data||bundled) as AdmissionCalendarCatalogue);
-  const officialData=validateOfficialCalendarSupplement((officialRows[0]?.data||officialBundled) as OfficialCalendarSupplement);
-  const official={...officialData,checkedAt:officialRows[0]?.checked_at?new Date(officialRows[0].checked_at).toISOString():officialData.checkedAt};
-  const checkedAt=row?.checked_at?new Date(row.checked_at).toISOString():catalogue.source.checkedAt;
-  const stale=Date.now()-Date.parse(checkedAt)>=ADMISSION_CALENDAR_REFRESH_MS;
-  const base=overlayOfficialCalendar({...catalogue,source:{...catalogue.source,checkedAt}},official);
-  const edits=includeAdmin?await query('select id,data,revision,deleted,updated_at as "updatedAt" from admission_calendar_admin_edits where admission_year=$1',[base.source.admissionYear]):[];
-  const managed=includeAdmin?applyCalendarAdminEdits(base,official,edits.map(edit=>({...edit,updatedAt:new Date(edit.updatedAt).toISOString()}))):{catalogue:base,official};
-  return {...managed,officialSchools:official.schools.length,stale,refreshDue:stale&&(!row?.retry_after||new Date(row.retry_after).getTime()<=Date.now()),lastRefreshFailed:Boolean(row?.last_error)};
+  const row=states.find(state=>state.source_key===ADMISSION_CALENDAR_SOURCE_KEY),officialState=states.find(state=>state.source_key==='official-susi-supplement');
+  const key=JSON.stringify([includeAdmin,states.map(state=>[state.source_key,state.latest_version_id,state.checked_at]).sort(),editRevisions]);
+  let pending=calendarCache.get(key);
+  if(!pending){
+    pending=(async()=>{
+      const ids=states.map(state=>state.latest_version_id).filter(Boolean);
+      const versions=ids.length?await query('select id,data from admission_calendar_versions where id=any($1::uuid[])',[ids]):[];
+      const catalogue=validateCalendarSnapshot((versions.find(version=>version.id===row?.latest_version_id)?.data||bundled) as AdmissionCalendarCatalogue);
+      const officialData=validateOfficialCalendarSupplement((versions.find(version=>version.id===officialState?.latest_version_id)?.data||officialBundled) as OfficialCalendarSupplement);
+      const official={...officialData,checkedAt:officialState?.checked_at?new Date(officialState.checked_at).toISOString():officialData.checkedAt};
+      const checkedAt=row?.checked_at?new Date(row.checked_at).toISOString():catalogue.source.checkedAt;
+      const base=overlayOfficialCalendar({...catalogue,source:{...catalogue.source,checkedAt}},official);
+      const edits=includeAdmin?await query('select id,data,revision,deleted,updated_at as "updatedAt" from admission_calendar_admin_edits where admission_year=$1',[base.source.admissionYear]):[];
+      const managed=includeAdmin?applyCalendarAdminEdits(base,official,edits.map(edit=>({...edit,updatedAt:new Date(edit.updatedAt).toISOString()}))):{catalogue:base,official};
+      return {...managed,officialSchools:official.schools.length};
+    })();
+    calendarCache.set(key,pending);if(calendarCache.size>4)calendarCache.delete(calendarCache.keys().next().value!);
+    pending.catch(()=>{if(calendarCache.get(key)===pending)calendarCache.delete(key);});
+  }
+  const managed=await pending;
+  const stale=Date.now()-Date.parse(managed.catalogue.source.checkedAt)>=ADMISSION_CALENDAR_REFRESH_MS;
+  return {...managed,stale,refreshDue:stale&&(!row?.retry_after||new Date(row.retry_after).getTime()<=Date.now()),lastRefreshFailed:Boolean(row?.last_error)};
 }
 
 /** The request reads the last successful snapshot; Next's after() owns this refresh. */

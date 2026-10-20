@@ -31,6 +31,27 @@ test('an empty track cannot complete the calendar confirmation step',()=>{
   const preview=buildSchoolCalendarPreview(snapshot(),{...target,admission_type:'미정'});
   assert.equal(preview.canReview,false);assert.ok(preview.tracks.includes('학생부종합전형I (면접형)'));
 });
+test('interview-only school hints stay selectable references without claiming a department match',()=>{
+  const data=snapshot(),school=data.catalogue.schools.find(row=>row.schoolReferenceId===uos.id)!;
+  const original=school.entries.find(entry=>entry.departments.includes('환경공학부')&&entry.trackLabel.includes('면접형'))!;
+  school.entries=[{...original,trackLabel:'다른 학과 전형',departments:['컴퓨터과학부'],departmentLabel:'컴퓨터과학부',departmentCount:99},
+    {...original,trackLabel:'학생부종합전형Ⅱ(서류형)'},
+    {...original,trackLabel:'학과 확인된 면접 전형'}];
+  school.unresolved.push({id:'unscoped',kind:'interview',sourceUniversity:school.university,trackLabel:'학교 전체 미확인 전형',rawDate:'미정',reason:'학과 범위 미확인',departmentCount:5,sourceUrl:'https://example.edu'});
+  const preview=buildSchoolCalendarPreview(data,{...target,admission_type:'미정'});
+  assert.deepEqual(preview.tracks,['다른 학과 전형','학과 확인된 면접 전형','학교 전체 미확인 전형']);
+  for(const label of ['다른 학과 전형','학교 전체 미확인 전형']){const reference=buildSchoolCalendarPreview(data,{...target,admission_type:label});assert.equal(reference.canReview,true);assert.equal(reference.status,'school_reference');assert.equal(reference.registrationScope,'school_reference');assert.equal(reference.matched.length,0);assert.match(reference.note,/학과.*확인 전/);}
+  assert.equal(buildSchoolCalendarPreview(data,{...target,admission_type:'학생부종합전형Ⅱ(서류형)'}).canReview,false);
+  school.entries[0].departmentCount=1;
+  assert.ok(!buildSchoolCalendarPreview(data,{...target,admission_type:'미정'}).tracks.includes('다른 학과 전형'),'an explicit complete exclusion never becomes a selectable broad reference');
+});
+test('an unknown campus preserves school references while an explicit other campus stays excluded',()=>{
+  const data=snapshot(),school=data.catalogue.schools.find(row=>row.schoolReferenceId===uos.id)!;
+  school.entries=school.entries.map(entry=>({...entry,sourceCampus:'서울'}));
+  const unknown=buildSchoolCalendarPreview(data,{...target,campus:'미정'});assert.ok(unknown.tracks.length>0);assert.ok(unknown.trackOptions.every(option=>option.scope==='school_reference'));
+  assert.ok(buildSchoolCalendarPreview(data,{...target,campus:'서울'}).tracks.length>0);
+  assert.deepEqual(buildSchoolCalendarPreview(data,{...target,campus:'다른캠퍼스'}).tracks,[]);
+});
 test('another admission year never borrows the 2027 schedule',()=>{
   for(const year of [2026,2028]){const preview=buildSchoolCalendarPreview(snapshot(),{...target,admission_year:year});assert.equal(preview.status,'year_mismatch');assert.equal(preview.matched.length+preview.references.length,0);assert.deepEqual(preview.tracks,[]);}
 });
