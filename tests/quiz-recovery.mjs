@@ -51,6 +51,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   if(name==='./shared')return{ActionButton:actionButton,post:async(url,payload)=>{state.calls.push({url,payload});return state.adapter?state.adapter(url,payload):info;},api:async url=>{state.calls.push({url,method:'GET'});return state.apiAdapter?state.apiAdapter(url):info;},PageTitle:'PageTitle',Breadcrumb:'Breadcrumb',Alert:'Alert',Empty:'Empty',Spinner:'Spinner'};
   if(name==='./practice-writing-help')return{PracticeWritingHelp:'PracticeWritingHelp'};
   if(name==='./learning-help')return{LearningHelp:'LearningHelp'};
+  if(name==='./training-continuation')return{TrainingContinuation:'TrainingContinuation'};
   if(name==='./audio-level-dot')return{AudioLevelDot:'AudioLevelDot'};
   if(name==='./playful-flow')return{animateStudyReceipt(){}};
   if(name==='@/lib/client/realtime-transcription')return{connectLiveTranscription:(device,scope,update)=>{const live={scope,update,started:false,closed:false,finished:false,ready:Promise.resolve(state.liveGate),start(){this.started=true;update({phase:'listening',text:''});},close(){this.closed=true;},finish(){this.finished=true;}};state.live=live;return live;}};
@@ -63,7 +64,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/c
   throw new Error(name);
 }});
 const render=()=>{state.hook=0;state.refHook=0;state.effects=[];return module.exports.QuizSession({id:'session'});};
-const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.values[23]=true;durableAudio.clear();recoveryRemovals.length=0;state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.uploadError=false;state.deviceRequests=0;state.timers.clear();state.confirm=false;state.events.clear();state.visibility='visible';state.deviceGate=null;state.reservationGate=null;state.assertGate=null;state.cancelledReservations=0;state.live=null;state.liveGate=null;state.logoutSaver=null;state.decodeResult=buildSpeechTelemetry([{atMs:0,rms:.04},{atMs:1499,rms:.04}],1500);state.decodeCalls=0;state.decodeGate=null;state.confirmCalls=0;};
+const reset=(dto=info)=>{state.values=[dto,'',false,10,'내 역할은 채취 조건 설계였습니다.'];state.values[24]=true;durableAudio.clear();recoveryRemovals.length=0;state.refs=[];state.effects=[];state.calls=[];state.toasts=[];state.listener=null;state.adapter=null;state.apiAdapter=null;state.storage.clear();state.local.clear();state.now=0;state.capture=null;state.uploads=[];state.finishCount=0;state.tracksStopped=0;state.captureAvailable=true;state.uploadError=false;state.deviceRequests=0;state.timers.clear();state.confirm=false;state.events.clear();state.visibility='visible';state.deviceGate=null;state.reservationGate=null;state.assertGate=null;state.cancelledReservations=0;state.live=null;state.liveGate=null;state.logoutSaver=null;state.decodeResult=buildSpeechTelemetry([{atMs:0,rms:.04},{atMs:1499,rms:.04}],1500);state.decodeCalls=0;state.decodeGate=null;state.confirmCalls=0;};
 const nodes=tree=>Array.isArray(tree)?tree.flatMap(nodes):tree&&typeof tree==='object'?[tree,...nodes(tree.props?.children),...nodes(tree.props?.aside)]:[];
 const text=value=>Array.isArray(value)?value.map(text).join(''):value&&typeof value==='object'?text(value.props?.children):typeof value==='string'?value:'';
 const saveButton=tree=>nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='답변 저장');
@@ -73,11 +74,11 @@ let checks=0;const check=(value,message)=>{assert.ok(value,message);checks++;};
 reset();let tree=render();state.effects.find(effect=>effect.toString().includes("metadata?.drafts"))();check(state.values[4]==='서버에 저장한 초안','fresh browser uses the server draft');check(state.values[15]==='unchecked','new recall self-check starts unchecked');
 reset();state.local.set('gakja-quiz:student:session:0','로컬 최신 초안');tree=render();state.effects.find(effect=>effect.toString().includes("metadata?.drafts"))();check(state.values[4]==='로컬 최신 초안','newer local fallback survives interrupted network saving');
 
-reset();tree=render();state.effects.find(effect=>effect.toString().includes('gakja:open-on'))();let prevented=false;state.listener({preventDefault(){prevented=true;}});await settle();check(prevented,'global ON navigation is held until saving');check(state.calls[0].payload.action==='draft'&&state.calls[0].payload.response===state.values[4],'the draft is saved before leaving');check(state.calls[1].payload.action==='pause','the owned quiz is paused before ON');const destination=new URL(state.calls.find(call=>call.navigate).navigate,'https://local.test');check(destination.searchParams.get('quizSessionId')==='session'&&destination.searchParams.get('quizItemIndex')==='0'&&destination.searchParams.get('sourceVersion')==='6','ON receives the exact session, item and original content version');
+reset();tree=render();state.effects.find(effect=>effect.toString().includes('gakja:open-on'))();let prevented=false;state.listener({preventDefault(){prevented=true;}});await settle();tree=render();const currentHelp=nodes(tree).find(node=>node.type==='LearningHelp');check(prevented&&currentHelp.props.openRequest===1,'global ON opens the current question help sheet without leaving');check(await currentHelp.props.beforeOpen()===true,'help opens after preserving the current draft');check(state.calls[0].payload.action==='draft'&&state.calls[0].payload.response===state.values[4],'the draft is saved before opening help');check(!state.calls.some(call=>call.navigate||call.payload?.action==='pause'),'help keeps the question mounted and does not navigate or pause the written quiz');check(currentHelp.props.quizSessionId==='session'&&currentHelp.props.itemIndex===0&&currentHelp.props.sourceVersion===6,'the help sheet receives the exact session, item and original content version');
 
 for(const blocked of ['choice','recording','blob']){reset(blocked==='choice'?{...info,session:{...info.session,mode:'choice',items:[{...item,options:[]}]}}:info);if(blocked==='recording')state.values[11]='recording';if(blocked==='blob')state.values[17]={blob:new Blob(['unsaved']),index:0,durationMs:500,telemetry:undefined};tree=render();state.effects.find(effect=>effect.toString().includes('gakja:open-on'))();state.listener({preventDefault(){}});await settle();check(state.calls.length===0,`${blocked} cannot leave the current answer through ON`);check(state.toasts.length===1,'save-first instruction is visible');}
 
-reset();state.adapter=async()=>{throw new Error('draft failed');};tree=render();state.effects.find(effect=>effect.toString().includes('gakja:open-on'))();state.listener({preventDefault(){}});await settle();check(!state.calls.some(call=>call.navigate),'failed durable draft blocks navigation');check(state.values[16]==='failed','failed draft saving remains visible and retryable');
+reset();state.adapter=async()=>{throw new Error('draft failed');};tree=render();state.effects.find(effect=>effect.toString().includes('gakja:open-on'))();state.listener({preventDefault(){}});await settle();tree=render();await assert.rejects(nodes(tree).find(node=>node.type==='LearningHelp').props.beforeOpen,/draft failed/);check(!state.calls.some(call=>call.navigate),'failed durable draft keeps the same question');check(state.values[16]==='failed','failed draft saving remains visible and retryable');
 
 reset();state.adapter=async()=>{throw new Error('response lost');};tree=render();await saveButton(tree).props.onClick();const first=state.calls.find(call=>call.payload?.action==='answer');check(first.payload.rating==='hard'&&first.payload.recallStatus==='unchecked','saving without self-check does not rate recall good');check(state.calls.some(call=>call.method==='GET'),'ambiguous submit checks the server receipt');check(state.values[4].includes('채취 조건'),'unconfirmed submit keeps the draft');tree=render();await saveButton(tree).props.onClick();const answers=state.calls.filter(call=>call.payload?.action==='answer');check(answers[0].payload.requestId===answers[1].payload.requestId,'unchanged retry reuses its answer request identity');
 
@@ -154,14 +155,14 @@ check(!saveButton(tree).props.disabled,'same oral question supports explicit tex
 await saveButton(tree).props.onClick();const textRequest=state.calls.find(call=>call.payload?.action==='answer').payload;
 check(textRequest.responseMode==='text'&&!textRequest.recordingId&&textRequest.itemIndex===0,'text fallback submits the original question without voice media or invented voice metrics');
 
-reset();state.values[10]=true;state.values[23]=false;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();tree=render();
-check(state.capture===null&&state.values[22]===0&&state.deviceRequests===1,'microphone permission and level check happen before the readiness countdown');
+reset();state.values[10]=true;state.values[24]=false;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();tree=render();
+check(state.capture===null&&state.values[23]===0&&state.deviceRequests===1,'microphone permission and level check happen before the readiness countdown');
 nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='준비됐어요 · 3초 뒤 시작').props.onClick();tree=render();
-check(state.values[22]===3&&state.capture===null,'learner explicitly starts the real three-second readiness countdown after the microphone check');
+check(state.values[23]===3&&state.capture===null,'learner explicitly starts the real three-second readiness countdown after the microphone check');
 nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='지금 시작').props.onClick();await settle();
 check(state.deviceRequests===1&&state.capture?.state==='recording','skip reuses the checked device and opens exactly one recorder');
-reset();state.values[10]=true;state.values[23]=false;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='취소').props.onClick();
-check(state.values[22]===null&&state.capture===null&&state.tracksStopped===1,'cancel microphone check releases the device without recording an answer');
+reset();state.values[10]=true;state.values[24]=false;tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();tree=render();await nodes(tree).find(node=>node.type==='button'&&text(node.props.children)==='취소').props.onClick();
+check(state.values[23]===null&&state.capture===null&&state.tracksStopped===1,'cancel microphone check releases the device without recording an answer');
 
 const pauseButton=()=>nodes(render()).find(node=>node.props?.['aria-label']==='일시정지');
 const installVisibility=()=>state.effects.find(effect=>effect.toString().includes('const hide ='))();
@@ -178,7 +179,7 @@ for(const arrival of ['countdown','recording','rejected']){
   check(state.values[0].session.state==='paused','hiding still pauses the screen immediately while the response is pending');
   state.visibility='visible';nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='이어서 풀기').props.onClick();
   if(arrival==='countdown'){oldPause.resolve({...info,session:{...info.session,state:'paused'},pauseReceipt:'old'});await settle();check(state.values[0].pauseReceipt!=='old'&&state.values[7]===3,'resume intent rejects an old pause before the start request is sent');}
-  await finishResumeCountdown();state.values[10]=true;state.values[23]=true;
+  await finishResumeCountdown();state.values[10]=true;state.values[24]=true;
   await nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
   if(arrival==='recording')oldPause.resolve({...info,session:{...info.session,state:'paused'},pauseReceipt:'old'});
   if(arrival==='rejected')oldPause.reject(new Error('old pause response failed'));
@@ -202,7 +203,7 @@ check(state.values[0].pauseReceipt==='second','an earlier pause cannot replace t
 reset();const failedCurrentPause=deferred();state.adapter=async()=>failedCurrentPause.promise;render();installVisibility();state.visibility='hidden';state.events.get('visibilitychange')();failedCurrentPause.reject(new Error('current pause failed'));await settle();
 check(state.values[1]==='current pause failed','a current pause error remains visible instead of suppressing all pause errors');
 const prepareCountdown=async()=>{
-  state.values[10]=true;state.values[23]=false;
+  state.values[10]=true;state.values[24]=false;
   await nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
   nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='준비됐어요 · 3초 뒤 시작').props.onClick();
   render();state.effects.find(effect=>effect.toString().includes('preparation > 1'))();
@@ -215,15 +216,15 @@ for(let second=3;second>=1;second--){const tick=[...state.timers.entries()].find
 check(state.capture?.state==='recording'&&state.deviceRequests===1,'an uninterrupted explicit readiness countdown starts exactly one recorder');
 
 for(const exit of ['pause','hidden','pagehide']){
-  reset();state.adapter=pauseResponse;await prepareCountdown();state.timers.clear();state.values[22]=1;const staleTick=installPreparationTick();installVisibility();
+  reset();state.adapter=pauseResponse;await prepareCountdown();state.timers.clear();state.values[23]=1;const staleTick=installPreparationTick();installVisibility();
   if(exit==='pause')await pauseButton().props.onClick();
   else{if(exit==='hidden')state.visibility='hidden';state.events.get(exit==='hidden'?'visibilitychange':'pagehide')();await settle();}
-  check(state.values[22]===null&&state.timers.size===0,`${exit} clears the readiness countdown immediately`);
+  check(state.values[23]===null&&state.timers.size===0,`${exit} clears the readiness countdown immediately`);
   await staleTick();await settle();
   check(state.capture===null&&state.tracksStopped===1&&state.cancelledReservations===1,`${exit} cannot start a recorder from a stale countdown and releases its device and reservation`);
   check(state.values[0].session.state==='paused',`${exit} pauses the session as well as readiness`);
   state.visibility='visible';state.events.get('visibilitychange')();render();await settle();
-  check(state.capture===null&&state.values[22]===null,`${exit} requires an explicit restart after returning`);
+  check(state.capture===null&&state.values[23]===null,`${exit} requires an explicit restart after returning`);
 }
 
 reset();state.adapter=pauseResponse;render();
@@ -235,12 +236,12 @@ check(state.tracksStopped===1&&state.cancelledReservations===1,'route unmount re
 
 reset();const staleSaveTick=await prepareCountdown(),draftGate=deferred();state.adapter=async()=>draftGate.promise;
 const pendingPause=pauseButton().props.onClick();await settle();
-check(state.values[22]===null&&state.values[0].session.state==='paused'&&state.tracksStopped===1,'pause cancels readiness and releases the microphone before a draft save responds');
+check(state.values[23]===null&&state.values[0].session.state==='paused'&&state.tracksStopped===1,'pause cancels readiness and releases the microphone before a draft save responds');
 draftGate.reject(new Error('synthetic draft failure'));await pendingPause;await staleSaveTick();await settle();
 check(state.capture===null&&state.values[0].session.state==='paused','failed draft saving cannot revive a cancelled recording countdown');
 
 for(const pending of ['reservation','permission','assert']){
-  reset();state.adapter=pauseResponse;state.values[10]=true;state.values[23]=pending!=='assert';const gate=deferred();
+  reset();state.adapter=pauseResponse;state.values[10]=true;state.values[24]=pending!=='assert';const gate=deferred();
   if(pending==='reservation')state.reservationGate=gate.promise;
   if(pending==='permission')state.deviceGate=gate.promise;
   const request=nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();
@@ -269,13 +270,13 @@ for(const pending of ['reservation','permission','realtime']){
 function mobilePreparationInfo(){return{...info,session:{...info.session,mode:'oral'}};}
 
 for(const lateResult of ['permission','permission-error','assert']){
-  reset();state.adapter=pauseResponse;state.values[10]=true;state.values[23]=lateResult!=='assert';const gate=deferred();
+  reset();state.adapter=pauseResponse;state.values[10]=true;state.values[24]=lateResult!=='assert';const gate=deferred();
   if(lateResult.startsWith('permission'))state.deviceGate=gate.promise;
   const oldRequest=nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();await settle();
   if(lateResult==='assert'){await oldRequest;state.assertGate=gate.promise;nodes(render()).find(node=>node.type==='button'&&text(node.props.children)==='지금 시작').props.onClick();await settle();}
   render();installVisibility();state.visibility='hidden';state.events.get('visibilitychange')();await settle();
   // The student explicitly resumes and starts again before the old browser/IDB response arrives.
-  state.visibility='visible';state.values[0]=info;state.values[23]=true;state.deviceGate=null;state.assertGate=null;
+  state.visibility='visible';state.values[0]=info;state.values[24]=true;state.deviceGate=null;state.assertGate=null;
   await nodes(render()).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음').props.onClick();const newCapture=state.capture;
   if(lateResult==='permission-error')gate.reject(new Error('old permission request failed'));else gate.resolve();await oldRequest;await settle();
   check(state.capture===newCapture&&newCapture.state==='recording'&&state.values[11]==='recording',`late ${lateResult} cannot stop or reset a newer explicit recording`);
@@ -411,14 +412,14 @@ for(const revisit of ['focus','pageshow','visibilitychange','lease-poll']){
   durableAudio.set(key,{...recovered,inUse:true});render();
   const cleanupRecovery=state.effects.find(effect=>effect.toString().includes('const recover ='))();await settle();
   tree=render();
-  check(state.values[27]===true&&nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음')?.props.disabled,`${revisit} initially respects the active recording lease and disables a conflicting new recording`);
+  check(state.values[28]===true&&nodes(tree).find(node=>node.type==='button'&&text(node.props.children).trim()==='답변 녹음')?.props.disabled,`${revisit} initially respects the active recording lease and disables a conflicting new recording`);
   check(state.timers.size===1&&[...state.timers.values()][0].ms===5000,`${revisit} schedules a bounded lease recheck while another recording owns the recovery`);
   durableAudio.set(key,{...recovered,inUse:false});
   if(revisit==='lease-poll'){
     const timer=[...state.timers.entries()][0];state.timers.delete(timer[0]);await timer[1].callback();
   }else state.events.get(revisit)();
   await settle();tree=render();
-  check(state.values[27]===false&&state.values[17]?.recoveryKey===key&&state.values[17]?.blob.size>0,`${revisit} discovers the same recoverable recording after the previous lease is released`);
+  check(state.values[28]===false&&state.values[17]?.recoveryKey===key&&state.values[17]?.blob.size>0,`${revisit} discovers the same recoverable recording after the previous lease is released`);
   check(state.uploads.length===0&&state.deviceRequests===0&&state.values[4]===mobileText,`${revisit} restores a pending choice without automatic microphone use, upload, or typed-answer replacement`);
   cleanupRecovery();
 }

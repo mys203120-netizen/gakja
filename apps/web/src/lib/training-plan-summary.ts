@@ -1,7 +1,7 @@
 type SummaryPlan={kind?:unknown;minutes?:unknown;target?:{minutes?:unknown;automaticPractice?:{minutes?:unknown;hybrid?:{kind?:unknown}}}};
 export type TrainingPlanSummary={kind:string;label:string;count:number;minutes:number|null};
 
-const categories=[['diagnostic','첫 진단'],['recall','누적 복습'],['focus','집중 보완'],['mixed','연결 면접'],['review','정리'],['study','공부'],['quiz','퀴즈'],['interview','모의면접'],['reading','읽기·영상'],['other','개인 학습']] as const;
+const categories=[['diagnostic','첫 진단'],['recall','누적 복습'],['quiz','퀴즈'],['assignment','받은 과제'],['focus','집중 보완'],['mixed','연결 면접'],['review','정리'],['study','공부'],['interview','모의면접'],['reading','읽기·영상'],['other','개인 학습']] as const;
 const labels=new Map<string,string>(categories);
 function knownMinutes(value:unknown):number|null{
   if(value===null||value===undefined||value==='')return null;

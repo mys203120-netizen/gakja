@@ -43,3 +43,12 @@ test('unconfirmed facts and own notes remain explicit while historical experienc
  const row=fold([], {cards:[card],notes:[{id:'note',activityId:'experience:card1',body:'확인한 역할',confirmedByStudent:true}]}).items.find(item=>item.kind==='experience')!;
  assert.equal(row.unconfirmed,true);assert.equal(row.notes.length,1);assert.equal(row.mainAnswers,0);
 });
+
+test('common quiz and assignment receipts share question readiness even before any interview or student activity exists',()=>{
+ const common={id:'common1',prompt:'지원 동기는?',common_revision:2,activity_ids:[]};
+ const event=(id:string,kind:string,patch:any={})=>({id,source_id:id,kind,created_at:'2026-10-21T01:00:00Z',data:{questionId:common.id,targetId:target.id,targetSnapshot:target,commonRevision:2,response:'지원 계기와 직접 확인한 내용을 설명합니다.',...patch}});
+ const quiz=event('quiz','quiz_response'),assignment=event('assignment','assignment_submission',{assisted:true});
+ const fold=(events:any[])=>foldTrainingEvidence({learning:{activities:[],questions:[common]},cards:[],turns:[],events,target,contentVersion:null});
+ const row=fold([quiz,quiz,assignment]).items[0];assert.equal(row.id,'question:'+common.id);assert.equal(row.mainAnswers,2);assert.equal(row.textAttempts,2);assert.equal(row.assistedAttempts,1);
+ assert.equal(fold([event('other','quiz_response',{commonRevision:1})]).items.length,0);
+});

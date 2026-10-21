@@ -9,25 +9,25 @@ import * as targetScope from '../apps/web/src/lib/learning-target-scope';
 
 const code=ts.transpileModule(readFileSync('apps/web/src/components/training-run.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
 const nodes=(value:any):any[]=>Array.isArray(value)?value.flatMap(nodes):value&&typeof value==='object'?[value,...nodes(value.props?.children)]:[];
-const text=(value:any):string=>typeof value==='string'?value:Array.isArray(value)?value.map(text).join(''):value?.props?text(value.props.children):'';
+const text=(value:any):string=>typeof value==='string'||typeof value==='number'?String(value):Array.isArray(value)?value.map(text).join(''):value?.props?text(value.props.children):'';
 function deferred(){let resolve!:(value:any)=>void,reject!:(error:Error)=>void;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};}
 
 function harness({diagnostic=false,existing=false,pendingAction='start',kind='focus',dayTasks=[] as any[],deferNext=false,failNext=false,diagnostics=undefined as any}={}){
   const hooks:any[]=[],effects:any[]=[],pending:Function[]=[],requests:any[]=[],pushes:string[]=[];
   let cursor=0,dirty=true,tree:any,target='school-a',student='student-a',plan='plan-a',refreshes=0,department='환경공학과',version=1;
-  const deferreds:ReturnType<typeof deferred>[]=[],nextReads:ReturnType<typeof deferred>[]=[];let reads=0;
-  const task=()=>({id:plan,minutes:25,kind,targetId:target,questionId:'question-'+target,sourceType:'fixture',sourceVersion:1,title:'집중 보완 · 나의 활동',...(existing?{sessionId:'session-'+target}:{})});
+  const deferreds:ReturnType<typeof deferred>[]=[],nextReads:ReturnType<typeof deferred>[]=[],planReads:string[]=[];let reads=0,planReadOverride:((url:string)=>Promise<any>)|null=null;
+  const task=()=>({id:plan,minutes:25,kind,targetId:target,questionId:'question-'+target,sourceType:'fixture',sourceVersion:1,title:'집중 보완 · 나의 활동',practice:kind==='quiz'?{kind:'quiz',mode:'answer',itemIds:['item-a']}:{kind:'assignment',assignmentId:'assignment-a'},href:'/quiz/assignments/assignment-a?trainingPlanId='+plan,...(existing?{sessionId:'session-'+target}:{})});
   const react={Suspense:'Suspense',useCallback:(fn:Function)=>fn,useState(initial:any){const index=cursor++;if(!(index in hooks))hooks[index]=initial;return [hooks[index],(value:any)=>{const next=typeof value==='function'?value(hooks[index]):value;if(!Object.is(next,hooks[index])){hooks[index]=next;dirty=true;}}];},useRef(initial:any){return hooks[cursor++]??={current:initial};},useEffect(fn:Function,deps:any[]){const index=cursor++,previous=effects[index];if(!previous||deps.some((value,i)=>!Object.is(value,previous.deps[i]))){effects[index]={deps};pending.push(()=>{previous?.cleanup?.();effects[index].cleanup=fn();});}}};
   const jsx={jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props})};
   const module={exports:{} as any};
-  vm.runInNewContext(code,{module,exports:module.exports,AbortController,URLSearchParams,crypto:{randomUUID},require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
+  vm.runInNewContext(code,{module,exports:module.exports,AbortController,URLSearchParams,crypto:{randomUUID},window:{location:{assign:(path:string)=>pushes.push(path)}},require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
     if(name==='react')return react;if(name==='react/jsx-runtime')return jsx;
     if(name==='next/link')return {default:'Link'};if(name==='next/navigation')return {useRouter:()=>({push:(path:string)=>pushes.push(path)}),useSearchParams:()=>new URLSearchParams({planId:plan})};
     if(name==='@/lib/training-flow')return trainingFlow;
     if(name==='@/lib/learning-target-scope')return targetScope;
     if(name==='lucide-react')return {ArrowRight:'ArrowRight',Check:'Check'};
     if(name==='./app-shell')return {useApp:()=>({targetId:target,target:{id:target,university:'시험대학교',department,admission_year:2027,campus:'본교',admission_type:'학생부종합'},data:{user:{id:student},package:{id:'package',active_version:version}},refresh:async()=>{refreshes++;},learningRevision:1})};
-    if(name==='./shared')return {Alert:'Alert',Spinner:'Spinner',ActionButton:'ActionButton',InfoTip:'InfoTip',api:async(url:string)=>{if(!new URLSearchParams(url.split('?')[1]).has('planId')){reads++;if(failNext)throw new Error('다음 계획 통신 오류');if(deferNext){const response=deferred();nextReads.push(response);return response.promise;}}return {today:{date:'2026-10-21',tasks:dayTasks},selectedTask:task(),diagnostics:typeof diagnostics==='function'?diagnostics(target):diagnostics,diagnosticInput:{targetId:target,sourceType:'fixture',questionCount:1},diagnosticQuestions:[{id:'question-'+target,title:'진단 질문'}],readiness:{items:[{id:'activity-'+target,title:'활동 '+target}]}};},post:async(url:string,input:any)=>{
+    if(name==='./shared')return {Alert:'Alert',Spinner:'Spinner',ActionButton:'ActionButton',InfoTip:'InfoTip',api:async(url:string)=>{if(new URLSearchParams(url.split('?')[1]).has('planId')){planReads.push(url);if(planReadOverride)return planReadOverride(url);}if(!new URLSearchParams(url.split('?')[1]).has('planId')){reads++;if(failNext)throw new Error('다음 계획 통신 오류');if(deferNext){const response=deferred();nextReads.push(response);return response.promise;}}return {today:{date:'2026-10-21',tasks:dayTasks},selectedTask:task(),dayReview:{date:'2026-10-21',targetId:null,answers:2,quizAnswers:1,assistedAnswers:1,remainingReview:1,questions:[{key:'scope-'+target,id:'question-'+target,targetId:target,title:'오늘 답한 질문 '+target,assisted:true}]},diagnostics:typeof diagnostics==='function'?diagnostics(target):diagnostics,diagnosticInput:{targetId:target,sourceType:'fixture',questionCount:1},diagnosticQuestions:[{id:'question-'+target,title:'진단 질문'}],readiness:{items:[{id:'activity-'+target,title:'활동 '+target}]}};},post:async(url:string,input:any)=>{
       requests.push({url,input});
       if(input.action===pendingAction){const response=deferred();deferreds.push(response);return response.promise;}
       if(input.action==='task_start')return {task:task()};
@@ -44,7 +44,7 @@ function harness({diagnostic=false,existing=false,pendingAction='start',kind='fo
   const action=(label:string)=>nodes(tree).find(node=>node.type==='ActionButton'&&text(node).includes(label));
   const interview=()=>nodes(tree).find(node=>node.type==='InterviewSession');
   const completion=(school=target)=>({session:{state:'completed',data:{trainingProgress:{allRootsAnswered:true},context:{questions:[{id:'question-'+school,activity_ids:['activity-'+school]}]}}},turns:[{id:'turn-'+school,rootQuestionId:'question-'+school,question:'활동 설명 '+school,answer:'저장 답변 '+school}]});
-  return {flush,action,interview,completion,deferreds,nextReads,requests,pushes,get reads(){return reads;},get tree(){return tree;},get refreshes(){return refreshes;},changePlan(value:string){plan=value;dirty=true;},changeContent(){version++;dirty=true;},changeDepartment(value:string){department=value;dirty=true;},changeScope(school:string,user='student-a'){target=school;student=user;plan='plan-'+school;dirty=true;}};
+  return {flush,action,interview,completion,deferreds,nextReads,requests,pushes,planReads,setPlanReadOverride(value:(url:string)=>Promise<any>){planReadOverride=value;},get reads(){return reads;},get tree(){return tree;},get refreshes(){return refreshes;},changePlan(value:string){plan=value;dirty=true;},changeContent(){version++;dirty=true;},changeDepartment(value:string){department=value;dirty=true;},changeScope(school:string,user='student-a'){target=school;student=user;plan='plan-'+school;dirty=true;}};
 }
 
 test('changing school while starting unlocks the new scope and a late old start cannot replace or unlock the next start',async()=>{
@@ -88,8 +88,8 @@ test('late activity save cannot mark a new school draft saved or reset its recei
 
 
 test('finishing an old school review does not navigate away from the next school',async()=>{
-  const h=harness({kind:'review',pendingAction:'task_complete'});await h.flush();h.action('오늘 정리 마치기').props.onClick();await h.flush();
-  h.changeScope('school-b');await h.flush();assert.equal(h.action('오늘 정리 마치기').props.pending,false);
+  const h=harness({kind:'review',pendingAction:'day_reflection'});await h.flush();h.action('오늘 정리 저장').props.onClick();await h.flush();
+  h.changeScope('school-b');await h.flush();assert.equal(h.action('오늘 정리 저장').props.pending,false);
   h.deferreds[0].resolve({});await h.flush();assert.deepEqual(h.pushes,[]);assert.equal(h.refreshes,0);
 });
 
@@ -171,7 +171,7 @@ test('a partial diagnostic from a previous visit opens a fresh start instead of 
 test('the final lesson leads to daily reflection and reflection confirmation ends the day without a blank interview',async()=>{
  const h=harness({existing:true,dayTasks:[{id:'plan-a',kind:'focus',title:'마친 질문',minutes:25},{id:'review',kind:'review',title:'오늘 정리',minutes:10}]});await h.flush();h.interview().props.onTrainingUpdate(h.completion());await h.flush();
  assert.ok(text(h.tree).includes('마지막 순서'));assert.ok(nodes(h.tree).some(node=>node.type==='a'&&node.props.href==='/my/train?planId=review'));
- const review=harness({kind:'review',pendingAction:'task_complete',dayTasks:[{id:'plan-a',kind:'review',title:'오늘 정리',minutes:10}]});await review.flush();review.action('오늘 정리 마치기').props.onClick();await review.flush();
+ const review=harness({kind:'review',pendingAction:'day_reflection',dayTasks:[{id:'plan-a',kind:'review',title:'오늘 정리',minutes:10}]});await review.flush();review.action('오늘 정리 저장').props.onClick();await review.flush();
  assert.ok(!text(review.tree).includes('오늘 정리 완료'),'completion waits for the server acknowledgement');review.deferreds[0].resolve({completed:true});await review.flush();
  assert.ok(text(review.tree).includes('오늘 정리 완료'));assert.ok(text(review.tree).includes('오늘 계획을 모두 마쳤어요.'));assert.equal(review.interview(),undefined);assert.deepEqual(review.pushes,[]);
 });
@@ -196,4 +196,59 @@ test('changing only planId after completion unmounts the old interview and opens
  oldUpdate(h.completion());await h.flush();assert.equal(text(h.tree).includes('훈련 완료'),false,'a late callback from the completed plan cannot restore its summary');
  h.action('이 훈련 시작').props.onClick();await h.flush();assert.equal(h.requests.filter(call=>call.input.action==='task_start').at(-1).input.planId,'next-focus');
  h.deferreds[1].resolve({session:{id:'next-session'}});await h.flush();assert.equal(h.interview().props.id,'next-session');
+});
+
+test('connected interviews enable the existing capped follow-up chain while diagnosis stays unaided',async()=>{
+ for(const [kind,diagnostic,followups] of [['mixed',false,true],['focus',false,true],['diagnostic',true,false]] as const){
+  const h=harness({kind,diagnostic});await h.flush();h.action(diagnostic?'진단 질문에 답하기':'이 훈련 시작').props.onClick();await h.flush();
+  const started=h.requests.find(request=>request.url==='/api/interviews'&&request.input.action==='start');assert.equal(started.input.followups,followups);assert.equal(started.input.questionCount,kind==='mixed'?4:1);
+  h.deferreds[0].resolve({session:{id:'session'}});await h.flush();
+ }
+});
+
+test('daily reflection displays saved work and persists one improvement with exact scoped revisit choices',async()=>{
+ const h=harness({kind:'review',pendingAction:'day_reflection'});await h.flush();assert.match(text(h.tree),/본질문 답변2개푼 퀴즈1개제출한 과제0개도움 사용1개남은 보완1개/);
+ const input=nodes(h.tree).find(node=>node.type==='textarea'&&node.props.placeholder?.startsWith('예: 활동'));input.props.onChange({target:{value:'내가 한 행동을 먼저 말했다.'}});
+ const choice=nodes(h.tree).find(node=>node.type==='button'&&text(node).includes('오늘 답한 질문'));choice.props.onClick();await h.flush();assert.equal(nodes(h.tree).find(node=>node.type==='button'&&text(node).includes('오늘 답한 질문')).props['aria-pressed'],true);
+ h.action('오늘 정리 저장').props.onClick();await h.flush();const saved=h.requests.find(request=>request.input.action==='day_reflection').input;
+ assert.equal(saved.improvement,'내가 한 행동을 먼저 말했다.');assert.deepEqual(JSON.parse(JSON.stringify(saved.revisitQuestionKeys)),['scope-school-a']);assert.equal(typeof saved.requestId,'string');
+ h.deferreds[0].resolve({completed:true});await h.flush();assert.match(text(h.tree),/고른 질문 1개를 다음 계획에 반영했어요/);
+});
+
+test('quiz and assignment lessons dispatch their real tools with the original plan and no interview session',async()=>{
+ const quiz=harness({kind:'quiz',pendingAction:'create'});await quiz.flush();quiz.action('퀴즈 시작').props.onClick();await quiz.flush();
+ const created=quiz.requests.find(request=>request.input.action==='create');assert.equal(created.url,'/api/quiz');assert.equal(created.input.trainingPlanId,'plan-a');assert.deepEqual(JSON.parse(JSON.stringify(created.input.itemIds)),['item-a']);
+ quiz.deferreds[0].resolve({session:{id:'quiz-a'}});await quiz.flush();assert.deepEqual(quiz.pushes,['/quiz/session/quiz-a?trainingPlanId=plan-a']);assert.equal(quiz.interview(),undefined);assert.equal(quiz.requests.some(request=>request.url==='/api/interviews'),false);
+ const assignment=harness({kind:'assignment'});await assignment.flush();assignment.action('과제 시작').props.onClick();await assignment.flush();assert.deepEqual(assignment.pushes,['/quiz/assignments/assignment-a?trainingPlanId=plan-a']);assert.equal(assignment.requests.filter(request=>request.input.action==='task_start').length,1);
+ const actualStart=assignment.requests.find(request=>request.url==='/api/learning');assert.equal(actualStart.input.action,'assignment_start');assert.equal(actualStart.input.assignmentId,'assignment-a');assert.match(actualStart.input.requestId,/^[0-9a-f-]{36}$/i);
+});
+
+test('assignment handoff waits for the validated start and retries a failed start with the same receipt',async()=>{
+ const h=harness({kind:'assignment',pendingAction:'assignment_start'});await h.flush();h.action('과제 시작').props.onClick();await h.flush();
+ assert.deepEqual(h.pushes,[],'the assignment page does not open before the server accepts its current snapshot');assert.equal(h.action('과제 시작').props.pending,true);
+ const first=h.requests.find(request=>request.input.action==='assignment_start').input;h.deferreds[0].reject(Error('과제 자료를 다시 확인해 주세요.'));await h.flush();
+ assert.deepEqual(h.pushes,[]);assert.match(text(h.tree),/과제 자료를 다시 확인해 주세요/);assert.equal(h.action('과제 시작').props.pending,false);
+ h.action('과제 시작').props.onClick();await h.flush();const retried=h.requests.filter(request=>request.input.action==='assignment_start').at(-1).input;assert.equal(retried.requestId,first.requestId);assert.equal(retried.assignmentId,first.assignmentId);
+ h.deferreds[1].resolve({assignment:{id:'assignment-a',state:'in_progress'}});await h.flush();assert.deepEqual(h.pushes,['/quiz/assignments/assignment-a?trainingPlanId=plan-a']);
+});
+
+test('a late assignment start acknowledgement never navigates back into the previous school',async()=>{
+ const h=harness({kind:'assignment',pendingAction:'assignment_start'});await h.flush();h.action('과제 시작').props.onClick();await h.flush();h.changeScope('school-b');await h.flush();
+ h.deferreds[0].resolve({assignment:{id:'assignment-a',state:'in_progress'}});await h.flush();assert.deepEqual(h.pushes,[]);assert.equal(h.action('과제 시작').props.pending,false);
+});
+
+
+test('saved daily reflection reloads its all-school review plan before displaying the latest remaining requests',async()=>{
+ const h=harness({kind:'review',pendingAction:'day_reflection'});await h.flush();const gate=deferred();h.setPlanReadOverride(()=>gate.promise);
+ h.action('오늘 정리 저장').props.onClick();await h.flush();h.deferreds[0].resolve({completed:true});await h.flush();
+ assert.equal(h.planReads.at(-1),'/api/training?planId=plan-a','refresh uses the review plan so its dayReview covers every school');assert.equal(text(h.tree).includes('오늘 정리 완료'),false,'the old counts are not shown as the saved result');
+ gate.resolve({selectedTask:{id:'plan-a',kind:'review',completed:true},today:{tasks:[]},dayReview:{date:'2026-10-21',targetId:null,answers:7,quizAnswers:3,assignmentAnswers:2,assistedAnswers:4,remainingReview:5,questions:[{key:'school-b-question',targetId:'school-b',title:'다른 학교에서 답한 질문'}]}});await h.flush();
+ assert.match(text(h.tree),/오늘 정리 완료/);assert.match(text(h.tree),/본질문 답변7개푼 퀴즈3개제출한 과제2개도움 사용4개남은 보완5개/);assert.equal(h.refreshes,1);
+});
+
+test('a late daily-review projection cannot replace the new account or school after save',async()=>{
+ const h=harness({kind:'review',pendingAction:'day_reflection'});await h.flush();const gate=deferred();let oldRead=true;h.setPlanReadOverride(async()=>oldRead?gate.promise:{selectedTask:{id:'plan-school-b',kind:'review'},dayReview:{targetId:null,answers:1,questions:[]}});
+ h.action('오늘 정리 저장').props.onClick();await h.flush();h.deferreds[0].resolve({completed:true});await h.flush();oldRead=false;h.changeScope('school-b','student-b');await h.flush();
+ gate.resolve({selectedTask:{id:'plan-a',kind:'review',completed:true},dayReview:{targetId:null,answers:987,remainingReview:654,questions:[]}});await h.flush();
+ assert.equal(text(h.tree).includes('987'),false);assert.equal(text(h.tree).includes('654'),false);assert.equal(text(h.tree).includes('오늘 정리 완료'),false);assert.equal(h.refreshes,0);assert.equal(h.action('오늘 정리 저장').props.pending,false);
 });

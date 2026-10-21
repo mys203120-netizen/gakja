@@ -49,6 +49,8 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
  assert.ok(markup.includes('오늘 가능 2시간')&&markup.includes('준비 목표 전'));
  assert.equal(h.posts.length,0);
  assert.ok(markup.includes('href="#training-calendar"')&&markup.includes('계획과 면접 일정'),'today exposes the actual combined calendar');
+ assert.ok(markup.includes('권장 25분')&&markup.includes('본질문 → 꼬리질문 → 보완 → 재답변'),'the plan exposes its actual activities and a recommended time');
+ assert.ok(!markup.includes('aria-label="필요한 연습 직접 선택"')&&!markup.includes('직접 연습 선택'),'tools are no longer buried in a second navigation at the bottom');
 }
 // Missing availability and missing questions cannot masquerade as a completed day.
 {
@@ -95,12 +97,18 @@ for(const kind of ['chat','video']){
  h.context.data.interviews=[{...session,state:'completed'}];
  assert.ok(!h.markup().includes('저장한 질문에서 계속'),'completed sessions never appear as active work');
 }
-for(const kind of ['focus','review']){
+for(const kind of ['focus','review','quiz','assignment']){
  const h=harness(payload([{...task,kind}]));
  const tree=h.render(),button=nodes(tree).find(node=>node.props?.onClick&&node.props.className==='taskTrigger');
  button.props.onClick();await flush();
  assert.equal(h.posts[0].body.action,'task_start');
  assert.equal(h.posts[0].body.planId,'plan');
+}
+{
+ const quiz={...task,id:'quiz',kind:'quiz',title:'질문 속 개념 확인하기',minutes:12},assignment={...task,id:'assignment',kind:'assignment',title:'받은 과제 마치기',minutes:15};
+ const markup=harness(payload([quiz,assignment])).markup();
+ assert.ok(markup.includes('퀴즈 · 권장 12분')&&markup.includes('질문·개념 확인 → 퀴즈 답변'));
+ assert.ok(markup.includes('받은 과제 · 권장 15분')&&markup.includes('받은 과제 → 답변 제출'));
 }
 // A response to the old school cannot navigate after the student switches their target.
 {

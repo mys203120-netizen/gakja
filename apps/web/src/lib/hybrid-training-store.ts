@@ -12,19 +12,32 @@ import {reviewDiagnostics} from './training-review-store';
 import {reviewDiagnosticKey} from './training-review';
 import {getTrainingReadModel,trainingReadContext} from './training-read-model';
 import {studentModelRevision} from './student-read-model';
+import {trainingQuizQuestions,pendingTrainingAssignments,trainingPracticeCompletions} from './training-practice-store';
 
 type Value=Record<string,any>;
 type Context=Awaited<ReturnType<typeof getPlanContext>>;
 const autoOf=(plan:Value)=>plan.target?.automaticPractice;
 const columns="*,to_char(planned_date,'YYYY-MM-DD') as date";
 const taskMinutes=(plan:Value)=>Math.max(0,Number(autoOf(plan)?.minutes||plan.target?.minutes||10));
-const hybridKinds=new Set<HybridTaskKind>(['diagnostic','recall','focus','mixed','review','break']);
+const hybridKinds=new Set<HybridTaskKind>(['diagnostic','recall','quiz','assignment','focus','mixed','review','break']);
+
+/** Preserve completed work and its spent time; an unfinished old-school draft stays in history, not today's budget. */
+export function fixedHybridPlans(plans:Value[],schoolTargets:Value[],today:string){
+  return plans.filter(plan=>{
+    const automatic=autoOf(plan);
+    if(automatic?.hybrid?.kind==='break'||automatic?.status==='superseded'||!preserveHybridPlan(plan,today))return false;
+    if(!automatic||plan.completed||plan.performedAt)return true;
+    const school=schoolTargets.find(school=>school.id===plan.target?.targetId);
+    return Boolean(school&&recordMatchesCurrentTarget({targetId:plan.target.targetId,targetSnapshot:plan.target.targetSnapshot},[{...school.data,id:school.id}]));
+  });
+}
 
 /** The explicit task/session link permits finishing across midnight and several diagnostic topics. */
-export function presentHybridPlan(plan:Value,context:Context,completedSessions:Set<string>){
+export function presentHybridPlan(plan:Value,context:Context,completedSessions:Set<string>,practiceCompletions=new Map<string,string>()){
   const hybrid=autoOf(plan)?.hybrid;
   if(!hybrid)return presentPlan(plan,context);
   const base=presentPlan(plan,{...context,events:[]});
+  if(['quiz','assignment'].includes(hybrid.kind))return {...base,performedAt:practiceCompletions.get(plan.id)||null};
   if(['review','break'].includes(hybrid.kind))return base;
   const linked=context.events.filter(event=>event.data?.trainingPlanId===plan.id&&completedSessions.has(event.data?.sessionId));
   for(const event of linked){
@@ -38,13 +51,13 @@ export function presentHybridPlan(plan:Value,context:Context,completedSessions:S
   return base;
 }
 
-function presentTask(plan:Value,context:Context,today:string,completedSessions:Set<string>):HybridTask{
+function presentTask(plan:Value,context:Context,today:string,completedSessions:Set<string>,practiceCompletions=new Map<string,string>()):HybridTask{
   const auto=autoOf(plan),kind:HybridTaskKind=hybridKinds.has(auto?.hybrid?.kind)?auto.hybrid.kind:plan.kind==='interview'?'mixed':plan.kind==='reading'?'review':'focus';
-  const decorated=presentHybridPlan(plan,context,completedSessions),performedAt=decorated.performedAt;
+  const decorated=presentHybridPlan(plan,context,completedSessions,practiceCompletions),performedAt=decorated.performedAt;
   const startedAt=auto?.startedAt||auto?.hybrid?.startedAt||null;
   return {id:plan.id,title:plan.title,kind,minutes:taskMinutes(plan),reason:auto?.reason||'직접 추가한 계획이에요.',targetId:plan.target?.targetId||null,questionId:plan.target?.kind==='question'?plan.target.id:undefined,
     sourceType:plan.target?.sourceType,sourceVersion:plan.target?.sourceVersion,activityIds:plan.target?.activityIds||[],href:decorated.href,performedAt,completed:plan.completed,startedAt,
-    status:plan.completed||performedAt?'completed':startedAt&&plan.date===today?'in_progress':'pending',manual:!auto,date:plan.date,sequence:auto?.hybrid?.sequence||0};
+    status:plan.completed||performedAt?'completed':startedAt&&plan.date===today?'in_progress':'pending',manual:!auto,date:plan.date,sequence:auto?.hybrid?.sequence||0,...(auto?.hybrid?.practice?{practice:auto.hybrid.practice}:{}),...(auto?.hybrid?.practice?.kind==='assignment'?{href:'/quiz/assignments/'+encodeURIComponent(auto.hybrid.practice.assignmentId)+'?trainingPlanId='+plan.id}:{})};
 }
 
 function scopedDiagnostics(value:Value,context:Context){
@@ -75,11 +88,13 @@ export async function getHybridTraining(studentId:string,targetId?:string|null,t
     const settings=Object.fromEntries(context.schoolTargets.flatMap(school=>{const value=preferences.automaticPractice?.[school.id];return value?.targetSnapshot&&recordMatchesCurrentTarget({targetId:school.id,targetSnapshot:value.targetSnapshot},[{...school.data,id:school.id}])?[[school.id,value]]:[];}));
     const deadlines=hybridDeadlines({today,targets,schedules:calendar.interviewSchedules,coverage:calendar.interviewScheduleCoverage.targets,availability,settings});
     const rows=(await db.query(`select ${columns} from student_plans where student_id=$1 and planned_date>=$2 and planned_date<$3 order by planned_date,created_at,id for update`,[studentId,today,shiftPlanDay(today,7)])).rows;
-    const tasks=rows.map(row=>presentTask(row,fresh,today,completedSessions));
+    const practiceCompletions=await trainingPracticeCompletions(studentId,rows,db);
+    const tasks=rows.map(row=>presentTask(row,fresh,today,completedSessions,practiceCompletions));
     const decorated=rows.map((row,index)=>({...row,performedAt:tasks[index].performedAt}));
-    const fixed=decorated.filter(row=>autoOf(row)?.hybrid?.kind!=='break'&&autoOf(row)?.status!=='superseded'&&preserveHybridPlan(row,today));
+    const fixed=fixedHybridPlans(decorated,context.schoolTargets,today);
     const fixedIds=new Set(fixed.map(row=>row.id));
-    const source={targets:new Map(snapshot.targets)},questions=snapshot.questions;
+    const source={targets:new Map(snapshot.targets)},questions=trainingQuizQuestions(snapshot.questions,fresh);
+    const assignments=await pendingTrainingAssignments(studentId,fresh,questions,db);
     for(const [schoolId,diagnostic] of Object.entries(diagnostics) as Array<[string,Value]>){
       const key=reviewDiagnosticKey(schoolId,reviewDiagnostics({[schoolId]:diagnostic})[schoolId]);
       const activeSelections=new Set(snapshot.activeRequests.filter(request=>request.diagnosticKey===key).map(request=>request.selectionKey));
@@ -88,7 +103,7 @@ export async function getHybridTraining(studentId:string,targetId?:string|null,t
       diagnostic.activeFocusCategories=(diagnostic.focusCategories||[]).filter((category:string)=>activeSelections.has('category:'+category));
     }
     const activeDeadlines=deadlines.filter(deadline=>settings[deadline.targetId]?.enabled!==false);
-    const days=hybridTrainingDays({today,availability,deadlines:activeDeadlines,questions,diagnostics,fixedTasks:tasks.filter(task=>fixedIds.has(task.id))});
+    const days=hybridTrainingDays({today,availability,deadlines:activeDeadlines,questions,assignments,diagnostics,fixedTasks:tasks.filter(task=>fixedIds.has(task.id))});
     if(availability){
       const used=new Set<string>();
       for(const day of days)for(let index=0;index<day.tasks.length;index++){
@@ -96,16 +111,16 @@ export async function getHybridTraining(studentId:string,targetId?:string|null,t
         const owned=source.targets.get(`${task.targetId}:${task.sourceType}:${task.sourceVersion}:${task.questionId}`);
         if(!owned)continue;
         const deadline=deadlines.find(item=>item.targetId===task.targetId)!;
-        const auto={version:3,status:'active',interviewDate:deadline.date,dateSource:deadline.source,dailyMinutes:day.capacityMinutes,minutes:task.minutes,reason:task.reason,hybrid:{version:1,key:task.id,kind:task.kind,sequence:task.sequence,availabilityRevision:availability.revision,diagnosticAt:diagnostics[String(task.targetId)]?.completedAt||null}};
+        const auto={version:3,status:'active',interviewDate:deadline.date,dateSource:deadline.source,dailyMinutes:day.capacityMinutes,minutes:task.minutes,reason:task.reason,hybrid:{version:2,key:task.id,kind:task.kind,sequence:task.sequence,availabilityRevision:availability.revision,diagnosticAt:diagnostics[String(task.targetId)]?.completedAt||null,...(task.practice?{practice:task.practice}:{})}};
         const existing=decorated.find(row=>!used.has(row.id)&&!fixedIds.has(row.id)&&autoOf(row)?.status!=='superseded'&&autoOf(row)?.hybrid?.key===task.id&&knowledgeTargetKey(row.target?.targetSnapshot)===knowledgeTargetKey(owned.targetSnapshot));
         let id:string;
         if(existing){
           id=existing.id;
           if(existing.title!==task.title||knowledgeTargetKey(autoOf(existing))!==knowledgeTargetKey(auto))await db.query("update student_plans set title=$3,target=jsonb_set(target,'{automaticPractice}',$4::jsonb),revision=revision+1,updated_at=now() where id=$1 and student_id=$2",[id,studentId,task.title,JSON.stringify(auto)]);
         }else{
-          const saved=(await db.query('insert into student_plans(student_id,title,planned_date,kind,target) values($1,$2,$3,$4,$5) returning id',[studentId,task.title,day.date,['mixed','diagnostic','recall','focus'].includes(task.kind)?'interview':'study',JSON.stringify({...owned,automaticPractice:auto})])).rows[0];id=saved.id;
+          const saved=(await db.query('insert into student_plans(student_id,title,planned_date,kind,target) values($1,$2,$3,$4,$5) returning id',[studentId,task.title,day.date,['mixed','diagnostic','recall','focus'].includes(task.kind)?'interview':task.kind==='quiz'?'quiz':'study',JSON.stringify({...owned,automaticPractice:auto})])).rows[0];id=saved.id;
         }
-        used.add(id);day.tasks[index]={...task,id};
+        used.add(id);day.tasks[index]={...task,id,...(task.practice?.kind==='assignment'?{href:'/quiz/assignments/'+encodeURIComponent(task.practice.assignmentId)+'?trainingPlanId='+id}:{})};
       }
       for(const row of decorated){
         if(!autoOf(row)||autoOf(row).status==='superseded'||fixedIds.has(row.id)||used.has(row.id))continue;
@@ -114,8 +129,10 @@ export async function getHybridTraining(studentId:string,targetId?:string|null,t
         await db.query("update student_plans set target=jsonb_set(target,'{automaticPractice}',(target->'automaticPractice')||$3::jsonb),revision=revision+1,updated_at=now() where id=$1 and student_id=$2",[row.id,studentId,JSON.stringify({status:'superseded',supersededAt:new Date().toISOString(),reason:'실제 면접 일정·가능한 시간·답변 기록에 맞춰 계획을 조정했어요.'})]);
       }
     }
-    const warnings=[...(!availability?['학습 가능한 시간을 설정하면 실제 일정에 맞춘 하루 계획을 만들어요.']:[]),...deadlines.filter(item=>!['ready','passed','today'].includes(item.status)).map(item=>`${item.university}: ${item.reason}`)];
+    const plannedAssignments=new Set(days.flatMap(day=>day.tasks.flatMap(task=>task.practice?.kind==='assignment'?[task.practice.assignmentId]:[])));
+    const waitingAssignments=assignments.filter(assignment=>!plannedAssignments.has(assignment.id));
+    const warnings=[...(!availability?['학습 가능한 시간을 설정하면 실제 일정에 맞춘 하루 계획을 만들어요.']:[]),...(waitingAssignments.length?[`받은 과제 ${waitingAssignments.length}개는 현재 학습 시간 안에 배치하지 못했어요. 과제함과 학습 시간을 확인해 주세요.`]:[]),...deadlines.filter(item=>!['ready','passed','today'].includes(item.status)).map(item=>`${item.university}: ${item.reason}`)];
     // The selected school is a display focus only; it never multiplies the student's daily budget.
-    return {availability,needsAvailability:!availability,startDate:availability?.startDate||null,selectedTargetId:targetId||context.selectedTargetId||null,deadlines,days,today:days[0],diagnostics,review:snapshot.review,warnings,interviewSchedules:calendar.interviewSchedules,interviewScheduleCoverage:calendar.interviewScheduleCoverage,refreshDue:calendar.refreshDue};
+    return {availability,needsAvailability:!availability,startDate:availability?.startDate||null,selectedTargetId:targetId||context.selectedTargetId||null,deadlines,days,today:days[0],diagnostics,dayReview:snapshot.dayReview?.[targetId||context.selectedTargetId||'all'],review:snapshot.review,warnings,interviewSchedules:calendar.interviewSchedules,interviewScheduleCoverage:calendar.interviewScheduleCoverage,refreshDue:calendar.refreshDue};
   });
 }

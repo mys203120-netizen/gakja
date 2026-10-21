@@ -18,6 +18,7 @@ import {InterviewerAvatarSignal} from '@/lib/client/interviewer-avatar';
 import {InterviewerAudioOutput} from '@/lib/client/interviewer-audio-output';
 import {connectRealtimeInterview,type RealtimeInterviewConnection} from '@/lib/client/realtime-interview';
 import {ChatComposer} from './chat-composer';
+import {LearningHelp} from './learning-help';
 import styles from './live-interview-session.module.css';
 
 // Reuse the gesture-unlocked audio element for every interviewer question (including Safari).
@@ -62,6 +63,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
   const cameraChoice=useRef(camera),leaving=useRef(false),destination=useRef<string|null>(null);cameraChoice.current=camera;
   const [recoveryChecked,setRecoveryChecked]=useState(false),[localStatus,setLocalStatus]=useState(''),[countdown,setCountdown]=useState(0),[textMode,setTextMode]=useState(initialInfo.session.data?.trainingPurpose==='diagnostic'),[textAnswer,setTextAnswer]=useState(''),[textTurn,setTextTurn]=useState(''),[textBusy,setTextBusy]=useState(false),[textStatus,setTextStatus]=useState('');
   const [exiting,setExiting]=useState(false);
+  const [assistantRequest,setAssistantRequest]=useState({turnId:'',token:0});
   const writer=useRef<RecordingRecoveryWriter|null>(null),preparationAbort=useRef<(()=>void)|null>(null),readyOnce=useRef(false),skipReady=useRef<(()=>void)|null>(null),thinkingUntil=useRef(0),textRef=useRef(''),textRequest=useRef<{turnId:string;answer:string;requestId:string}|null>(null);
   const uploadedRecordings=useRef(new WeakMap<LiveAnswerRecording,{mediaId:string;turnId:string;generation:number}>());
   textRef.current=textAnswer;
@@ -239,7 +241,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     };
     const navigation=(window as unknown as {navigation?:EventTarget}).navigation;
     const navigate=(event:Event)=>{const nav=event as Event&{navigationType?:string;destination?:{url:string}};if(nav.navigationType==='traverse'&&nav.cancelable&&nav.destination&&askLeave(nav.destination.url))nav.preventDefault();};
-    const openAssistant=(event:Event)=>{if(!['idle','complete'].includes(instance.state.phase)){event.preventDefault();pause();}};
+    const openAssistant=(event:Event)=>{if(instance.state.info.question&&instance.state.phase!=='complete'){event.preventDefault();setAssistantRequest(value=>({turnId:instance.state.info.question.turnId,token:value.token+1}));}};
     const heartbeat=setInterval(()=>{if(!['idle','paused','error','complete'].includes(instance.state.phase))void post('/api/interviews',{action:'heartbeat',sessionId:id}).catch(()=>pause());},8000);
     document.addEventListener('visibilitychange',visibility);document.addEventListener('click',click,true);window.addEventListener('beforeunload',beforeUnload);window.addEventListener('pagehide',suspendOnUnload);window.addEventListener('gakja:open-on',openAssistant,true);navigation?.addEventListener('navigate',navigate);
     return()=>{mounted=false;clearInterval(heartbeat);document.removeEventListener('visibilitychange',visibility);document.removeEventListener('click',click,true);window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('pagehide',suspendOnUnload);window.removeEventListener('gakja:open-on',openAssistant,true);navigation?.removeEventListener('navigate',navigate);suspendOnUnload();instance.dispose();controller.current=null;audioOutput.current?.dispose();audioOutput.current=null;audio.current=null;};
@@ -295,6 +297,22 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
   useEffect(()=>{if(phase==='error'||phase==='complete')setExiting(false);},[phase]);
   const finish=()=>{if(exiting)return;setExiting(true);destination.current=leaveHref;setLeaveHref(null);setExitOpen(false);setLocalStatus('답변과 녹음 원본의 저장을 확인하고 있어요.');if(textMode){setTextBusy(true);void (async()=>{try{if(question)await post('/api/interviews',{action:'draft',sessionId:id,turnId:question.turnId,draft:textAnswer});const receipt=await post('/api/interviews',{action:'finish',sessionId:id});controller.current?.dispose();setState(previous=>({phase:'complete',info:{...previous.info,session:receipt.session||previous.info.session,report:receipt.report||previous.info.report,question:null},error:''}));}catch(cause){setExiting(false);setState(previous=>({...previous,error:(cause as Error).message}));}finally{setTextBusy(false);}})();}else{if(error)setLocalStatus('녹음 원본은 보관하고, 제출한 답변까지 면접 기록에 남겨요.');else prepareAudio();void controller.current?.finish({preserveOnly:Boolean(error)});}};
   async function switchToText(){let switched=false;setTextBusy(true);try{await controller.current?.preserveAnswer();setTextMode(true);switched=true;}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}finally{setTextBusy(false);if(switched)revealTypedAnswer();}}
+  async function prepareHelp(){
+    const room=controller.current,current=room?.state.info.question;
+    if(!room||!current||textBusy||exiting||['saving','recovering','complete'].includes(room.state.phase))return false;
+    // pause() retains an in-progress recorder; help must never submit or discard its bytes.
+    room.pause();
+    const draft=textMode?textRef.current:String(current.draft||'');
+    if(textMode)try{localStorage.setItem(`gakja-live-text:${studentId}:${id}:${current.turnId}`,draft);}catch{}
+    await post('/api/interviews',{action:'pause',sessionId:id,turnId:current.turnId,draft});
+    if(room.state.info.question?.turnId!==current.turnId)throw new Error('질문이 바뀌었어요. 현재 질문에서 다시 도움받아 주세요.');
+    return true;
+  }
+  async function refreshHelp(){
+    const current=question?.turnId,fresh=await api(`/api/interviews?id=${id}`);
+    if(current&&fresh.question?.turnId!==current)throw new Error('현재 질문의 도움 기록을 다시 확인해 주세요.');
+    setState(previous=>({...previous,info:fresh}));
+  }
   async function replaceRecording(){
     if(!consent||preferenceBusy||!question||!window.confirm('이 기기에 보관한 미제출 녹음을 지우고 같은 질문에 다시 답할까요? 필요한 녹음은 먼저 내려받아 주세요. 서버에 저장한 원본은 유지돼요.'))return;
     try{if(state.recording?.recoveryKey)await removeRecordingRecovery(state.recording.recoveryKey);setLocalStatus('새 녹음을 준비해요.');prepareAudio();await controller.current?.rerecord();}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}
@@ -344,6 +362,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
           {active&&<button className={ownedClassName("button secondary",true)} onClick={()=>controller.current?.pause()}><Pause size={16}/>일시정지</button>}
           {phase==='listening'&&<><button className={ownedClassName("text-link",true)} onClick={()=>controller.current?.finishAnswer()}>답변 마침</button><button className={ownedClassName("text-link",true)} onClick={()=>{thinkingUntil.current=Date.now()+30000;setLocalStatus('30초 동안 자동 마침을 기다려요. 준비되면 말하거나 답변 마침을 눌러 주세요.');}}>잠깐 생각할게요</button></>}
           {question&&!textMode&&<button className={ownedClassName("button secondary",true)} disabled={textBusy||phase==='saving'||phase==='recovering'} onClick={()=>void switchToText()}>이번 질문은 글로 답하기</button>}
+          {question&&<LearningHelp key={question.turnId} interviewSessionId={id} interviewTurnId={question.turnId} targetId={settings.context?.targetId||info.session.target_id} sourceVersion={settings.context?.contentVersion} questionPrompt={question.prompt} answerDraft={textMode?textAnswer:question.draft} openRequest={assistantRequest.turnId===question.turnId?assistantRequest.token:0} beforeOpen={prepareHelp} onAssisted={refreshHelp} onClose={()=>{if(textMode)revealTypedAnswer();}} showEvidence={false} disabled={textBusy||exiting||phase==='saving'||phase==='recovering'}/>}
           {textMode&&<><button className={ownedClassName("text-link",true)} disabled={textBusy||Boolean(textAnswer.trim())||!consent||preferenceBusy} onClick={begin}>{diagnostic?'음성으로 답하기':'음성 면접으로 돌아가기'}</button>{!consent&&<p className={ownedClassName(styles.note,true)}>음성으로 바꾸려면 위에서 저장·전사 동의를 선택해 주세요.</p>}</>}
           {!textMode&&<div className={ownedClassName(styles.voiceHelp,true)}><InfoTip label="음성 답변 사용 안내">한 답변은 최대 3분이에요. 말을 마친 뒤 5초 동안 조용하면 자동 저장돼요. 이어폰을 사용하면 질문 소리가 녹음에 섞이는 것을 줄일 수 있어요. 면접 종료로 언제든 마칠 수 있어요.</InfoTip></div>}
         </div>

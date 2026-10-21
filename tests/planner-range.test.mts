@@ -7,6 +7,7 @@ import ts from 'typescript';
 import {z} from 'zod';
 import * as model from '../apps/web/src/lib/planner-model';
 import {plannerMonthRange} from '../apps/web/src/lib/planner-range';
+import {allInterviewRootsAnsweredSql} from '../apps/web/src/lib/interview-completion';
 
 const require=createRequire(import.meta.url);
 test('a monthly query covers its calendar grid and complete selected weeks, including leap February',()=>{
@@ -36,6 +37,8 @@ test('planner history remains month scoped and only queries completion sessions 
   if(name==='next/server')return {after(){throw new Error('No refresh needed in fixture.');}};
   if(name==='@/lib/automatic-practice-store')return {synchronizeAutomaticPractice:async()=>[]};
   if(name==='@/lib/hybrid-training-store')return {presentHybridPlan:(row:any)=>row};
+  if(name==='@/lib/interview-completion')return {allInterviewRootsAnsweredSql};
+  if(name==='@/lib/training-practice-store')return {trainingPracticeCompletions:async()=>new Map()};
   return require(name);
  }});
  const response=await module.exports.GET(new Request('http://local/api/planner?month=2026-09&history=1')),body=await response.json();

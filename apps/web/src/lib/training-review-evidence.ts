@@ -1,11 +1,11 @@
-import type {LearningData} from '@gakja/content-contracts';
+import {evaluateQuizResponse,type LearningData,type QuizResponse,type QuizSnapshotItem} from '@gakja/content-contracts';
 import {recordMatchesCurrentTarget} from './learning-target-scope';
 import {memoryReviewOutcome,quizAnswerContext} from './learning-record-rules';
 import {quizOutcome,type QuizMode,type SessionItem} from './quiz-rules';
 
 type Value=Record<string,any>;
-export type ReviewAttempt={id:string;at:string;kind?:'interview_answer'|'quiz_response'|'memory_review';assistanceKnown:boolean;assisted:boolean;timedOut?:boolean;outcome?:boolean;valid?:boolean;inputMode?:string};
-export type ReviewEvidenceSource={kind:'interview_answer'|'quiz_response'|'memory_review';sourceId:string;questionId:string;record:Value;at:unknown;submitted:boolean;invalidated?:boolean;followup?:boolean;assistanceKnown:boolean;assisted:boolean;timedOut?:boolean;outcome?:boolean;inputMode?:string};
+export type ReviewAttempt={id:string;at:string;kind?:'interview_answer'|'quiz_response'|'memory_review'|'assignment_submission';assistanceKnown:boolean;assisted:boolean;timedOut?:boolean;outcome?:boolean;valid?:boolean;inputMode?:string};
+export type ReviewEvidenceSource={kind:'interview_answer'|'quiz_response'|'memory_review'|'assignment_submission';sourceId:string;discoveryIds?:string[];questionId:string;record:Value;at:unknown;submitted:boolean;invalidated?:boolean;followup?:boolean;assistanceKnown:boolean;assisted:boolean;timedOut?:boolean;outcome?:boolean;inputMode?:string};
 type QuestionScope={id:string;sourceType:'personal'|'common';sourceVersion:number};
 const text=(value:unknown)=>typeof value==='string'?value:'';
 const reviewed=new Set(['verified','approved','confirmed','synthetic_reviewed','confirmed_from_record','confirmed_by_student']);
@@ -56,12 +56,66 @@ export function memoryReviewSource(row:Value,learning?:LearningData):ReviewEvide
   ...reviewAssistance(data),timedOut:data.timed_out===true||data.timedOut===true,...(outcome===undefined?{}:{outcome}),inputMode:data.response_mode==='voice'?'voice':'text'};
 }
 
+/** Assignment receipts reuse their frozen server evaluator; self checks never certify independent success. */
+export function assignmentReviewSource(row:Value,learning?:LearningData):ReviewEvidenceSource{
+ const response=row.response&&typeof row.response==='object'&&!Array.isArray(row.response)?row.response:{},result=row.result||{},item=row.item||{};
+ const identity=quizAnswerContext(item,{},learning),common=item.common_revision,kind=row.source_kind;
+ const validItem=Boolean(item.id&&item.id===row.memory_item_id&&item.question_id);
+ const timedOut=response.timed_out===true||response.timedOut===true;
+ let outcome:boolean|undefined,evaluated=false;
+ if(validItem){try{
+  const evaluation=evaluateQuizResponse(item as QuizSnapshotItem,{...response,memoryItemId:row.memory_item_id} as QuizResponse);evaluated=true;
+  if(reviewed.has(item.verification_status)&&evaluation.evaluation_method==='reviewed_correct_answer'&&result.evaluation_method==='reviewed_correct_answer'){
+   if(evaluation.correct===false||result.correct===false)outcome=false;
+   else if(evaluation.correct===true&&result.correct===true&&!timedOut)outcome=true;
+  }
+ }catch{}}
+ const snapshot=response.target_snapshot||response.targetSnapshot;
+ const scopeChanged=Boolean((response.target_id||response.targetId)&&String(response.target_id||response.targetId)!==String(row.target_id)||snapshot&&!recordMatchesCurrentTarget({targetId:row.target_id,targetSnapshot:snapshot},[{...row.target_snapshot,id:row.target_id}])||(response.source_kind&&response.source_kind!==kind)||(response.question_id&&response.question_id!==item.question_id)||(response.memoryItemId&&response.memoryItemId!==row.memory_item_id)||(response.content_version!==undefined&&Number(response.content_version)!==Number(row.content_version))||(kind==='common'&&(response.common_revision??response.commonRevision)!==undefined&&Number(response.common_revision??response.commonRevision)!==Number(common)));
+ const assistance=reviewAssistance({...response,helpEvents:[...(Array.isArray(response.helpEvents)?response.helpEvents:[]),...(Array.isArray(row.help_events)?row.help_events:[])]});
+ return {kind:'assignment_submission',sourceId:String(row.id),questionId:identity.question_id,
+  record:{targetId:row.target_id,targetSnapshot:row.target_snapshot,sourceType:kind,contentVersion:row.content_version,commonRevision:kind==='common'?common:undefined},
+  at:row.submitted_at,submitted:validItem&&evaluated&&['submitted','reviewed','retry_due','completed'].includes(row.assignment_state),
+  invalidated:response.invalidated===true||result.invalidated===true||scopeChanged||!['personal','common'].includes(kind)||Boolean(row.student_id&&row.assignment_student_id&&row.student_id!==row.assignment_student_id),
+  ...assistance,timedOut,...(outcome===undefined?{}:{outcome}),inputMode:item.kind==='choice'?'choice':response.response_mode==='voice'?'voice':'text'};
+}
+
+/** Screen counts use current owned receipt facts; mirrored events retain one canonical submission. */
+export function sourceValidateTrainingEvents(events:Value[],sources:ReviewEvidenceSource[]):Value[]{
+ const kinds=new Set(['quiz_response','assignment_submission','memory_review']),byReceipt=new Map<string,ReviewEvidenceSource>(),seen=new Set<string>();
+ for(const source of sources){
+  if(!kinds.has(source.kind))continue;
+  byReceipt.set(`${source.kind}:${source.sourceId}`,source);
+  for(const alias of source.discoveryIds||[])byReceipt.set(alias,source);
+ }
+ const validated:Value[]=[];
+ for(const event of events){
+  if(!kinds.has(event.kind)){validated.push(event);continue;}
+  const source=byReceipt.get(`${event.kind}:${event.source_id}`);if(!source||!source.submitted||source.invalidated)continue;
+  const receipt=`${source.kind}:${source.sourceId}`;if(seen.has(receipt))continue;
+  const at=source.at instanceof Date?source.at:new Date(String(source.at));if(!Number.isFinite(at.getTime()))continue;
+  const record=source.record,common=record.commonRevision??record.common_revision,version=record.contentVersion??record.content_version;
+  const targetId=record.targetId||record.target_id,targetSnapshot=record.targetSnapshot||record.target_snapshot,sourceType=record.sourceType||record.source_type||(Number(common)>0?'common':'personal');
+  seen.add(receipt);validated.push({...event,kind:source.kind,source_id:source.sourceId,created_at:at.toISOString(),data:{...(event.data||{}),
+   questionId:source.questionId,question_id:source.questionId,targetId,target_id:targetId,targetSnapshot,target_snapshot:targetSnapshot,sourceType,source_type:sourceType,
+   contentVersion:version,content_version:version,commonRevision:common,common_revision:common,sourceVersion:sourceType==='common'?common:version,
+   assistanceKnown:source.assistanceKnown,assistance_recorded:source.assistanceKnown,assistanceRecorded:source.assistanceKnown,
+   assisted:source.assisted,hintUsed:false,hint_used:false,aiAssisted:false,ai_assisted:false,helpKinds:[],helpEvents:[],
+   outcome:source.outcome,correct:source.outcome,timedOut:source.timedOut===true,timed_out:source.timedOut===true,invalidated:false,
+   verified:typeof source.outcome==='boolean',evaluationMethod:typeof source.outcome==='boolean'?'reviewed_correct_answer':undefined,evaluation_method:typeof source.outcome==='boolean'?'reviewed_correct_answer':undefined,
+   inputMode:source.inputMode,response_mode:source.inputMode,responseMode:source.inputMode,
+   recordingId:source.inputMode==='voice'?event.data?.recordingId:undefined,audioId:source.inputMode==='voice'?event.data?.audioId:undefined,recording_id:source.inputMode==='voice'?event.data?.recording_id:undefined,
+  }});
+ }
+ return validated;
+}
+
 /** Events discover a real owned source; they cannot resurrect a deleted/invalidated source or supply success/help facts. */
 export function reviewQuestionAttempts(question:QuestionScope,target:Value,events:Value[],sources:ReviewEvidenceSource[]):ReviewAttempt[]{
  const discovered=new Set(events.map(event=>`${event.kind}:${event.source_id}`)),seen=new Set<string>(),attempts:ReviewAttempt[]=[];
  for(const source of sources){
   const id=`${source.kind}:${source.sourceId}`,record=source.record,common=record.commonRevision??record.common_revision;
-  if(!discovered.has(id)||seen.has(id)||source.followup||source.questionId!==question.id||!recordMatchesCurrentTarget(record,[target]))continue;
+  if(!discovered.has(id)&&!source.discoveryIds?.some(alias=>discovered.has(alias))||seen.has(id)||source.followup||source.questionId!==question.id||!recordMatchesCurrentTarget(record,[target]))continue;
   if(question.sourceType==='common'?Number(common)!==question.sourceVersion:Boolean(common)||Number(record.contentVersion??record.content_version)!==question.sourceVersion)continue;
   if(question.sourceType==='personal'&&(record.sourceType==='common'||record.source_type==='common'))continue;
   if(question.sourceType==='common'&&(record.sourceType==='personal'||record.source_type==='personal'))continue;

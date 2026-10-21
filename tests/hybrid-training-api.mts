@@ -24,6 +24,11 @@ async function addSchool(canonicalName:string,departmentName:string,track:string
  const registered=await registerReviewedSchool((path,body)=>request(path,body).then(body=>({status:200,body})),{referenceId:school.id,departmentId:department.id,admissionYear:2027,track});
  return registered.body.target as Value;
 }
+async function checkCalendarLesson(training:Value,planId:string,label:string){
+ const calendar=await request('/api/planner?month='+training.today.date.slice(0,7));
+ const plan=calendar.plans.find((item:Value)=>item.id===planId),task=training.today.tasks.find((item:Value)=>item.id===planId);
+ check(Boolean(plan)&&Boolean(task)&&Boolean(plan.completed||plan.performedAt)===(task.status==='completed'),label);
+}
 const availability={weekdayMinutes:120,weekendMinutes:120,csatDate:null,beforeCsatWeekdayMinutes:20,beforeCsatWeekendMinutes:60,blockedDates:[] as string[],overrides:{} as Record<string,number>};
 let failure:unknown;
 await db.connect();
@@ -79,6 +84,7 @@ try{
  check(immediatePartial.sessionId===partialId&&immediatePartial.state==='partial'&&immediatePartial.completedAt===null,'Relinking an interrupted diagnostic immediately stores partial status before a correcting GET can run');
  const partialTraining=await request('/api/training?targetId='+encodeURIComponent(target.id));
  check(partialTraining.diagnostics.state==='partial'&&partialTraining.today.tasks.find((item:Value)=>item.id===task.id)?.status!=='completed','Today and persisted diagnosis both keep a one-answer interrupted lesson incomplete');
+ await checkCalendarLesson(partialTraining,task.id,'Calendar and Today both keep an ended one-answer diagnostic incomplete');
  const partialHistory=await request('/api/interviews?id='+partialId);
  check(partialHistory.turns.filter((turn:Value)=>turn.answer).length===1,'The interrupted lesson retains its submitted answer in history');
  const retryTask=(await request('/api/training',{action:'task_start',planId:task.id})).task;
@@ -108,6 +114,7 @@ try{
  training=await request('/api/training?targetId='+encodeURIComponent(target.id));
  check(training.diagnostics?.state==='completed','Finishing the owned diagnostic updates its durable status');
  check(training.today.tasks.find((item:Value)=>item.id===task.id)?.status==='completed','Completed session evidence marks only its actual daily task as performed');
+ await checkCalendarLesson(training,task.id,'Calendar and Today both complete the lesson after every root has a valid answer');
  await request('/api/training',{action:'task_start',planId:task.id},0,409);
  const evidence=training.readiness.items.find((item:Value)=>item.id==='experience:'+cardId);
  check(evidence?.mainAnswers===turns.length&&evidence.textAttempts===turns.length&&evidence.audioAttempts===0,'Live-screen text replies update the same activity as text evidence, without inventing audio attempts');
@@ -120,16 +127,19 @@ try{
  check(invalidatedImmediate.state==='partial'&&invalidatedImmediate.completedAt===null,'Relinking recomputes an existing completed diagnosis immediately when one source answer becomes invalid');
  const invalidatedTraining=await request('/api/training?targetId='+encodeURIComponent(target.id));
  check(invalidatedTraining.diagnostics.state==='partial'&&invalidatedTraining.today.tasks.find((item:Value)=>item.id===task.id)?.status!=='completed','Invalidating one root reopens both diagnosis and lesson despite the cached complete finish receipt');
+ await checkCalendarLesson(invalidatedTraining,task.id,'Calendar and Today both reopen the lesson when one original answer is invalidated');
  await db.query("update interview_turns set data=data||'{\"invalidated\":true}'::jsonb where session_id=$1 and student_id=$2",[sessionId,ids[0]]);
  await request('/api/training',{action:'link_session',planId:task.id,sessionId,diagnostic:true});
  const allInvalidated=(await db.query("select data->'trainingDiagnostics'->$2 as diagnostic from student_preferences where student_id=$1",[ids[0],target.id])).rows[0].diagnostic;
  check(allInvalidated.state==='partial'&&allInvalidated.answers===0,'The already-linked diagnosis remains partial even when all of its original answers become invalid');
  const noValidTraining=await request('/api/training?targetId='+encodeURIComponent(target.id));
  check(noValidTraining.diagnostics.state==='partial'&&noValidTraining.diagnostics.answers===0&&noValidTraining.today.tasks.find((item:Value)=>item.id===task.id)?.status!=='completed','Today cannot revive a completed lesson from a finish receipt after every original answer is invalidated');
+ await checkCalendarLesson(noValidTraining,task.id,'Calendar and Today cannot revive completion after every original answer becomes invalid');
  await db.query("update interview_turns set data=data-'invalidated' where session_id=$1 and student_id=$2",[sessionId,ids[0]]);
  await request('/api/training',{action:'link_session',planId:task.id,sessionId,diagnostic:true});
  const restoredTraining=await request('/api/training?targetId='+encodeURIComponent(target.id));
  check(restoredTraining.diagnostics.state==='completed'&&restoredTraining.today.tasks.find((item:Value)=>item.id===task.id)?.status==='completed','Restoring every valid root resolves both diagnosis and lesson again without resubmitting or duplicating history');
+ await checkCalendarLesson(restoredTraining,task.id,'Calendar and Today both restore completion from the same valid source answers');
  await request('/api/training',{action:'diagnostic_reflection',sessionId,needsReviewQuestionIds:[diagnostic.questionIds[0]],focusCategories:['major']});
  await request('/api/training',{action:'diagnostic_reflection',sessionId,needsReviewQuestionIds:['unanswered-question'],focusCategories:[]},0,409);
  const reflected=await request('/api/training?targetId='+encodeURIComponent(target.id));check(reflected.diagnostics.needsReviewQuestionIds.includes(diagnostic.questionIds[0]),'Student reflection is recorded for subsequent adaptive planning');
@@ -166,6 +176,55 @@ try{
  const firstHistory=await request('/api/interviews?id='+firstFocus.session.id),secondHistory=await request('/api/interviews?id='+secondFocus.session.id);
  check(firstHistory.turns[0].answer===firstFocusText&&secondHistory.turns[0].answer===secondFocusText&&secondHistory.session.data.trainingImprovement===improvement,'The first answer and the revised answer remain separate, durable attempts for the same question');
 
+ // Real quiz and assignment sources share the same budget and completion predicate.
+ let practiceDay=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ const quizTask=practiceDay.today.tasks.find((item:Value)=>item.kind==='quiz'&&item.targetId===target.id);
+ check(Boolean(quizTask?.practice?.itemIds.length),'Today assigns a real server-eligible quiz instead of a decorative tool link');
+ const quizStarted=(await request('/api/training',{action:'task_start',planId:quizTask.id})).task;
+ const quizInput={action:'create',trainingPlanId:quizTask.id,targetId:quizStarted.targetId,sourceType:quizStarted.sourceType,sourceVersion:quizStarted.sourceVersion,mode:quizStarted.practice.mode,itemIds:quizStarted.practice.itemIds};
+ await request('/api/quiz',quizInput,1,404);
+ await request('/api/quiz',{...quizInput,itemIds:['unowned-item']},0,409);
+ const emptyQuiz=await request('/api/quiz',quizInput);
+ await request('/api/quiz',{action:'end',sessionId:emptyQuiz.session.id});
+ practiceDay=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ check(practiceDay.today.tasks.find((item:Value)=>item.id===quizTask.id).status!=='completed','Opening and ending a quiz without submitting does not complete its lesson');
+ const quiz=await request('/api/quiz',quizInput);
+ const quizDuplicate=await request('/api/quiz',quizInput);
+ check(quiz.session.id===quizDuplicate.session.id,'Concurrent/retried plan quiz creation reuses the same unsubmitted room');
+ await request('/api/quiz',{action:'start',sessionId:quiz.session.id});
+ for(let index=0;index<quiz.session.items.length;index++){
+  if(index)await request('/api/quiz',{action:'start',sessionId:quiz.session.id});
+  await request('/api/quiz',{action:'answer',sessionId:quiz.session.id,itemIndex:index,response:'저는 조건을 비교하고 직접 확인할 자료를 설명하겠습니다.',responseMode:'text',rating:'good',recallStatus:'remembered',requestId:randomUUID()});
+ }
+ practiceDay=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ check(practiceDay.today.tasks.find((item:Value)=>item.id===quizTask.id).status==='completed','Actual quiz submissions complete the exact planned lesson');
+ await checkCalendarLesson(practiceDay,quizTask.id,'Calendar and Today agree on the submitted planned quiz');
+ const quizEvidence=practiceDay.readiness.items.find((item:Value)=>item.id==='question:'+quizTask.questionId);
+ check(quizEvidence?.textAttempts>0,'A quiz without a student-record activity still contributes to the same question readiness');
+ await db.query("update quiz_responses set data=data||'{\"invalidated\":true}'::jsonb where session_id=$1 and student_id=$2",[quiz.session.id,ids[0]]);
+ const invalidQuiz=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ check(invalidQuiz.today.tasks.find((item:Value)=>item.id===quizTask.id).status!=='completed','Invalidating submitted quiz evidence reopens its lesson');
+ await checkCalendarLesson(invalidQuiz,quizTask.id,'Calendar and Today agree after quiz evidence invalidation');
+ await db.query("update quiz_responses set data=data-'invalidated' where session_id=$1 and student_id=$2",[quiz.session.id,ids[0]]);
+ const assigned=await request('/api/learning',{action:'assignment_create',requestId:randomUUID(),targetId:target.id,questionIds:diagnostic.questionIds.slice(0,1),title:'오늘 계획 연결 검증 과제'});
+ const assignmentId=assigned.assignment.id;
+ practiceDay=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ const assignmentTask=practiceDay.today.tasks.find((item:Value)=>item.kind==='assignment'&&item.practice?.assignmentId===assignmentId);
+ check(Boolean(assignmentTask)&&practiceDay.today.plannedMinutes<=120,'A received assignment replaces focus time inside the shared daily budget');
+ await request('/api/training',{action:'task_start',planId:assignmentTask.id});
+ await request('/api/learning',{action:'assignment_start',requestId:randomUUID(),assignmentId});
+ const submission={action:'assignment_submit',requestId:randomUUID(),assignmentId,responses:assigned.assignment.items.map((item:Value)=>({memoryItemId:item.id||item.memory_item_id,response:'자료를 대조하고 제가 직접 한 행동과 남은 한계를 설명하겠습니다.',rating:'good'}))};
+ await request('/api/learning',submission);await request('/api/learning',submission);
+ practiceDay=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ check(practiceDay.today.tasks.find((item:Value)=>item.id===assignmentTask.id).status==='completed','Actual assignment submissions complete their owned daily lesson');
+ await checkCalendarLesson(practiceDay,assignmentTask.id,'Calendar and Today agree on submitted assignment completion');
+ check((await db.query('select count(*)::int count from quiz_submissions where assignment_id=$1 and student_id=$2',[assignmentId,ids[0]])).rows[0].count===assigned.assignment.items.length,'Retrying one assignment submission does not duplicate source receipts');
+ await db.query("update quiz_submissions set response=response||'{\"invalidated\":true}'::jsonb where assignment_id=$1 and student_id=$2",[assignmentId,ids[0]]);
+ const invalidAssignment=await request('/api/training?targetId='+encodeURIComponent(target.id));
+ check(invalidAssignment.today.tasks.find((item:Value)=>item.id===assignmentTask.id).status!=='completed','Invalidated assignment source answers reopen the planned lesson');
+ await checkCalendarLesson(invalidAssignment,assignmentTask.id,'Calendar and Today agree after assignment evidence invalidation');
+ await db.query("update quiz_submissions set response=response-'invalidated' where assignment_id=$1 and student_id=$2",[assignmentId,ids[0]]);
+
  const second=await addSchool('건국대학교','사회환경공학부','KU자기추천전형');
  const shared=await request('/api/training?targetId='+encodeURIComponent(second.id));
  check(shared.deadlines.some((item:Value)=>item.targetId===target.id)&&shared.deadlines.some((item:Value)=>item.targetId===second.id),'Different actual university targets share one student training routine');
@@ -196,7 +255,7 @@ finally{
    assert.ok(owned.every(row=>emails.includes(row.email)),'Cleanup is restricted to exact synthetic profiles created by this run.');
    await db.query('begin');
    await db.query('delete from answer_revisions where answer_id in (select id from user_answers where student_id=any($1::uuid[]))',[createdIds]);
-   for(const table of ['answer_comments','user_answers','interview_reports','media_assets','interview_turns','interview_sessions','study_session_events','study_session_tabs','study_sessions','experience_card_drafts','experience_cards','student_plans','ai_usage_logs','notifications','student_preferences','school_profiles','support_targets'])await db.query(`delete from ${table} where student_id=any($1::uuid[])`,[createdIds]);
+   for(const table of ['answer_comments','user_answers','memory_attempts','quiz_responses','quiz_recordings','quiz_sessions','quiz_submissions','quiz_assignment_events','quiz_assignments','learning_requests','interview_reports','media_assets','interview_turns','interview_sessions','study_session_events','study_session_tabs','study_sessions','experience_card_drafts','experience_cards','student_plans','ai_usage_logs','notifications','student_preferences','school_profiles','support_targets'])await db.query(`delete from ${table} where student_id=any($1::uuid[])`,[createdIds]);
    await db.query('delete from audit_logs where actor_id=any($1::uuid[]) or student_id=any($1::uuid[])',[createdIds]);
    await db.query('delete from sessions where user_id=any($1::uuid[])',[createdIds]);
    await db.query('delete from profiles where id=any($1::uuid[]) and email=any($2::text[])',[createdIds,emails]);

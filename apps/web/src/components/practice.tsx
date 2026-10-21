@@ -4,7 +4,7 @@ import {ownedClassName} from './owned-class-name';
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Clock3, Sparkles, Mic, ArrowUpRight, Check, RotateCcw, GripVertical, Play, ChevronRight, ListChecks, ArrowUp, ArrowDown } from 'lucide-react';
 import {useRecordPages,useRecordDetail} from './use-record-pages';
 import { useApp } from './app-shell';
@@ -15,6 +15,7 @@ import { QuizLibrary } from './quiz-library';
 import { learningRetryHref } from '@/lib/learning-navigation';
 import { growthContextKey } from '@/lib/learning-growth';
 import { LearningHelp } from './learning-help';
+import { TrainingContinuation } from './training-continuation';
 
 export function QuizPages({ slug = [] }: { slug?: string[] }) {
   if (slug[0] === 'assignments') return slug[1] ? <AssignmentSession key={slug[1]} id={slug[1]} /> : <AssignmentList />;
@@ -215,6 +216,14 @@ function AssignmentList() {
 }
 
 function AssignmentSession({ id }: { id: string }) {
+  const {data}=useApp(),params=useSearchParams();
+  const requestedPlan=params.get('trainingPlanId');
+  const trainingPlanId=requestedPlan&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedPlan)?requestedPlan:null;
+  // A query change preserves this assignment draft; another account or task owns a new form.
+  return <AssignmentSessionBody key={`${data.user.id}:${id}`} id={id} trainingPlanId={trainingPlanId}/>;
+}
+
+function AssignmentSessionBody({ id, trainingPlanId }: { id: string; trainingPlanId: string|null }) {
   const { data, refresh } = useApp();
   const router = useRouter();
   const detail=useRecordDetail('assignments','id='+encodeURIComponent(id),true,data.user.id);
@@ -226,6 +235,8 @@ function AssignmentSession({ id }: { id: string }) {
   const requestIds = useRef<Item>({});
   const restored = useRef(false);
   const activeItem=useRef('');
+  const visit=useRef({active:true});
+  useEffect(()=>{const current=visit.current;current.active=true;return()=>{current.active=false;};},[]);
   const [assistantRequest,setAssistantRequest]=useState<{itemId:string;token:number}>({itemId:'',token:0});
   const assignment:Item|null=detail.item;
   const draftKey = `gakja-assignment:${data.user.id}:${id}`;
@@ -260,8 +271,11 @@ function AssignmentSession({ id }: { id: string }) {
     requestIds.current[actionName] ||= crypto.randomUUID();
     try {
       const result = await post('/api/learning', { action: actionName, assignmentId: id, requestId: requestIds.current[actionName], ...extra });
+      if(!visit.current.active)return;
       await reload();
+      if(!visit.current.active)return;
       if (actionName === 'assignment_submit') { sessionStorage.removeItem(draftKey); setResponses({}); await refresh(); }
+      if(!visit.current.active)return;
       if (actionName === 'assignment_retry' && result.assignment?.id) router.push('/quiz/assignments/' + result.assignment.id);
       requestIds.current[actionName] = '';
     } catch (err) { setSaveError((err as Error).message); }
@@ -284,6 +298,8 @@ function AssignmentSession({ id }: { id: string }) {
     <PageTitle title={pageTitle} aside={<Badge tone={assignment.state === 'completed' ? 'green' : 'neutral'}>{assignmentStates[assignment.state] || '확인 중'}</Badge>}>
       {savedTarget && <>{savedTarget?.university} · {savedTarget?.department} · </>}{items.length}개 항목{assignment.due_at ? ' · ' + dateLabel(assignment.due_at) + '까지' : ''}
     </PageTitle>
+    {locked&&trainingPlanId&&<TrainingContinuation planId={trainingPlanId}/>}
+    {trainingPlanId&&!locked&&<div className={ownedClassName("learning-inline-links",true)}><span className={ownedClassName("muted small",true)}>오늘 계획에서 진행 중</span><Link className={ownedClassName("text-link")} href={'/my/train?planId='+encodeURIComponent(trainingPlanId)}>오늘 계획으로 돌아가기<ArrowUpRight size={16}/></Link></div>}
     {savedTarget && !targetUnchanged && <p className={ownedClassName("confirmation-review-note",true)}>당시 학교·학과의 질문과 근거로 다시 말해요. 현재 지원처의 준비 기록과 구분해 보관합니다.</p>}
     {assignment.review?.note && <p className={ownedClassName("confirmation-review-note",true)}>담당자 의견 · {assignment.review.note}</p>}
     {(error || saveError) && <Alert>{saveError || error}</Alert>}

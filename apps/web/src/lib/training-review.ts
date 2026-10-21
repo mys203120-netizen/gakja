@@ -3,7 +3,7 @@ export type ReviewCategory = 'personal' | 'major' | 'talent';
 export type ReviewAttempt = {
   id: string; at: string; assistanceKnown?: boolean; assisted?: boolean; timedOut?: boolean;
   outcome?: boolean; valid?: boolean; inputMode?: string;
-  kind?: 'interview_answer' | 'quiz_response' | 'memory_review';
+  kind?: 'interview_answer' | 'quiz_response' | 'memory_review' | 'assignment_submission';
 };
 export type ReviewQuestion = {
   id: string; targetId: string; targetKey: string; sourceType: 'personal' | 'common'; sourceVersion: number;
@@ -155,7 +155,7 @@ function studentRequest(input: {episodes: Map<string, number>; evidence: (questi
 
 function qualifies(attempt: ReviewAttempt): boolean {
   if (attempt.valid === false || attempt.assistanceKnown !== true || attempt.assisted !== false || attempt.timedOut === true || attempt.outcome === false) return false;
-  return attempt.kind === 'quiz_response' || attempt.kind === 'memory_review' ? attempt.outcome === true : true;
+  return attempt.kind === 'quiz_response' || attempt.kind === 'memory_review' || attempt.kind === 'assignment_submission' ? attempt.outcome === true : true;
 }
 
 /** Recompute from original facts each time, including previously resolved requests. */
@@ -255,7 +255,7 @@ export function applyReviewReflection(input: {state?: unknown; questions: Review
     if (request.origin === 'student' && request.diagnosticKey === key && !selections.has(request.selectionKey)) request.status = 'dismissed';
     // Saving a new reflection replaces earlier student selections in this exact current scope.
     // Merely linking a new diagnosis never clears unfinished work or automatic evidence requests.
-    if (request.origin === 'student' && request.diagnosticKey !== key && request.status !== 'dismissed'
+    if (request.origin === 'student' && !request.diagnosticKey?.startsWith('daily:') && request.diagnosticKey !== key && request.status !== 'dismissed'
       && request.questionKeys.length > 0 && request.questionKeys.every(questionKey => currentScopes.has(questionKey))
       && request.scopes.every(scope => {
         const current = currentScopes.get(reviewQuestionKey(scope));

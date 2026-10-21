@@ -60,8 +60,6 @@
 .weekCategories small { color:var(--clarity-muted); font-size:11px; }
 .weekMinutes { font-size:12px; text-align:right; font-variant-numeric:tabular-nums; }
 .weekMinutes small { display:block; color:var(--clarity-muted); font-size:11px; }
-.tools { display:flex; flex-wrap:wrap; gap:4px 28px; padding-block:12px; margin-top:20px; }
-.tools>a { display:inline-flex; align-items:center; gap:6px; min-height:44px; color:var(--clarity-muted); font-size:13px; }
 .note { color:var(--clarity-muted); font-size:13px; line-height:1.8; margin:16px 0; }
 .note>a { color:var(--clarity-green); text-underline-offset:4px; text-decoration:underline; }
 .setup { padding:28px; border:1px solid var(--clarity-line); border-radius:16px; background:var(--clarity-surface); }
@@ -199,8 +197,6 @@
  .evidenceLinks { gap:4px 18px; }
  .connectionNote { flex-wrap:wrap; }
  .connectionNote>a { margin-left:33px; }
- .tools { gap:2px 22px; }
- .tools>a { font-size:12px; }
 }
 @media(prefers-reduced-motion:reduce) { .activity>summary>svg { transition:none; } }
 
@@ -213,7 +209,6 @@
  .sectionHeading { margin-bottom:18px; }
  .focus { margin-bottom:40px; }
  .activity+.activity { margin-top:20px; }
- .tools { margin-top:36px; }
  .taskCopy p { display:none; }
  .taskCopy strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
  .preparationFocus { flex-direction:column; align-items:stretch; gap:24px; padding:22px 20px; }
@@ -241,6 +236,7 @@
 .taskTrigger:hover { background:var(--clarity-soft); }
 .taskTrigger:disabled { cursor:wait; opacity:.65; }
 .taskReason { display:block; margin-top:6px; color:var(--clarity-muted); font-size:12px; line-height:1.65; }
+.taskActivity { display:block; margin-top:7px; color:var(--clarity-green); font-size:12px; line-height:1.7; word-break:keep-all; overflow-wrap:anywhere; }
 .taskArrow { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:38px; min-height:38px; color:var(--clarity-green); }
 @media(max-width:700px) {
  .focusAction[data-has-next=true]>:global(.button) { display:none; }

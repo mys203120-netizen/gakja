@@ -18,7 +18,7 @@ export function SectionNavigation(){
     if(overflow)container.scrollBy({left:overflow,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
   },[path]);
   if(isAnswerWorkspace(path))return null;
-  if(path==='/my'||path==='/preparation'||path==='/availability'||path.startsWith('/my/diagnosis')||path.startsWith('/my/train'))return null;
+  if(path==='/preparation'||path==='/availability')return null;
   const items=section==='preparation'?RESOURCE_SECTIONS:section==='today'?PRACTICE_SECTIONS:null;
   if(!items)return null;
   const current=section==='preparation'?resourceSectionHref(path):practiceSectionHref(path);

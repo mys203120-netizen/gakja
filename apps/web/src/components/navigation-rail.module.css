@@ -53,15 +53,17 @@
 .practiceHome h1 { margin:0 0 var(--clarity-section-gap); font-size:var(--clarity-title-size); line-height:1.35; font-weight:650; }
 .resume { display:flex; justify-content:space-between; align-items:center; gap:15px; padding:18px 22px; margin-bottom:26px; background:var(--clarity-surface); border-radius:12px; color:var(--clarity-muted); font-size:14px; }
 .resume a,.practiceLinks a,.openPaths a { display:inline-flex; align-items:center; gap:8px; font-size:14px; }
-.practiceChoices { display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:12px 0 12px; }
+.practiceChoices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; padding:12px 0 12px; }
 .practiceChoices>a { display:flex; gap:20px; align-items:flex-start; padding:24px; text-decoration:none; color:var(--clarity-ink); background:var(--ui-card); border:1px solid var(--clarity-line); border-radius:20px; box-shadow:var(--ui-shadow); }
 .practiceChoices>a>svg:first-child { width:52px; height:52px; padding:13px; border-radius:50%; background:var(--clarity-mint); color:var(--clarity-green); flex-shrink:0; margin-top:1px; }
 .practiceChoices>a>svg:last-child { margin-left:auto; margin-top:7px; flex-shrink:0; color:var(--clarity-muted); }
 .practiceChoices h2 { font-size:var(--clarity-section-size); font-weight:600; line-height:1.45; margin:0 0 8px; }
 .practiceChoices p { margin:0 0 10px; font-size:var(--clarity-body-size); line-height:var(--clarity-line-height); color:var(--clarity-muted); }
+.practiceChoices>a>div { min-width:0; }
 .practiceChoices span { color:var(--clarity-muted); font-size:13px; }
 .practiceChoices>a:hover h2 { color:var(--clarity-green); }
 .practiceChoices>a:focus-visible { outline:2px solid var(--clarity-green); outline-offset:5px; border-radius:8px; }
+@media(min-width:1001px) { .practiceChoices>a { position:relative; flex-direction:column; gap:20px; } .practiceChoices>a>svg:last-child { position:absolute; top:26px; right:24px; margin:0; } }
 .experienceEntry { display:flex; align-items:center; gap:12px; min-height:52px; margin-bottom:24px; padding:12px 0; border-bottom:1px solid var(--clarity-line); color:var(--clarity-ink); text-decoration:none; }
 .experienceEntry>svg { flex-shrink:0; color:var(--clarity-green); }
 .experienceEntry>svg:last-child { margin-left:auto; }

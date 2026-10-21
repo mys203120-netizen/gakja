@@ -26,9 +26,7 @@ export const RESOURCE_SECTIONS=[
 ] as const;
 export const PRACTICE_SECTIONS=[
   {href:'/my',label:'오늘 계획'},
-  {href:'/learn',label:'직접 연습 선택'},
-  {href:'/interview',label:'모의면접'},
-  {href:'/quiz/assignments',label:'과제'},
+  {href:'/learn',label:'자유 연습'},
   {href:'/on',label:'AI 비서'},
 ] as const;
 export function resourceSectionHref(path:string) {
@@ -43,12 +41,10 @@ export function resourceSectionHref(path:string) {
 }
 export function practiceSectionHref(path:string) {
   if(within(path,'/my')||within(path,'/availability'))return '/my';
-  if(within(path,'/learn')||within(path,'/quiz')&&!within(path,'/quiz/assignments'))return '/learn';
-  if(within(path,'/quiz/assignments'))return '/quiz/assignments';
   if(within(path,'/on')&&!within(path,'/on/interviews'))return '/on';
-  return '/interview';
+  return '/learn';
 }
 /** Keep the primary navigation available; remove browsing tabs during an answer. */
 export function isAnswerWorkspace(path:string) {
-  return /^\/(?:quiz\/session\/[^/]+|interview\/(?!new(?:\/|$)|chat(?:\/|$)|live(?:\/|$))[^/]+|practice\/video\/[^/]+|chat\/interviews\/[^/]+|on\/interviews\/(?!new(?:\/|$))[^/]+)(?:\/|$)/.test(path);
+  return /^\/(?:my\/(?:train|diagnosis)|quiz\/(?:session|assignments)\/[^/]+|interview\/(?!new(?:\/|$)|chat(?:\/|$)|live(?:\/|$))[^/]+|practice\/video\/[^/]+|chat\/interviews\/[^/]+|on\/interviews\/(?!new(?:\/|$))[^/]+)(?:\/|$)/.test(path);
 }

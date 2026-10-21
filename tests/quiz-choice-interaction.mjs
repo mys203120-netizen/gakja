@@ -39,7 +39,7 @@ const depsEqual = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length ===
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 
 function harness(initial = fixture(), storage = new Map()) {
-  const state = { server: copy(initial), tree: null, dirty: true, slots: [], hook: 0, pendingEffects: [],
+  const state = { componentId:initial.session.id,server: copy(initial), tree: null, dirty: true, slots: [], hook: 0, pendingEffects: [],
     timers: new Map(), timerId: 0, now: 0, calls: [], toasts: [], listeners: new Map(),
     storage, local: new Map(), modal: null, postAdapter: null, getAdapter: null, unmounted: false };
   class FakeElement {
@@ -168,6 +168,7 @@ function harness(initial = fixture(), storage = new Map()) {
       if (name === './practice-writing-help') return {PracticeWritingHelp:'PracticeWritingHelp'};
       if (name === '@/lib/client/recording-recovery') return {readRecordingRecovery:async()=>state.recovery||null,installRecordingExitGuard:()=>()=>{},beginRecordingRecovery:async()=>{if(!state.allowSyntheticMedia)throw Error('No recording writer in choice tests');return {key:'synthetic-recovery',assertActive:async()=>{},assertFresh(){},append:async()=>{},finish:async()=>({key:'synthetic-recovery'}),cancel:async()=>{}};}};
       if (name === './learning-help') return { LearningHelp: 'LearningHelp' };
+      if (name === './training-continuation') return { TrainingContinuation: 'TrainingContinuation' };
       if (name === './audio-level-dot') return { AudioLevelDot: 'AudioLevelDot' };
       if (name === './playful-flow') return { animateStudyReceipt() {} };
       if (name === '@/lib/client/realtime-transcription') return { connectLiveTranscription() { if(!state.allowSyntheticMedia)throw new Error('Choice quiz must not request transcription');return {ready:Promise.resolve(),start(){},finish(){},close(){}}; } };
@@ -182,7 +183,7 @@ function harness(initial = fixture(), storage = new Map()) {
   function render() {
     state.hook = 0;
     state.dirty = false;
-    state.tree = module.exports.QuizSession({ id: 'choice-session' });
+    state.tree = module.exports.QuizSession({ id: state.componentId });
     for (const effect of state.pendingEffects.splice(0)) effect();
   }
   async function settle() {
@@ -420,6 +421,17 @@ export async function runQuizChoiceInteractionChecks() {
   const editor=h=>nodes(h.state.tree).find(node=>node.type==='textarea'&&node.props['aria-label']==='내 답변');
   const write=async(h,value)=>{editor(h).props.onChange({target:{value}});await h.settle();};
   const enter=(h,extra={})=>{const event={key:'Enter',nativeEvent:{},shiftKey:false,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},...extra};editor(h).props.onKeyDown(event);return event;};
+  {
+    const h=harness(writtenFixture());await h.begin();await write(h,'AI 도움 뒤에도 같은 문항에 남길 실제 초안');
+    let helper=nodes(h.state.tree).find(node=>node.type==='LearningHelp');check(!!helper,'AI help is visible next to the current written question, outside collapsed hints');
+    check(await helper.props.beforeOpen()===true,'help waits for the actual current-item draft save');await h.settle();
+    check(h.state.server.session.metadata.drafts['0'].response==='AI 도움 뒤에도 같은 문항에 남길 실제 초안','opening help durably preserves the typed draft');
+    let prevented=false;h.dispatch('gakja:open-on',{preventDefault(){prevented=true;}});await h.settle();helper=nodes(h.state.tree).find(node=>node.type==='LearningHelp');
+    check(prevented&&helper.props.openRequest===1&&!h.state.calls.some(call=>call.navigate),'the AI tab opens the contextual sheet instead of navigating away');
+    h.state.server.session.metadata.assistedIndices=[0];await helper.props.onAssisted();await h.settle();
+    check(editor(h).props.value==='AI 도움 뒤에도 같은 문항에 남길 실제 초안'&&h.state.server.session.current_index===0,'refreshing a help receipt preserves the exact question and draft');
+    check(h.calls('answer').length===0&&h.calls('pause').length===0,'AI help is neither a completed answer nor a pause that unmounts the question');await h.unmount();
+  }
   for(const setting of [undefined,true,false]){
     const h=harness(writtenFixture());h.app.data.preferences.enterToSend=setting;await h.begin();await write(h,'내가 직접 작성한 합성 답변');
     const event=enter(h);await h.settle();
@@ -460,4 +472,34 @@ export async function runQuizChoiceInteractionChecks() {
     check(h.calls('answer').length===0,'Enter cannot bypass an unsubmitted recording receipt');await h.unmount();
   }
   console.log(`Choice interaction: ${checks} rendered-handler checks passed; no browser, DB, provider or device calls.`);
+}
+
+
+export async function runPlannedQuizAutoStartChecks(){
+  const linked=()=>{const value=fixture();value.session.metadata.trainingPlanId='today-plan';return value;};
+  for(const planned of [true,false]){
+    const value=planned?linked():fixture();value.session.state='completed';value.session.mode='answer';value.session.current_index=1;value.responses=[{id:'saved-answer',item_index:0,response:'직접 작성한 답변',outcome:null,data:{recall_state:'unchecked'}}];
+    const h=harness(value);await h.settle();const rendered=nodes(h.state.tree),continuation=rendered.findIndex(node=>node.type==='TrainingContinuation'),details=rendered.findIndex(node=>node.props?.['aria-labelledby']==='quiz-result-review-title');
+    assert.ok(continuation>=0&&continuation<details,'the next plan step precedes the detailed answer report');assert.equal(rendered.some(node=>node.props?.['aria-labelledby']==='quiz-result-next-title'),!planned,'only free practice retains its general interview handoff');await h.unmount();
+  }
+  {
+    const h=harness(linked());await h.settle();assert.ok(!h.button('퀴즈 시작'),'the plan handoff shows its one existing countdown');await h.advance(1400);
+    assert.equal(h.state.server.session.state,'active');assert.equal(h.calls('start').length,1,'a new plan quiz starts without a duplicate click');await h.advance(3000);assert.equal(h.calls('start').length,1);await h.unmount();
+  }
+  for(const mode of ['free','paused','review']){
+    const value=mode==='free'?fixture():linked();if(mode==='paused')value.session.state='paused';if(mode==='review'){value.session.current_index=1;value.responses=[{id:'saved-answer',item_index:0,outcome:true,data:{}}];}
+    const h=harness(value);await h.settle();await h.advance(5000);assert.equal(h.calls('start').length,0,mode+' waits for the student');await h.unmount();
+  }
+  {
+    const h=harness(linked());h.state.postAdapter=async()=>{throw Error('start failed');};await h.settle();await h.advance(1400);assert.equal(h.calls('start').length,1);await h.advance(10000);assert.equal(h.calls('start').length,1,'a failed auto start never retries itself');assert.ok(h.button('퀴즈 시작'),'manual retry stays available after failure');await h.unmount();
+  }
+  {
+    const h=harness(linked());await h.settle();h.app.data.user.id='different-student';h.state.dirty=true;await h.settle();await h.advance(5000);assert.equal(h.calls('start').length,0,'account changes cancel a pending auto-start countdown');await h.unmount();
+  }
+  {
+    const h=harness(linked()),old=copy(h.state.server),gate=deferred();let first=true;h.state.getAdapter=async(_url,response)=>{if(first){first=false;await gate.promise;return old;}return response();};await h.settle();
+    h.state.componentId='different-session';h.state.server=fixture();h.state.server.session.id='different-session';h.state.dirty=true;await h.settle();gate.resolve();await h.settle();await h.advance(5000);
+    assert.equal(h.calls('start').length,0,'a late result from the old session cannot auto-start the new one');assert.equal(h.state.server.session.id,'different-session');await h.unmount();
+  }
+  console.log('Plan quiz auto-start: linked, free, paused, review, failed, account and session guards passed.');
 }

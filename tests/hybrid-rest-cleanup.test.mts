@@ -39,6 +39,7 @@ test('read-through replanning retires only owned untouched current/future automa
   if(name==='./student-read-model')return {studentModelRevision:async()=> '1'};
   if(name==='./training-availability')return availability;
   if(name==='./hybrid-training')return hybrid;
+  if(name==='./training-practice-store')return {trainingQuizQuestions:(questions:any[])=>questions,pendingTrainingAssignments:async()=>[],trainingPracticeCompletions:async()=>new Map()};
   if(name==='./training-review')return review;
   if(name==='./training-review-evidence-store')return {loadReviewQuestionFacts:async(owner:string)=>{assert.equal(owner,studentId);return {questions:[],targets:new Map()};}};
   if(name==='./training-review-store')return {synchronizeTrainingReviews:async(_db:any,owner:string,preferences:any,questions:any[])=>{assert.equal(owner,studentId);return review.reconcileTrainingReviews({state:preferences.trainingReview,questions,diagnostics:preferences.trainingDiagnostics||{},now:today+'T00:00:00Z'});}};

@@ -9,6 +9,8 @@ import {synchronizeAutomaticPractice} from '@/lib/automatic-practice-store';
 import {presentHybridPlan} from '@/lib/hybrid-training-store';
 import {plannerMonthRange} from '@/lib/planner-range';
 import {calendarPlanEvidence} from '@/lib/calendar-plan-evidence';
+import {allInterviewRootsAnsweredSql} from '@/lib/interview-completion';
+import {trainingPracticeCompletions} from '@/lib/training-practice-store';
 const targetSchema = z.object({kind:z.enum(['question','activity','video','assignment']),id:z.string().min(1).max(200),targetId:z.string().min(1).max(200).optional(),sourceType:z.enum(['personal','common']).optional(),sourceVersion:z.number().int().min(1).max(100000).optional()}).strict();
 const inputSchema = z.discriminatedUnion('action',[
   z.object({action:z.literal('create'),title:z.string().trim().min(1).max(160),date:z.string().refine(validPlanDay),kind:z.enum(['study','quiz','interview','reading']).default('study'),target:targetSchema.nullable().optional()}),
@@ -29,10 +31,11 @@ export async function GET(request:Request) {
     const plans=(params.get('history')==='1'?allPlans:allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded')).filter(plan=>plan.target?.automaticPractice?.hybrid?.kind!=='break');
     const evidence=await calendarPlanEvidence(user.id,plans,range,context.sources.filter(source=>source.kind==='question').map(source=>source.id));
     const hybridIds=plans.filter(plan=>plan.target?.automaticPractice?.hybrid).map(plan=>plan.id);
-    const hybridSessions=hybridIds.length?await query("select id from interview_sessions where student_id=$1 and state='completed' and data->>'trainingPlanId'=any($2::text[])",[user.id,hybridIds]):[];
+    const hybridSessions=hybridIds.length?await query(`select s.id from interview_sessions s where s.student_id=$1 and s.state='completed' and s.data->>'trainingPlanId'=any($2::text[]) and ${allInterviewRootsAnsweredSql('s')}`,[user.id,hybridIds]):[];
     const completedSessionIds=new Set(hybridSessions.map(row=>row.id));
     const merged={...context,events:[...evidence,...context.events.filter(event=>event.kind!=='interview_answer'&&!evidence.some(row=>row.id===event.id))]};
-    const presented=plans.map(plan=>presentHybridPlan(plan,merged,completedSessionIds));
+    const practiceCompletions=await trainingPracticeCompletions(user.id,plans);
+    const presented=plans.map(plan=>presentHybridPlan(plan,merged,completedSessionIds,practiceCompletions));
     if(calendar.refreshDue)after(()=>refreshAdmissionCalendar());
     return Response.json({plans:presented,range,automaticPractice,supersededPlanCount:allPlans.length-allPlans.filter(plan=>plan.target?.automaticPractice?.status!=='superseded').length,targets:context.targets,interviewSchedules:calendar.interviewSchedules,interviewScheduleCoverage:calendar.interviewScheduleCoverage},{headers:privateHeaders});
   } catch(error){return errorResponse(error);}

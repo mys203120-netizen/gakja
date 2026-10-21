@@ -39,6 +39,20 @@
 .nextEyebrow { display:block; margin-bottom:10px; color:#008747; font-size:12px; font-weight:600; }
 .summary .continuation h3 { margin:0; font-size:19px; line-height:1.6; font-weight:600; overflow-wrap:anywhere; }
 .continuation>p { margin:0; color:#626e68; }
+.dayScope{margin:8px 0 20px!important;color:#687078;font-size:13px}
+.dayStats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:24px 0 36px}
+.dayStats>span{display:flex;flex-direction:column;gap:10px;padding:18px 14px;background:#fff;border-radius:16px;color:#687078;font-size:13px}
+.dayStats strong{color:#202923;font-size:24px;font-weight:600;line-height:1.3}
+.dayImprovement{display:block;margin:32px 0;font-weight:600}
+.dayImprovement textarea{display:block;width:100%;margin-top:14px;padding:18px;border:0;border-radius:16px;background:#fff;color:#202923;font:inherit;font-weight:400;line-height:1.7;resize:vertical}
+.dayImprovement textarea:focus{outline:0;box-shadow:none}
+.dayQuestions{min-width:0;margin:36px 0 0;padding:0;border:0}
+.dayQuestions legend{margin-bottom:16px;font-weight:600}
+.dayQuestion{display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;margin:0 0 12px;padding:18px 20px;border:0;border-radius:16px;background:#fff;color:#202923;text-align:left;font:inherit;line-height:1.7;word-break:keep-all;overflow-wrap:break-word;cursor:pointer}
+.dayQuestion[aria-pressed=true]{background:#d6f9e6;color:#176d46}
+.dayQuestion small{color:#687078;font-size:12px}
+.dayQuestion small:empty{display:none}
+.dayQuestion:focus-visible{outline:0;text-decoration:underline;text-underline-offset:4px}
 .nextStep { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:72px; }
 .nextStep>span { min-width:0; }
 .nextStep>svg { flex-shrink:0; color:#008747; }
@@ -46,6 +60,10 @@
 .continuation>:global(.button) { margin-top:20px; }
 .nextStep:focus-visible { outline:2px solid #008747; outline-offset:8px; border-radius:10px; }
 @media(max-width:700px) {
+ .dayStats{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:36px}
+ .dayStats>span:last-child{grid-column:1 / -1;flex-direction:row;align-items:center;justify-content:space-between}
+ .dayQuestions{margin-top:40px}
+ .dayQuestion{padding:18px;line-height:1.75}
  .actions { column-gap:24px; row-gap:8px; }
  .practiceQuestion,.questionList li,.summary article :is(h3,p),.summary .reflection label>span { text-align:left; word-break:keep-all; overflow-wrap:break-word; word-spacing:normal; }
  .summary .categoryChoices label { display:flex; margin-right:0; }

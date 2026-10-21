@@ -3,7 +3,7 @@ import {ownedClassName} from './owned-class-name';
 
 import Link from 'next/link';
 import {Suspense,useCallback,useEffect,useRef,useState} from 'react';
-import {useSearchParams} from 'next/navigation';
+import {useRouter,useSearchParams} from 'next/navigation';
 import {ArrowRight,Check} from 'lucide-react';
 import {useApp} from './app-shell';
 import {api,post,Alert,Spinner,ActionButton,InfoTip,type Item} from './shared';
@@ -16,7 +16,7 @@ import styles from './training-run.module.css';
 
 export function TrainingRun({diagnostic=false}:{diagnostic?:boolean}){return <Suspense fallback={<Spinner/>}><Run diagnostic={diagnostic}/></Suspense>;}
 function Run({diagnostic}:{diagnostic:boolean}){
- const {targetId,target,data:appData,refresh,learningRevision}=useApp(),params=useSearchParams();
+ const {targetId,target,data:appData,refresh,learningRevision}=useApp(),params=useSearchParams(),router=useRouter();
  const planId=params.get('planId'),scope=JSON.stringify([appData.user.id,targetId,learningScopeIdentity(target||{}),appData.package?.id,appData.package?.active_version,planId,diagnostic]),scopeRef=useRef({key:scope});
  // A new visit gets a distinct receipt, including switching A → B → A while A is saving.
  if(scopeRef.current.key!==scope)scopeRef.current={key:scope};
@@ -24,14 +24,15 @@ function Run({diagnostic}:{diagnostic:boolean}){
  const [data,setData]=useState<Item|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[sessionId,setSessionId]=useState(''),[info,setInfo]=useState<Item|null>(null);
  const [reviewIds,setReviewIds]=useState<string[]>([]),[categories,setCategories]=useState<string[]>([]),[reflectionSaved,setReflectionSaved]=useState(false),[note,setNote]=useState(''),[noteActivity,setNoteActivity]=useState(''),[noteSaved,setNoteSaved]=useState(false);
  const [experience,setExperience]=useState<any>(null),[improvement,setImprovement]=useState('');
+ const [dayImprovement,setDayImprovement]=useState(''),[revisitKeys,setRevisitKeys]=useState<string[]>([]);
  const [reviewDone,setReviewDone]=useState(false),[nextData,setNextData]=useState<{token:object;sessionId:string;day:Item}|null>(null),[nextError,setNextError]=useState(''),[nextRevision,setNextRevision]=useState(0);
- const pendingStart=useRef<string|null>(null),noteRequest=useRef<string|null>(null),retryRequest=useRef<string|null>(null);
- useEffect(()=>{const controller=new AbortController();scopeRef.current=scopeToken;setBusy(false);setData(null);setInfo(null);setSessionId('');setError('');setReflectionSaved(false);setExperience(null);setReviewIds([]);setCategories([]);setNote('');setNoteActivity('');setNoteSaved(false);setImprovement('');setReviewDone(false);setNextData(null);setNextError('');pendingStart.current=null;retryRequest.current=null;noteRequest.current=null;
+ const pendingStart=useRef<string|null>(null),noteRequest=useRef<string|null>(null),retryRequest=useRef<string|null>(null),dayRequest=useRef<string|null>(null);
+ useEffect(()=>{const controller=new AbortController();scopeRef.current=scopeToken;setBusy(false);setData(null);setInfo(null);setSessionId('');setError('');setReflectionSaved(false);setExperience(null);setReviewIds([]);setCategories([]);setNote('');setNoteActivity('');setNoteSaved(false);setImprovement('');setDayImprovement('');setRevisitKeys([]);setReviewDone(false);setNextData(null);setNextError('');pendingStart.current=null;retryRequest.current=null;noteRequest.current=null;dayRequest.current=null;
   const query=new URLSearchParams({...targetId?{targetId}:{},...planId?{planId}:{}});
-  api('/api/training?'+query,{signal:controller.signal,cache:'no-store'}).then(value=>{if(controller.signal.aborted||scopeRef.current!==scopeToken)return;setData(value);const diagnosticState=value.diagnostics||{},selection=(active:string,legacy:string)=>{const selected=Object.prototype.hasOwnProperty.call(diagnosticState,active)?diagnosticState[active]:diagnosticState[legacy];return Array.isArray(selected)?selected.filter((id:unknown):id is string=>typeof id==='string'):[];};setReviewIds(selection('activeNeedsReviewQuestionIds','needsReviewQuestionIds'));setCategories(selection('activeFocusCategories','focusCategories'));setReviewDone(value.selectedTask?.kind==='review'&&value.selectedTask?.completed===true);const existing=value.selectedTask?.sessionId||(diagnostic&&value.diagnostics?.state==='in_progress'?value.diagnostics.sessionId:null),partial=value.diagnostics?.state==='partial'&&value.diagnostics?.sessionId===existing;if(existing&&!partial)setSessionId(existing);}).catch(cause=>{if(!controller.signal.aborted&&scopeRef.current===scopeToken)setError(cause.message);});return()=>{controller.abort();if(scopeRef.current===scopeToken)scopeRef.current={key:''};};
+  api('/api/training?'+query,{signal:controller.signal,cache:'no-store'}).then(value=>{if(controller.signal.aborted||scopeRef.current!==scopeToken)return;setData(value);const diagnosticState=value.diagnostics||{},selection=(active:string,legacy:string)=>{const selected=Object.prototype.hasOwnProperty.call(diagnosticState,active)?diagnosticState[active]:diagnosticState[legacy];return Array.isArray(selected)?selected.filter((id:unknown):id is string=>typeof id==='string'):[];};setReviewIds(selection('activeNeedsReviewQuestionIds','needsReviewQuestionIds'));setCategories(selection('activeFocusCategories','focusCategories'));setReviewDone(value.selectedTask?.kind==='review'&&value.selectedTask?.completed===true);setDayImprovement(value.selectedTask?.dayReflection?.improvement||'');setRevisitKeys(value.selectedTask?.dayReflection?.revisitQuestionKeys||[]);const existing=!['quiz','assignment'].includes(value.selectedTask?.kind)&&(value.selectedTask?.sessionId||(diagnostic&&value.diagnostics?.state==='in_progress'?value.diagnostics.sessionId:null)),partial=value.diagnostics?.state==='partial'&&value.diagnostics?.sessionId===existing;if(existing&&!partial)setSessionId(existing);}).catch(cause=>{if(!controller.signal.aborted&&scopeRef.current===scopeToken)setError(cause.message);});return()=>{controller.abort();if(scopeRef.current===scopeToken)scopeRef.current={key:''};};
  },[scopeToken]);
  const task=data?.selectedTask,isDiagnostic=diagnostic||task?.kind==='diagnostic';
- const taskLabel=isDiagnostic?'첫 진단':({focus:'집중 보완',recall:'누적 복습',mixed:'연결 면접',review:'오늘 정리',break:'휴식'} as Record<string,string>)[task?.kind]||'답변 훈련';
+ const taskLabel=isDiagnostic?'첫 진단':({focus:'집중 보완',recall:'누적 복습',mixed:'연결 면접',review:'오늘 정리',quiz:'퀴즈',assignment:'받은 과제',break:'휴식'} as Record<string,string>)[task?.kind]||'답변 훈련';
  const taskParts=String(task?.title||'').split(' · '),taskPrompt=taskParts.slice(1).join(' · ');
  const update=useCallback((value:Item)=>{if(scopeRef.current===scopeToken)setInfo(value);},[scopeToken]);
  const completed=info?.session?.state==='completed',fullyAnswered=info?.session?.data?.trainingProgress?.allRootsAnswered===true;
@@ -54,17 +55,41 @@ function Run({diagnostic}:{diagnostic:boolean}){
   try{
    let current=task;if(planId){const result=await post('/api/training',{action:'task_start',planId});current=result.task;}
    if(scopeRef.current!==capture)return;
+   if(current?.kind==='quiz'){
+    const practice=current.practice;if(!planId||practice?.kind!=='quiz'||!practice.itemIds?.length)throw new Error('오늘 계획에서 퀴즈를 다시 선택해 주세요.');
+    const result=await post('/api/quiz',{action:'create',trainingPlanId:planId,targetId:current.targetId,sourceType:current.sourceType,sourceVersion:current.sourceVersion,mode:practice.mode,itemIds:practice.itemIds});
+    if(scopeRef.current===capture)router.push('/quiz/session/'+encodeURIComponent(result.session.id)+'?trainingPlanId='+encodeURIComponent(planId));return;
+   }
+   if(current?.kind==='assignment'){
+    const practice=current.practice;if(practice?.kind!=='assignment'||!practice.assignmentId||!current.href?.startsWith('/quiz/assignments/'))throw new Error('오늘 계획에서 과제를 다시 선택해 주세요.');
+    pendingStart.current??=crypto.randomUUID();
+    await post('/api/learning',{action:'assignment_start',assignmentId:practice.assignmentId,requestId:pendingStart.current});
+    if(scopeRef.current===capture)window.location.assign(current.href);return;
+   }
    const source=isDiagnostic?data.diagnosticInput:current;
    if(!source?.targetId)throw new Error('지원 학교와 연습할 질문을 확인해 주세요.');
    pendingStart.current??=current?.requestId||'training-'+crypto.randomUUID();
    const input={action:'start',kind:'video',mode:'basic',targetId:current?.targetId||source.targetId,sourceType:current?.sourceType||source.sourceType,sourceVersion:current?.sourceVersion||source.sourceVersion,questionId:isDiagnostic?undefined:source.questionId,
-    ...(isDiagnostic&&source.sourceType===(current?.sourceType||source.sourceType)?{questionIds:data.diagnosticQuestions.filter((q:Item)=>q.sourceType===undefined||q.sourceType===source.sourceType).map((q:Item)=>q.id)}:{}),...(experience&&!isDiagnostic&&current?.kind!=='mixed'?{experienceCardId:experience.id,experienceRevision:experience.revision}:{}),questionCount:isDiagnostic?source.questionCount:current?.kind==='mixed'?4:1,followups:!isDiagnostic&&current?.kind==='focus',feedbackTiming:isDiagnostic?'end':'turn',interviewerReactions:false,trainingPlanId:planId||undefined,trainingPurpose:isDiagnostic?'diagnostic':['focus','mixed','recall'].includes(current?.kind)?current.kind:'focus',requestId:pendingStart.current};
+    ...(isDiagnostic&&source.sourceType===(current?.sourceType||source.sourceType)?{questionIds:data.diagnosticQuestions.filter((q:Item)=>q.sourceType===undefined||q.sourceType===source.sourceType).map((q:Item)=>q.id)}:{}),...(experience&&!isDiagnostic&&current?.kind!=='mixed'?{experienceCardId:experience.id,experienceRevision:experience.revision}:{}),questionCount:isDiagnostic?source.questionCount:current?.kind==='mixed'?4:1,followups:!isDiagnostic&&['focus','mixed'].includes(current?.kind),feedbackTiming:isDiagnostic?'end':'turn',interviewerReactions:false,trainingPlanId:planId||undefined,trainingPurpose:isDiagnostic?'diagnostic':['focus','mixed','recall'].includes(current?.kind)?current.kind:'focus',requestId:pendingStart.current};
    const result=await post('/api/interviews',input);
    await post('/api/training',{action:'link_session',...(planId?{planId}:{}),sessionId:result.session.id,diagnostic:isDiagnostic});
    if(scopeRef.current!==capture)return;setSessionId(result.session.id);setInfo(null);
   }catch(cause){if(scopeRef.current===capture)setError((cause as Error).message);}finally{if(scopeRef.current===capture)setBusy(false);}
  }
- async function finishReview(){if(busy||!planId)return;const capture=scopeToken;setBusy(true);setError('');try{await post('/api/training',{action:'task_complete',planId});if(scopeRef.current!==capture)return;setReviewDone(true);await refresh();}catch(cause){if(scopeRef.current===capture)setError((cause as Error).message);}finally{if(scopeRef.current===capture)setBusy(false);}}
+ async function finishReview(){
+  if(busy||!planId)return;const capture=scopeToken;setBusy(true);setError('');
+  try{
+   dayRequest.current??=crypto.randomUUID();
+   await post('/api/training',{action:'day_reflection',planId,requestId:dayRequest.current,improvement:dayImprovement.trim(),revisitQuestionKeys:revisitKeys});
+   if(scopeRef.current!==capture)return;
+   // A review plan resolves the all-school projection; target-only reads are only for continuation.
+   const updated=await api('/api/training?'+new URLSearchParams({planId}),{cache:'no-store'});
+   if(scopeRef.current!==capture)return;
+   if(updated.selectedTask?.id!==planId||updated.selectedTask?.kind!=='review'||!updated.dayReview||updated.dayReview.targetId)throw new Error('오늘 정리 기록을 다시 불러와 주세요.');
+   setData(updated);setReviewDone(true);await refresh();
+  }catch(cause){if(scopeRef.current===capture)setError((cause as Error).message);}
+  finally{if(scopeRef.current===capture)setBusy(false);}
+ }
  async function retryAnswer(){
   if(busy||!planId||!task||!improvement.trim())return;const capture=scopeToken;setBusy(true);setError('');
   try{retryRequest.current??='training-'+crypto.randomUUID();const card=info?.session?.data?.experienceCard;
@@ -78,6 +103,8 @@ function Run({diagnostic}:{diagnostic:boolean}){
  const turns:Item[]=(info?.turns||[]).filter((turn:Item)=>turn.answer&&!turn.invalidated);
  const activityIds=new Set((info?.session?.data?.context?.questions||[]).flatMap((q:Item)=>q.activity_ids||[]));if(info?.session?.data?.experienceCard)activityIds.add('experience:'+info.session.data.experienceCard.id);
  const activities=(data?.readiness?.items||[]).filter((row:Item)=>activityIds.has(row.id));
+ const dayReview=data?.dayReview,dayQuestions:Item[]=dayReview?.questions||[];
+ const dayStats=dayReview&&<div className={ownedClassName(styles.dayStats,true)} aria-label="오늘 학습 기록"><span className={ownedClassName(undefined,true)}>본질문 답변<strong className={ownedClassName(undefined,true)}>{dayReview.answers}개</strong></span><span className={ownedClassName(undefined,true)}>푼 퀴즈<strong className={ownedClassName(undefined,true)}>{dayReview.quizAnswers}개</strong></span><span className={ownedClassName(undefined,true)}>제출한 과제<strong className={ownedClassName(undefined,true)}>{dayReview.assignmentAnswers||0}개</strong></span><span className={ownedClassName(undefined,true)}>도움 사용<strong className={ownedClassName(undefined,true)}>{dayReview.assistedAnswers}개</strong></span><span className={ownedClassName(undefined,true)}>남은 보완<strong className={ownedClassName(undefined,true)}>{dayReview.remainingReview}개</strong></span></div>;
  if(!data)return <div className={ownedClassName(styles.page,true)}>{error?<><Alert>{error}</Alert><Link href="/my">오늘 훈련으로</Link></>:<Spinner/>}</div>;
  if(!diagnostic&&!task)return <Alert>오늘 계획에서 훈련을 선택해 주세요. <Link href="/my">오늘 훈련</Link></Alert>;
  return <div className={ownedClassName(styles.page,true)}>
@@ -85,12 +112,13 @@ function Run({diagnostic}:{diagnostic:boolean}){
   {error&&<Alert>{error}</Alert>}
   {!sessionId&&!reviewDone?<section className={ownedClassName(styles.intro,true)}><span className={ownedClassName(styles.eyebrow,true)}>{isDiagnostic?'먼저, 지금의 답변을 확인해요.':'같은 활동, 다음 나의 답'}</span><h1 className={ownedClassName(undefined,true)}>{isDiagnostic?'첫 진단':taskParts[0]||taskLabel}</h1>
    {!isDiagnostic&&taskPrompt&&<h2 className={ownedClassName(styles.practiceQuestion,true)}>{taskPrompt}</h2>}
-   <p className={ownedClassName(undefined,true)}>{isDiagnostic?'생각나는 내용부터 글로 답해요. 원하면 음성으로 바꿀 수 있어요. 아직 답하지 않은 영역은 미확인으로 남겨요.':task?.reason}</p>
+   {task?.kind!=='review'&&<p className={ownedClassName(undefined,true)}>{isDiagnostic?'생각나는 내용부터 글로 답해요. 원하면 음성으로 바꿀 수 있어요. 아직 답하지 않은 영역은 미확인으로 남겨요.':task?.reason}</p>}
    {isDiagnostic&&<ol className={ownedClassName(styles.questionList,true)}>{data.diagnosticQuestions?.map((q:Item)=><li key={q.id} className={ownedClassName(undefined,true)}>{q.title}</li>)}</ol>}
    {!isDiagnostic&&['focus','recall'].includes(task?.kind)&&<QuestionExperiencePicker question={{id:task.questionId,prompt:task.title}} targetId={task.targetId} value={experience} onSelect={setExperience}/>}
-   {['review','break'].includes(task?.kind)?<><div className={ownedClassName(styles.actions,true)}><Link className={ownedClassName("button ghost")} href="/records">저장한 답변 확인</Link><ActionButton className={ownedClassName("button primary")} pending={busy} onClick={()=>void finishReview()}>오늘 정리 마치기<Check size={16}/></ActionButton></div></>:<div className={ownedClassName(styles.actions,true)}><ActionButton className={ownedClassName("button primary")} pending={busy} disabled={isDiagnostic&&!data.diagnosticInput} pendingLabel="질문 준비 중" onClick={()=>void start()}>{isDiagnostic?'진단 질문에 답하기':'이 훈련 시작'}<ArrowRight size={16}/></ActionButton><Link href="/preparation">활동과 근거 확인</Link></div>}
+   {task?.kind==='review'?<section className={ownedClassName(styles.dayReflection,true)}><p className={ownedClassName(styles.dayScope,true)}>{dayReview?.targetId?'이 지원 학교의 오늘 기록':'모든 지원 학교의 오늘 기록'}</p>{dayStats}<label className={ownedClassName(styles.dayImprovement,true)}>오늘 바꾼 한 가지<textarea disabled={busy} rows={3} maxLength={500} value={dayImprovement} placeholder="예: 활동에서 내가 직접 한 행동부터 답했다." onChange={event=>{setDayImprovement(event.target.value);dayRequest.current=null;}} className={ownedClassName(undefined,true)}/></label><fieldset disabled={busy} className={ownedClassName(styles.dayQuestions,true)}><legend className={ownedClassName(undefined,true)}>내일 다시 답할 질문</legend>{dayQuestions.length?dayQuestions.map(question=>{const school=(data.deadlines||[]).find((deadline:Item)=>deadline.targetId===question.targetId);return <button key={question.key} type="button" className={ownedClassName(styles.dayQuestion,true)} aria-pressed={revisitKeys.includes(question.key)} onClick={()=>{setRevisitKeys(previous=>previous.includes(question.key)?previous.filter(key=>key!==question.key):[...previous,question.key]);dayRequest.current=null;}}><span className={ownedClassName(undefined,true)}>{question.title}</span><small className={ownedClassName(undefined,true)}>{school?.university||school?.schoolName||''}{question.assisted?' · 도움 사용':question.needsReview?' · 보완 중':''}</small></button>;}):<p className={ownedClassName(styles.note,true)}>오늘 답한 질문이 생기면 여기서 다시 고를 수 있어요.</p>}</fieldset><div className={ownedClassName(styles.actions,true)}><ActionButton className={ownedClassName("button primary")} pending={busy} onClick={()=>void finishReview()}>오늘 정리 저장<Check size={16}/></ActionButton><Link href="/records">저장한 답변 확인</Link></div></section>:<div className={ownedClassName(styles.actions,true)}><ActionButton className={ownedClassName("button primary")} pending={busy} disabled={isDiagnostic&&!data.diagnosticInput} pendingLabel="질문 준비 중" onClick={()=>void start()}>{isDiagnostic?'진단 질문에 답하기':task?.kind==='quiz'?'퀴즈 시작':task?.kind==='assignment'?'과제 시작':'이 훈련 시작'}<ArrowRight size={16}/></ActionButton><Link href="/preparation">활동과 근거 확인</Link></div>}
   </section>:!completed&&!reviewDone&&<InterviewSession id={sessionId} kind="video" onTrainingUpdate={update}/>}
   {(completed||reviewDone)&&<section className={ownedClassName(styles.summary,true)}><div className={ownedClassName(styles.summaryTop,true)}><h2 className={ownedClassName(undefined,true)}>{reviewDone?'오늘 정리 완료':isDiagnostic?'여기까지 진단 기록':'이번 훈련 기록'}</h2>{!reviewDone&&<span className={ownedClassName(undefined,true)}>답변 {turns.length}개 저장</span>}</div>
+   {reviewDone&&<>{dayStats}{dayImprovement&&<p className={ownedClassName(styles.improvementSaved,true)}><span className={ownedClassName(undefined,true)}>오늘 바꾼 한 가지</span>{dayImprovement}</p>}{!!revisitKeys.length&&<p className={ownedClassName(styles.note,true)}>고른 질문 {revisitKeys.length}개를 다음 계획에 반영했어요.</p>}</>}
    {completed&&!fullyAnswered&&<><p className={ownedClassName(styles.note,true)}>아직 답하지 않은 질문이 있어요. 이 차시는 완료로 표시하지 않고, 남긴 답변만 기록해요.</p><button className={ownedClassName('button primary',true)} onClick={()=>{pendingStart.current=null;setSessionId('');setInfo(null);setNextData(null);}}>{isDiagnostic?'진단 다시 답하기':'이 훈련 다시 시작'}</button></>}
    {info?.session?.data?.trainingImprovement&&<p className={ownedClassName(styles.improvementSaved,true)}><span className={ownedClassName(undefined,true)}>보완한 점</span>{info.session.data.trainingImprovement}</p>}
    {!!turns.length&&<details className={ownedClassName(styles.answerDetails,true)}><summary className={ownedClassName(undefined,true)}>질문별 답변과 피드백 {turns.length}개</summary>{turns.map(turn=><article key={turn.id} className={ownedClassName(undefined,true)}><h3 className={ownedClassName(undefined,true)}>{turn.question}</h3><p className={ownedClassName(undefined,true)}>{turn.answer}</p><small className={ownedClassName(undefined,true)}>{turn.submissionSource==='recording'?'음성 답변 · 원음과 전사 보존':'글로 제출한 답변'}{turn.assisted?' · 도움 사용':''}</small>{turn.feedback?.content&&<div className={ownedClassName(styles.feedback,true)}><MarkdownMessage content={turn.feedback.content}/></div>}</article>)}</details>}

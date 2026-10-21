@@ -47,8 +47,10 @@ export function foldTrainingEvidence(input:{learning:Value;cards:Value[];turns:V
   const commonRevision=value.commonRevision??value.common_revision;
   if(Number(commonRevision)>0?Number(question.common_revision)!==Number(commonRevision):Number(value.contentVersion||value.content_version)!==Number(input.contentVersion))continue;
   const text=value.answer||value.response;if(typeof text!=='string'||!text.trim())continue;
-  link(question.id,question.activity_ids||[]);
-  for(const id of question.activity_ids||[]){const row=rows.get(id);if(row)add(row,value,String(event.created_at),false,Boolean(value.recordingId||value.audioId));}
+  const ids=new Set<string>(question.activity_ids||[]);
+  if(!ids.size){const key='question:'+question.id;if(!rows.has(key)){const row=base(key,'question',question.prompt,'/records/comparisons/'+encodeURIComponent(question.id));row.questionCount=1;rows.set(key,row);}ids.add(key);}
+  link(question.id,ids);
+  for(const id of ids){const row=rows.get(id);if(row)add(row,value,String(event.created_at),false,value.inputMode==='voice'||Boolean(value.recordingId||value.audioId));}
   seen.add(receipt);
  }
  for(const row of rows.values()){

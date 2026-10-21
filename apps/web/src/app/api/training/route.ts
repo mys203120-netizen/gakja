@@ -16,6 +16,8 @@ import {applyReviewReflection,reconcileTrainingReviews} from '@/lib/training-rev
 import {diagnosticReviewScope} from '@/lib/training-diagnostic-scope';
 import {getTrainingReadModel,trainingReadContext} from '@/lib/training-read-model';
 import {allInterviewRootsAnsweredSql} from '@/lib/interview-completion';
+import {applyTrainingDayReflection} from '@/lib/training-day-review';
+import {studentModelRevision} from '@/lib/student-read-model';
 
 export const dynamic='force-dynamic';
 const headers={'Cache-Control':'private, no-store'};
@@ -24,6 +26,7 @@ const inputSchema=z.discriminatedUnion('action',[
  z.object({action:z.literal('task_start'),planId:z.string().uuid()}).strict(),
  z.object({action:z.literal('link_session'),planId:z.string().uuid().optional(),sessionId:z.string().uuid(),diagnostic:z.boolean().default(false)}).strict(),
  z.object({action:z.literal('task_complete'),planId:z.string().uuid()}).strict(),
+ z.object({action:z.literal('day_reflection'),planId:z.string().uuid(),requestId:z.string().uuid(),improvement:z.string().trim().max(500),revisitQuestionKeys:z.array(z.string().min(1).max(2500)).max(30)}).strict(),
  z.object({action:z.literal('diagnostic_reflection'),sessionId:z.string().uuid(),needsReviewQuestionIds:z.array(z.string().max(200)).max(20),focusCategories:z.array(z.enum(['personal','major','talent'])).max(3)}).strict(),
  z.object({action:z.literal('activity_note'),turnId:z.string().uuid(),activityId:z.string().min(1).max(220),body:z.string().trim().min(1).max(1500),requestId:z.string().uuid()}).strict(),
 ]);
@@ -31,7 +34,7 @@ async function ownedPlan(studentId:string,id:string,db:{query:Function}={query:a
  const [plan]=(await db.query("select *,to_char(planned_date,'YYYY-MM-DD') as date from student_plans where id=$1 and student_id=$2",[id,studentId])).rows;
  if(!plan||!plan.target?.automaticPractice?.hybrid)throw new ApiError(404,'오늘 훈련에서 계획을 다시 선택해 주세요.');return plan;
 }
-function taskView(plan:Value){const ap=plan.target.automaticPractice,hybrid=ap.hybrid;return {id:plan.id,date:plan.date,title:plan.title,kind:hybrid.kind,minutes:ap.minutes,reason:ap.reason,targetId:plan.target.targetId,questionId:plan.target.id,sourceType:plan.target.sourceType,sourceVersion:plan.target.sourceVersion,activityIds:plan.target.activityIds||[],href:'/my/train?planId='+plan.id,sessionId:hybrid.sessionId||null,completed:plan.completed,startedAt:ap.startedAt||hybrid.startedAt,requestId:hybrid.requestId};}
+function taskView(plan:Value){const ap=plan.target.automaticPractice,hybrid=ap.hybrid;return {id:plan.id,date:plan.date,title:plan.title,kind:hybrid.kind,minutes:ap.minutes,reason:ap.reason,targetId:plan.target.targetId,questionId:plan.target.id,sourceType:plan.target.sourceType,sourceVersion:plan.target.sourceVersion,activityIds:plan.target.activityIds||[],href:hybrid.kind==='assignment'?'/quiz/assignments/'+encodeURIComponent(hybrid.practice?.assignmentId||'')+'?trainingPlanId='+plan.id:'/my/train?planId='+plan.id,sessionId:hybrid.sessionId||null,practice:hybrid.practice||null,dayReflection:hybrid.dayReflection||null,completed:plan.completed,startedAt:ap.startedAt||hybrid.startedAt,requestId:hybrid.requestId};}
 
 export async function GET(request:Request){
  try{
@@ -56,7 +59,7 @@ export async function GET(request:Request){
   for(const q of pool)if(diagnosticQuestions.length<3&&!diagnosticQuestions.some(chosen=>chosen.id===q.id))diagnosticQuestions.push(q);
   const diagnosticInput=diagnosticQuestions.length?{targetId:selectedTargetId,sourceType:diagnosticQuestions[0].sourceType,sourceVersion:diagnosticQuestions[0].sourceVersion,questionIds:diagnosticQuestions.map(q=>q.id),questionCount:diagnosticQuestions.length}:null;
   const selectedTask=selectedPlan?taskView(selectedPlan):null;
-  return Response.json({...hybrid,readiness,registeredAt:profile[0]?.created_at,diagnostics:hybrid.diagnostics[selectedTargetId||'']||null,diagnosticQuestions:diagnosticQuestions.map(q=>({id:q.id,title:q.title,activityIds:q.activityIds})),diagnosticInput,selectedTask,activityNotes:preferences[0]?.data?.trainingActivityNotes||[]},{headers});
+  return Response.json({...hybrid,...(selectedTask?.kind==='review'?{dayReview:snapshot.dayReview?.all}:{}),readiness,registeredAt:profile[0]?.created_at,diagnostics:hybrid.diagnostics[selectedTargetId||'']||null,diagnosticQuestions:diagnosticQuestions.map(q=>({id:q.id,title:q.title,activityIds:q.activityIds})),diagnosticInput,selectedTask,activityNotes:preferences[0]?.data?.trainingActivityNotes||[]},{headers});
  }catch(error){return errorResponse(error);}
 }
 
@@ -89,10 +92,42 @@ export async function POST(request:Request){
    const plan=await transaction(async db=>{
     await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+user.id]);
     const row=await ownedPlan(user.id,input.planId,db),kind=row.target.automaticPractice.hybrid.kind;
+    if(kind==='review'&&!row.target.automaticPractice.hybrid.dayReflection)throw new ApiError(409,'오늘 답변을 돌아보고 정리를 저장해 주세요.');
     if(!['review','break'].includes(kind))throw new ApiError(409,'답변을 제출한 실제 훈련 기록으로 완료를 확인해요.');
     if(row.date!==koreaToday()||row.target.automaticPractice.status==='superseded')throw new ApiError(409,'오늘 계획을 다시 확인해 주세요.');
     await db.query('update student_plans set completed=true,revision=revision+1,updated_at=now() where id=$1 and student_id=$2',[row.id,user.id]);return row;
    });return Response.json({completed:true,selfChecked:true,planId:plan.id},{headers});
+  }
+  if(input.action==='day_reflection'){
+   const snapshot=await getTrainingReadModel(user.id),context=trainingReadContext(snapshot);
+   const saved=await transaction(async db=>{
+    await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+user.id]);
+    const row=await ownedPlan(user.id,input.planId,db),ap=row.target.automaticPractice;
+    if(ap.hybrid.kind!=='review'||ap.status==='superseded'||row.date!==koreaToday())throw new ApiError(409,'오늘 정리에서 다시 선택해 주세요.');
+    const current=(await db.query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null for share",[user.id])).rows;
+    const school=current.find(target=>target.id===row.target.targetId);
+    if(!school||!recordMatchesCurrentTarget({targetId:school.id,targetSnapshot:row.target.targetSnapshot},[{...school.data,id:school.id}]))throw new ApiError(409,'지원 정보가 바뀌었어요. 오늘 계획을 다시 확인해 주세요.');
+    const candidates=[...automaticQuestionTargets(context,school.id).values()];
+    if(!candidates.some(question=>question.id===row.target.id&&question.sourceType===row.target.sourceType&&Number(question.sourceVersion)===Number(row.target.sourceVersion)))throw new ApiError(409,'자료가 바뀌었어요. 오늘 계획을 다시 확인해 주세요.');
+    const keys=[...new Set(input.revisitQuestionKeys)].sort(),previous=ap.hybrid.dayReflection;
+    if(previous){
+     if(previous.requestId!==input.requestId||previous.improvement!==input.improvement||JSON.stringify([...(previous.revisitQuestionKeys||[])].sort())!==JSON.stringify(keys))throw new ApiError(409,'이미 저장한 오늘 정리는 오늘 훈련에서 확인해 주세요.');
+     return previous;
+    }
+    if(await studentModelRevision(db,user.id)!==snapshot.sourceRevision)throw new ApiError(409,'새 기록을 반영하고 있어요. 오늘 정리를 다시 불러와 주세요.');
+    const preference=(await db.query('select data from student_preferences where student_id=$1 for update',[user.id])).rows[0]?.data||{};
+    const events=(await db.query('select id,source_id,kind,data,created_at from study_session_events where student_id=$1 union all select id,source_id,kind,data,occurred_at as created_at from study_imported_events where student_id=$1',[user.id])).rows;
+    const source=await loadReviewQuestionFacts(user.id,{...context,events},db),now=new Date().toISOString();
+    if(current.length!==context.schoolTargets.length||current.some(target=>!context.schoolTargets.some(saved=>saved.id===target.id&&recordMatchesCurrentTarget({targetId:target.id,targetSnapshot:saved.data},[{...target.data,id:target.id}]))))throw new ApiError(409,'지원 정보가 바뀌었어요. 오늘 정리를 다시 확인해 주세요.');
+    let state;try{state=applyTrainingDayReflection({state:preference.trainingReview,questions:source.questions,planId:row.id,date:row.date,questionKeys:keys,now});}catch(error){throw new ApiError(409,(error as Error).message);}
+    const reflection={requestId:input.requestId,improvement:input.improvement,revisitQuestionKeys:keys,date:row.date,savedAt:now};
+    await db.query("insert into student_preferences(student_id,data) values($1,jsonb_build_object('trainingReview',$2::jsonb)) on conflict(student_id) do update set data=jsonb_set(student_preferences.data,'{trainingReview}',$2::jsonb),updated_at=now()",[user.id,JSON.stringify(state)]);
+    await db.query("update student_plans set target=jsonb_set(target,'{automaticPractice}', $3::jsonb),completed=true,revision=revision+1,updated_at=now() where id=$1 and student_id=$2",[row.id,user.id,JSON.stringify({...ap,hybrid:{...ap.hybrid,dayReflection:reflection}})]);
+    // Automatic reconciliation writes trainingReview without invalidation. A new student
+    // request must explicitly invalidate the shared projection; receipt retries return above.
+    await db.query('insert into student_learning_revisions(student_id,revision) values($1,1) on conflict(student_id) do update set revision=student_learning_revisions.revision+1',[user.id]);
+    return reflection;
+   });return Response.json({completed:true,reflection:saved},{headers});
   }
   const [session]=input.action==='activity_note'?[]:await query('select id,target_id,state,data from interview_sessions where id=$1 and student_id=$2',[input.sessionId,user.id]);
   if(input.action!=='activity_note'&&!session)throw new ApiError(404,'내가 진행한 훈련을 선택해 주세요.');

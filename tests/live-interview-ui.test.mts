@@ -14,7 +14,7 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture(),rec
   const values:any[]=[],deps:any[]=[],effects:Function[]=[],cleanups:Function[]=[];
   const calls:any[]=[],listeners=new Map<string,Function>(),controllers:any[]=[],destinations:string[]=[],frames:Function[]=[],storage=new Map<string,string>();
   const faults={suspend:undefined as Promise<void>|undefined,allowDevice:false,recovery,apiInfo:initialInfo,uploadReceipt:{media:{id:'new-server-media'}} as any,recoveryKey:'reserved-writer-attempt',assertActiveError:undefined as Error|undefined,assertFreshError:undefined as Error|undefined,mobile:false,reducedMotion:false,scrollPadding:80,textInput:null as any,appData:{user:{id:'student'},preferences:{} as any},preferenceError:undefined as Error|undefined,preferencePending:undefined as Promise<void>|undefined,reflectPreferenceInBootstrap:true,serverPreferences:null as any,refreshPending:undefined as Promise<void>|undefined,refreshUpdatesPreferences:false};
-  const draftFaults={preservedRecording:undefined as any,preservePending:undefined as Promise<void>|undefined,preserveError:undefined as Error|undefined,recoveryReadError:undefined as Error|undefined,draftError:undefined as Error|undefined,suspendError:undefined as Error|undefined,storageError:undefined as Error|undefined,storageMismatch:false};
+  const draftFaults={preservedRecording:undefined as any,preservePending:undefined as Promise<void>|undefined,preserveError:undefined as Error|undefined,recoveryReadError:undefined as Error|undefined,draftError:undefined as Error|undefined,helpPauseError:undefined as Error|undefined,suspendError:undefined as Error|undefined,storageError:undefined as Error|undefined,storageMismatch:false};
   const rtcFaults={enabled:false,playError:undefined as Error|undefined,closeResult:true,closePending:undefined as Promise<void>|undefined,capture:false,captureOptions:null as any};
   let index=0;
   const events=(prefix:string)=>({addEventListener:(name:string,fn:Function)=>listeners.set(prefix+name,fn),removeEventListener:(name:string)=>listeners.delete(prefix+name)});
@@ -52,7 +52,7 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture(),rec
       if(name==='next/link')return {__esModule:true,default:'Link'};
       if(name==='next/navigation')return {useRouter:()=>({push:(href:string)=>destinations.push(href)})};
       if(name==='./app-shell')return {useApp:()=>({data:faults.appData,refresh:async()=>{calls.push({refresh:true});await faults.refreshPending;if(faults.refreshUpdatesPreferences&&faults.serverPreferences)faults.appData.preferences=structuredClone(faults.serverPreferences);}})};
-      if(name==='./shared')return {action:async(action:string,payload:any)=>{calls.push({action,payload});await faults.preferencePending;if(faults.preferenceError)throw faults.preferenceError;faults.serverPreferences={...(faults.serverPreferences||faults.appData.preferences),...payload};if(faults.reflectPreferenceInBootstrap)faults.appData.preferences=structuredClone(faults.serverPreferences);return {preferences:structuredClone(faults.serverPreferences)};},api:async(url:string)=>{calls.push({api:url});return url==='/api/interviews/realtime'?{enabled:rtcFaults.enabled}:structuredClone(faults.apiInfo);},post:async(url:string,body:any)=>{calls.push({url,body});if(body.action==='draft'&&draftFaults.draftError)throw draftFaults.draftError;if(body.action==='suspend'){await faults.suspend;if(draftFaults.suspendError)throw draftFaults.suspendError;}return {};},Breadcrumb:'Breadcrumb',InfoTip:'InfoTip',Modal:'Modal',Alert:'Alert',targetName:(target:any)=>target?.university||'지원처 미등록'};
+      if(name==='./shared')return {action:async(action:string,payload:any)=>{calls.push({action,payload});await faults.preferencePending;if(faults.preferenceError)throw faults.preferenceError;faults.serverPreferences={...(faults.serverPreferences||faults.appData.preferences),...payload};if(faults.reflectPreferenceInBootstrap)faults.appData.preferences=structuredClone(faults.serverPreferences);return {preferences:structuredClone(faults.serverPreferences)};},api:async(url:string)=>{calls.push({api:url});return url==='/api/interviews/realtime'?{enabled:rtcFaults.enabled}:structuredClone(faults.apiInfo);},post:async(url:string,body:any)=>{calls.push({url,body});if(body.action==='draft'&&draftFaults.draftError)throw draftFaults.draftError;if(body.action==='pause'&&draftFaults.helpPauseError)throw draftFaults.helpPauseError;if(body.action==='suspend'){await faults.suspend;if(draftFaults.suspendError)throw draftFaults.suspendError;}return {};},Breadcrumb:'Breadcrumb',InfoTip:'InfoTip',Modal:'Modal',Alert:'Alert',targetName:(target:any)=>target?.university||'지원처 미등록'};
       if(name==='@/lib/client/draft-save')return {registerDraftSaver:(userId:string,save:()=>Promise<void>)=>{calls.push({draftSaver:'registered',userId});const remove=registerDraftSaver(userId,save);return()=>{calls.push({draftSaver:'removed',userId});remove();};}};
       if(name==='@/lib/client/live-interview-controller')return {LiveInterviewController:Controller};
       if(name==='@/lib/client/interviewer-avatar')return {InterviewerAvatarSignal};
@@ -421,4 +421,37 @@ test('pausing before logout retains pending and failed RTC shutdown receipts unt
   const info=fixture(),h=harness(undefined,info);t.after(()=>h.cleanup());h.rtcFaults.enabled=true;h.faults.allowDevice=true;h.faults.appData.preferences={liveRecordingConsent:true};h.render();await h.flush();button(h.render(),'면접 시작').props.onClick();const services=h.controllers[0].services;await services.prepare();await services.speak(info.question,0,new AbortController().signal);
   let release!:()=>void;h.rtcFaults.closePending=new Promise<void>(resolve=>release=resolve);h.rtcFaults.closeResult=false;services.mute(true);const saving=flushPendingDrafts('student');let settled=false;void saving.then(()=>settled=true,()=>settled=true);await h.flush();assert.equal(settled,false,'a prior pause cannot discard the outstanding close');release();await assert.rejects(()=>saving,/초안을 보관하지 못했어요/);
   h.rtcFaults.closePending=undefined;h.rtcFaults.closeResult=true;await flushPendingDrafts('student');assert.ok(h.calls.filter(call=>call.rtc==='close').length>=3);assert.equal(h.calls.some(call=>call.body?.action==='finish'||call.body?.action==='answer_recording'),false);
+});
+
+
+test('Live AI help pauses the current recorder without finishing, uploading or discarding it and returns to the same question',async(t)=>{
+  const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();const recording={blob:new Blob(['unfinished durable audio']),recoveryKey:'current-attempt'};
+  let tree=emit(h,{phase:'listening',recording}),helper=nodes(tree).find(node=>node.type==='LearningHelp');assert.ok(helper);
+  const offset=h.calls.length;assert.equal(await helper.props.beforeOpen(),true);tree=h.render();const actions=h.calls.slice(offset);
+  assert.equal(h.controllers[0].state.phase,'paused');assert.equal(h.controllers[0].state.recording,recording);assert.equal(h.controllers[0].state.info.question.turnId,'turn');
+  assert.equal(actions.some(call=>call.controller==='preserveAnswer'||call.controller==='finish'||call.upload||call.recovery==='removed'||call.recovery==='cancelled'),false);
+  assert.equal(actions.find(call=>call.body?.action==='pause').body.turnId,'turn');assert.equal(actions.some(call=>call.body?.action==='answer'||call.body?.action==='finish'),false);
+  helper=nodes(tree).find(node=>node.type==='LearningHelp');helper.props.onClose();assert.equal(h.destinations.length,0);assert.ok(button(h.render(),'보관한 답변 저장하고 계속'));
+});
+
+test('Live typed help preserves the latest answer draft and refreshes its assisted receipt without submitting an answer',async(t)=>{
+  const info=fixture();info.session.data.trainingPurpose='diagnostic';const h=harness(undefined,info);t.after(()=>h.cleanup());h.render();await h.flush();let tree=h.render();
+  nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('이 도움창을 닫고 이어서 쓸 초안');tree=h.render();let helper=nodes(tree).find(node=>node.type==='LearningHelp');assert.equal(await helper.props.beforeOpen(),true);
+  assert.equal(h.storage.get('gakja-live-text:student:live-session:turn'),'이 도움창을 닫고 이어서 쓸 초안');
+  const paused=h.calls.filter(call=>call.body?.action==='pause').at(-1).body;assert.equal(paused.draft,'이 도움창을 닫고 이어서 쓸 초안');
+  h.faults.apiInfo={...info,turns:[{id:'turn',answer:null,assisted:true,helpKinds:['ai']}]};await helper.props.onAssisted();tree=h.render();
+  assert.equal(nodes(tree).find(node=>node.type==='ChatComposer').props.value,'이 도움창을 닫고 이어서 쓸 초안');assert.equal(h.calls.some(call=>call.body?.action==='answer'||call.body?.action==='finish'),false);
+  helper=nodes(tree).find(node=>node.type==='LearningHelp');assert.equal(helper.props.interviewSessionId,'live-session');assert.equal(helper.props.interviewTurnId,'turn');
+});
+
+test('Live helper refuses processing turns and fails closed when the server cannot pause the same turn',async(t)=>{
+  const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let tree=emit(h,{phase:'saving'});let helper=nodes(tree).find(node=>node.type==='LearningHelp');assert.equal(helper.props.disabled,true);assert.equal(await helper.props.beforeOpen(),false);
+  tree=emit(h,{phase:'paused'});helper=nodes(tree).find(node=>node.type==='LearningHelp');h.draftFaults.helpPauseError=Error('서버 연결을 확인해 주세요.');await assert.rejects(helper.props.beforeOpen,/서버 연결/);
+  assert.equal(h.destinations.length,0);assert.equal(h.controllers[0].state.info.question.turnId,'turn');assert.equal(h.calls.some(call=>call.body?.action==='answer'||call.body?.action==='finish'),false);
+});
+
+test('opening the AI tab during Live opens its current sheet and a later question does not inherit that request',async(t)=>{
+  const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let prevented=false;h.listeners.get('window:gakja:open-on')!({preventDefault(){prevented=true;}});
+  let tree=h.render();assert.equal(prevented,true);assert.equal(nodes(tree).find(node=>node.type==='LearningHelp').props.openRequest,1);assert.equal(h.destinations.length,0);
+  tree=emit(h,{info:{...fixture(),question:{...fixture().question,turnId:'next-turn'}}});assert.equal(nodes(tree).find(node=>node.type==='LearningHelp').props.openRequest,0);
 });

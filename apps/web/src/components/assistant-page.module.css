@@ -3,7 +3,9 @@
 :global(.app-shell) :global(.app-body):has(.page) > :global(.topbar),
 :global(.app-shell) :global(.app-body):has(.page) > :global(.mobile-tools) { flex-shrink:0; }
 :global(.app-shell) :global(.main-content):has(.page) { display:flex; flex:1; min-height:0; max-width:none; padding-top:16px; padding-bottom:0; background:var(--clarity-surface); }
-:global(.app-shell) :global(.main-content):has(.page) > :global(.page-motion) { display:flex; flex:1; min-width:0; min-height:0; }
+:global(.app-shell) :global(.main-content):has(.page) > :global(.page-motion) { display:flex; flex-direction:column; flex:1; min-width:0; min-height:0; }
+/* Browsing tabs stay above the conversation and never take its horizontal space. */
+:global(.app-shell) :global(.main-content):has(.page) > :global(.page-motion) > nav { flex:0 0 auto; min-width:0; margin-bottom:16px; }
 :global(.app-shell) :global(.app-body):has(.page) > :global(.app-footer) { display:none; }
 
 .page { display:flex; flex-direction:column; flex:1; width:100%; min-width:0; min-height:0; gap:12px; background:var(--clarity-surface); font-size:14px; }

@@ -34,7 +34,7 @@ function harness(){
   });
   const render=()=>{index=0;const tree=mod.exports.ChatInterviewSession({id:'session',kind:'chat'});while(effects.length)effects.shift()();return tree;};
   const flush=()=>new Promise(resolve=>setImmediate(resolve));
-  return {render,flush,faults,values,listeners,posts,destinations,document,storage,cleanup:()=>cleanups.forEach(fn=>fn?.())};
+  return {render,flush,faults,values,listeners,posts,destinations,document,storage,source,cleanup:()=>cleanups.forEach(fn=>fn?.())};
 }
 function nodes(tree:any):any[]{return !tree||typeof tree!=='object'?[]:Array.isArray(tree)?tree.flatMap(nodes):[tree,...nodes(tree.props?.children)];}
 function click(h:ReturnType<typeof harness>,href:string){let prevented=false;h.listeners.get('document:click')!({target:{closest:()=>({href,target:'',hasAttribute:()=>false})},button:0,preventDefault(){prevented=true;},stopPropagation(){}});return prevented;}
@@ -98,4 +98,17 @@ test('a failed logout after chat pause shows resume and keeps navigation guards 
 test('the actual interview answer composer follows the account Enter setting without changing or sending its draft',async()=>{
  const h=harness();h.render();await h.flush();h.values[1]='설정 변경 중에도 보관할 답변';let tree=h.render();const composer=()=>nodes(tree).find(node=>node.type==='ChatComposer').props;
  assert.equal(composer().enterToSend,true);h.faults.enterToSend=false;tree=h.render();assert.equal(composer().enterToSend,false);assert.equal(composer().value,'설정 변경 중에도 보관할 답변');h.faults.enterToSend=true;tree=h.render();assert.equal(composer().enterToSend,true);assert.equal(h.posts.some(post=>post.action==='answer'),false);h.cleanup();
+});
+
+
+test('Chat AI help saves and pauses the exact question, refreshes observed help, then resumes the same local draft',async(t)=>{
+  const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let tree=h.render();nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('도움 뒤에 계속 쓸 학생의 초안');tree=h.render();
+  let helper=nodes(tree).find(node=>node.type==='LearningHelp');assert.equal(await helper.props.beforeOpen(),true);tree=h.render();assert.equal(h.posts.at(-1).action,'pause');assert.equal(h.posts.at(-1).turnId,'turn');assert.equal(h.posts.at(-1).draft,'도움 뒤에 계속 쓸 학생의 초안');assert.equal(h.destinations.length,0);
+  h.source.turns=[{id:'turn',assisted:true,answer:null,helpKinds:['ai']}];helper=nodes(tree).find(node=>node.type==='LearningHelp');await helper.props.onAssisted();tree=h.render();assert.equal(nodes(tree).find(node=>node.type==='ChatComposer').props.value,'도움 뒤에 계속 쓸 학생의 초안');
+  helper=nodes(tree).find(node=>node.type==='LearningHelp');await helper.props.onClose();tree=h.render();assert.equal(h.source.session.data.paused,false);assert.equal(nodes(tree).find(node=>node.type==='ChatComposer').props.value,'도움 뒤에 계속 쓸 학생의 초안');assert.equal(h.posts.some(post=>post.action==='answer'||post.action==='finish'),false);
+});
+
+test('failed Chat AI pause keeps its question and draft and does not navigate',async(t)=>{
+  const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let tree=h.render();nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('저장 실패해도 보존할 초안');tree=h.render();h.faults.pause=true;
+  await assert.rejects(nodes(tree).find(node=>node.type==='LearningHelp').props.beforeOpen,/pause offline/);tree=h.render();assert.equal(nodes(tree).find(node=>node.type==='ChatComposer').props.value,'저장 실패해도 보존할 초안');assert.equal(h.destinations.length,0);assert.equal(h.posts.some(post=>post.action==='answer'||post.action==='finish'),false);
 });
