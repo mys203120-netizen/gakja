@@ -1,0 +1,2 @@
+.choice { display:flex; flex-direction:row; align-items:flex-start; gap:10px; font-size:14px; }
+.choice input { flex:none; margin-top:6px; accent-color:var(--accent); }

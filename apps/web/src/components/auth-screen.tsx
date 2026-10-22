@@ -11,6 +11,8 @@ import { Logo, Alert, FloatingNotice, post } from './shared';
 import { socialErrors, socialNext, type SocialProvider } from '@/lib/social-auth-rules';
 import socialStyles from './social-auth.module.css';
 import { LoginIntroSheet } from './login-intro-sheet';
+import {PublicLinks} from './public-links';
+import {trackEvent} from '@/lib/analytics';
 
 export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'invite' | 'reset-password' }) {
   const router = useRouter();
@@ -79,6 +81,7 @@ export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'in
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!ready || busy || mode === 'signup') return;
+    if(mode==='login')trackEvent('cta_start_click',{placement:'hero'});
     setError('');
     setNotice('');
     setBusy(true);
@@ -110,6 +113,7 @@ export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'in
     if (busy) return;
     setNotice('');
     if (!providers[provider]) { setError(socialErrors[`${provider}_not_configured`]); return; }
+    trackEvent('cta_start_click',{placement:'hero'});
     setError(''); setBusy(true);
     const next = socialNext(new URLSearchParams(window.location.search).get('next'));
     window.location.assign(`/api/auth/${provider}/start?next=${encodeURIComponent(next)}`);
@@ -132,7 +136,7 @@ export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'in
       <img className={ownedClassName("auth-outline-right",true)} src="/auth/brand-outline.svg" alt=""/>
     </div>
     <section className={ownedClassName("auth-center-main",true)} aria-labelledby="auth-title">
-      <form className={ownedClassName("auth-form",true)} method="post" aria-busy={!ready || busy} onSubmit={submit}>
+      <form id="auth-form" className={ownedClassName("auth-form",true)} method="post" aria-busy={!ready || busy} onSubmit={submit}>
         <div className={ownedClassName("auth-center-mark",true)}>
           <div className={ownedClassName("auth-logo-attention",true)}><img className={ownedClassName("login-art-logo",true)} src="/brand-logo.svg" alt="" width={82} height={82}/><span className={ownedClassName("auth-privacy-cue",true)} aria-hidden="true"><EyeOff size={20} strokeWidth={1.6}/></span></div>
         </div>
@@ -152,6 +156,6 @@ export function AuthScreen({ mode = 'login' }: { mode?: 'login' | 'signup' | 'in
         <div className={ownedClassName("auth-foot",true)}>{mode==='login'?<div className={ownedClassName(socialStyles.signupFoot,true)}>아직 계정이 없으신가요? <Link href="/signup">회원가입</Link></div>:<Link href="/login">로그인으로 돌아가기</Link>}</div>
       </form>
     </section>
-    <footer className={ownedClassName("auth-entry-footer",true)}><span className={ownedClassName(undefined,true)}>각자의 이야기, 각자의 답이 되도록.</span>{mode==='login'&&<Link href="/invite">초대 계정 연결</Link>}<span className={ownedClassName(undefined,true)}>© {new Date().getFullYear()} 각자의답</span></footer>
+    <footer className={ownedClassName("auth-entry-footer",true)}><PublicLinks/>{mode==='login'&&<Link href="/invite">초대 계정 연결</Link>}<span className={ownedClassName(undefined,true)}>© {new Date().getFullYear()} 각자의답</span></footer>
   </main>{mode==='login'&&<LoginIntroSheet disabled={busy}/>}</>;
 }

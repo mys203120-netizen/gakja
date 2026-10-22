@@ -11,6 +11,7 @@ import { ArrowUpRight, Users, Upload, Clock3, Check, FileCode2, Plus, Search, Ch
 import { useApp } from './app-shell';
 import { AdminAssignments, AdminSchools, AdminSchedules } from './admin-learning';
 import { AdminAdmissionCalendar } from './admin-calendar';
+import { AdminInquiries } from './admin-inquiries';
 import { action, api, post, PageTitle, Breadcrumb, Badge, Empty, Alert, Modal, LinkedRow, dateLabel, targetName, targetMajor, type Item } from './shared';
 import './admin-guidebook.css';
 import overviewStyles from './admin-overview.module.css';
@@ -44,6 +45,7 @@ function useAdminData() { const { data } = useApp(); return data.admin || {}; }
 
 export function AdminPages({ slug = [] }: { slug?: string[] }) {
   const { data } = useApp();
+  if (slug[0] === 'inquiries') return data.user.role === 'admin' ? <AdminInquiries/> : <Empty title="문의는 운영 관리자만 확인할 수 있어요"/>;
   if (slug[0] === 'assignments') return <AdminAssignments data={data}/>;
   if (slug[0] === 'schools') return <AdminSchools data={data}/>;
   if (slug[0] === 'schedules') return data.user.role === 'admin' ? <AdminAdmissionCalendar /> : <AdminSchedules data={data}/>;

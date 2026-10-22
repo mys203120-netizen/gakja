@@ -60,10 +60,10 @@ function context(href, key, id) {
 }
 let tree = materials.Materials({ slug: ['briefings', 'news', 'article'] });
 let crumbs = nodes(tree).find(node => node.type === 'Breadcrumb').props.items;
-check(crumbs.map(item => item.label).join('/') === '자료/시사/기사', 'news breadcrumbs belong to the material resource section rather than personal textbooks');
+check(crumbs.map(item => item.label).join('/') === '준비 현황/시사 브리핑/기사', 'news breadcrumbs belong to the material resource section rather than personal textbooks');
 tree = materials.Materials({ slug: ['answers', 'q1'] });
 crumbs = nodes(tree).find(node => node.type === 'Breadcrumb').props.items;
-check(crumbs.map(item => item.label).join('/') === '자료/내 교재/답변 초안/상세', 'prepared scripts have an explicit material child hierarchy');
+check(crumbs.map(item => item.label).join('/') === '준비 현황/학생부·교재/답변 초안/상세', 'prepared scripts have an explicit material child hierarchy');
 tree = materials.ActivityDetail({ id: 'a1' });
 context(link(tree, '각자ON에서 정리').props.href, 'activityId', 'a1');
 tree = materials.QuestionDetail({ id: 'q1' });

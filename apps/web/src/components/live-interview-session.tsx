@@ -12,6 +12,7 @@ import {LiveInterviewerStage} from './live-interviewer-stage';
 import {LiveInterviewController, type LiveSnapshot} from '@/lib/client/live-interview-controller';
 import {createLiveAnswerCapture} from '@/lib/client/live-interview-recorder';
 import {uploadRecording} from '@/lib/recording-upload-client';
+import {PRIVACY_POLICY_VERSION} from '@/lib/privacy-policy';
 import {beginRecordingRecovery, readRecordingRecovery, removeRecordingRecovery, type RecordingRecoveryWriter} from '@/lib/client/recording-recovery';
 import type {LiveAnswerRecording} from '@/lib/client/live-interview-recorder';
 import {InterviewerAvatarSignal} from '@/lib/client/interviewer-avatar';
@@ -47,6 +48,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
   const [consent,setConsent]=useState(appData?.preferences?.liveRecordingConsent===true),[camera,setCamera]=useState(appData?.preferences?.liveCameraEnabled!==false),[leaveHref,setLeaveHref]=useState<string|null>(null),[exitOpen,setExitOpen]=useState(false),[download,setDownload]=useState('');
   const [recordingSettingsOpen,setRecordingSettingsOpen]=useState(false),[preferenceBusy,setPreferenceBusy]=useState(false),[preferenceError,setPreferenceError]=useState('');
   const preferenceScope=useRef<string|undefined>(appData?.user?.id);
+  const consentPolicyVersion=useRef<string|undefined>(appData?.preferences?.liveRecordingPolicyVersion);
   const preferenceReceipt=useRef<{studentId:string;consent:boolean;camera:boolean}|null>(null);
   const voiceChoice=useRef({consent,camera,busy:preferenceBusy});voiceChoice.current={consent,camera,busy:preferenceBusy};
   const controller=useRef<LiveInterviewController|null>(null),stream=useRef<MediaStream|null>(null),video=useRef<HTMLVideoElement|null>(null),audio=useRef<HTMLAudioElement|null>(null);
@@ -84,20 +86,20 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     const receipt=preferenceReceipt.current;
     // An older bootstrap response cannot undo a setting just acknowledged by the server.
     if(receipt&&receipt.studentId===scope&&(receipt.consent!==savedConsent||receipt.camera!==savedCamera))return;
-    preferenceReceipt.current=null;setConsent(savedConsent);setCamera(savedCamera);
+    preferenceReceipt.current=null;setConsent(savedConsent);setCamera(savedCamera);consentPolicyVersion.current=appData.preferences?.liveRecordingPolicyVersion;
     voiceChoice.current={consent:savedConsent,camera:savedCamera,busy:voiceChoice.current.busy};cameraChoice.current=savedCamera;
-  },[appData?.user?.id,appData?.preferences?.liveRecordingConsent,appData?.preferences?.liveCameraEnabled,studentId]);
+  },[appData?.user?.id,appData?.preferences?.liveRecordingConsent,appData?.preferences?.liveRecordingPolicyVersion,appData?.preferences?.liveCameraEnabled,studentId]);
   async function saveRecordingSettings(next:{liveRecordingConsent?:boolean;liveCameraEnabled?:boolean}){
     if(voiceChoice.current.busy||active)return false;
     const scope=studentId;
     voiceChoice.current.busy=true;
     setPreferenceBusy(true);setPreferenceError('');
     try{
-      const result=await action('preference',next);
+      const result=await action('preference',{...next,...(next.liveRecordingConsent!==undefined?{policyVersion:PRIVACY_POLICY_VERSION}:{})});
       if(preferenceScope.current!==scope)return false;
       const saved={studentId:scope,consent:result.preferences.liveRecordingConsent===true,camera:result.preferences.liveCameraEnabled!==false};
       preferenceReceipt.current=saved;voiceChoice.current={consent:saved.consent,camera:saved.camera,busy:true};cameraChoice.current=saved.camera;
-      setConsent(saved.consent);setCamera(saved.camera);if(next.liveRecordingConsent)setRecordingSettingsOpen(false);
+      setConsent(saved.consent);setCamera(saved.camera);consentPolicyVersion.current=result.preferences.liveRecordingPolicyVersion;if(next.liveRecordingConsent)setRecordingSettingsOpen(false);
       // Preserve a paused capture before releasing its tracks. A later start checks the remembered choices.
       if(stream.current)await controller.current?.resetDevices();
       await refresh();return true;
@@ -193,7 +195,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
         const form=new FormData(),extension=recording.blob.type.includes('mp4')?'mp4':'webm';
         form.set('recording',recording.blob,`answer.${extension}`);
         if(recording.analysisAudio)form.set('analysisAudio',recording.analysisAudio,recording.analysisAudio.type.includes('mp4')?'answer-audio.mp4':'answer-audio.webm');
-        form.set('sessionId',id);form.set('questionId',current.id);form.set('turnId',current.turnId);form.set('generation',String(generation));form.set('consent','true');form.set('durationSeconds',String(recording.durationMs/1000));
+        form.set('sessionId',id);form.set('questionId',current.id);form.set('turnId',current.turnId);form.set('generation',String(generation));form.set('consent','true');if(consentPolicyVersion.current)form.set('policyVersion',consentPolicyVersion.current);form.set('durationSeconds',String(recording.durationMs/1000));
         if(options?.deferTranscription)form.set('deferTranscription','true');
         if(recording.telemetry)form.set('speechTelemetry',JSON.stringify(recording.telemetry));
         const result=await uploadRecording('/api/media',form);
@@ -356,7 +358,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
           <details className={ownedClassName(styles.recordingSettings,true)} open={!consent||recordingSettingsOpen} onToggle={event=>setRecordingSettingsOpen(event.currentTarget.open)}><summary className={ownedClassName(undefined,true)}><span className={ownedClassName(undefined,true)}>녹음 설정</span><span className={ownedClassName(undefined,true)}>{preferenceBusy?'저장 중':consent?'설정됨':'처음 한 번 설정'}</span></summary><div className={ownedClassName(styles.recordingSettingsBody,true)}>
             <label className={ownedClassName(styles.consent,true)}><span className={ownedClassName(undefined,true)}>음성·영상 저장과 답변 전사에 동의해요.</span><span className={ownedClassName("motion-toggle-field",true)}><input className={ownedClassName("motion-toggle-input",true)} type="checkbox" checked={consent} disabled={preferenceBusy||active} onChange={event=>void saveRecordingSettings({liveRecordingConsent:event.target.checked})}/><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></span></label>
             <label className={ownedClassName(styles.consent,true)}><span className={ownedClassName(undefined,true)}>카메라 함께 사용</span><span className={ownedClassName("motion-toggle-field",true)}><input className={ownedClassName("motion-toggle-input",true)} type="checkbox" checked={camera} disabled={preferenceBusy||active} onChange={event=>void saveRecordingSettings({liveCameraEnabled:event.target.checked})}/><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></span></label>
-            <div className={ownedClassName(styles.settingsHelp,true)}><span className={ownedClassName(undefined,true)}>계정에 저장됨</span><InfoTip label="녹음 설정과 권한 안내">동의와 카메라 선택은 다음 면접에도 유지돼요. 마이크 연결은 면접 시작을 눌렀을 때 확인하며, 브라우저가 요청하는 권한은 직접 허용해야 해요. 녹음은 비공개로 저장되고 AI 전사·피드백에 사용돼요. 일시정지 후 동의를 끌 수 있으며, 이미 저장한 답변은 유지돼요.</InfoTip></div>
+            <Link href="/privacy" className={ownedClassName("text-link")}>개인정보 처리방침 · 녹음·AI 처리 안내</Link><div className={ownedClassName(styles.settingsHelp,true)}><span className={ownedClassName(undefined,true)}>계정에 저장됨</span><InfoTip label="녹음 설정과 권한 안내">동의와 카메라 선택은 다음 면접에도 유지돼요. 마이크 연결은 면접 시작을 눌렀을 때 확인하며, 브라우저가 요청하는 권한은 직접 허용해야 해요. 녹음은 비공개로 저장되고 AI 전사·피드백에 사용돼요. 일시정지 후 동의를 끌 수 있으며, 이미 저장한 답변은 유지돼요.</InfoTip></div>
           </div></details>
           {preferenceError&&<p className={ownedClassName(styles.error,true)} role="alert">{preferenceError}</p>}
           {phase==='idle'&&!textMode&&<button className={ownedClassName("button primary",true)} disabled={!consent||!recoveryChecked||preferenceBusy} onClick={begin}><Play size={16}/>{state.recording?'보관한 답변 저장하고 계속':'면접 시작'}</button>}

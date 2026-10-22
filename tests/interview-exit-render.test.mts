@@ -20,7 +20,7 @@ function harness(){
   vm.runInNewContext(ts.transpileModule(readFileSync('apps/web/src/components/interview.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,{
     module:mod,exports:mod.exports,Date,URL,crypto:{randomUUID},document,location,window:{...events('window:'),navigation:events('navigation:')},sessionStorage:{getItem:()=>null,setItem(){},removeItem(){}},localStorage:{getItem:(key:string)=>storage.get(key)??null,setItem:(key:string,value:string)=>{if(faults.storage)throw Error('storage blocked');storage.set(key,value);},removeItem:(key:string)=>storage.delete(key)},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
     fetch:async(_url:string,init:any)=>{posts.push(JSON.parse(init.body));return {ok:true};},
-    require(name:string){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
+    require(name:string){if(name==='@/lib/privacy-policy')return {PRIVACY_POLICY_VERSION:'2026-10-22'};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
       if(name==='react')return react;
       if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props}),Fragment:'Fragment'};
       if(name==='next/navigation')return {useRouter:()=>({push:(url:string)=>destinations.push(url)})};

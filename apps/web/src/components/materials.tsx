@@ -19,8 +19,8 @@ function PageTitle(props:ComponentProps<typeof BasePageTitle>){return <><BasePag
 export function Materials({slug=[]}:{slug?:string[]}){
   const{data}=useApp();const section=slug[0]||'';
   const breadcrumbs=section==='briefings'
-    ?[{label:'자료',href:'/knowledge'},{label:'시사',href:slug[1]?'/materials/briefings':undefined},...(slug[1]?[{label:'기사'}]:[])]
-    :[{label:'자료',href:'/knowledge'},{label:'내 교재',href:section?'/materials':undefined},...(section?[{label:tabs.find(t=>t[0]===section)?.[1]||'자료',href:slug[1]?`/materials/${section}`:undefined}]:[]),...(slug[1]?[{label:'상세'}]:[])];
+    ?[{label:'준비 현황',href:'/preparation'},{label:'시사 브리핑',href:slug[1]?'/materials/briefings':undefined},...(slug[1]?[{label:'기사'}]:[])]
+    :[{label:'준비 현황',href:'/preparation'},{label:'학생부·교재',href:section?'/materials':undefined},...(section?[{label:tabs.find(t=>t[0]===section)?.[1]||'자료',href:slug[1]?`/materials/${section}`:undefined}]:[]),...(slug[1]?[{label:'상세'}]:[])];
   return <><Breadcrumb items={breadcrumbs}/>{section==='briefings'?(slug[1]==='news'?<DepartmentNews articleId={slug[2]}/>:slug[1]?<Briefings key={slug[1]} id={slug[1]}/>:<DepartmentNews/>):!data.package?<><PageTitle title="내 교재"/><Empty title="자료가 준비 중이에요" href="/interview" label="공통 질문 연습"/></>:section==='guidebook'||section==='handbook'?<BookReader key={section} kind={section}/>:section==='activities'?slug[1]?<ActivityDetail key={slug[1]} id={slug[1]}/>:<ActivityList/>:section==='questions'?slug[1]?<QuestionDetail key={slug[1]} id={slug[1]}/>:<QuestionList/>:section==='answers'?slug[1]?<AnswerEditor key={slug[1]} id={slug[1]}/>:<QuestionList answers/>:<MaterialsOverview/>}</>;
 }
 

@@ -31,7 +31,7 @@ const module = { exports: {} };
 const actionButton = ({pending=false,pendingLabel,disabled,children,type='button',...props}) => ({type:'button',props:{...props,type,disabled:disabled||pending,'aria-busy':pending||undefined,children:pending?[{type:'LoaderCircle',props:{size:16,'aria-hidden':true}},pendingLabel??children]:children}});
 vm.runInNewContext(output, {
   module, exports: module.exports, URLSearchParams,
-  require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+  require(name) {if(name==='@/lib/privacy-policy')return {PRIVACY_POLICY_VERSION:'2026-10-22'};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if(name==='@/lib/client/draft-save')return {registerDraftSaver:()=>()=>{}};
     if(name==='@/lib/client/enter-send')return {sendOnEnter};
     if (name === 'react') return {
@@ -53,6 +53,7 @@ vm.runInNewContext(output, {
     if (name === '@/lib/quiz-session-view') return quizView;
     if (name.endsWith('.module.css')) return {__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
     if (name === './practice-writing-help') return {PracticeWritingHelp:'PracticeWritingHelp'};
+    if (name === './training-continuation') return {TrainingContinuation:'TrainingContinuation'};
       if (name === '@/lib/client/recording-recovery') return {readRecordingRecovery:async()=>null,installRecordingExitGuard:()=>()=>{}};
       if (name === './learning-help') return { LearningHelp: 'LearningHelp' };
     if (name === './audio-level-dot') return { AudioLevelDot: 'AudioLevelDot' };

@@ -8,6 +8,7 @@ import { assertPublishedAccess, completeUsage, FeatureError, featureError, googl
 import { analyzeSpeech, validateSpeechTelemetry } from '@/lib/speech-analysis';
 import { transcribeOwnedInterviewRecording } from '@/lib/interview-transcription';
 import { transcriptionResponse,withRecordingTranscriptionLock } from '@/lib/recording-transcription';
+import {PRIVACY_POLICY_VERSION} from '@/lib/privacy-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
     if (!(file instanceof File) || !file.size) throw new FeatureError(400, '녹화 파일을 선택해 주세요.', 'MEDIA_REQUIRED');
     if (file.size > MAX_BYTES) throw new FeatureError(413, '녹화는 파일당 20MB까지 저장할 수 있어요.', 'MEDIA_TOO_LARGE');
     if (form.get('consent') !== 'true') throw new FeatureError(400, '녹화와 비공개 저장에 동의해 주세요.', 'RECORDING_CONSENT_REQUIRED');
+    const consentPolicyVersion=z.literal(PRIVACY_POLICY_VERSION).optional().parse(form.get('policyVersion')??undefined);
     const sessionId = z.string().uuid().parse(form.get('sessionId'));
     const questionId = z.string().min(1).max(160).parse(form.get('questionId'));
     const turnId = form.get('turnId') ? z.string().uuid().parse(form.get('turnId')) : null;
@@ -125,7 +127,7 @@ export async function POST(request: Request) {
     const id = randomUUID();
     const analysisMediaId = !mime.startsWith('audio/') && audioBytes ? randomUUID() : null;
     const speechAnalysis = analyzeSpeech({telemetry:speechTelemetry});
-    const metadata: Record<string, unknown> = { kind: 'answer_recording', digest, questionId, turnId: turn.id, size: bytes.length, consentAt: new Date().toISOString(), measurementStatus: speechAnalysis.status, speechTelemetry, speechAnalysis, transcriptionStatus: audioBytes ? 'pending' : 'audio_required', provider: 'postgresql', analysisMediaId, durationSeconds, generation };
+    const metadata: Record<string, unknown> = { kind: 'answer_recording', digest, questionId, turnId: turn.id, size: bytes.length, consentAt: new Date().toISOString(), ...(consentPolicyVersion?{consentPolicyVersion,consentPolicyPath:'/privacy'}:{}), measurementStatus: speechAnalysis.status, speechTelemetry, speechAnalysis, transcriptionStatus: audioBytes ? 'pending' : 'audio_required', provider: 'postgresql', analysisMediaId, durationSeconds, generation };
     await transaction(async db => {
       const [current] = (await db.query('select s.state,s.data as session_data,t.data as turn_data from interview_sessions s join interview_turns t on t.session_id=s.id where s.id=$1 and s.student_id=$2 and t.id=$3 and t.student_id=$2 for update of s,t', [sessionId,user.id,turn.id])).rows;
       if (!current || current.state !== 'active' || current.turn_data.answer || current.turn_data.invalidated || Number(current.session_data.generation || 0) !== generation) throw new FeatureError(409, '현재 답변의 녹화를 저장해 주세요.', 'STALE_TURN');

@@ -8,16 +8,19 @@ const source=ts.transpileModule(readFileSync('apps/web/src/app/api/actions/route
 class ApiError extends Error {constructor(public status:number,message:string){super(message);}}
 function harness(){
   let userId='student-one';
-  const saved=new Map<string,Record<string,unknown>>([['student-one',{answerLength:'normal',notificationsEnabled:false}]]),writes:any[]=[];
+  const saved=new Map<string,Record<string,unknown>>([['student-one',{answerLength:'normal',notificationsEnabled:false}]]),writes:any[]=[],audits:any[]=[];
+  const dbQuery=async(sql:string,args:any[])=>{
+    if(sql.startsWith('insert into audit_logs')){audits.push({actor:args[0],student:args[1],action:args[2],data:JSON.parse(args[3])});return [];}
+    assert.match(sql,/insert into student_preferences/);assert.match(sql,/data=student_preferences.data\|\|excluded.data/);writes.push({sql,args});
+    const preferences={...saved.get(args[0]),...JSON.parse(args[1])};saved.set(args[0],preferences);return [{data:preferences}];
+  };
   const module={exports:{} as any};
   vm.runInNewContext(source,{module,exports:module.exports,Request,Response,URL,JSON,require(name:string){
     if(name==='node:crypto')return {randomUUID:()=>''};
     if(name==='@supabase/supabase-js')return {};
+    if(name==='@/lib/privacy-policy')return {PRIVACY_POLICY_VERSION:'2026-10-22'};
     if(name==='@/lib/auth')return {requireUser:async()=>({id:userId,role:'student'}),checkOrigin:(request:Request)=>{if(request.headers.get('origin')!=='http://fixture.test')throw new ApiError(403,'출처 확인');}};
-    if(name==='@/lib/db')return {ApiError,errorResponse:(error:any)=>Response.json({error:error.message},{status:error.status||500}),query:async(sql:string,args:any[])=>{
-      assert.match(sql,/insert into student_preferences/);assert.match(sql,/data=student_preferences.data\|\|excluded.data/);writes.push({sql,args});
-      const preferences={...saved.get(args[0]),...JSON.parse(args[1])};saved.set(args[0],preferences);return [{data:preferences}];
-    }};
+    if(name==='@/lib/db')return {ApiError,errorResponse:(error:any)=>Response.json({error:error.message},{status:error.status||500}),query:dbQuery,transaction:async(work:Function)=>work({query:async(sql:string,args:any[])=>({rows:await dbQuery(sql,args)})})};
     if(name.startsWith('@/lib/'))return {};
     throw Error(name);
   }});
@@ -25,7 +28,7 @@ function harness(){
     const response=await module.exports.POST(new Request('http://fixture.test/api/actions',{method:'POST',headers:{'content-type':'application/json',origin},body:JSON.stringify({action:'preference',payload})}));
     return {status:response.status,body:await response.json()};
   }
-  return {post,saved,writes,setUser:(id:string)=>{userId=id;}};
+  return {post,saved,writes,audits,setUser:(id:string)=>{userId=id;}};
 }
 
 test('help, enter-send and recording preferences persist true and false per authenticated account while preserving unrelated settings',async()=>{
@@ -49,4 +52,21 @@ test('help, enter-send and recording preferences reject truthy strings, numbers 
 
 test('preference writes retain same-origin protection',async()=>{
   const h=harness();assert.equal((await h.post({helpEnabled:false},'https://other.invalid')).status,403);assert.equal(h.writes.length,0);
+});
+
+test('explicit recording choices retain their policy revision and revocation in durable audit history',async()=>{
+  const h=harness();
+  assert.equal((await h.post({liveRecordingConsent:true,policyVersion:'2026-10-22'})).status,200);
+  assert.equal(h.saved.get('student-one')?.liveRecordingPolicyVersion,'2026-10-22');
+  assert.equal((await h.post({liveRecordingConsent:false,policyVersion:'2026-10-22'})).status,200);
+  assert.deepEqual(h.audits.map(event=>[event.action,event.data.granted,event.data.policyVersion]),[['recording.consent',true,'2026-10-22'],['recording.consent',false,'2026-10-22']]);
+  assert.ok(h.audits.every(event=>!Number.isNaN(Date.parse(event.data.recordedAt))));
+  assert.equal((await h.post({liveRecordingConsent:true,policyVersion:'invented-version'})).status,400);
+  assert.equal(h.writes.length,2);
+});
+
+test('legacy recording consent remains compatible without claiming a policy revision it did not confirm',async()=>{
+  const h=harness();assert.equal((await h.post({liveRecordingConsent:true})).status,200);
+  assert.equal(h.audits[0].data.policyVersion,null);
+  assert.equal(h.saved.get('student-one')?.liveRecordingPolicyVersion,null);
 });

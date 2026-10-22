@@ -26,7 +26,7 @@ const gsap = {
 
 const introModule={exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/login-intro-sheet.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{
- module:introModule,exports:introModule.exports,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+ module:introModule,exports:introModule.exports,require(name){if(name==='@/lib/analytics')return {trackEvent:()=>{}};if(name==='./public-faq')return {PublicFaq:()=>null};if(name==='./public-links')return {PublicLinks:()=>null};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name==='react')return React;
   if(name==='react-dom')return {createPortal};
   if(name==='react/jsx-runtime')return jsx;
@@ -43,7 +43,7 @@ function loadAuth({ hooks = React, post = async () => { throw new Error('Unexpec
     module, exports: module.exports, Date, URLSearchParams, fetch,
     window: { location: { search: '', assign: () => { throw new Error('Unexpected external navigation'); } }, matchMedia: () => ({ matches: true }) },
     document: { hidden: false },
-    require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+    require(name) {if(name==='@/lib/analytics')return {trackEvent:()=>{}};if(name==='./public-faq')return {PublicFaq:()=>null};if(name==='./public-links')return {PublicLinks:()=>null};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
       if (name === './login-intro-sheet') return introModule.exports;
       if (name === 'react') return hooks;
       if (name === 'react/jsx-runtime') return jsx;

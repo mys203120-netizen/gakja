@@ -31,6 +31,7 @@ function harness(){
   vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../apps/web/src/app/api/quiz/route.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
     module,exports:module.exports,Response,Date,JSON,Buffer,URL,URLSearchParams,Set,Number,String,
     require(name:string){
+      if(name==='@/lib/privacy-policy')return {PRIVACY_POLICY_VERSION:'2026-10-22'};
       if(name==='zod')return{z};if(name==='node:crypto')return{};
       if(name==='@/lib/auth')return{checkOrigin(){},requireUser:async()=>({id:studentId,role:'student'})};
       if(name==='@/lib/db')return{ApiError,query,transaction:async(work:any)=>work(db),errorResponse:(error:any)=>Response.json({error:error.message},{status:error.status||500})};

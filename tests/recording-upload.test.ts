@@ -14,7 +14,7 @@ class ApiError extends Error {constructor(public status:number,message:string){s
 function load(path:string,mocks:Record<string,unknown>,globals:Record<string,unknown>={}) {
   const module={exports:{} as any};
   const code=ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-  vm.runInNewContext(code,{module,exports:module.exports,require:(name:string)=>name in mocks?mocks[name]:require(name),Buffer,File,Blob,FormData,Request,Response,URL,console,...globals});
+  vm.runInNewContext(code,{module,exports:module.exports,require:(name:string)=>name==='@/lib/privacy-policy'?{PRIVACY_POLICY_VERSION:'2026-10-22'}:name in mocks?mocks[name]:require(name),Buffer,File,Blob,FormData,Request,Response,URL,console,...globals});
   return module.exports;
 }
 function harness() {
@@ -184,7 +184,7 @@ test('media preservation-only upload stores the original without requiring trans
     const bytes=Buffer.concat([Buffer.from([0x1a,0x45,0xdf,0xa3]),Buffer.alloc(128)]),form=new FormData();
     form.set('recording',new File([bytes],'answer.webm',{type:'audio/webm'}));
     for(const[key,value]of Object.entries({sessionId,turnId,questionId:'q',generation:'0',durationSeconds:'1',consent:'true'}))form.set(key,value);
-    if(deferred)form.set('deferTranscription','true');
+    if(deferred){form.set('deferTranscription','true');form.set('policyVersion','2026-10-22');}
     let asset:any,transcriptions=0;
     class FeatureError extends ApiError{constructor(status:number,message:string,public code:string){super(status,message);}}
     const query=async(sql:string,args:any[]=[])=>{
@@ -206,6 +206,7 @@ test('media preservation-only upload stores the original without requiring trans
     });
     const response=await route.POST(new Request('http://local/api/media',{method:'POST',body:form})),value=await response.json();
     assert.equal(response.status,200,JSON.stringify(value));assert.equal(Buffer.compare(asset.bytes,bytes),0);assert.equal(asset.metadata.transcriptionStatus,'pending');
+    assert.equal(asset.metadata.consentPolicyVersion,deferred?'2026-10-22':undefined,'only an explicit current policy confirmation records its revision');
     assert.equal(transcriptions,deferred?0:1);assert.equal(value.transcriptionStatus,deferred?'pending':'completed');assert.ok(value.media.id);
   }
 });

@@ -12,6 +12,7 @@ import {commonInterviewQuestions,schoolLearningIdentityMatches} from '@/lib/scho
 import {quizSchoolMetadata,sameSchoolQuizSource,schoolQuizItems,schoolQuizTargetIdentity} from '@/lib/school-quiz';
 import {quizHelpFacts,recordQuizHelp} from '@/lib/quiz-assistance';
 import {snapshotSpeechAnswer} from '@/lib/transcript-provenance';
+import {PRIVACY_POLICY_VERSION} from '@/lib/privacy-policy';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const uuid = z.string().uuid(), mode = z.enum(['choice','answer','oral']);
@@ -148,6 +149,7 @@ export async function POST(request:Request) {
       if(!(file instanceof File)||!file.size)throw new ApiError(400,'녹음 파일을 선택해 주세요.');
       if(file.size>10*1024*1024)throw new ApiError(413,'녹음은 10MB까지 저장할 수 있어요.');
       if(form.get('consent')!=='true')throw new ApiError(400,'비공개 녹음 저장에 동의해 주세요.');
+      const consentPolicyVersion=z.literal(PRIVACY_POLICY_VERSION).optional().parse(form.get('policyVersion')??undefined);
       const sessionId=uuid.parse(form.get('sessionId')),itemIndex=z.coerce.number().int().min(0).parse(form.get('itemIndex'));
       const durationMs=z.coerce.number().int().min(1).max(180_000).parse(form.get('durationMs'));
       const rawTelemetry=form.get('speechTelemetry');let speechTelemetry=null;
@@ -164,7 +166,7 @@ export async function POST(request:Request) {
         if(s.state!=='active'||s.current_index!==itemIndex||s.mode==='choice')throw new ApiError(409,'현재 답변의 녹음을 저장해 주세요.');
         const [old]=(await db.query("select id,item_index,mime,duration_ms from quiz_recordings where session_id=$1 and item_index=$2 and metadata->>'digest'=$3",[sessionId,itemIndex,digest])).rows;
         if(old)return old;
-        const id=randomUUID(),metadata:any={provider:'postgresql',digest,consentAt:new Date().toISOString(),size:bytes.length,speechTelemetry,speechAnalysis:analyzeSpeech({telemetry:speechTelemetry,transcript:null,durationMs})}; let dbBytes=bytes;
+        const id=randomUUID(),metadata:any={provider:'postgresql',digest,consentAt:new Date().toISOString(),...(consentPolicyVersion?{consentPolicyVersion,consentPolicyPath:'/privacy'}:{}),size:bytes.length,speechTelemetry,speechAnalysis:analyzeSpeech({telemetry:speechTelemetry,transcript:null,durationMs})}; let dbBytes=bytes;
         const uploaded=uploadedFiles.find(file=>file.field==='recording');
         if(uploaded) {
           metadata.provider='supabase';metadata.bucket=uploaded.bucket;metadata.path=uploaded.path;dbBytes=Buffer.alloc(0);

@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { getUser } from '@/lib/auth';
 import { AppShell } from '@/components/app-shell';
 import { bootstrap } from '@/lib/data';
+import { privateMetadata } from '@/lib/public-site';
+export const metadata = privateMetadata('내 면접 준비');
 export const dynamic = 'force-dynamic';
 async function AuthenticatedShell({children}:{children:React.ReactNode}) {
  const user=await getUser();

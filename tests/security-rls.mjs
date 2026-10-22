@@ -36,6 +36,7 @@ try {
   const own='00000000-0000-4000-8000-000000000001', other='00000000-0000-4000-8000-000000000002', upload='00000000-0000-4000-8000-000000000003';
   const path=own+'/uploads/'+upload+'/recording';
   await db.query("insert into profiles(id,email,name) values($1,'own@example.test','Own'),($2,'other@example.test','Other')",[own,other]);
+  await db.query("insert into support_inquiries(request_id,email,type,content,policy_version,response_time_notice,retention_notice) values(gen_random_uuid(),'inquiry@example.test','privacy','Synthetic private inquiry','2026-10-22','Synthetic response notice','Synthetic retention notice')");
   await db.query("insert into support_targets(id,student_id,data) values('own',$1,'{}'),('other',$2,'{}')",[own,other]);
   await db.query("insert into experience_card_drafts(id,student_id,data) values('00000000-0000-4000-8000-000000000011',$1,'{\"title\":\"Own draft\"}'),('00000000-0000-4000-8000-000000000012',$2,'{\"title\":\"Other draft\"}')",[own,other]);
   // Production intentionally revokes direct client writes. Grant them only in
@@ -52,6 +53,8 @@ try {
   }
   const count=async table=>(await db.query(`select count(*)::int n from ${table}`)).rows[0].n;
   await asUser(own,async()=>{
+    assert.equal(await count('support_inquiries'),0);checks++;
+    await assert.rejects(db.query("insert into support_inquiries(request_id,email,type,content,policy_version,response_time_notice,retention_notice) values(gen_random_uuid(),'forged@example.test','service','Forged','2026-10-22','response','retention')"),/permission denied/);checks++;
     assert.equal((await db.query("select * from storage.objects where bucket_id='document-originals'")).rowCount,0);checks++;
     await assert.rejects(db.query("insert into storage.objects(bucket_id,name) values('document-originals',$1)",[own+'/forged.html']),/row-level security/);checks++;
 
@@ -98,8 +101,9 @@ try {
   assert.equal((await db.query('select id from recording_uploads where id=$1',[upload])).rowCount,1);checks++;
   await db.query("update recording_uploads set locked_at=null,expires_at=now()-interval '1 second' where id=$1",[upload]);
   await asUser(own,async()=>{await assert.rejects(db.query("insert into storage.objects(bucket_id,name) values('student-media',$1)",[path]),/row-level security/);checks++;});
-  // A forgotten public table gate is a regression, even if no fixtures use it.
-  assert.deepEqual((await db.query("select tablename from pg_tables t where schemaname='public' and rowsecurity and not exists(select 1 from pg_policies p where p.schemaname=t.schemaname and p.tablename=t.tablename and policyname in ('active_account_gate','active_profile_gate'))")).rows,[]); checks++;
+  // Any client-readable policy needs the active-account gate. Internal tables
+  // deliberately have RLS with zero policies, which denies every client row.
+  assert.deepEqual((await db.query("select tablename from pg_tables t where schemaname='public' and rowsecurity and exists(select 1 from pg_policies p where p.schemaname=t.schemaname and p.tablename=t.tablename) and not exists(select 1 from pg_policies p where p.schemaname=t.schemaname and p.tablename=t.tablename and policyname in ('active_account_gate','active_profile_gate'))")).rows,[]); checks++;
   console.log(`PostgreSQL RLS: ${checks} checks passed; every migration applied to an empty database.`);
 } finally {
   if(db) await db.end();

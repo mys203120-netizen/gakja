@@ -9,6 +9,7 @@ import { memoryReviewOutcome, quizAnswerContext } from '@/lib/learning-record-ru
 import type { LearningData } from '@gakja/content-contracts';
 import { chatCandidateProvenance } from '@/lib/answer-provenance';
 import { assertRegisteredTargets, FINAL_GUIDEBOOK_CONTRACT, publicationDigest, validatePublication } from '@/lib/content-publication';
+import {PRIVACY_POLICY_VERSION} from '@/lib/privacy-policy';
 
 const text = (value: unknown, limit = 10_000) => { const str = String(value ?? '').trim(); if (str.length > limit) throw new ApiError(400, '입력 가능한 길이를 넘었어요.'); return str; };
 const uuid = (value: unknown) => { const str = text(value, 100); if (!/^[0-9a-f-]{36}$/i.test(str)) throw new ApiError(400, '대상을 확인해 주세요.'); return str; };
@@ -194,8 +195,15 @@ export async function POST(request: Request) {
       }
       if (JSON.stringify(data).length > 5_000) throw new ApiError(400, '설정 길이를 확인해 주세요.');
       if (data.selectedTargetId) { const [target] = await query("select id from support_targets where id=$1 and student_id=$2 and nullif(data->>'archived_at','') is null", [data.selectedTargetId, user.id]); if (!target) throw new ApiError(404, '지원처를 확인해 주세요.'); }
-      const projection=allowed.map(key=>`'${key}',student_preferences.data->'${key}'`).join(',');
-      const [preferences] = await query(`insert into student_preferences(student_id,data) values($1,$2) on conflict(student_id) do update set data=student_preferences.data||excluded.data,updated_at=now() returning jsonb_strip_nulls(jsonb_build_object(${projection})) as data`, [user.id, JSON.stringify(data)]);
+      const hasRecordingChoice=Object.hasOwn(data,'liveRecordingConsent');
+      if(hasRecordingChoice&&p.policyVersion!==undefined&&p.policyVersion!==PRIVACY_POLICY_VERSION)throw new ApiError(400,'현재 개인정보 처리방침을 확인해 주세요.');
+      if(hasRecordingChoice){data.liveRecordingPolicyVersion=p.policyVersion??null;data.liveRecordingConsentAt=new Date().toISOString();}
+      const projection=[...allowed,'liveRecordingPolicyVersion','liveRecordingConsentAt'].map(key=>`'${key}',student_preferences.data->'${key}'`).join(',');
+      const preferences=await transaction(async db=>{
+        const [saved]=(await db.query(`insert into student_preferences(student_id,data) values($1,$2) on conflict(student_id) do update set data=student_preferences.data||excluded.data,updated_at=now() returning jsonb_strip_nulls(jsonb_build_object(${projection})) as data`,[user.id,JSON.stringify(data)])).rows;
+        if(hasRecordingChoice)await db.query('insert into audit_logs(actor_id,student_id,action,data) values($1,$2,$3,$4)',[user.id,user.role==='student'?user.id:null,'recording.consent',JSON.stringify({granted:data.liveRecordingConsent,policyVersion:data.liveRecordingPolicyVersion,recordedAt:data.liveRecordingConsentAt,source:'live_recording_settings'})]);
+        return saved;
+      });
       return Response.json({ ok: true, preferences: preferences.data });
     }
 

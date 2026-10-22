@@ -9,6 +9,7 @@ import { useApp } from './app-shell';
 import { useLearningWorkflows } from './practice';
 import { LearningPreferences } from './learning-preferences';
 import { SettingsSelect } from './settings-select';
+import {PublicLinks} from './public-links';
 import { action, post, Breadcrumb, PageTitle, Alert, FloatingNotice, Badge, Empty, Spinner, dateLabel, targetName, targetMajor, targetDate, Modal, type Item } from './shared';
 
 export function AccountPages({ slug = [] }: { slug?: string[] }) {
@@ -51,6 +52,7 @@ export function AccountPages({ slug = [] }: { slug?: string[] }) {
         <Link className={ownedClassName("linked-row")} href="/account/confirmations"><div className={ownedClassName("row-text",true)}><strong className={ownedClassName(undefined,true)}>내 역할과 기록 확인하기</strong><span className={ownedClassName(undefined,true)}>{data.summary?.confirmations ? `${data.summary.confirmations}개 확인 요청` : '기억이 안 나는 내용과 정정할 사실을 남겨주세요.'}</span></div><ArrowUpRight size={20} /></Link>
       </section>
     </>}
+    <section className={ownedClassName("detail-section",true)}><div className={ownedClassName("section-heading",true)}><h2 className={ownedClassName(undefined,true)}>이용 안내</h2></div><Link className={ownedClassName("linked-row")} href="/contact?type=privacy"><div className={ownedClassName("row-text",true)}><strong className={ownedClassName(undefined,true)}>개인정보 및 삭제 요청</strong><span className={ownedClassName(undefined,true)}>자료 열람·정정·삭제와 계정 관련 요청을 남겨주세요.</span></div><ArrowUpRight size={18}/></Link><PublicLinks/></section>
   </>;
 }
 
