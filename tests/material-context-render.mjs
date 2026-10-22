@@ -22,6 +22,7 @@ function load(file, exports) {
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
   const module = { exports: {} };
   vm.runInNewContext(output, { module, exports: module.exports, URLSearchParams, Intl, require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+    if(name==='@/lib/client/device-storage')return {setDeviceItem:(storage,key,value)=>storage.setItem(key,value)};
     if (name === 'react') return { useState: initial => [stateCursor < renderStates.length ? renderStates[stateCursor++] : typeof initial === 'function' ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {}, useCallback: fn => fn };
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }), Fragment: 'Fragment' };
     if (name === 'next/link') return { __esModule: true, default: 'Link' };
@@ -90,12 +91,15 @@ function comparisons() {
   const result = records.AnswerComparisons({}); renderStates = []; stateCursor = 0; return result;
 }
 tree = comparisons();
-const picks = nodes(tree).filter(node => node.type === 'select' && node.props['aria-label']?.endsWith('저장 시점'));
+const picks = nodes(tree).filter(node => node.type === 'SettingsSelect' && node.props.label?.endsWith('저장 시점'));
 check(picks.length === 2, 'the actual comparison component renders two answer pickers for this publication');
-for (const pick of picks) check(nodes(pick).filter(node => node.type === 'option').map(node => node.props.value).join(',') === 'owned-before,owned-after', 'the actual picker excludes unrelated schools, old books, common sources and unknown provenance');
+for (const pick of picks) check(pick.props.options.map(option => option.value).join(',') === 'owned-before,owned-after', 'the actual picker excludes unrelated schools, old books, common sources and unknown provenance');
+check(nodes(tree).filter(node=>node.type==='SettingsSelect'&&node.props.label==='비교할 질문').length===1,'one app-styled question picker replaces the repeated full question heading');
+check(!nodes(tree).some(node=>node.type==='h2'&&label(node)==='역할은?'),'selected question is not duplicated as another large heading');
+check(nodes(tree).some(node=>node.type==='div'&&node.props.className==='columns'),'saved answers use the bounded comparison grid');
 query.set('sourceVersion', '8'); tree = comparisons();
 check(nodes(tree).some(node => node.type === 'Empty' && node.props.title === '선택한 학습 맥락에 저장한 답변이 없어요'), 'missing scoped history shows an honest empty state instead of borrowing a different book');
-check(!nodes(tree).some(node => node.type === 'select'), 'no unrelated answer selector is rendered when the requested publication has no answers');
+check(!nodes(tree).some(node => node.type === 'select'||node.type==='SettingsSelect'), 'no unrelated answer selector is rendered when the requested publication has no answers');
 
 // Preparation cards link to one observed question, experience or student-record activity.
 // Render the actual destination component to verify all three activityId shapes.
@@ -107,10 +111,20 @@ workflows={versions:[
 ]};
 for(const activityId of ['question:q1','experience:owned-experience','a1']){
  query=new URLSearchParams({activityId,targetId:'uos'});tree=comparisons();
- const destinationPicks=nodes(tree).filter(node=>node.type==='select'&&node.props['aria-label']?.endsWith('저장 시점'));
+ const destinationPicks=nodes(tree).filter(node=>node.type==='SettingsSelect'&&node.props.label?.endsWith('저장 시점'));
  check(destinationPicks.length===2,`preparation ${activityId} destination renders the matching submitted answers`);
- for(const pick of destinationPicks)check(nodes(pick).filter(node=>node.type==='option').map(node=>node.props.value).join(',')==='readiness-q-before,readiness-q-after',`preparation ${activityId} destination excludes unrelated questions and schools`);
+ for(const pick of destinationPicks)check(pick.props.options.map(option=>option.value).join(',')==='readiness-q-before,readiness-q-after',`preparation ${activityId} destination excludes unrelated questions and schools`);
 }
+
+workflows={versions:[{...base,id:'single',question:'저장 당시의 질문',hint_used:true,ai_assisted:true,audio_id:'recording-own'}]};
+query=new URLSearchParams('questionId=q1&targetId=uos&sourceType=personal&sourceVersion=6');tree=comparisons();
+const singlePicker=nodes(tree).find(node=>node.type==='SettingsSelect'&&node.props.label==='비교할 질문');
+check(singlePicker.props.options[0].label==='저장 당시의 질문','question selection uses the saved wording instead of replacing it with current textbook text');
+check(nodes(tree).filter(node=>node.type==='section'&&node.props['aria-label']==='저장한 답변').length===1,'one saved answer has a complete readable card before comparison is possible');
+check(!nodes(tree).some(node=>node.props?.['aria-label']==='답변 비교 보기 방식'),'one saved answer does not expose unusable compare controls');
+const singleFooter=nodes(tree).find(node=>node.type==='div'&&node.props.className==='singleFooter');
+check(singleFooter&&link(singleFooter,'이 질문 다시 말하기'),'single-answer guidance and retry action share one compact footer');
+context(link(singleFooter,'이 질문 다시 말하기').props.href,'questionId','q1');
 
 const savedCommon={questionId:'common_motivation',memoryItemId:'common:memory',target_id:'saved-school',source_type:'general_practice',common_revision:3,contentVersion:6,response:'제가 직접 답한 내용입니다.'};
 tree=records.StudyAnswer({event:{kind:'quiz_response',created_at:'2026-10-15T10:00:00Z',data:savedCommon}});

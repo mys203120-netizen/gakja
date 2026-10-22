@@ -148,6 +148,7 @@
 .collapsibleShell:global(.app-shell) :global(.topbar .icon-button:hover) { background:var(--clarity-soft); }
 .collapsibleShell:global(.app-shell) :global(.main-content) { overflow-anchor:none; }
 .targetSwitcher { position:relative; width:min(440px,100%); min-width:0; }
+.todayBrand { display:none; }
 .targetPending { display:flex; flex-direction:column; justify-content:center; gap:6px; width:180px; max-width:100%; height:48px; flex-shrink:1; }
 .targetPending>span { display:block; width:120px; max-width:85%; height:12px; border-radius:4px; background:var(--clarity-soft); }
 .targetPending>span:last-child { width:80px; height:9px; }
@@ -185,6 +186,10 @@
  .collapsibleShell:global(.app-shell) :global(.topbar-actions) { gap:0; }
  .collapsibleShell:global(.app-shell) :global(.topbar .icon-button),.collapsibleShell:global(.app-shell) :global(.topbar .account-trigger.compact) { width:40px; height:44px; min-width:40px; min-height:44px; }
  .targetSwitcher { width:100%; }
+ .todayBrand { display:inline-flex; align-items:center; justify-content:center; flex:0 0 44px; width:44px; height:44px; margin-left:-6px; border-radius:12px; }
+ .todayBrand :global(.brand) { display:flex; align-items:center; justify-content:center; margin:0; padding:0; }
+ .todayBrand img { display:block; width:30px; height:30px; }
+ .todayBrand:focus-visible { outline:2px solid var(--clarity-action); outline-offset:2px; }
  .targetTrigger { width:100%; gap:6px; min-height:48px; padding-inline:6px; margin-left:-6px; }
  .targetTrigger :global(.target-copy) { flex:1; }
  .targetTrigger :global(.target-copy strong) { font-size:var(--font-size-caption); }

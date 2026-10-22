@@ -96,7 +96,7 @@ function loadComponent(name) {
     if (id === '@/lib/material-learning-flow') return { materialComparisonVersions() {} };
     if (id === '@/lib/learning-navigation') return { learningRetryHref() {} };
     if (id === '@/lib/study-record-links') return studyLinks;
-    if (['./record-media', './speech-growth', './comparison-observation', './markdown-message', './comparison-wipe', './practice', './study-session-provider'].includes(id)) return new Proxy({}, { get: (_, key) => String(key) });
+    if (['./record-media', './speech-growth', './comparison-observation', './markdown-message', './comparison-wipe', './practice', './study-session-provider','./settings-select'].includes(id)) return new Proxy({}, { get: (_, key) => String(key) });
     throw new Error('Unexpected component import: ' + id);
   } });
   return module.exports;

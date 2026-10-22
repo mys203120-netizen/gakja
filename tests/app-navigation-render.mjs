@@ -24,6 +24,7 @@ function load(name,context,environment={}){
   if(name==='@/lib/learning-target-scope')return scope;
   if(name==='./app-shell')return {useApp:()=>context};
   if(name==='./focus-training')return {FocusTraining:({targetId})=>React.createElement('section',{'aria-label':'약점 집중 훈련','data-target-id':targetId})};
+  if(name==='./learning-discovery')return load('learning-discovery.tsx',context,environment);
   if(name==='./shared')return {PageTitle:({title})=>React.createElement('h1',null,title)};
   if(name.endsWith('.module.css'))return {__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
   throw Error(name);
@@ -119,7 +120,9 @@ equal(markup.includes('/quiz?targetId=target'),true);equal(markup.includes('/int
 for(const label of ['퀴즈','Chat 면접','Live 면접'])equal((markup.match(new RegExp(`<h2>${label}</h2>`,'g'))||[]).length,1);
 equal(markup.includes('href="/on"'),false);equal(markup.includes('href="/quiz/assignments"'),true);
 equal(markup.includes('aria-label="약점 집중 훈련" data-target-id="target"'),true);
-equal(markup.includes('href="/knowledge"'),true);equal(markup.includes('href="/armory"'),true);equal(markup.includes('href="/records/comparisons"'),true);
+equal(markup.includes('href="/knowledge?targetId=target"'),true);equal(markup.includes('href="/materials/briefings"'),true);equal(markup.includes('href="/armory"'),true);equal(markup.includes('href="/records/comparisons"'),true);
+equal(markup.includes('지식한입'),true);equal(markup.includes('시사 브리핑'),true);
+equal(markup.indexOf('aria-label="개념과 시사"')<markup.indexOf('href="/armory"'),true);
 equal((markup.match(/href="\/armory"/g)||[]).length,1);
 equal(markup.indexOf('href="/interview/live?targetId=target"')<markup.indexOf('href="/armory"'),true);
 equal(markup.indexOf('href="/armory"')<markup.indexOf('aria-label="약점 집중 훈련"'),true);
@@ -128,6 +131,6 @@ context.data.interviews=[old];markup=renderToStaticMarkup(React.createElement(Pr
 for(const purpose of ['diagnostic','focus','mixed']){
  context.data.interviews=[{...current,data:{...current.data,trainingPlanId:'saved-plan',trainingPurpose:purpose}}];
  markup=renderToStaticMarkup(React.createElement(PracticeHome));equal(markup.includes('href="/my/train?planId=saved-plan"'),true);equal(markup.includes('/interview/current?'),false);
- equal(markup.includes('이어서 할 오늘 훈련이 있어요'),true);
+ equal(markup.includes('진행 중인 훈련'),true);
 }
 console.log(`App navigation: ${checks} route/context/render checks passed; three shared menus, nested activity/material access, focused answer workspaces and frozen-target resume verified.`);

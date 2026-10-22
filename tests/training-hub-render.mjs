@@ -25,7 +25,7 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
  const refs=[],posts=[],pushes=[];let refIndex=0;
  const hooks={...React,useEffect(){},useMemo:callback=>callback(),useCallback:callback=>callback,useRef(initial){return refs[refIndex++]??={current:initial};},useState(initial){const slot=index++;if(!(slot in state))state[slot]=initial;return [state[slot],next=>{state[slot]=typeof next==='function'?next(state[slot]):next;}];}};
  const module={exports:{}};
- vm.runInNewContext(source,{module,exports:module.exports,Date,Intl,Event,AbortController,URLSearchParams,console,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+ vm.runInNewContext(source,{module,exports:module.exports,Date,Intl,Event,AbortController,URLSearchParams,console,require:function requireComponent(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
   if(name==='react')return hooks;if(name==='react/jsx-runtime')return jsx;
   if(name==='next/link')return {default:({href,children,...props})=>React.createElement('a',{href,...props},children)};
   if(name==='next/navigation')return {usePathname:()=>'/my',useRouter:()=>({push:href=>pushes.push(href)})};
@@ -35,6 +35,10 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
   if(name==='@/lib/training-plan-summary')return planSummaryLibrary;
   if(name==='@/lib/training-flow')return trainingFlowLibrary;
   if(name==='./training-calendar')return {TrainingCalendar:()=>React.createElement('section',{'aria-label':'훈련과 학교 면접 캘린더',id:'training-calendar'},'계획과 면접 일정')};
+  if(name==='./learning-discovery'){
+   const entry={exports:{}},code=ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/learning-discovery.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
+   vm.runInNewContext(code,{module:entry,exports:entry.exports,require:requireComponent});return entry.exports;
+  }
   if(name.endsWith('.module.css'))return {default:new Proxy({},{get:(_,key)=>String(key)})};
   if(name==='./shared')return {InfoTip:({label,children})=>React.createElement('aside',{'aria-label':label},children),api(){throw Error('No reads during render');},post:async(url,body)=>{posts.push({url,body});return mutate(body);},ActionButton:({pending,pendingLabel,children,...props})=>React.createElement('button',props,pending?pendingLabel:children),Alert:({children})=>React.createElement('p',{role:'alert'},children),Spinner:()=>React.createElement('p',null,'loading'),targetName:target=>target?.university||''};
   throw Error(name);
@@ -53,11 +57,14 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
  assert.ok(!markup.includes('오늘 가능한 시간에 맞춰 순서대로 준비해요.')&&!markup.includes('새 답변과 가능한 시간이 바뀌면 우선순위를 다시 맞춰요.'),'repeated introductory explanations are omitted');
  assert.ok(!markup.includes('본질문 → 꼬리질문 → 보완 → 재답변')&&!markup.includes(task.reason),'the overview omits repeated workflow and selection explanations');
  assert.ok(!markup.includes('aria-label="필요한 연습 직접 선택"')&&!markup.includes('직접 연습 선택'),'tools are no longer buried in a second navigation at the bottom');
+ assert.ok(markup.includes('href="/knowledge?targetId=a"')&&markup.includes('href="/materials/briefings"'),'concepts and news have direct entries on today');
+ assert.ok(markup.indexOf('aria-label="개념과 시사"')<markup.indexOf('id="today-plan-title"'),'resource entries are visible before the full plan and calendar');
 }
 // Missing availability and missing questions cannot masquerade as a completed day.
 {
  const value=payload();value.needsAvailability=true;
- assert.ok(harness(value).markup().includes('학습 시간 설정'));
+ const setup=harness(value).markup();assert.ok(setup.includes('학습 시간 설정'));
+ assert.ok(setup.includes('지식한입')&&setup.includes('시사 브리핑'),'resources also stay available before learning time is configured');
  const empty=harness(payload([])).markup();assert.ok(empty.includes('면접 일정과 연습 질문을 먼저 확인해요.'));
  assert.ok(!empty.includes('오늘 계획을 모두 마쳤어요.'));
 }

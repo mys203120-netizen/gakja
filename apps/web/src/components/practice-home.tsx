@@ -8,6 +8,7 @@ import {splitInterviewsByLearningTarget} from '@/lib/learning-target-scope';
 import styles from './navigation-rail.module.css';
 import {FocusTraining} from './focus-training';
 import {PageTitle} from './shared';
+import {LearningDiscovery} from './learning-discovery';
 
 export function PracticeHome(){
  const {data,target,targetId}=useApp(),suffix=targetId?'?targetId='+encodeURIComponent(targetId):'';
@@ -21,8 +22,9 @@ export function PracticeHome(){
   <Link href={'/interview/chat'+suffix}><MessagesSquare size={25} strokeWidth={1.5}/><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>Chat 면접</h2><p className={ownedClassName(undefined,true)}>글로 답하고 꼬리질문 이어가기</p></div><ArrowUpRight size={20}/></Link>
   <Link href={'/interview/live'+suffix}><Mic size={25} strokeWidth={1.5}/><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>Live 면접</h2><p className={ownedClassName(undefined,true)}>질문을 듣고 내 목소리로 답하기</p></div><ArrowUpRight size={20}/></Link>
  </div>
+ <LearningDiscovery targetId={targetId}/>
  <Link className={ownedClassName(styles.experienceEntry)} href="/armory"><Library size={19} aria-hidden="true"/><span className={ownedClassName(undefined,true)}><strong className={ownedClassName(undefined,true)}>내 경험 정리</strong></span><ArrowUpRight size={17} aria-hidden="true"/></Link>
  <FocusTraining key={targetId} targetId={targetId}/><div className={ownedClassName(styles.practiceLinks,true)}><Link href="/quiz/assignments"><ListChecks size={17}/>과제함<ArrowUpRight size={14}/></Link><Link href="/quiz/memory">복습할 질문<ArrowUpRight size={14}/></Link></div>
- <div className={ownedClassName(styles.openPaths,true)}><Link href="/knowledge">답에 더할 자료 찾기<ArrowUpRight size={15}/></Link><Link href="/records/comparisons">이전 답변과 비교하기<ArrowUpRight size={15}/></Link></div>
+ <div className={ownedClassName(styles.openPaths,true)}><Link href="/records/comparisons">이전 답변과 비교하기<ArrowUpRight size={15}/></Link></div>
  </div>;
 }

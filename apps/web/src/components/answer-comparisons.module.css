@@ -1,0 +1,49 @@
+/* Long question labels and saved-answer text must never determine the page width. */
+.view { width:100%; max-width:100%; min-width:0; }
+.view > * { min-width:0; max-width:100%; }
+.view :global(.page-title) { margin-bottom:20px; }
+.view :global(.subnav) { margin-bottom:20px; }
+.loadMore { margin-bottom:16px; }
+.questionPicker,.contextPicker { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; min-width:0; margin-bottom:20px; }
+.fieldLabel { color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.6; }
+.questionPicker > div,.contextPicker > div,.cardHeading > div { min-width:0; max-width:100%; }
+.compareToolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin:0 0 16px; }
+.viewSwitch { display:flex; align-items:center; max-width:100%; padding:4px; gap:4px; border-radius:12px; background:var(--clarity-soft); }
+.viewSwitch > button { min-height:40px; padding:8px 12px; border:0; border-radius:9px; background:transparent; color:var(--clarity-muted); font-size:var(--font-size-caption); font-weight:500; cursor:pointer; }
+.viewSwitch > button[aria-pressed=true] { background:var(--clarity-surface); color:var(--clarity-action); box-shadow:var(--soft-shadow-small); }
+.viewSwitch > button:disabled { opacity:.45; cursor:default; }
+.viewSwitch > button:focus-visible { outline:2px solid var(--clarity-action); outline-offset:2px; }
+.columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:20px; min-width:0; margin-bottom:20px; }
+.answerCard { min-width:0; padding:24px; border:0; border-radius:20px; background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); }
+.single { margin-bottom:16px; }
+.view .answerHeading { margin:0 0 12px; font-size:var(--font-size-section); font-weight:600; line-height:1.5; }
+.cardHeading { display:grid; grid-template-columns:minmax(0,1fr); gap:0; margin-bottom:16px; }
+.view .cardHeading .answerHeading { color:var(--clarity-muted); font-size:var(--font-size-caption); font-weight:500; margin-bottom:8px; }
+:global(.app-shell) .view.view :global(.comparison-school-context) { margin:0 0 8px; font-size:var(--font-size-caption); line-height:1.6; }
+:global(.app-shell) .view.view :global(.comparison-evidence) { gap:6px 10px; margin:0 0 16px; font-size:var(--font-size-caption); }
+:global(.app-shell) .view.view :global(.comparison-evidence) time { color:var(--clarity-muted); font-variant-numeric:tabular-nums; }
+:global(.app-shell) .view.view :global(.comparison-answer) { max-width:none; margin:0; font-size:var(--font-size-body); line-height:1.8; white-space:pre-wrap; overflow-wrap:anywhere; }
+:global(.app-shell) .view.view :global(.comparison-structure) { margin:0 0 16px; }
+:global(.app-shell) .view.view :global(.comparison-structure) h4 { margin:0 0 6px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+:global(.app-shell) .view.view :global(.comparison-structure) p { margin:0; font-size:var(--font-size-body); line-height:1.8; overflow-wrap:anywhere; }
+:global(.app-shell) .view.view :global(.comparison-audio) { display:block; width:100%; max-width:100%; min-width:0; margin:16px 0 0; }
+:global(.app-shell) .view.view :global(.comparison-observation) { margin:20px 0; }
+:global(.app-shell) .view.view :global(.comparison-observation) :global(.comparison-notice) { margin:8px 0; font-size:var(--font-size-caption); line-height:1.7; }
+:global(.app-shell) .view.view :global(.comparison-meaning-checks) { margin:20px 0; }
+.singleFooter { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px 20px; margin:0 0 24px; }
+.singleFooter p { flex:1 1 260px; margin:0; color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.7; }
+.singleFooter > a { flex-shrink:0; }
+.view .actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px 20px; margin-top:20px; }
+@media(max-width:900px) {
+ .columns { grid-template-columns:minmax(0,1fr); gap:16px; }
+}
+@media(max-width:700px) {
+ .view :global(.page-title) { margin-bottom:16px; }
+ .questionPicker,.contextPicker { margin-bottom:16px; }
+ .answerCard { padding:18px; border-radius:16px; }
+ .view .answerHeading { font-size:var(--font-size-body); }
+ .viewSwitch > button { min-height:44px; padding-inline:10px; }
+ .singleFooter { justify-content:flex-start; gap:12px; }
+ .singleFooter p { flex-basis:100%; }
+ .view .actions { gap:8px 16px; }
+}
