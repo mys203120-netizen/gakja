@@ -48,3 +48,20 @@ export function practiceSectionHref(path:string) {
 export function isAnswerWorkspace(path:string) {
   return /^\/(?:my\/(?:train|diagnosis)|quiz\/(?:session|assignments)\/[^/]+|interview\/(?!new(?:\/|$)|chat(?:\/|$)|live(?:\/|$))[^/]+|practice\/video\/[^/]+|chat\/interviews\/[^/]+|on\/interviews\/(?!new(?:\/|$))[^/]+)(?:\/|$)/.test(path);
 }
+
+/** A known in-app parent also works when a detail URL was opened directly. */
+export function mobileParent(path:string):{href:string;label:string}|null {
+  if(['/my','/preparation','/records'].includes(path))return null;
+  if(within(path,'/account')&&!within(path,'/account/confirmations'))return path==='/account'?{href:'/my',label:'오늘 훈련'}:{href:'/account',label:'내 계정'};
+  if(within(path,'/reports')||within(path,'/records'))return {href:'/records',label:'내 기록'};
+  if(within(path,'/schools')&&path!=='/schools')return {href:'/schools',label:'지원 학교'};
+  if(within(path,'/knowledge')&&path!=='/knowledge')return {href:'/knowledge',label:'지식한입'};
+  if(within(path,'/materials')&&path!=='/materials'&&path!=='/materials/briefings'){
+    const section=path.split('/')[2],labels:Record<string,string>={activities:'활동',questions:'예상 질문',answers:'답변 초안',briefings:'시사 브리핑'};
+    return path.split('/').length>3&&labels[section]?{href:'/materials/'+section,label:labels[section]}:{href:'/materials',label:'학생부·교재'};
+  }
+  if(studentSection(path)==='preparation')return {href:'/preparation',label:'준비 현황'};
+  if(within(path,'/on')&&!within(path,'/on/interviews'))return {href:'/my',label:'오늘 훈련'};
+  if(studentSection(path)==='today')return {href:path==='/learn'||path==='/availability'||within(path,'/my')?'/my':'/learn',label:path==='/learn'||path==='/availability'||within(path,'/my')?'오늘 훈련':'자유 연습'};
+  return null;
+}

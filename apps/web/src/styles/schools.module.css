@@ -48,7 +48,7 @@
 :global(.topbar-context) .school-logo { flex-shrink:0; }
 .school-talent-profile+.school-talent-profile{margin-top:36px}
 .school-overview-fold{margin-top:36px;padding:20px 0}
-.school-overview-fold>summary{font-size:18px;line-height:1.7;font-weight:500;cursor:pointer;color:#273b2d}
+.school-overview-fold>summary{font-size:var(--font-size-section);line-height:1.7;font-weight:500;cursor:pointer;color:#273b2d}
 .school-overview-fold[open]>summary{margin-bottom:22px}
 .school-registration label { color: var(--clarity-ink); font-weight: 450; }
 .school-onboarding-steps { color: var(--clarity-muted); gap: 20px; }
@@ -75,18 +75,18 @@
   .school-onboarding-steps { gap: 10px; }
 }
 :global(.app-shell) .school-learning .school-first-practice strong { font-weight: 500; line-height: 1.6; }
-:global(.app-shell) .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { max-width: 70ch; font-size: 16px; line-height: 1.85; color: var(--clarity-muted); }
-:global(.app-shell) .school-learning .school-quote h3 { font-size: 18px; font-weight: 500; line-height: 1.65; }
-:global(.app-shell) .school-learning .school-talent-points h3 { font-size: 17px; color: var(--clarity-ink); }
+:global(.app-shell) .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { max-width: 70ch; font-size: var(--font-size-body); line-height: 1.85; color: var(--clarity-muted); }
+:global(.app-shell) .school-learning .school-quote h3 { font-size: var(--font-size-section); font-weight: 500; line-height: 1.65; }
+:global(.app-shell) .school-learning .school-talent-points h3 { font-size: var(--font-size-body); color: var(--clarity-ink); }
 :global(.app-shell) .school-learning .school-talent-points { gap: 22px; }
 :global(.app-shell) .school-learning :is(.school-reference-block, .school-source-details) { border: 0; }
-:global(.app-shell) .school-learning :is(.school-source-line, .school-talent-caption, .school-reference-state, .school-source-details) { color: var(--clarity-muted); font-size: 13px; line-height: 1.75; }
+:global(.app-shell) .school-learning :is(.school-source-line, .school-talent-caption, .school-reference-state, .school-source-details) { color: var(--clarity-muted); font-size: var(--font-size-caption); line-height: 1.75; }
 :global(.app-shell) .school-learning :is(.school-source-link, .school-admission-button) { color: var(--clarity-green); }
 :global(.app-shell) .school-learning .school-table-wrap th { background: var(--clarity-soft); font-weight: 500; }
 :global(.app-shell) .school-learning .school-table-wrap :is(th, td) { border-color: var(--clarity-line); line-height: 1.8; }
 
 @media (max-width: 700px) {
-  :global(.app-shell) .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { font-size: 15px; }
+  :global(.app-shell) .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { font-size: var(--font-size-body); }
 }
 
 @media (max-width: 700px) {
@@ -94,7 +94,7 @@
 }
 
 @media (min-width: 768px) {
-  :global(.app-shell) .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { font-size: 14px; line-height: 1.75; }
+  :global(.app-shell) .school-learning :is(.school-quote p, .school-talent-points p, .school-target-details) { font-size: var(--font-size-caption); line-height: 1.75; }
 }
 @media(max-width:700px) {
  :global(.app-shell):not(:global(.admin-shell)) :global(.topbar-context) > :is(.school-logo,.school-logo-fallback) { display:none!important; }
@@ -113,7 +113,7 @@
 }
 
 @media(max-width:700px) {
- :global(.app-shell):not(:global(.admin-shell)) .target-change-cue { display:inline-flex; align-items:center; flex-shrink:0; gap:2px; color:var(--clarity-action); font-size:12px; font-weight:600; line-height:1.5; white-space:nowrap; pointer-events:none; }
+ :global(.app-shell):not(:global(.admin-shell)) .target-change-cue { display:inline-flex; align-items:center; flex-shrink:0; gap:2px; color:var(--clarity-action); font-size:var(--font-size-caption); font-weight:600; line-height:1.5; white-space:nowrap; pointer-events:none; }
 }
 
 @media(max-width:700px) {
@@ -121,7 +121,7 @@
 }
 :global(.app-shell) :global(.topbar-context) .target-select { min-width: 0; }
 :global(.app-shell) .school-learning .school-first-practice { background: var(--clarity-surface); border: 0; border-radius: var(--soft-radius); padding: 24px; box-shadow: var(--soft-shadow-raised); }
-:global(.app-shell) .school-learning .school-first-practice strong { font-size: 20px; }
+:global(.app-shell) .school-learning .school-first-practice strong { font-size: var(--font-size-section); }
 @media(max-width:700px) {
   :global(.app-shell):not(:global(.admin-shell)) :global(.main-content) :is(:global(.quiz-today),:global(.quiz-mode-row),:global(.knowledge-understanding),.school-first-practice) { border: 0; border-radius: 24px; background: var(--clarity-surface); box-shadow: var(--soft-shadow-small); padding: 22px 16px; }
 }

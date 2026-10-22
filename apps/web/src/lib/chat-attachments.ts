@@ -148,6 +148,12 @@ export async function readChatAttachment(row: ChatAttachmentRow) {
   if (bytes.length !== row.size || !row.storage.path.startsWith(row.student_id + '/')) throw new FeatureError(404, '첨부 파일을 가져오지 못했어요.', 'ATTACHMENT_UNAVAILABLE');
   return bytes;
 }
+/** Data management has already verified the snapshot owner and the storage reference. */
+export async function removeLocalAccountAttachment(row: ChatAttachmentRow) {
+  if (row.storage.provider !== 'local' || !row.storage.path.startsWith(row.student_id + '/')) throw new FeatureError(404, '첨부 파일을 찾을 수 없어요.', 'ATTACHMENT_UNAVAILABLE');
+  try { await unlink(privatePath(row.storage.path)); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+}
 export async function chatAttachmentInputs(rows: ChatAttachmentRow[]): Promise<ChatAttachmentInput[]> {
   if (rows.filter(row => row.kind === 'text').reduce((sum, row) => sum + (row.extracted_text?.length || 0), 0) > 160000) throw new FeatureError(413, '한 대화 요청의 첨부 텍스트는 16만 자까지 읽을 수 있어요.', 'ATTACHMENT_CONTEXT_TOO_LONG');
   return Promise.all(rows.map(async row => row.kind === 'text' ? { kind: 'text' as const, name: row.name, text: row.extracted_text || '' } : { kind: row.kind, name: row.name, mime: row.mime, dataUrl: `data:${row.mime};base64,${(await readChatAttachment(row)).toString('base64')}` }));

@@ -33,13 +33,13 @@
 
 @media (max-width:700px) {
   :global(.landing-nav) .brand strong {
-    font-size: 22px;
+    font-size: var(--font-size-section);
   }
 }
 
 @media (max-width:700px) {
   :global(.landing-footer) .brand strong {
-    font-size: 19px;
+    font-size: var(--font-size-section);
   }
 }
 
@@ -62,7 +62,7 @@ img[src="/brand-logo.svg"]:where(.element) {
 }
 
 .brand strong {
-  font-size: 23px;
+  font-size: var(--font-size-section);
 }
 
 :global(.auth-art) .brand img {
@@ -91,9 +91,9 @@ img[src="/brand-logo.svg"]:where(.element) {
 .brand { gap: 10px; }
 .brand strong { color: var(--text); letter-spacing: -.06em; font-weight: 750; }
 .brand img { height: auto; object-fit: contain; filter: none; }
-:global(.sidebar-brand) .brand strong { font-size: 23px; }
+:global(.sidebar-brand) .brand strong { font-size: var(--font-size-section); }
 @media (max-width: 1100px) {
-  :global(.sidebar-brand) .brand strong { font-size: 21px; }
+  :global(.sidebar-brand) .brand strong { font-size: var(--font-size-section); }
 }
 
 :global(.auth-page) .brand {
@@ -102,7 +102,7 @@ img[src="/brand-logo.svg"]:where(.element) {
 
 :global(.auth-page) .brand strong,
 :global(.landing) .brand strong {
-  font-size: 20px;
+  font-size: var(--font-size-section);
   font-weight: 740;
   letter-spacing: -.055em;
 }
@@ -137,7 +137,7 @@ img[src="/brand-logo.svg"]:where(.element) {
 }
 
 @media (max-width: 700px) {
-  :global(.auth-page) :global(.auth-mobile-brand) .brand strong { font-size: 23px; }
+  :global(.auth-page) :global(.auth-mobile-brand) .brand strong { font-size: var(--font-size-section); }
 }
 
 @media (max-width: 700px) {
@@ -145,13 +145,13 @@ img[src="/brand-logo.svg"]:where(.element) {
 }
 
 @media (max-width: 700px) {
-  :global(.landing) :global(.landing-nav) .brand strong { font-size: 19px; }
+  :global(.landing) :global(.landing-nav) .brand strong { font-size: var(--font-size-section); }
 }
 
 @media (max-width: 700px) {
   :global(.landing) :global(.landing-end) .brand img { width: 58px; height: auto; }
-}:global(.sidebar-brand) .service-wordmark { font-size:25px;letter-spacing:-.06em;font-weight:800;color:#171b18; }
-@media(max-width:1150px){:global(.sidebar-brand) .service-wordmark{font-size:23px;}}
+}:global(.sidebar-brand) .service-wordmark { font-size:var(--font-size-title);letter-spacing:-.06em;font-weight:800;color:#171b18; }
+@media(max-width:1150px){:global(.sidebar-brand) .service-wordmark{font-size:var(--font-size-section);}}
 @media(max-width:950px){:global(.sidebar-brand) .service-wordmark{display:none;}}
 
 .brand-status-page {
@@ -168,7 +168,7 @@ img[src="/brand-logo.svg"]:where(.element) {
 .brand-status-page h1 {
   max-width: 680px;
   margin: 0;
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: var(--font-size-title);
   font-weight: 550;
   line-height: 1.4;
   word-break: keep-all;
@@ -187,18 +187,18 @@ img[src="/brand-logo.svg"]:where(.element) {
 .brand-on-image { display:block; width:48px; height:28px; object-fit:contain; flex-shrink:0; }
 :global(.auth-centered) :global(.auth-entry-brand) .brand { gap: 10px; }
 :global(.auth-centered) :global(.auth-entry-brand) .brand img { width: 38px; height: auto; }
-:global(.auth-centered) :global(.auth-entry-brand) .brand strong { color: var(--clarity-ink); font-size: 23px; letter-spacing: -.055em; font-weight: 700; }
+:global(.auth-centered) :global(.auth-entry-brand) .brand strong { color: var(--clarity-ink); font-size: var(--font-size-section); letter-spacing: -.055em; font-weight: 700; }
 
 @media (max-width: 767px) {
   :global(.auth-centered) :global(.auth-entry-brand) .brand img { width: 32px; }
 }
 
 @media (max-width: 767px) {
-  :global(.auth-centered) :global(.auth-entry-brand) .brand strong { font-size: 21px; }
+  :global(.auth-centered) :global(.auth-entry-brand) .brand strong { font-size: var(--font-size-section); }
 }
 
 @media (min-width: 768px) {
-  :global(.auth-centered) :global(.auth-entry-brand) .brand strong { font-size: 21px; }
+  :global(.auth-centered) :global(.auth-entry-brand) .brand strong { font-size: var(--font-size-section); }
 }
 body :global(.app-shell) :global(.sidebar-brand) .service-wordmark,
 body :global(.topbar-context) .service-wordmark,
@@ -219,13 +219,13 @@ body :is(.brand-wordmark,.service-wordmark) .brand-on-sup {
   flex-shrink:0;
   margin:-.06em 0 0 -.2em;
   padding:0;
-  font-size:.66em;
+  font-size:inherit;
   line-height:1;
 }
 body :is(.brand-wordmark,.service-wordmark) .brand-on-sup .brand-on-image {
   display:block;
-  width:1.8em;
-  height:1.03em;
+  width:1.188em;
+  height:.6798em;
   max-width:none;
   object-fit:contain;
 }

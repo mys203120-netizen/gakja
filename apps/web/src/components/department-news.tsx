@@ -1,4 +1,5 @@
 'use client';
+import {setDeviceItem} from '@/lib/client/device-storage';
 import {ownedClassName} from './owned-class-name';
 
 import Link from 'next/link';
@@ -97,7 +98,7 @@ function NewsDetail({ article, major, connection, targetId, onUpdate }: { articl
   const [busy, setBusy] = useState(''), [error, setError] = useState(''), [history, setHistory] = useState<{ content: string; revision: number; created_at: string }[] | null>(null), lock = useRef(false);
   useEffect(() => { const draft = sessionStorage.getItem(draftKey); if (draft !== null) setThought(draft); }, [draftKey]);
   const dirty = thought.trim() !== savedContent, older = Date.now() - new Date(article.publishedAt).getTime() > 30 * 86_400_000;
-  function write(value: string) { setThought(value); sessionStorage.setItem(draftKey, value); }
+  function write(value: string) { setThought(value); setDeviceItem(sessionStorage,draftKey, value); }
   async function save() {
     if (lock.current || !thought.trim()) return; lock.current = true; setBusy('save'); setError('');
     try {

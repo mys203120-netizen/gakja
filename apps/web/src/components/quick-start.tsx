@@ -1,4 +1,5 @@
 'use client';
+import {setDeviceItem} from '@/lib/client/device-storage';
 import {ownedClassName} from './owned-class-name';
 
 import Link from 'next/link';
@@ -28,7 +29,7 @@ export function QuickStart(){
  const heading=useRef<HTMLHeadingElement>(null),draftQueue=useRef<Promise<unknown>>(Promise.resolve()),draftTimer=useRef<ReturnType<typeof setTimeout>|null>(null),pendingAnswer=useRef<{sessionId:string;response:string;requestId:string}|null>(null),aiRequest=useRef<DraftRequest|null>(null),aiFlight=useRef<AbortController|null>(null);
  const operation=useRef<{token:typeof token;promise:Promise<void>}|null>(null),logoutSaving=useRef<typeof token|null>(null);
  const editor=useRef({token,key,scope,loaded,session,answer,aiMode,thoughts,conversation,followup,done,assisted,edited});editor.current={token,key,scope,loaded,session,answer,aiMode,thoughts,conversation,followup,done,assisted,edited};
- function storeEditor(current=editor.current){const value=JSON.stringify({scope:current.scope,sessionId:current.session?.id,answer:current.answer,updatedAt:new Date().toISOString(),aiMode:current.aiMode,thoughts:current.thoughts,conversation:current.conversation,followup:current.followup,assisted:current.assisted,edited:current.edited,pendingAI:aiRequest.current});try{localStorage.setItem(current.key,value);return localStorage.getItem(current.key)===value;}catch{return false;}}
+ function storeEditor(current=editor.current){const value=JSON.stringify({scope:current.scope,sessionId:current.session?.id,answer:current.answer,updatedAt:new Date().toISOString(),aiMode:current.aiMode,thoughts:current.thoughts,conversation:current.conversation,followup:current.followup,assisted:current.assisted,edited:current.edited,pendingAI:aiRequest.current});try{setDeviceItem(localStorage,current.key,value);return localStorage.getItem(current.key)===value;}catch{return false;}}
  function acceptProposal(proposal:Item,request:DraftRequest){
   if(typeof proposal.draft!=='string'||proposal.draft.length>8000||!(proposal.followup_question===null||typeof proposal.followup_question==='string'))throw new Error('정리된 답변을 확인하지 못했어요. 다시 이어가 주세요.');
   setAnswer(proposal.draft);setConversation([...request.body.history,request.entry]);setFollowup(proposal.followup_question);setThoughts('');setEdited(false);setAssisted(true);setPreview('');aiRequest.current=null;

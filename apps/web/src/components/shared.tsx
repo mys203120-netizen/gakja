@@ -28,7 +28,7 @@ export function Breadcrumb({ items }: { items: { label: string; href?: string }[
   if(!items.length)return null;
   return <nav className={ownedClassName("breadcrumb",true)} aria-label="현재 위치">{items.map((item,i)=><span key={i} className={ownedClassName(undefined,true)}>{i>0&&<ChevronRight size={13} aria-hidden="true"/>}{i===items.length-1?<span aria-current="page">{item.label}</span>:item.href?<Link href={item.href}>{item.label}</Link>:<span>{item.label}</span>}</span>)}</nav>;
 }
-const tabTitles=new Set(['연습','퀴즈','모의면접','AI 비서','나의 무기고','자료','내 교재','지식한입','시사 브리핑','지원 학교','내 리포트','내 기록','연습 이력','답변 비교','활동','예상 질문']);
+const tabTitles=new Set(['연습','퀴즈','모의면접','AI 비서','내 경험','자료','내 교재','지식한입','시사 브리핑','지원 학교','내 리포트','내 기록','연습 이력','답변 비교','활동','예상 질문']);
 export function PageTitle({ title, children, aside, questionId,titleMode,help }: { eyebrow?: string; title: string; children?: ReactNode; aside?: ReactNode; questionId?:string;titleMode?:'visible'|'tab';help?:ReactNode }) {
   const tab=titleMode==='tab'||(titleMode!=='visible'&&!questionId&&tabTitles.has(title));
   return <div className={ownedClassName('page-title'+(tab?' '+tooltipStyles.tabTitle:''),true)} data-tab-title={tab||undefined} data-title-only={tab&&!help&&!aside||undefined}><div className={ownedClassName(tab?tooltipStyles.tabTitleContent:undefined,true)}><h1 className={ownedClassName(tab?tooltipStyles.hiddenTitle:undefined,true)} data-question-key={questionId}>{title}</h1>{!tab&&children&&<div className={ownedClassName("subtitle",true)}>{children}</div>}{help&&<InfoTip label={title+' 안내'}>{help}</InfoTip>}</div>{aside}</div>;

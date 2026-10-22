@@ -1,4 +1,5 @@
 'use client';
+import {setDeviceItem} from '@/lib/client/device-storage';
 import {ownedClassName} from './owned-class-name';
 
 
@@ -46,17 +47,17 @@ function PracticeOverview() {
       <Link className={ownedClassName("training-path")} href="/quiz/memory">
         <Sparkles size={28} strokeWidth={1.5} />
         <div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>암기 훈련</h2><p className={ownedClassName(undefined,true)}>회상 · 개념 확인 · 순서 정리</p></div>
-        <span className={ownedClassName("training-path-action",true)}>복습 시작<ArrowUpRight size={22} strokeWidth={1.5} /></span>
+        <span className={ownedClassName("training-path-action",true)}><span className={ownedClassName(undefined,true)}>복습 시작</span><ArrowUpRight size={22} strokeWidth={1.5} /></span>
       </Link>
       <Link className={ownedClassName("training-path")} href="/quiz/assignments">
         <ListChecks size={28} strokeWidth={1.5} />
         <div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>퀴즈 과제</h2><p className={ownedClassName(undefined,true)}>학생부 사실 확인 · 경험 복원 · 재훈련</p></div>
-        <span className={ownedClassName("training-path-action",true)}>과제 보기<ArrowUpRight size={22} strokeWidth={1.5} /></span>
+        <span className={ownedClassName("training-path-action",true)}><span className={ownedClassName(undefined,true)}>과제 보기</span><ArrowUpRight size={22} strokeWidth={1.5} /></span>
       </Link>
       <Link className={ownedClassName("training-path")} href="/interview/new?kind=video">
         <Mic size={28} strokeWidth={1.5} />
         <div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>화상 모의면접</h2><p className={ownedClassName(undefined,true)}>질문을 듣고 내 말로 답하기</p></div>
-        <span className={ownedClassName("training-path-action",true)}>연습 시작<ArrowUpRight size={22} strokeWidth={1.5} /></span>
+        <span className={ownedClassName("training-path-action",true)}><span className={ownedClassName(undefined,true)}>연습 시작</span><ArrowUpRight size={22} strokeWidth={1.5} /></span>
       </Link>
     </div>
     <section className={ownedClassName("training-keywords",true)}>
@@ -241,7 +242,7 @@ function AssignmentSessionBody({ id, trainingPlanId }: { id: string; trainingPla
   const assignment:Item|null=detail.item;
   const draftKey = `gakja-assignment:${data.user.id}:${id}`;
   useEffect(() => { try { const stored = sessionStorage.getItem(draftKey); if (stored) setResponses(JSON.parse(stored)); } catch {} restored.current = true; }, [draftKey]);
-  useEffect(() => { if (restored.current && Object.keys(responses).length) sessionStorage.setItem(draftKey, JSON.stringify(responses)); }, [responses, draftKey]);
+  useEffect(() => { if (restored.current && Object.keys(responses).length) setDeviceItem(sessionStorage,draftKey, JSON.stringify(responses)); }, [responses, draftKey]);
   const items: Item[] = assignment?.items || [];
   const schoolAssignment = assignment?.source_kind === 'common';
   const savedTarget = assignment?.target_snapshot;
@@ -257,7 +258,7 @@ function AssignmentSessionBody({ id, trainingPlanId }: { id: string; trainingPla
       const item=items.find(item=>item.memory_item_id===activeItem.current)||items[0];
       if(!item){setSaveError('도움을 받을 질문을 먼저 확인해 주세요.');return;}
       if(!item.question_snapshot&&assignment.source_kind!=='common'&&assignment.content_version!==data.package?.active_version){setSaveError('당시 질문의 자료를 확인할 수 없어요. 원래 기록에서 확인해 주세요.');return;}
-      try{sessionStorage.setItem(draftKey,JSON.stringify(responses));}
+      try{setDeviceItem(sessionStorage,draftKey,JSON.stringify(responses));}
       catch{setSaveError('초안을 보관하지 못했어요. 답변을 복사한 뒤 다시 시도해 주세요.');return;}
       setAssistantRequest(previous=>({itemId:item.memory_item_id,token:previous.token+1}));
     }

@@ -26,6 +26,9 @@ export class ApiError extends Error {
 }
 export function errorResponse(error: unknown): Response {
   if (error instanceof ApiError) return Response.json({ error: error.message }, { status: error.status });
+  const failure=error as {code?:string;message?:string};
+  if(['55P03','40P01'].includes(failure?.code||''))return Response.json({error:'다른 화면에서 자료를 저장하고 있어요. 잠시 후 다시 시도해 주세요.'},{status:409});
+  if(failure?.code==='P0001'&&['휴지통에 있는 항목이에요. 복원한 뒤 이어서 작성해 주세요.','삭제한 항목이에요. 새 항목으로 작성해 주세요.'].includes(failure.message||''))return Response.json({error:failure.message},{status:409});
   console.error(error);
   return Response.json({ error: '요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.' }, { status: 500 });
 }

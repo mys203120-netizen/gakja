@@ -18,7 +18,7 @@ function harness(component='Assistant',extra:any={},stored=new Map<string,string
   vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,{module:mod,exports:mod.exports,crypto:{randomUUID},URLSearchParams,Promise,JSON,Number,Set,
     sessionStorage:{getItem:(key:string)=>stored.get(key)||null,setItem:(key:string,value:string)=>stored.set(key,value)},
     document:{activeElement:null,body:{style:{overflow:''}},addEventListener(){},removeEventListener(){}},
-    require(name:string){
+    require(name:string){if(name==='@/lib/client/device-storage'||name==='./client/device-storage')return {setDeviceItem:(storage:any,key:string,value:string)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:Promise.resolve(),close(){}})};
       if(name==='react')return react;
       if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props}),Fragment:'Fragment'};
       if(name==='./owned-class-name')return {ownedClassName:(value:any)=>value};

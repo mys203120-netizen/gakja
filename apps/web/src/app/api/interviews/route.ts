@@ -75,7 +75,7 @@ async function ownedExperience(studentId:string,id?:string|null,revision?:string
  const [card]=await query('select id,data,revision from experience_cards where id=$1 and student_id=$2',[id,studentId]);
  if(!card)throw new FeatureError(404,'경험 카드를 찾을 수 없어요.');
  if(!card.data.confirmed)throw new FeatureError(409,'상황과 내 행동을 확인한 뒤 연습해 주세요.');
- if(!revision || Number(revision)!==card.revision)throw new FeatureError(409,'카드가 수정됐어요. 무기고에서 다시 연습을 시작해 주세요.');
+ if(!revision || Number(revision)!==card.revision)throw new FeatureError(409,'카드가 수정됐어요. 내 경험에서 다시 연습을 시작해 주세요.');
  return card;
 }
 

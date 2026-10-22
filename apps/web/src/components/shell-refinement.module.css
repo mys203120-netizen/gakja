@@ -1,18 +1,18 @@
-.shell :global(.topbar-context) :global(.target-select) select { font-size: 13px; }
-.shell :global(.app-footer), .shell :global(.admin-caption) { font-size: 13px; color: var(--clarity-muted); }
-.searchScope, .searchCount { color: var(--clarity-muted); font-size: 13px; line-height: 1.65; margin: 0; }
+.shell :global(.topbar-context) :global(.target-select) select { font-size: var(--font-size-caption); }
+.shell :global(.app-footer), .shell :global(.admin-caption) { font-size: var(--font-size-caption); color: var(--clarity-muted); }
+.searchScope, .searchCount { color: var(--clarity-muted); font-size: var(--font-size-caption); line-height: 1.65; margin: 0; }
 .searchScope { margin-bottom: 14px; }
 .searchMeta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
-.searchReset { padding: 6px 0 6px 10px; color: var(--clarity-green); font-size: 13px; background: transparent; border: 0; cursor: pointer; }
+.searchReset { padding: 6px 0 6px 10px; color: var(--clarity-green); font-size: var(--font-size-caption); background: transparent; border: 0; cursor: pointer; }
 .searchResults { max-height: min(55dvh, 420px); overflow-y: auto; overscroll-behavior: contain; padding-block: 6px; }
-.searchResults > a { display: flex; align-items: baseline; gap: 12px; padding: 13px 2px; font-size: 15px; line-height: 1.65; text-wrap: pretty; }
+.searchResults > a { display: flex; align-items: baseline; gap: 12px; padding: 13px 2px; font-size: var(--font-size-body); line-height: 1.65; text-wrap: pretty; }
 .searchResults > a > span { min-width: 0; overflow-wrap: anywhere; }
-.searchResults > a > small { flex: 0 0 58px; font-size: 13px; color: var(--clarity-muted); }
+.searchResults > a > small { flex: 0 0 58px; font-size: var(--font-size-caption); color: var(--clarity-muted); }
 .searchEmpty { padding: 26px 2px 16px; }
-.searchEmpty p { margin: 0; font-size: 15px; line-height: 1.65; }
-.searchEmpty p + p { margin-top: 6px; font-size: 13px; color: var(--clarity-muted); }
+.searchEmpty p { margin: 0; font-size: var(--font-size-body); line-height: 1.65; }
+.searchEmpty p + p { margin-top: 6px; font-size: var(--font-size-caption); color: var(--clarity-muted); }
 .moreLinks { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; }
-.moreLinks > a { display: flex; align-items: center; gap: 11px; padding: 15px 9px; color: var(--clarity-ink); font-size: 14px; line-height: 1.5; border-radius: 8px; }
+.moreLinks > a { display: flex; align-items: center; gap: 11px; padding: 15px 9px; color: var(--clarity-ink); font-size: var(--font-size-caption); line-height: 1.5; border-radius: 8px; }
 .moreLinks > a[aria-current='page'] { background: var(--clarity-mint); color: var(--clarity-green); }
 .moreLinks > a > svg { flex-shrink: 0; }
 .moreLinks > a:hover { background: var(--clarity-soft); }
@@ -21,7 +21,7 @@
   .shell :global(.topbar) :global(.icon-button) { width: 32px; height: 36px; }
   .shell:global(.admin-shell) :global(.main-content) { padding-bottom: calc(71px + 24px + env(safe-area-inset-bottom, 0px)); }
   .shell nav.mobilePrimary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); overflow: visible; gap: 0; }
-  .shell nav.mobilePrimary > a, .shell nav.mobilePrimary > button { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; width: 100%; height: 100%; gap: 5px; padding: 8px 0 max(10px, env(safe-area-inset-bottom)); border: 0; border-radius: 0; background: transparent; color: var(--clarity-muted); font-family: inherit; font-size: 12px; font-weight: 450; line-height: 1.2; cursor: pointer; }
+  .shell nav.mobilePrimary > a, .shell nav.mobilePrimary > button { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; width: 100%; height: 100%; gap: 5px; padding: 8px 0 max(10px, env(safe-area-inset-bottom)); border: 0; border-radius: 0; background: transparent; color: var(--clarity-muted); font-family: inherit; font-size: var(--font-size-caption); font-weight: 450; line-height: 1.2; cursor: pointer; }
   .shell nav.mobilePrimary > [aria-current='page'], .shell nav.mobilePrimary > button[data-active='true'] { color: var(--clarity-green); }
   .shell nav.mobilePrimary > button[aria-expanded='true'] { background: var(--clarity-soft); }
 }

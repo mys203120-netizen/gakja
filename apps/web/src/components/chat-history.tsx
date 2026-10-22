@@ -44,10 +44,12 @@ function ThreadMenu({ thread, archived, disabled, onAction }: { thread: Item; ar
     </div>, document.body)}
   </>;
 }
-export function ChatHistory({ threads, currentId, busy, onChange,hasMore=false,loading=false,error:readError='',onMore }: { threads: Item[]; currentId?: string; busy?: boolean; onChange: (id: string, action: Management) => void | Promise<void>;hasMore?:boolean;loading?:boolean;error?:string;onMore?:()=>void }) {
+export function ChatHistory({ threads, currentId, busy, onChange,hasMore=false,loading=false,error:readError='',onMore,mobileAction }: { threads: Item[]; currentId?: string; busy?: boolean; onChange: (id: string, action: Management) => void | Promise<void>;hasMore?:boolean;loading?:boolean;error?:string;onMore?:()=>void;mobileAction?:React.ReactNode }) {
   const [archivedPage,setArchivedPage]=useState<Item|null>(null),[archivedLoading,setArchivedLoading]=useState(false);
   const [view, setView] = useState<'active' | 'archived'>('active'), [archived, setArchived] = useState<Item[]>([]);
   const [intent, setIntent] = useState<{ action: Management; thread: Item } | null>(null), [title, setTitle] = useState(''), [error, setError] = useState(''), [saving, setSaving] = useState(false);
+  const mobileHistory=useRef<HTMLDetailsElement>(null);
+  useEffect(()=>{if(mobileHistory.current)mobileHistory.current.open=false;},[currentId]);
   useEffect(() => { if (view !== 'archived') return; let live = true; api('/api/chat?view=archived').then(r => { if (live) { setArchived(r.threads);setArchivedPage(r.page); setError(''); } }).catch(e => { if (live) setError(e.message); }); return () => { live = false; }; }, [view, threads]);
   async function moreArchived(){if(archivedLoading||!archivedPage?.nextCursor)return;setArchivedLoading(true);try{const result=await api('/api/chat?view=archived&cursor='+encodeURIComponent(archivedPage.nextCursor));setArchived(previous=>[...previous,...result.threads.filter((item:Item)=>!previous.some(row=>row.id===item.id))]);setArchivedPage(result.page);}catch(error){setError((error as Error).message);}finally{setArchivedLoading(false);}}
   function choose(action: Management, thread: Item) { setIntent({ action, thread }); setTitle(thread.title || '새 대화'); setError(''); }
@@ -61,10 +63,10 @@ export function ChatHistory({ threads, currentId, busy, onChange,hasMore=false,l
   }
   const list = view === 'archived' ? archived : threads;
   const history = <>
-    <Link href="/on" className={ownedClassName("button ghost full")}><Plus size={17} />새 대화</Link>
+    <Link href="/on" onClick={()=>{if(mobileHistory.current)mobileHistory.current.open=false;}} className={ownedClassName("button ghost full")}><Plus size={17} />새 대화</Link>
     <div className={ownedClassName(styles.tabs,true)} aria-label="대화 목록"><button type="button" aria-pressed={view === 'active'} onClick={() => setView('active')} className={ownedClassName(undefined,true)}>대화</button><button type="button" aria-pressed={view === 'archived'} onClick={() => setView('archived')} className={ownedClassName(undefined,true)}><Archive size={13} />보관함</button></div>
     <div className={ownedClassName(styles.list,true)}>{list.map(thread => <div key={thread.id} className={ownedClassName(`${styles.row} ${thread.id === currentId ? styles.active : ''}`,true)}>
-      <Link href={`/on/${thread.id}`} title={thread.title || '새 대화'} aria-current={thread.id === currentId ? 'page' : undefined}>{thread.title || '새 대화'}</Link>
+      <Link href={`/on/${thread.id}`} onClick={()=>{if(mobileHistory.current)mobileHistory.current.open=false;}} title={thread.title || '새 대화'} aria-current={thread.id === currentId ? 'page' : undefined}>{thread.title || '새 대화'}</Link>
       <ThreadMenu thread={thread} archived={view === 'archived'} disabled={busy || saving} onAction={action => { if (action === 'rename' || action === 'delete') choose(action, thread); else void manage(action, thread); }} />
     </div>)}</div>
     {readError&&view==='active'&&<Alert>{readError}</Alert>}
@@ -74,7 +76,7 @@ export function ChatHistory({ threads, currentId, busy, onChange,hasMore=false,l
   </>;
   return <>
     <aside className={ownedClassName("chat-history",true)}>{history}</aside>
-    <details className={ownedClassName("chat-mobile-history",true)}><summary className={ownedClassName(undefined,true)}>대화·보관함</summary>{history}</details>
+    <div className={ownedClassName("chat-mobile-toolbar",true)}><details ref={mobileHistory} className={ownedClassName("chat-mobile-history",true)} onKeyDown={event=>{if(event.key==='Escape'){event.currentTarget.open=false;event.currentTarget.querySelector('summary')?.focus();}}}><summary className={ownedClassName(undefined,true)}>대화 보관함</summary><div className={ownedClassName("chat-mobile-history-content",true)}>{history}</div></details>{mobileAction}</div>
     {error && !intent && <Alert>{error}</Alert>}
     {intent && <Modal title={intent.action === 'rename' ? '대화 이름 바꾸기' : '대화를 삭제할까요?'} onClose={() => { if (!saving) { setIntent(null); setError(''); } }}>
       {error && <Alert>{error}</Alert>}

@@ -95,7 +95,7 @@ function harness({ storedSidebarPreference = null, storageUnavailable = false, s
 {
   const layoutCode=ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/app/(student)/layout.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
   const module={exports:{}},calls=[];let actor=null;
-  vm.runInNewContext(layoutCode,{module,exports:module.exports,require(name){
+  vm.runInNewContext(layoutCode,{module,exports:module.exports,require(name){if(name==='@/lib/client/device-storage'||name==='./client/device-storage')return {setDeviceItem:(storage,key,value)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:Promise.resolve(),close(){}})};
     if(name==='@/components/owned-class-name')return {ownedClassName:value=>value};
     if(name==='react')return {Suspense:'Suspense'};
     if(name==='react/jsx-runtime')return {jsx:(type,props,key)=>({type,props,key})};

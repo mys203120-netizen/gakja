@@ -56,8 +56,12 @@ export async function PATCH(request: Request) {
     const value = await readInquiryBody(request) as Record<string, unknown>;
     if (!value || typeof value !== 'object' || !/^[0-9a-f-]{36}$/i.test(String(value.id)) || !['received', 'in_progress', 'resolved'].includes(String(value.status)) || typeof value.note !== 'string' || value.note.length > 5000) throw new ApiError(400, '처리 상태와 메모를 확인해 주세요.');
     await transaction(async db => {
+      const dataRequest = (await db.query('select id,status from account_data_requests where inquiry_id=$1 for update',[value.id])).rows[0];
+      if (dataRequest?.status === 'cancelled') throw new ApiError(409, '사용자가 취소한 요청이에요.');
+      if (dataRequest && value.status === 'resolved' && !(value.note as string).trim()) throw new ApiError(400, '삭제 범위와 처리 결과를 확인한 뒤 완료 메모를 남겨 주세요.');
       const rows = (await db.query('update support_inquiries set status=$2,operator_note=$3,updated_by=$4,updated_at=now() where id=$1 returning id,student_id', [value.id, value.status, value.note, user.id])).rows;
       if (!rows.length) throw new ApiError(404, '문의를 찾을 수 없어요.');
+      if (dataRequest) await db.query('update account_data_requests set status=$2,detail=$3,updated_at=now() where id=$1',[dataRequest.id,value.status==='resolved'?'completed':value.status==='in_progress'?'processing':'requested',value.status==='resolved'?'운영팀이 처리 완료로 표시했어요. 추가 확인은 문의 내역으로 요청해 주세요.':value.status==='in_progress'?'운영팀이 본인 확인과 삭제 범위를 확인하고 있어요.':'접수했어요. 운영팀 확인을 기다리고 있어요.']);
       await db.query('insert into audit_logs(actor_id,student_id,action,data) values($1,$2,$3,$4)', [user.id, rows[0].student_id, 'support.inquiry.updated', JSON.stringify({ inquiryId: value.id, status: value.status })]);
     });
     return Response.json({ ok: true }, { headers });

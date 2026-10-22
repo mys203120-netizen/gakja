@@ -44,11 +44,17 @@
   --clarity-warning: #926521;
   --clarity-danger: #bf403e;
   --clarity-motion: 160ms;
-  --clarity-title-size: 30px;
-  --clarity-title-mobile-size: 26px;
-  --clarity-section-size: 20px;
-  --clarity-body-size: 15px;
-  --clarity-secondary-size: 13px;
+  /* Four sizes across mobile, desktop and embedded app controls.
+     Hierarchy within a size uses weight and colour rather than extra steps. */
+  --font-size-caption: 14px;
+  --font-size-body: 16px;
+  --font-size-section: 20px;
+  --font-size-title: 28px;
+  --clarity-title-size: var(--font-size-title);
+  --clarity-title-mobile-size: var(--font-size-title);
+  --clarity-section-size: var(--font-size-section);
+  --clarity-body-size: var(--font-size-body);
+  --clarity-secondary-size: var(--font-size-caption);
   --clarity-line-height: 1.7;
   --clarity-control-radius: 12px;
   --clarity-section-gap: 28px;
@@ -85,6 +91,7 @@
 }
 
 html {
+  font-size: var(--font-size-body);
   background: var(--bg);
   scroll-behavior: smooth;
   scroll-padding-top: 88px;
@@ -110,7 +117,7 @@ label {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  font-size: 14px;
+  font-size: var(--font-size-caption);
   font-weight: 550;
 }
 
@@ -184,22 +191,59 @@ h4 {
 }
 
 h1 {
-  font-size: 32px;
+  font-size: var(--font-size-title);
   line-height: 1.35;
   font-weight: 720;
   letter-spacing: -.035em;
 }
 
 h2 {
-  font-size: 21px;
+  font-size: var(--font-size-section);
   line-height: 1.5;
   font-weight: 660;
 }
 
 h3 {
-  font-size: 18px;
+  font-size: var(--font-size-section);
   line-height: 1.55;
   font-weight: 620;
+}
+
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-body);
+}
+
+small,
+sub,
+sup {
+  font-size: var(--font-size-caption);
+}
+
+big,
+button,
+input,
+select,
+textarea {
+  font-size: inherit;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-size: inherit;
+}
+
+@media (max-width: 700px) {
+  /* A shared minimum prevents iOS from zooming when a field gains focus.
+     It must win over older page-specific form rules as well as inline styles. */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),
+  select,
+  textarea {
+    font-size: var(--font-size-body) !important;
+  }
 }
 
 p {
@@ -221,13 +265,13 @@ blockquote {
 
 @media (max-width:700px) {
   body {
-    font-size: 16px;
+    font-size: var(--font-size-body);
   }
 }
 
 @media (max-width:700px) {
   h1 {
-    font-size: 27px;
+    font-size: var(--font-size-title);
     line-height: 1.4;
   }
 }
@@ -239,8 +283,8 @@ h1,
 h2,
 h3 { letter-spacing: -.035em; }
 a { transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease; }
-blockquote { border-left: 2px solid #d4d4d9; padding: 3px 0 3px 23px; color: #66666d; font-size: 16px; line-height: 1.85; }
-blockquote cite { color: #6e6e73; font-size: 12px; display: block; margin-top: 14px; }
+blockquote { border-left: 2px solid #d4d4d9; padding: 3px 0 3px 23px; color: #66666d; font-size: var(--font-size-body); line-height: 1.85; }
+blockquote cite { color: #6e6e73; font-size: var(--font-size-caption); display: block; margin-top: 14px; }
 @media (max-width: 1100px) {
   :root { --sidebar-width: 180px; --page-gutter: 30px; }
 }
@@ -287,7 +331,7 @@ body {
   color: var(--clarity-ink);
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 400;
-  font-size: var(--clarity-body-size);
+  font-size: var(--font-size-body);
   line-height: var(--clarity-line-height);
   letter-spacing: -.02em;
 }

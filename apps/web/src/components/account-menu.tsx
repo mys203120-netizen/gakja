@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useEffect, useLayoutEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
-import { Ellipsis, LogOut, Settings2, UserRound } from 'lucide-react';
+import { Ellipsis, LogOut, Settings2, UserRound,Database } from 'lucide-react';
 
 export function AccountMenu({ name, admin, compact = false, onLogout }: { name: string; admin: boolean; compact?: boolean; onLogout: () => Promise<void> }) {
   const [open, setOpen] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
@@ -18,7 +18,7 @@ export function AccountMenu({ name, admin, compact = false, onLogout }: { name: 
   useLayoutEffect(() => {
     if (!open || !trigger.current) return;
     const rect = trigger.current.getBoundingClientRect();
-    const width = Math.min(248, window.innerWidth - 24), height = admin ? 126 : 170;
+    const width = Math.min(248, window.innerWidth - 24), height = admin ? 126 : 218;
     setPosition({ left: Math.min(Math.max(12, rect.left), window.innerWidth - width - 12), top: compact ? rect.bottom + 10 : Math.max(12, rect.top - height - 10) });
     menu.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus({preventScroll:true});
     const outside = (event: PointerEvent) => { if (!menu.current?.contains(event.target as Node) && !trigger.current?.contains(event.target as Node)) close(); };
@@ -43,6 +43,7 @@ export function AccountMenu({ name, admin, compact = false, onLogout }: { name: 
       if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) { event.preventDefault(); items[event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus({preventScroll:true}); }
     }}>
       {!admin && <Link role="menuitem" href="/account" aria-disabled={busy||undefined} onClick={event => {if(lock.current)event.preventDefault();else close();}}><UserRound size={17}/>내 계정</Link>}
+      {!admin && <Link role="menuitem" href="/account/data" aria-disabled={busy||undefined} onClick={event => {if(lock.current)event.preventDefault();else close();}}><Database size={17}/>데이터 관리</Link>}
       <Link role="menuitem" href={admin ? '/admin/settings' : '/account/settings'} aria-disabled={busy||undefined} onClick={event => {if(lock.current)event.preventDefault();else close();}}><Settings2 size={17}/>설정</Link>
       <button type="button" role="menuitem" disabled={busy} onClick={()=>void logout()} className={ownedClassName(undefined,true)}><LogOut size={17}/>{busy?'저장하고 로그아웃 중…':'로그아웃'}</button>
       {error&&<p role="alert" className={ownedClassName("logout-error",true)}>{error}</p>}

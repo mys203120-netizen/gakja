@@ -42,6 +42,23 @@ function hydrate(row:StoredRecording,parts:StoredChunk[]):RecoveredRecording {
 }
 function readParts(parts:IDBObjectStore,row:StoredRecording,done:(result:RecoveredRecording)=>void){const request=parts.index('recordingKey').getAll(IDBKeyRange.only(row.key));request.onsuccess=()=>done(hydrate(row,request.result));}
 export async function removeRecordingRecovery(key:string):Promise<void> {await operation<void>('readwrite',(store,done,parts,fail)=>{const request=store.get(key);request.onsuccess=()=>{if(request.result&&inUse(request.result)){fail(locked());return;}store.delete(key);deleteParts(parts,key);done();};});}
+/** Account data management reads a consistent snapshot, including unfinished private recordings. */
+export async function listAccountRecordingRecovery(studentId:string):Promise<RecoveredRecording[]> {
+  if(!studentId)throw unavailable();
+  return operation<RecoveredRecording[]>('readonly',(store,done,parts)=>{const request=store.getAll();request.onsuccess=()=>{
+    const selected=(request.result as StoredRecording[]).filter(row=>row.studentId===studentId&&hasParts(row));
+    if(!selected.length){done([]);return;}const result:RecoveredRecording[]=[];for(const row of selected)readParts(parts,row,value=>{result.push(value);if(result.length===selected.length)done(result.sort((a,b)=>b.updatedAt-a.updatedAt));});
+  };});
+}
+/** All-or-nothing for this account; another tab's live capture blocks cleanup. */
+export async function clearAccountRecordingRecovery(studentId:string):Promise<number> {
+  if(!studentId)throw unavailable();
+  return operation<number>('readwrite',(store,done,parts,fail)=>{const request=store.getAll();request.onsuccess=()=>{
+    const selected=(request.result as StoredRecording[]).filter(row=>row.studentId===studentId);
+    if(selected.some(inUse)){fail(locked());return;}
+    for(const row of selected){store.delete(row.key);deleteParts(parts,row.key);}done(selected.filter(hasParts).length);
+  };});
+}
 export async function listRecordingRecovery(scope:Pick<RecordingRecoveryScope,'studentId'|'sessionId'|'kind'>):Promise<RecoveredRecording[]> {
   return operation<RecoveredRecording[]>('readwrite',(store,done,parts)=>{
     const request=store.getAll();request.onsuccess=()=>{

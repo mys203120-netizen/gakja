@@ -57,8 +57,8 @@
 .logout-dialog::backdrop { background:#1420194d; backdrop-filter:blur(3px); }
 .logout-close { position:absolute; top:13px; right:13px; }
 .logout-symbol { display:inline-flex; margin:2px 0 23px; }
-.logout-dialog h2 { font-size:23px; }
-.logout-dialog p { margin:12px 0 28px; font-size:14px; line-height:1.7; word-break:keep-all; }
+.logout-dialog h2 { font-size:var(--font-size-section); }
+.logout-dialog p { margin:12px 0 28px; font-size:var(--font-size-caption); line-height:1.7; word-break:keep-all; }
 .logout-dialog .logout-error { margin-top:-12px; }
 .logout-actions { display:flex; gap:9px; justify-content:flex-end; }
 .logout-actions :global(.ghost) { border:0; background:#f2f5f2; }

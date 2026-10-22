@@ -53,8 +53,8 @@ test('only repeated tab titles are visually hidden; questions, form titles, and 
   const PageTitle=module.exports.PageTitle,heading=(tree:any)=>nodes(tree,node=>node.type==='h1')[0];
   const plain=PageTitle({title:'AI 비서'});assert.equal(plain.props['data-title-only'],true);assert.equal(heading(plain).props.children,'AI 비서');assert.equal(heading(plain).props.className,'hiddenTitle');
   const action=React.createElement('button',null,'내 기록 내보내기'),withAction=PageTitle({title:'내 리포트',aside:action});assert.equal(nodes(withAction,node=>node.type==='button')[0].props.children,action.props.children);assert.notEqual(withAction.props['data-title-only'],true);
-  const explained=PageTitle({title:'나의 무기고',children:'내 경험을 질문에 연결해요.'});assert.equal(nodes(explained,node=>node.type==='Help').length,0,'generic tab copy is removed instead of creating another tooltip');
-  const necessary=PageTitle({title:'나의 무기고',help:'내가 확인한 사실만 활동에 반영돼요.'});assert.equal(nodes(necessary,node=>node.type==='Help')[0].props.children,'내가 확인한 사실만 활동에 반영돼요.');
+  const explained=PageTitle({title:'내 경험',children:'내 경험을 질문에 연결해요.'});assert.equal(nodes(explained,node=>node.type==='Help').length,0,'generic tab copy is removed instead of creating another tooltip');
+  const necessary=PageTitle({title:'내 경험',help:'내가 확인한 사실만 활동에 반영돼요.'});assert.equal(nodes(necessary,node=>node.type==='Help')[0].props.children,'내가 확인한 사실만 활동에 반영돼요.');
   for(const props of [{title:'답변 초안'},{title:'이 질문 말하기'},{title:'퀴즈',questionId:'question-1'},{title:'지원 학교',titleMode:'visible'}])assert.equal(heading(PageTitle(props)).props.className,undefined);
   const form=PageTitle({title:'답변 초안',children:'필수 입력과 저장 안내'});assert.equal(nodes(form,node=>node.props.className==='subtitle')[0].props.children,'필수 입력과 저장 안내');
 });

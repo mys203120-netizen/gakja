@@ -43,7 +43,7 @@ function useStudyReports(id?:string) {
 }
 
 function ReportNav({active='reports'}:{active?:string}) {
-  return <nav className={ownedClassName("subnav",true)} aria-label="리포트 보기">{[['reports','/records','발화와 답변'],['history','/records/history','연습 이력'],['comparisons','/records/comparisons','답변 비교']].map(([key,href,label])=><Link key={key} href={href} className={ownedClassName(active===key?'active':'')} aria-current={active===key?'page':undefined}>{label}</Link>)}</nav>;
+  return <nav className={ownedClassName(`subnav ${toolbarStyles.mobileReportNavigation}`,true)} data-mobile-child={active!=='reports'||undefined} aria-label="리포트 보기">{[['reports','/records','발화와 답변'],['history','/records/history','연습 이력'],['comparisons','/records/comparisons','답변 비교']].map(([key,href,label])=><Link key={key} href={href} className={ownedClassName(active===key?'active':'')} aria-current={active===key?'page':undefined}>{label}</Link>)}</nav>;
 }
 function interviewLabel(session?:Item){const kind=session?.data?.trainingPurpose;return ({diagnostic:'첫 진단',recall:'누적 복습',focus:'집중 보완',mixed:'연결 면접'} as Record<string,string>)[kind]||(session?.kind==='video'?'화상 모의면접':'채팅 모의면접');}
 
@@ -91,7 +91,7 @@ function RecordsOverview({ slug = [] }: { slug?: string[] }) {
     catch(err){setFinishError((err as Error).message);}finally{setFinishing(false);}
   }
   const memoryHistory=memories.items;
-  return <div className={ownedClassName("records-view "+styles.report,true)}>
+  return <div className={ownedClassName("records-view "+styles.report+' '+toolbarStyles.view,true)}>
     <Breadcrumb items={[{ label: '내 기록', href: slug.length ? '/records' : undefined }, ...(history ? [{ label: '연습 이력' }] : [])]} />
     <PageTitle title={history ? '연습 이력' : '내 기록'} />
     <div className={ownedClassName(toolbarStyles.toolbar,true)}><ReportNav active={history?'history':'reports'} /><button type="button" className={ownedClassName(toolbarStyles.export,true)} onClick={exportRecords} disabled={exporting||!reports} aria-label={exporting?'내 기록 내보내는 중':'내 기록 내보내기'} aria-busy={exporting||undefined} title="내 기록 내보내기">{exporting?<LoaderCircle size={18} className={ownedClassName("spin")}/>:<Download size={18}/>}</button></div>
@@ -125,15 +125,15 @@ function RecordsOverview({ slug = [] }: { slug?: string[] }) {
         <details className={ownedClassName("speech-activity-details",true)}><summary className={ownedClassName(undefined,true)}>함께 쌓인 학습 기록</summary><section className={ownedClassName("study-total",true)}><StudyReportNumbers report={reports!.totals} showReview={false}/><div className={ownedClassName("study-facts",true)}>{[{label:'암기 복습',value:reports.totals.memory?.reviewed},{label:'과제 답변',value:reports.totals.assignments?.submitted},{label:'시청 체크',value:reports.totals.knowledge?.completed},{label:'영상 메모',value:reports.totals.knowledge?.reflections}].filter(item=>item.value>0).map(item=><span key={item.label} className={ownedClassName(undefined,true)}>{item.label} {item.value}개</span>)}</div></section></details>
       </>}
       {!!reports?.current?.report?.eventCount&&<section className={ownedClassName("study-current",true)}><div className={ownedClassName("section-heading",true)}><h2 className={ownedClassName(undefined,true)}>이번 학습</h2><Badge tone="green">자동 저장 중</Badge></div><div className={ownedClassName("study-report-actions",true)}><Link className={ownedClassName("text-link")} href={'/reports/sessions/'+reports.current.id}>진행 기록 보기<ArrowUpRight size={17}/></Link><button className={ownedClassName("button secondary",true)} onClick={finish} disabled={finishing}>{finishing?'저장하는 중':'학습 마치기'}</button></div></section>}
-      {!!reports?.sessions?.length&&<section className={ownedClassName("records-history-section",true)}><h2 className={ownedClassName(undefined,true)}>학습 리포트</h2><div className={ownedClassName("records-report-list",true)}>{reports.sessions.map((session:Item)=><Link className={ownedClassName("records-report-row")} key={session.id} href={'/reports/sessions/'+session.id}><span className={ownedClassName("records-row-icon",true)}><ListChecks size={25}/></span><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>{dateLabel(session.started_at)} 학습</h2><p className={ownedClassName(undefined,true)}>그날 남긴 답변과 연습 기록</p></div><ArrowUpRight size={22} strokeWidth={1.5}/></Link>)}</div>{reports.sessionsPage?.hasMore&&<button className={ownedClassName("button ghost",true)} disabled={Boolean(loadingMore)} onClick={()=>void more('sessions')}>이전 리포트 더 보기</button>}</section>}
-      {!!feedback.items.length&&<section className={ownedClassName("records-history-section",true)}><h2 className={ownedClassName(undefined,true)}>훈련·면접 피드백</h2><div className={ownedClassName("records-report-list",true)}>
-      {feedback.items.map(r => <Link className={ownedClassName("records-report-row")} key={r.id} href={'/reports/reports/' + r.id}>
+      {!!reports?.sessions?.length&&<section className={ownedClassName("records-history-section",true)}><h2 className={ownedClassName(undefined,true)}>학습 리포트</h2><div className={ownedClassName('records-report-list '+toolbarStyles.reportRows,true)}>{reports.sessions.map((session:Item)=><Link className={ownedClassName('records-report-row '+toolbarStyles.reportRow)} key={session.id} href={'/reports/sessions/'+session.id}><span className={ownedClassName("records-row-icon",true)}><ListChecks size={25}/></span><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>{dateLabel(session.started_at)} 학습</h2><p className={ownedClassName(undefined,true)}>그날 남긴 답변과 연습 기록</p></div><ArrowUpRight size={22} strokeWidth={1.5}/></Link>)}</div>{reports.sessionsPage?.hasMore&&<button className={ownedClassName("button ghost",true)} disabled={Boolean(loadingMore)} onClick={()=>void more('sessions')}>이전 리포트 더 보기</button>}</section>}
+      {!!feedback.items.length&&<section className={ownedClassName("records-history-section",true)}><h2 className={ownedClassName(undefined,true)}>훈련·면접 피드백</h2><div className={ownedClassName('records-report-list '+toolbarStyles.reportRows,true)}>
+      {feedback.items.map(r => <Link className={ownedClassName('records-report-row '+toolbarStyles.reportRow)} key={r.id} href={'/reports/reports/' + r.id}>
         <span className={ownedClassName("records-row-icon",true)}>{r.data?.kind === 'video' ? <Mic size={26} strokeWidth={1.5} /> : <MessagesSquare size={26} strokeWidth={1.5} />}</span>
         <div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>{interviewLabel({kind:r.data?.kind,data:r.data})}</h2><p className={ownedClassName(undefined,true)}>{dateLabel(r.created_at)}</p></div>
         <ArrowUpRight size={22} strokeWidth={1.5} />
       </Link>)}
     </div>{feedback.page?.hasMore&&<button className={ownedClassName("button ghost",true)} disabled={feedback.loading} onClick={()=>void feedback.more()}>이전 면접 피드백 더 보기</button>}</section>}
-    {!reports&&!error&&<Spinner/>}
+    {!reports&&!error&&<div className={ownedClassName(toolbarStyles.reportSkeleton,true)} aria-hidden="true"><span/><span/></div>}
     </>}
   </div>;
 }
@@ -198,7 +198,7 @@ function Report({ id }: { id: string }) {
     <PageTitle title={(report.kind === 'video' ? '화상' : '채팅') + ' 면접 리포트'} />
     {error && <Alert>{error}</Alert>}
     <div className={ownedClassName("report-summary",true)}><span className={ownedClassName(undefined,true)}>{dateLabel(report.created_at)}</span></div>
-    {detail.session?.data?.experienceCard && <section className={ownedClassName("detail-section",true)}><h2 className={ownedClassName(undefined,true)}>이 경험을 더 다듬어볼까?</h2><p className={ownedClassName(undefined,true)}>이번 답변과 피드백을 보고, 내 행동과 배운 점을 보완해 보세요.</p><Link className={ownedClassName("button ghost")} href={'/armory?card='+detail.session!.data.experienceCard.id}>무기고에서 경험 보완하기</Link></section>}
+    {detail.session?.data?.experienceCard && <section className={ownedClassName("detail-section",true)}><h2 className={ownedClassName(undefined,true)}>이 경험을 더 다듬어볼까?</h2><p className={ownedClassName(undefined,true)}>이번 답변과 피드백을 보고, 내 행동과 배운 점을 보완해 보세요.</p><Link className={ownedClassName("button ghost")} href={'/armory?card='+detail.session!.data.experienceCard.id}>내 경험에서 보완하기</Link></section>}
     <SpeechGrowth reportId={id}/>
     {report.session_id && <RecordMedia sessionId={report.session_id} />}
     {report.aiFeedback && <section className={ownedClassName("report-feedback-section",true)}><h2 className={ownedClassName(undefined,true)}>AI 피드백</h2><p className={ownedClassName("muted small",true)}>표현 제안은 내 답변·원문과 확인해 사용해 주세요. 내가 하지 않은 행동은 답변에 넣지 않아요.</p><MarkdownMessage content={report.aiFeedback.content}/></section>}

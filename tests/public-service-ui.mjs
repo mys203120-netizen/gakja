@@ -44,7 +44,7 @@ try {
   check((await page.locator('details').nth(3).innerText()).includes('담당자'), 'FAQ accurately states assigned access');
   await page.screenshot({ path: `${directory}/mobile-faq.png`, fullPage: true });
   await page.goto(`${base}/contact?type=privacy`, { waitUntil: 'networkidle' });
-  check(await page.locator('select[name="type"]').inputValue() === 'privacy', 'privacy request preselected');
+  check(await page.getByRole('button', { name: '문의 유형 · 개인정보·삭제 요청', exact: true }).count() === 1, 'privacy request preselected');
   check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'contact no horizontal overflow');
   await page.screenshot({ path: `${directory}/mobile-contact.png`, fullPage: true });
   await page.locator('input[name="email"]').fill(email);
@@ -73,7 +73,8 @@ try {
   await page.goto(`${base}/admin/inquiries`, { waitUntil: 'networkidle' });
   const row = page.getByRole('region', { name: '개인정보·삭제 요청 문의' }).filter({ hasText: email });
   await row.waitFor();
-  await row.locator('select').selectOption('in_progress');
+  await row.getByRole('button', { name: /^처리 상태 ·/ }).click();
+  await row.getByRole('option', { name: '확인 중', exact: true }).click();
   await row.locator('textarea').fill('합성 문의의 처리 상태 검증');
   await row.getByRole('button', { name: '처리 내역 저장' }).click();
   await row.getByText('처리 상태를 저장했어요.').waitFor();

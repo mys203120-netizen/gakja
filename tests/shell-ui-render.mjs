@@ -154,7 +154,7 @@ function interactiveShell({persisted='true',blocked=false,onboarding=false,admin
  vm.runInNewContext(source,{module,exports:module.exports,console,Date,Event,
   localStorage:{getItem(key){reads++;assert.equal(key,'gakja-sidebar-collapsed');if(blocked)throw Error('Storage blocked');return persisted;},setItem(key,value){if(blocked)throw Error('Storage blocked');writes.push([key,value]);}},
   window:{dispatchEvent(event){events.push(event);if(cancelAssistant)event.preventDefault();return !event.defaultPrevented;}},
-  require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+  require(name){if(name==='@/lib/client/device-storage'||name==='./client/device-storage')return {setDeviceItem:(storage,key,value)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:Promise.resolve(),close(){}})};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
    if(name==='react')return hooks;if(name==='react/jsx-runtime')return jsx;
    if(name==='next/link')return {default:'a'};
    if(name==='next/navigation')return {usePathname:()=>admin?'/admin':'/my',useRouter:()=>({replace(){}})};

@@ -1,4 +1,5 @@
 'use client';
+import {setDeviceItem} from '@/lib/client/device-storage';
 import {ownedClassName} from './owned-class-name';
 
 import Link from 'next/link';
@@ -269,7 +270,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     if(current){
       const draft=loadedTextTurn.current===current.turnId?textRef.current:String(current.draft||'');
       const key=`gakja-live-text:${studentId}:${id}:${current.turnId}`;
-      localStorage.setItem(key,draft);
+      setDeviceItem(localStorage,key,draft);
       if(localStorage.getItem(key)!==draft)throw new Error('답변 초안 보관을 확인하지 못했어요.');
       try{await post('/api/interviews',{action:'draft',sessionId:id,turnId:current.turnId,draft});}
       catch(cause){
@@ -293,7 +294,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
   useEffect(()=>{
     if(phase==='complete'||!textMode||!question?.turnId||textTurn!==question.turnId||textBusy)return;
     const turnId=question.turnId,key=`gakja-live-text:${studentId}:${id}:${turnId}`,draft=textAnswer;
-    try{localStorage.setItem(key,draft);setTextStatus('이 기기에 초안 보관됨');}catch{setTextStatus('기기 저장을 확인하지 못했어요. 답변을 보내기 전 화면을 닫지 마세요.');}
+    try{setDeviceItem(localStorage,key,draft);setTextStatus('이 기기에 초안 보관됨');}catch{setTextStatus('기기 저장을 확인하지 못했어요. 답변을 보내기 전 화면을 닫지 마세요.');}
     const timer=setTimeout(()=>{void post('/api/interviews',{action:'draft',sessionId:id,turnId,draft}).then(()=>{if(loadedTextTurn.current===turnId&&textRef.current===draft)setTextStatus('초안 저장됨');}).catch(()=>{if(loadedTextTurn.current===turnId)setTextStatus('기기에 보관됨 · 연결 후 다시 저장해 주세요.');});},600);
     return()=>clearTimeout(timer);
   },[id,studentId,question?.turnId,textTurn,textMode,textAnswer,textBusy,phase]);
@@ -308,7 +309,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     // pause() retains an in-progress recorder; help must never submit or discard its bytes.
     room.pause();
     const draft=textMode?textRef.current:String(current.draft||'');
-    if(textMode)try{localStorage.setItem(`gakja-live-text:${studentId}:${id}:${current.turnId}`,draft);}catch{}
+    if(textMode)try{setDeviceItem(localStorage,`gakja-live-text:${studentId}:${id}:${current.turnId}`,draft);}catch{}
     await post('/api/interviews',{action:'pause',sessionId:id,turnId:current.turnId,draft});
     if(room.state.info.question?.turnId!==current.turnId)throw new Error('질문이 바뀌었어요. 현재 질문에서 다시 도움받아 주세요.');
     return true;

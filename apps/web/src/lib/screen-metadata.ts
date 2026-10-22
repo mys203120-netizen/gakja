@@ -6,7 +6,7 @@ export function screenMetadata(section: string, slug: string[] = []) {
   let title: string;
   switch (section) {
     case 'account':
-      title = screen === 'settings' ? '계정 설정' : screen === 'confirmations' ? '확인 요청' : '내 계정';
+      title = screen === 'settings' ? '계정 설정' : screen === 'data' ? '데이터 관리' : screen === 'confirmations' ? '확인 요청' : '내 계정';
       break;
     case 'chat': case 'on':
       title = screen === 'interviews' ? detail && detail !== 'new' ? '채팅 면접 연습' : '채팅 면접 시작' : '각자ON 대화';

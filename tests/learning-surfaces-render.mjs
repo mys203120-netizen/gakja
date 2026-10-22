@@ -14,7 +14,7 @@ function load(file,extra='') {
   const source=fs.readFileSync(new URL('../apps/web/src/components/'+file,import.meta.url),'utf8')+extra;
   const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
   const module={exports:{}};
-  vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Intl,require(name){if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+  vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Intl,require(name){if(name==='@/lib/client/device-storage'||name==='./client/device-storage')return {setDeviceItem:(storage,key,value)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:Promise.resolve(),close(){}})};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if(name==='react')return {Suspense:'Suspense',useState(initial){const index=stateIndex++;if(!(index in states))states[index]=initial;return [states[index],value=>{states[index]=typeof value==='function'?value(states[index]):value;}];},useEffect(){},useRef:initial=>({current:initial})};
     if(name==='react/jsx-runtime')return {jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'Fragment'};
     if(name==='next/link')return {__esModule:true,default:'Link'};

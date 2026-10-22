@@ -48,18 +48,18 @@ function harness({diagnostic=false,existing=false,pendingAction='start',kind='fo
 }
 
 test('changing school while starting unlocks the new scope and a late old start cannot replace or unlock the next start',async()=>{
-  const h=harness();await h.flush();h.action('이 훈련 시작').props.onClick();await h.flush();assert.equal(h.action('이 훈련 시작').props.pending,true);
-  h.changeScope('school-b');await h.flush();assert.equal(h.action('이 훈련 시작').props.pending,false,'new school can start without waiting for the old school');
-  h.action('이 훈련 시작').props.onClick();await h.flush();assert.equal(h.deferreds.length,2);
-  h.deferreds[0].resolve({session:{id:'old-session'}});await h.flush();assert.equal(h.action('이 훈련 시작').props.pending,true);assert.equal(h.interview(),undefined);
+  const h=harness();await h.flush();h.action('훈련 시작').props.onClick();await h.flush();assert.equal(h.action('훈련 시작').props.pending,true);
+  h.changeScope('school-b');await h.flush();assert.equal(h.action('훈련 시작').props.pending,false,'new school can start without waiting for the old school');
+  h.action('훈련 시작').props.onClick();await h.flush();assert.equal(h.deferreds.length,2);
+  h.deferreds[0].resolve({session:{id:'old-session'}});await h.flush();assert.equal(h.action('훈련 시작').props.pending,true);assert.equal(h.interview(),undefined);
   h.deferreds[1].resolve({session:{id:'new-session'}});await h.flush();assert.equal(h.interview().props.id,'new-session');
 });
 
 test('returning to the same school still rejects the previous visit response',async()=>{
-  const h=harness();await h.flush();h.action('이 훈련 시작').props.onClick();await h.flush();
+  const h=harness();await h.flush();h.action('훈련 시작').props.onClick();await h.flush();
   h.changeScope('school-b');await h.flush();h.changeScope('school-a');await h.flush();
-  h.action('이 훈련 시작').props.onClick();await h.flush();h.deferreds[0].resolve({session:{id:'old-visit'}});await h.flush();
-  assert.equal(h.action('이 훈련 시작').props.pending,true);assert.equal(h.interview(),undefined);
+  h.action('훈련 시작').props.onClick();await h.flush();h.deferreds[0].resolve({session:{id:'old-visit'}});await h.flush();
+  assert.equal(h.action('훈련 시작').props.pending,true);assert.equal(h.interview(),undefined);
   h.deferreds[1].resolve({session:{id:'current-visit'}});await h.flush();assert.equal(h.interview().props.id,'current-visit');
 });
 
@@ -189,18 +189,18 @@ test('a next-plan load failure stays retryable and cannot masquerade as a comple
 
 test('changing only planId after completion unmounts the old interview and opens a fresh same-school lesson',async()=>{
  const h=harness({dayTasks:[{id:'plan-a',kind:'focus',title:'마친 질문',minutes:25},{id:'next-focus',kind:'focus',title:'다음 활동 질문',minutes:25},{id:'review',kind:'review',title:'오늘 정리',minutes:10}]});
- await h.flush();h.action('이 훈련 시작').props.onClick();await h.flush();h.deferreds[0].resolve({session:{id:'first-session'}});await h.flush();
+ await h.flush();h.action('훈련 시작').props.onClick();await h.flush();h.deferreds[0].resolve({session:{id:'first-session'}});await h.flush();
  const oldUpdate=h.interview().props.onTrainingUpdate;oldUpdate(h.completion());await h.flush();assert.equal(h.interview(),undefined,'completed summary removes the InterviewSession that owns LiveSession listeners');
  const next=nodes(h.tree).find(node=>node.type==='a'&&node.props.href==='/my/train?planId=next-focus');assert.ok(next,'completed Live continuation uses a native anchor with a real plan URL');assert.equal(next.props.onClick,undefined,'no client router interception can retain the completed document');
- h.changePlan('next-focus');await h.flush();assert.ok(h.action('이 훈련 시작'));assert.equal(text(h.tree).includes('훈련 완료'),false);assert.equal(h.interview(),undefined,'the old session is never reused by a new query-only plan');
+ h.changePlan('next-focus');await h.flush();assert.ok(h.action('훈련 시작'));assert.equal(text(h.tree).includes('훈련 완료'),false);assert.equal(h.interview(),undefined,'the old session is never reused by a new query-only plan');
  oldUpdate(h.completion());await h.flush();assert.equal(text(h.tree).includes('훈련 완료'),false,'a late callback from the completed plan cannot restore its summary');
- h.action('이 훈련 시작').props.onClick();await h.flush();assert.equal(h.requests.filter(call=>call.input.action==='task_start').at(-1).input.planId,'next-focus');
+ h.action('훈련 시작').props.onClick();await h.flush();assert.equal(h.requests.filter(call=>call.input.action==='task_start').at(-1).input.planId,'next-focus');
  h.deferreds[1].resolve({session:{id:'next-session'}});await h.flush();assert.equal(h.interview().props.id,'next-session');
 });
 
 test('connected interviews enable the existing capped follow-up chain while diagnosis stays unaided',async()=>{
  for(const [kind,diagnostic,followups] of [['mixed',false,true],['focus',false,true],['diagnostic',true,false]] as const){
-  const h=harness({kind,diagnostic});await h.flush();h.action(diagnostic?'진단 질문에 답하기':'이 훈련 시작').props.onClick();await h.flush();
+  const h=harness({kind,diagnostic});await h.flush();h.action(diagnostic?'진단 질문에 답하기':'훈련 시작').props.onClick();await h.flush();
   const started=h.requests.find(request=>request.url==='/api/interviews'&&request.input.action==='start');assert.equal(started.input.followups,followups);assert.equal(started.input.questionCount,kind==='mixed'?4:1);
   h.deferreds[0].resolve({session:{id:'session'}});await h.flush();
  }

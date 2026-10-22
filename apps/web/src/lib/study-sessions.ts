@@ -102,7 +102,7 @@ async function eventsFor(db: PoolClient, sessionId: string, studentId: string) {
 export async function normaliseSourceFacts(db:PoolClient,studentId:string,events:any[]) {
   if(!events.some(event=>['quiz_response','memory_review','assignment_submission','interview_answer'].includes(event.kind)))return events;
   const sourceIds=(kind:string)=>events.filter(event=>event.kind===kind).map(event=>event.source_id).filter(id=>typeof id==='string'&&/^[0-9a-f-]{36}$/i.test(id));
-  const sources=(await db.query(`select 'quiz_response' as kind,r.id::text as source_id,r.data,r.hint_used,s.content_version,s.mode,s.items->r.item_index as item,r.outcome,r.response as answer,r.memory_item_id,true as source_valid,r.timed_out as source_timed_out,null::text as source_evaluation_method
+  const sources=(await db.query(`select 'quiz_response' as kind,r.id::text as source_id,case when exists(select 1 from quiz_recordings audio where audio.id::text=r.data->>'recording_id' and audio.student_id=r.student_id and audio.session_id=r.session_id) then r.data else r.data-'recording_id' end as data,r.hint_used,s.content_version,s.mode,s.items->r.item_index as item,r.outcome,r.response as answer,r.memory_item_id,true as source_valid,r.timed_out as source_timed_out,null::text as source_evaluation_method
       from quiz_responses r join quiz_sessions s on s.id=r.session_id and s.student_id=r.student_id where r.student_id=$1 and r.id=any($2::uuid[])
     union all select 'assignment_submission',r.id::text,r.response,null::boolean,a.content_version,'assignment',i.value,(r.result->>'correct')::boolean,r.response->>'response',r.memory_item_id,true,null::boolean,r.result->>'evaluation_method' from quiz_submissions r join quiz_assignments a on a.id=r.assignment_id and a.student_id=r.student_id left join lateral(select x.value from jsonb_array_elements(a.items) x(value) where x.value->>'id'=r.memory_item_id limit 1)i on true where r.student_id=$1 and r.id=any($3::uuid[])
     union all select 'memory_review',m.id::text,m.data,null::boolean,case when coalesce(m.data->>'content_version','')~'^[0-9]+$' then (m.data->>'content_version')::int else null end,'memory',null::jsonb,null::boolean,null::text,m.memory_item_id,true,null::boolean,null::text from memory_attempts m where m.student_id=$1 and m.id=any($4::uuid[])
@@ -117,7 +117,7 @@ export async function normaliseSourceFacts(db:PoolClient,studentId:string,events
     if(!['quiz_response','memory_review','assignment_submission','interview_answer'].includes(event.kind))return event;
     const row=bySource.get(event.kind+':'+event.source_id);
     const knownSource=event.data?.provenance||event.kind==='quiz_response'&&event.data?.quizSessionId||event.kind==='assignment_submission'&&event.data?.assignmentId||event.kind==='interview_answer'&&event.data?.sessionId;
-    if(!row)return knownSource?{...event,data:{...event.data,invalidated:true,sourceUnavailable:true}}:event;
+    if(!row)return knownSource?{...event,data:{...event.data,invalidated:true,sourceUnavailable:true,...(event.kind==='quiz_response'?{audioId:null,audioUrl:null}:{})}}:event.kind==='quiz_response'?{...event,data:{...event.data,audioId:null,audioUrl:null}}:event;
     if(row.source_valid===false)return {...event,data:{...event.data,invalidated:true,sourceUnavailable:true}};
     const complete=row.data?.assistance_recorded===true||row.data?.assistanceRecorded===true;
     const sourceBoolean=(names:string[],fallback:boolean)=>{for(const name of names)if(typeof row.data?.[name]==='boolean')return row.data[name];return complete?false:fallback;};
@@ -126,11 +126,16 @@ export async function normaliseSourceFacts(db:PoolClient,studentId:string,events
     const recorded=typeof row.data?.assistance_recorded==='boolean'?row.data.assistance_recorded:typeof row.data?.assistanceRecorded==='boolean'?row.data.assistanceRecorded:event.data?.assistance_recorded===true;
     const assistance=answerAssistance({hint_used:hintUsed,data:{assisted:helped,assistance_recorded:recorded}});
     if(event.kind==='interview_answer')return {...event,data:{...event.data,invalidated:false,sourceUnavailable:false,answer:row.answer,contentVersion:row.content_version,hintUsed:assistance.hintUsed,assisted:assistance.assisted,assistance_recorded:assistance.assistanceRecorded}};
+    if(event.kind==='quiz_response')event={...event,data:{...event.data,audioId:row.data?.recording_id||null,audioUrl:row.data?.recording_id?'/api/quiz?recordingId='+encodeURIComponent(row.data.recording_id):null}};
     const source=archives.find(archive=>archive.version===row.content_version)?.data as LearningData|undefined;
     const item=row.item||source?.memory_items.find(item=>item.id===row.memory_item_id);
     if(!item)return event.kind==='memory_review'?{...event,data:{...event.data,outcome:null,verified:false,evaluationMethod:'self_check'}}:event;
     const identity=quizAnswerContext(item,row.data,source);
     const data={...event.data,invalidated:false,sourceUnavailable:false,questionId:identity.question_id,linkedQuestionId:identity.linked_question_id,practiceKind:identity.practice_kind,practicePrompt:identity.question,contentVersion:row.content_version,hintUsed:assistance.hintUsed,assisted:assistance.assisted,assistance_recorded:assistance.assistanceRecorded};
+    if(event.kind==='quiz_response'){
+      const recordingId=row.data?.recording_id;
+      data.audioId=recordingId||null;data.audioUrl=recordingId?'/api/quiz?recordingId='+encodeURIComponent(recordingId):null;
+    }
     if(event.kind==='quiz_response'||event.kind==='assignment_submission'){
       data.outcome=row.outcome;data.verified=row.outcome!==null&&(event.kind==='quiz_response'||row.source_evaluation_method==='reviewed_correct_answer');
       if(row.source_evaluation_method)data.evaluationMethod=row.source_evaluation_method;

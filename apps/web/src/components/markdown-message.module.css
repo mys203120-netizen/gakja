@@ -14,13 +14,13 @@
 .markdown :is(h1,h2,h3,h4,h5,h6) {
   color: inherit;
   margin: 24px 0 10px;
-  font-size: 1.06em;
+  font-size: var(--font-size-body);
   line-height: 1.5;
   font-weight: 600;
   letter-spacing: -.025em;
 }
-.markdown h1 { font-size: 1.24em; }
-.markdown h2 { font-size: 1.15em; }
+.markdown h1 { font-size: var(--font-size-section); }
+.markdown h2 { font-size: var(--font-size-section); }
 .markdown :is(ul,ol) { padding-left: 1.25em; margin: 10px 0 18px; }
 .markdown li { padding-left: 1px; margin: 7px 0; }
 .markdown li > p { margin: 0 0 7px; }
@@ -38,7 +38,7 @@
 .markdown blockquote p:last-child { margin-bottom: 0; }
 .markdown code {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: .87em;
+  font-size: var(--font-size-caption);
   white-space: break-spaces;
   background: var(--clarity-soft);
   color: var(--clarity-ink);
@@ -61,7 +61,7 @@
 .markdown pre code { background: transparent; padding: 0; white-space: pre; }
 .markdown hr { margin: 24px 0; border: 0; height: 1px; background: var(--clarity-line); }
 .tableScroll { max-width: 100%; overflow-x: auto; margin: 16px 0; scrollbar-width: thin; }
-.tableScroll table { width: 100%; min-width: 340px; border-collapse: collapse; font-size: .93em; }
+.tableScroll table { width: 100%; min-width: 340px; border-collapse: collapse; font-size: var(--font-size-body); }
 .tableScroll :is(th,td) { padding: 10px 12px; border: 0; border-bottom: 1px solid var(--clarity-line); text-align: left; vertical-align: top; }
 .tableScroll th { background: var(--clarity-soft); font-weight: 550; }
 .markdown input[type="checkbox"] { width: 14px; height: 14px; margin-right: 6px; accent-color: var(--clarity-action); }

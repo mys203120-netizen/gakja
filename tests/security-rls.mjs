@@ -36,6 +36,13 @@ try {
   const own='00000000-0000-4000-8000-000000000001', other='00000000-0000-4000-8000-000000000002', upload='00000000-0000-4000-8000-000000000003';
   const path=own+'/uploads/'+upload+'/recording';
   await db.query("insert into profiles(id,email,name) values($1,'own@example.test','Own'),($2,'other@example.test','Other')",[own,other]);
+  const trashId='00000000-0000-4000-8000-000000000020';
+  await db.query("insert into account_data_trash(id,student_id,type,root_table,root_id,title,snapshot,original_created_at) values($1,$2,'experience','experience_cards','synthetic','Private trash','{\"rows\":{}}',now())",[trashId,own]);
+  await db.query("insert into account_data_blobs(trash_id,table_name,row_id,data) values($1,'media_assets','synthetic',decode('010203','hex'))",[trashId]);
+  await db.query("insert into account_device_sessions(student_id,session_key,label,expires_at) values($1,'private-session-key','Synthetic device',now()+interval '1 hour')",[own]);
+  await db.query("insert into account_data_requests(student_id,type) values($1,'all_data')",[own]);
+  await db.query("insert into account_data_tombstones(student_id,table_name,row_id) values($1,'experience_cards','synthetic')",[own]);
+  await db.query("insert into account_session_revocations(student_id,revoked_before,allowed_session_key) values($1,now(),'private-session-key')",[own]);
   await db.query("insert into support_inquiries(request_id,email,type,content,policy_version,response_time_notice,retention_notice) values(gen_random_uuid(),'inquiry@example.test','privacy','Synthetic private inquiry','2026-10-22','Synthetic response notice','Synthetic retention notice')");
   await db.query("insert into support_targets(id,student_id,data) values('own',$1,'{}'),('other',$2,'{}')",[own,other]);
   await db.query("insert into experience_card_drafts(id,student_id,data) values('00000000-0000-4000-8000-000000000011',$1,'{\"title\":\"Own draft\"}'),('00000000-0000-4000-8000-000000000012',$2,'{\"title\":\"Other draft\"}')",[own,other]);
@@ -53,6 +60,7 @@ try {
   }
   const count=async table=>(await db.query(`select count(*)::int n from ${table}`)).rows[0].n;
   await asUser(own,async()=>{
+    for(const table of ['account_data_trash','account_data_blobs','account_device_sessions','account_data_requests','account_data_tombstones','account_session_revocations']){assert.equal(await count(table),0);checks++;}
     assert.equal(await count('support_inquiries'),0);checks++;
     await assert.rejects(db.query("insert into support_inquiries(request_id,email,type,content,policy_version,response_time_notice,retention_notice) values(gen_random_uuid(),'forged@example.test','service','Forged','2026-10-22','response','retention')"),/permission denied/);checks++;
     assert.equal((await db.query("select * from storage.objects where bucket_id='document-originals'")).rowCount,0);checks++;

@@ -6,6 +6,7 @@ import { compare, hash } from 'bcryptjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { ApiError, query } from './db';
 import { resolveAppOrigin } from './auth-origin';
+import {observeDeviceSession, verifiedSupabaseSession} from './account-device-sessions';
 
 export type Profile = { id: string; email: string; name: string; role: 'student' | 'staff' | 'admin'; active: boolean; is_test?: boolean };
 export const SESSION_COOKIE = 'gakja_session';
@@ -51,12 +52,19 @@ export async function getUser(): Promise<Profile | null> {
     const { data } = await client.auth.getUser(bearer ?? undefined);
     if (!data.user) return null;
     const [profile] = await query<Profile>('select id,email,name,role,active from profiles where id=$1 and active=true', [data.user.id]);
-    return profile ? { ...profile, is_test: profile.email.endsWith('@gakja.test') } : null;
+    if (!profile) return null;
+    const token = bearer || (await client.auth.getSession()).data.session?.access_token;
+    if (!token) return null;
+    await observeDeviceSession(profile.id, verifiedSupabaseSession(token,profile.id));
+    return { ...profile, is_test: profile.email.endsWith('@gakja.test') };
   }
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const [profile] = await query<Profile>('select p.id,p.email,p.name,p.role,p.active from sessions s join profiles p on p.id=s.user_id where s.id=$1 and s.expires_at>now() and p.active=true', [digest(token)]);
-  return profile ? { ...profile, is_test: profile.email.endsWith('@gakja.test') } : null;
+  const [session] = await query<Profile&{session_expires_at:Date}>('select p.id,p.email,p.name,p.role,p.active,s.expires_at as session_expires_at from sessions s join profiles p on p.id=s.user_id where s.id=$1 and s.expires_at>now() and p.active=true', [digest(token)]);
+  if (!session) return null;
+  const {session_expires_at,...profile}=session;
+  await observeDeviceSession(profile.id,{key:'local:'+digest(token),expiresAt:new Date(session_expires_at)});
+  return { ...profile, is_test: profile.email.endsWith('@gakja.test') };
 }
 export async function requireUser(): Promise<Profile> {
   const user = await getUser(); if (!user) throw new ApiError(401, '로그인이 필요해요.'); return user;

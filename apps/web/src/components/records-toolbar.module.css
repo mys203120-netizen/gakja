@@ -4,4 +4,36 @@
 .export:hover { color:var(--clarity-ink); background:var(--clarity-soft); }
 .export:focus-visible { outline:2px solid var(--clarity-green); outline-offset:3px; }
 .export:disabled { opacity:.45; cursor:wait; }
-@media(max-width:700px) { .toolbar { gap:10px; margin-bottom:22px; }.toolbar.toolbar :global(.subnav) { gap:17px; margin:0; }.toolbar :global(.subnav a) { font-size:13px; white-space:nowrap; }.export { width:36px; height:40px; } }
+
+/* Keep the full hover target padded, including its icon and trailing arrow. */
+:global(.app-shell) .view:global(.records-view) .reportRows { display:grid; gap:8px; margin-inline-start:0; border:0; }
+:global(.app-shell) .view:global(.records-view) .reportRow { display:grid; grid-template-columns:44px minmax(0,1fr) 22px; align-items:center; gap:18px; min-height:100px; padding:20px 24px; border:0; border-radius:16px; background:transparent; box-shadow:none; color:var(--clarity-ink); text-decoration:none; transition:background .16s,color .16s; }
+:global(.app-shell) .view .reportRow > :global(.records-row-icon) { display:grid; place-items:center; width:44px; height:44px; border-radius:14px; color:var(--clarity-action); background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); }
+:global(.app-shell) .view .reportRow > div { min-width:0; }
+:global(.app-shell) .view .reportRow h2 { margin:0; color:var(--clarity-ink); font-size:var(--font-size-body); font-weight:600; line-height:1.5; }
+:global(.app-shell) .view .reportRow p { margin:6px 0 0; color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.6; }
+:global(.app-shell) .view .reportRow > svg { display:block; width:22px; height:22px; color:var(--clarity-muted); }
+:global(.app-shell) .view .reportRow:hover { background:var(--clarity-mint); }
+:global(.app-shell) .view .reportRow:hover h2 { color:var(--clarity-action); }
+:global(.app-shell) .view .reportRow:focus-visible { outline:2px solid var(--clarity-action); outline-offset:3px; background:var(--clarity-mint); }
+.reportSkeleton { display:grid; gap:12px; margin-block:28px; padding:22px 24px; border-radius:16px; background:var(--clarity-soft); }
+.reportSkeleton > span { display:block; width:min(200px,60%); height:16px; border-radius:8px; background:var(--clarity-muted); opacity:.1; }
+.reportSkeleton > span + span { width:min(320px,85%); height:12px; }
+
+@media(max-width:700px) { .toolbar { gap:10px; margin-bottom:22px; }.toolbar.toolbar :global(.subnav) { gap:17px; margin:0; }.toolbar :global(.subnav a) { font-size:var(--font-size-caption); white-space:nowrap; }.export { width:36px; height:40px; } }
+@media(max-width:700px) {
+  :global(.app-shell) .view:global(.records-view) .reportRow { grid-template-columns:36px minmax(0,1fr) 18px; gap:12px; min-height:92px; padding:18px 16px; border-radius:14px; }
+  :global(.app-shell) .view .reportRow > :global(.records-row-icon) { width:36px; height:36px; border-radius:12px; }
+  :global(.app-shell) .view .reportRow > :global(.records-row-icon) svg { width:22px; height:22px; }
+  :global(.app-shell) .view .reportRow > svg { width:18px; height:18px; }
+  :global(.app-shell) .view .reportRow p { font-size:var(--font-size-caption); }
+  .reportSkeleton { padding-inline:16px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  :global(.app-shell) .view .reportRow,:global(.app-shell) .view .reportRow > svg { transition:none; }
+  :global(.app-shell) .view .reportRow:hover > svg { transform:none; }
+}
+@media(max-width:700px) {
+ .mobileReportNavigation[data-mobile-child],.toolbar:has(.mobileReportNavigation[data-mobile-child]) { display:none; }
+ .mobileReportNavigation:not([data-mobile-child])>a[aria-current=page] { display:none; }
+}

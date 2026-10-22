@@ -1,4 +1,5 @@
 'use client';
+import {setDeviceItem} from '@/lib/client/device-storage';
 import {ownedClassName} from './owned-class-name';
 
 import {useEffect,useId,useState} from 'react';
@@ -18,7 +19,7 @@ export function PracticeWritingHelp({value,maxLength,rawTranscript,draftKey,disa
   const proposed=mode==='speaking'?selected?.text||'':appendStudentSentence(baseline,sentence);
   const overLimit=proposed.length>maxLength;
   const limitMessage=`적용할 글이 ${proposed.length.toLocaleString('ko-KR')}자예요. 답변은 ${maxLength.toLocaleString('ko-KR')}자까지 저장할 수 있어요. ${Math.max(0,proposed.length-maxLength).toLocaleString('ko-KR')}자를 줄여 주세요. 원문은 그대로 보관해요.`;
-  function apply(){if(value!==baseline){setError('작성한 글이 바뀌었어요. 닫고 최신 글에서 다시 열어 주세요.');return;}if(overLimit){setError(limitMessage);return;}if(mode==='speaking'&&!isSafeSpeakingSuggestion(baseline,proposed)){setError('허용한 어미·줄바꿈 이외의 변경이 있어 적용하지 않았어요.');return;}const snapshot={before:baseline,after:proposed};try{if(draftKey)localStorage.setItem(draftKey,JSON.stringify(snapshot));}catch{setError('기존 수정본을 보관하지 못해 적용하지 않았어요. 저장 공간을 확인해 주세요.');return;}setPrevious(snapshot);onApply(proposed);setMode(null);}
+  function apply(){if(value!==baseline){setError('작성한 글이 바뀌었어요. 닫고 최신 글에서 다시 열어 주세요.');return;}if(overLimit){setError(limitMessage);return;}if(mode==='speaking'&&!isSafeSpeakingSuggestion(baseline,proposed)){setError('허용한 어미·줄바꿈 이외의 변경이 있어 적용하지 않았어요.');return;}const snapshot={before:baseline,after:proposed};try{if(draftKey)setDeviceItem(localStorage,draftKey,JSON.stringify(snapshot));}catch{setError('기존 수정본을 보관하지 못해 적용하지 않았어요. 저장 공간을 확인해 주세요.');return;}setPrevious(snapshot);onApply(proposed);setMode(null);}
   return <div className={ownedClassName(styles.help,true)}>
     <div className={ownedClassName(styles.actions,true)}><button type="button" className={ownedClassName("button ghost small",true)} disabled={disabled||busy} onClick={()=>void open('direction')}>답변이 막혀요</button>{(rawTranscript||value.trim())&&<button type="button" className={ownedClassName("button ghost small",true)} disabled={disabled||busy} onClick={()=>void open('speaking')}>말하기 좋게 다듬기</button>}</div>
     {error&&<p role="alert" className={ownedClassName(undefined,true)}>{error}</p>}

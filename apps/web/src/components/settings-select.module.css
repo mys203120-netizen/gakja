@@ -1,15 +1,19 @@
 .root { position:relative; flex-shrink:0; min-width:124px; }
-.trigger { display:flex; align-items:center; justify-content:space-between; gap:20px; width:100%; min-height:44px; padding:10px 12px; border:0; border-radius:10px; background:var(--clarity-soft); color:var(--clarity-ink); font:inherit; font-size:14px; line-height:1.5; cursor:pointer; }
+.root[data-full-width] { width:100%; min-width:0; }
+.trigger { display:flex; align-items:center; justify-content:space-between; gap:20px; width:100%; min-height:46px; padding:11px 14px; border:0; border-radius:12px; background:var(--clarity-soft); color:var(--clarity-ink); font:inherit; font-size:var(--font-size-caption); line-height:1.6; text-align:left; cursor:pointer; transition:background 140ms ease; }
+.trigger>span { min-width:0; overflow-wrap:anywhere; word-break:keep-all; }
+.root[data-full-width] .trigger { min-height:50px; font-size:var(--font-size-body); font-weight:450; padding:13px 16px; }
 .trigger>svg { color:var(--clarity-muted); flex-shrink:0; transition:transform 140ms ease; }
 .trigger[aria-expanded=true]>svg { transform:rotate(180deg); }
 .trigger:hover,.trigger[aria-expanded=true] { background:var(--clarity-mint); }
 .trigger:disabled { opacity:.6; cursor:progress; }
-.trigger:focus-visible { outline:2px solid var(--clarity-green); outline-offset:3px; }
-.menu { position:absolute; z-index:50; top:calc(100% + 6px); right:0; width:max(180px,100%); max-width:calc(100vw - 40px); padding:6px; border:1px solid var(--clarity-line); border-radius:14px; background:var(--clarity-surface); box-shadow:0 12px 32px rgb(28 38 48 / 12%); }
-.menu>button { display:flex; align-items:center; justify-content:space-between; gap:20px; width:100%; min-height:44px; padding:10px 12px; border:0; border-radius:9px; background:transparent; color:var(--clarity-ink); font:inherit; font-size:14px; line-height:1.5; text-align:left; cursor:pointer; }
+.trigger:focus-visible { outline:none; background:var(--clarity-mint); box-shadow:0 0 0 3px rgb(0 135 71 / 10%); }
+.menu { position:absolute; z-index:50; top:calc(100% + 8px); right:0; width:max(180px,100%); max-width:calc(100vw - 40px); max-height:min(320px,60dvh); overflow-y:auto; overscroll-behavior:contain; padding:6px; border:0; border-radius:14px; background:var(--clarity-surface); box-shadow:0 10px 36px rgb(28 38 48 / 13%),0 2px 8px rgb(28 38 48 / 4%); }
+.menu[data-side=top] { top:auto; bottom:calc(100% + 8px); }
+.menu>button { display:flex; align-items:center; justify-content:space-between; gap:20px; width:100%; min-height:44px; padding:10px 12px; border:0; border-radius:9px; background:transparent; color:var(--clarity-ink); font:inherit; font-size:var(--font-size-caption); line-height:1.5; text-align:left; cursor:pointer; }
 .menu>button[aria-selected=true] { background:var(--clarity-mint); font-weight:600; }
 .menu>button>svg { color:var(--clarity-green); }
 .menu>button:hover,.menu>button:focus-visible { background:var(--clarity-soft); outline:none; }
-.menu>button[aria-selected=true]:focus-visible { outline:2px solid var(--clarity-green); outline-offset:-2px; }
+.menu>button[aria-selected=true]:focus-visible { background:#d6f3e3; }
 @media(prefers-reduced-motion:reduce) { .trigger>svg { transition:none; } }
 @media(forced-colors:active) { .trigger,.menu { border:1px solid ButtonText; } .menu>button:focus-visible { outline:2px solid Highlight; outline-offset:-2px; } }

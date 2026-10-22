@@ -11,7 +11,7 @@
   display: block;
   margin: 0;
   color: var(--clarity-ink);
-  font-size: 13px;
+  font-size: var(--font-size-caption);
   font-weight: 450;
   line-height: 1.5;
 }
@@ -30,7 +30,7 @@
   background: var(--clarity-surface);
   color: var(--clarity-ink);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--font-size-caption);
   line-height: 1.55;
   text-align: left;
   cursor: pointer;
@@ -94,7 +94,7 @@
   box-shadow: none;
   color: var(--clarity-ink);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--font-size-caption);
   line-height: 1.5;
 }
 .picker .search .searchInput:focus-visible { outline: 0; box-shadow: none; }
@@ -123,7 +123,7 @@
   background: none;
   color: var(--clarity-ink);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--font-size-caption);
   line-height: 1.55;
   text-align: left;
   white-space: normal;
@@ -132,27 +132,27 @@
 
 .optionLabel { display: block; flex: 1; min-width: 0; }
 .optionText { display: block; word-break: keep-all; overflow-wrap: anywhere; }
-.picker .option small { display: block; margin-top: 4px; color: var(--clarity-muted); font-size: 12px; line-height: 1.5; }
+.picker .option small { display: block; margin-top: 4px; color: var(--clarity-muted); font-size: var(--font-size-caption); line-height: 1.5; }
 .option > svg { flex-shrink: 0; margin-top: 3px; }
 .picker .options .option:global(.is-active),
 .picker .options .option:hover,
 .picker .options .option:focus-visible { background: var(--clarity-soft); }
 .picker .options .option:focus-visible { outline: 2px solid var(--clarity-action); outline-offset: -2px; }
 .picker .options .option[aria-selected=true] { background: var(--clarity-soft); color: var(--clarity-action); }
-.picker .empty { margin: 0; padding: 18px 12px; color: var(--clarity-muted); font-size: 14px; line-height: 1.6; }
+.picker .empty { margin: 0; padding: 18px 12px; color: var(--clarity-muted); font-size: var(--font-size-caption); line-height: 1.6; }
 
 @media (max-width: 640px) {
-  .picker .search .searchInput { font-size: 16px; }
+  .picker .search .searchInput { font-size: var(--font-size-body); }
   .picker .options { max-height: 260px; }
 }
 
 /* A recessed picker opens into a softly lifted list, without divider lines. */
-.picker .trigger { min-height:48px; padding:12px 16px; font-size:16px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.picker .trigger { min-height:48px; padding:12px 16px; font-size:var(--font-size-body); border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 .picker .trigger[aria-expanded=true] { outline:2px solid var(--clarity-action); outline-offset:3px; }
 .picker .popover { border:0; border-radius:var(--soft-radius); background:var(--clarity-surface); box-shadow:var(--soft-shadow-raised); padding:10px; }
 .picker .search { min-height:48px; padding:8px 12px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 .picker .search:focus-within { outline:2px solid var(--clarity-action); outline-offset:2px; box-shadow:var(--soft-shadow-inset); }
-.picker .search .searchInput { min-height:32px; font-size:16px; background:transparent; }
+.picker .search .searchInput { min-height:32px; font-size:var(--font-size-body); background:transparent; }
 .picker .options { padding:8px 0 0; }
 .picker .options .option { min-height:48px; padding:12px; border-radius:var(--soft-control-radius); }
 .picker .options .option[aria-selected=true] { color:var(--soft-accent-ink); background:var(--clarity-mint); }

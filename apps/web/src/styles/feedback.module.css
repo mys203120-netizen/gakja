@@ -1,18 +1,18 @@
 /* feedback: locally owned classes; :global classes are DOM context hooks only.
    Keep visual state in its owning component, not in unrelated page overrides. */
 .alert {
-  font-size: 14px;
+  font-size: var(--font-size-caption);
   margin-bottom: 18px;
 }
 
 .success-message {
   padding: 13px;
-  font-size: 14px;
+  font-size: var(--font-size-caption);
 }
 
 .inline-notice {
   padding: 13px 18px;
-  font-size: 13px;
+  font-size: var(--font-size-caption);
   margin: 16px 0;
   display: flex;
   justify-content: space-between;
@@ -43,7 +43,7 @@
 }
 
 .notification-item strong {
-  font-size: 15px;
+  font-size: var(--font-size-body);
   font-weight: 550;
 }
 
@@ -54,7 +54,7 @@
 
 @media (max-width:700px) {
   .toast {
-    font-size: 12px;
+    font-size: var(--font-size-caption);
     width: max-content;
   }
 }
@@ -90,7 +90,7 @@
 
 .notification-item p {
   color: var(--muted);
-  font-size: 15px;
+  font-size: var(--font-size-body);
 }
 
 @media (max-width:700px) {
@@ -101,7 +101,7 @@
   }
 }
 .alert { background: #fff7f5; border-color: #eed7d3; color: #9b433b; border-radius: 8px; }
-.toast { background: #1d1d1f; color: #fff; border-radius: 12px; padding: 15px 24px; font-size: 14px; }
+.toast { background: #1d1d1f; color: #fff; border-radius: 12px; padding: 15px 24px; font-size: var(--font-size-caption); }
 
 :global(.auth-page) .success-message,
 :global(.auth-page) .alert {
@@ -114,7 +114,7 @@
   line-height: 1.65;
 }
 :global(.interview-quick-start) .alert { margin-top: 18px; }:global(.plan-form)>div:not(:global(.form-actions)):not(.alert){display:grid;grid-template-columns:1fr 1fr;gap:15px;}
-@media(max-width:700px){:global(.plan-form)>div:not(:global(.form-actions)):not(.alert){grid-template-columns:1fr;}}:global(.learning-help)>.alert{margin:10px 0;}:global(.learning-help-panel)>.alert{max-height:120px;overflow:auto;flex-shrink:0;font-size:12px;}
+@media(max-width:700px){:global(.plan-form)>div:not(:global(.form-actions)):not(.alert){grid-template-columns:1fr;}}:global(.learning-help)>.alert{margin:10px 0;}:global(.learning-help-panel)>.alert{max-height:120px;overflow:auto;flex-shrink:0;font-size:var(--font-size-caption);}
 :global(.native-modal) :global(.modal) .notification-item {
   padding: 16px 0;
   border-bottom-color: var(--clarity-line);
@@ -128,7 +128,7 @@
 :global(.native-modal) :global(.plan-form) > div:not(:global(.form-actions)):not(.alert) { gap:16px; }
 :global(.app-shell) :is(.alert,.error-message) { background:#fff0ef; color:var(--clarity-danger); }
 :global(.auth-page):global(.auth-centered) .alert,
-:global(.auth-page):global(.auth-centered) .success-message { margin-bottom: 20px; padding: 13px 16px; font-size: 14px; line-height: 1.7; }
+:global(.auth-page):global(.auth-centered) .success-message { margin-bottom: 20px; padding: 13px 16px; font-size: var(--font-size-caption); line-height: 1.7; }
 :global(.auth-page):global(.auth-centered) .alert { border-color: color-mix(in srgb, var(--clarity-danger) 35%, var(--clarity-line)); }
 :global(.auth-page):global(.auth-centered) .success-message { border-color: var(--clarity-line); }
 

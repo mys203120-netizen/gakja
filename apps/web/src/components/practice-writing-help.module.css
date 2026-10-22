@@ -2,10 +2,10 @@
 .actions { display:flex; flex-wrap:wrap; gap:8px; }
 .panel { margin-top:16px; padding:20px 0; border-block:0; }
 .panel h3,.panel h4 { margin:0 0 8px; }
-.panel p { margin:8px 0 16px; white-space:pre-wrap; overflow-wrap:anywhere; font-size:13px; line-height:1.7; }
+.panel p { margin:8px 0 16px; white-space:pre-wrap; overflow-wrap:anywhere; font-size:var(--font-size-caption); line-height:1.7; }
 .panel fieldset { display:flex; flex-wrap:wrap; gap:10px; border:0; padding:0; margin:16px 0; }
-.panel legend { margin-bottom:10px; font-size:13px; }
-.panel label { display:block; font-size:14px; line-height:1.65; }
+.panel legend { margin-bottom:10px; font-size:var(--font-size-caption); }
+.panel label { display:block; font-size:var(--font-size-caption); line-height:1.65; }
 .panel fieldset label { flex:1 1 150px; padding:12px; border-radius:12px; background:var(--clarity-soft); cursor:pointer; }
 .panel input { accent-color:var(--clarity-action); margin-right:8px; }
 .panel small { display:block; margin-top:7px; color:var(--clarity-muted); }
@@ -22,6 +22,6 @@
 .actions button,.panel button { min-height:44px; border-radius:var(--soft-control-radius); }
 .panel fieldset label { min-height:44px; padding:14px; border-radius:var(--soft-control-radius); background:var(--clarity-soft); }
 .panel fieldset label:has(input:checked) { color:var(--soft-accent-ink); background:var(--clarity-mint); box-shadow:var(--soft-shadow-inset); }
-.panel textarea { padding:16px; font-size:16px; border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
+.panel textarea { padding:16px; font-size:var(--font-size-body); border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 .panel textarea:focus-visible { outline:2px solid var(--clarity-action); outline-offset:3px; }
 @media(max-width:767px) { .panel { padding:16px; }.comparison { gap:20px; } }

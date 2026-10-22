@@ -36,7 +36,9 @@ export function attachQuestionCarry() {
       if(!destination){state.raf=requestAnimationFrame(seek);return;}
       const end=destination.getBoundingClientRect();if(!end.height||end.top>innerHeight||end.bottom<0){stopCarry();return;}
       const endStyle=getComputedStyle(destination);state.target=destination;
-      gsap.set(destination,{opacity:0});gsap.to(ghost,{left:end.left,top:end.top,width:end.width,fontSize:endStyle.fontSize,lineHeight:endStyle.lineHeight,letterSpacing:endStyle.letterSpacing,opacity:1,duration:.34,ease:'power3.out',onComplete:()=>{if(carry!==state)return;gsap.to(destination,{opacity:1,duration:.12,clearProps:'opacity'});gsap.to(ghost,{opacity:0,duration:.12,onComplete:stopCarry});}});
+      // Keep text on the four-step type scale while its container moves.
+      gsap.set(ghost,{fontSize:endStyle.fontSize});
+      gsap.set(destination,{opacity:0});gsap.to(ghost,{left:end.left,top:end.top,width:end.width,lineHeight:endStyle.lineHeight,letterSpacing:endStyle.letterSpacing,opacity:1,duration:.34,ease:'power3.out',onComplete:()=>{if(carry!==state)return;gsap.to(destination,{opacity:1,duration:.12,clearProps:'opacity'});gsap.to(ghost,{opacity:0,duration:.12,onComplete:stopCarry});}});
     };
     // Cover only the source text while the destination loads; normal navigation is never delayed.
     gsap.fromTo(ghost,{opacity:.35},{opacity:.75,duration:.12});state.raf=requestAnimationFrame(seek);

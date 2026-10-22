@@ -53,6 +53,7 @@ export function featureError(error: unknown) {
   if (error instanceof FeatureError) return { status: error.status, error: error.message, code: error.code };
   if (error instanceof z.ZodError) return { status: 400, error: '입력 내용을 확인해 주세요.', code: 'INVALID_INPUT' };
   const message = error instanceof Error ? error.message : '';
+  if((error as {code?:string})?.code==='P0001'&&['휴지통에 있는 항목이에요. 복원한 뒤 이어서 작성해 주세요.','삭제한 항목이에요. 새 항목으로 작성해 주세요.'].includes(message))return {status:409,error:message,code:'RECORD_DELETED'};
   if (/로그인|unauthenticated|unauthorized/i.test(message)) return { status: 401, error: '로그인해 주세요.', code: 'AUTH_REQUIRED' };
   return { status: 500, error: '요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.', code: 'INTERNAL_ERROR' };
 }

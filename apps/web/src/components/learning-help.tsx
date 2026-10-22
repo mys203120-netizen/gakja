@@ -1,4 +1,5 @@
 'use client';
+import {setDeviceItem} from '@/lib/client/device-storage';
 import {ownedClassName} from './owned-class-name';
 
 import {useCallback,useEffect,useRef,useState} from 'react';
@@ -84,7 +85,7 @@ function Assistant({onClose,scope,...props}:LearningHelpProps&{scope:string;onCl
       if(typeof saved.request?.id==='string'&&saved.request.id.length>=8&&saved.request.id.length<=100&&typeof saved.request.text==='string'&&saved.request.text.length<=6000&&typeof saved.request.draft==='string'&&typeof saved.draft==='string'&&saved.request.draft===saved.draft.trim()){requestId.current=saved.request.id;requestText.current=saved.request.text;requestDraft.current=saved.request.draft;}
     }catch{setMessage('');setMessages([]);setThreadId(undefined);}setLoadedKey(key);
   },[key]);
-  function persist(){try{sessionStorage.setItem(key,JSON.stringify({draft:message,messages:messages.slice(-24),threadId,...(requestId.current?{request:{id:requestId.current,text:requestText.current,draft:requestDraft.current}}:{})}));}catch{/* Server receipts remain authoritative when browser storage is unavailable. */}}
+  function persist(){try{setDeviceItem(sessionStorage,key,JSON.stringify({draft:message,messages:messages.slice(-24),threadId,...(requestId.current?{request:{id:requestId.current,text:requestText.current,draft:requestDraft.current}}:{})}));}catch{/* Server receipts remain authoritative when browser storage is unavailable. */}}
   useEffect(()=>{if(loadedKey===key)persist();},[key,loadedKey,message,messages,threadId,busy]);
   useEffect(()=>{
     const old=document.activeElement as HTMLElement|null,overflow=document.body.style.overflow;document.body.style.overflow='hidden';dialog.current?.focus();

@@ -44,7 +44,7 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
 // Public periods stay visibly distinct from a personal interview date.
 {
  const h=harness(),markup=h.markup();
- assert.ok(markup.includes('준비 목표까지 11일')&&markup.includes('준비 목표 D-11'));
+ assert.ok(markup.includes('준비 목표까지 11일')&&markup.replace(/<[^>]*>/g,'').replace(/\s+/g,'').includes('준비목표D-11'));
  assert.ok(markup.includes('10월 31일–11월 1일')&&markup.includes('개인 배정 대기'));
  assert.ok(markup.includes('오늘 가능 2시간')&&markup.includes('준비 목표 전'));
  assert.equal(h.posts.length,0);
@@ -95,7 +95,7 @@ for(const kind of ['chat','video']){
  h.context.data.interviews=[{...session,data:{context:{target}}}];
  assert.ok(h.markup().includes(`href="/interview/active-session?kind=${kind==='video'?'video':'chat'}"`),'legacy unlinked practice retains its existing detail route');
  h.context.data.interviews=[{...session,state:'completed'}];
- assert.ok(!h.markup().includes('저장한 질문에서 계속'),'completed sessions never appear as active work');
+ assert.ok(!h.markup().includes('이어 하기'),'completed sessions never appear as active work');
 }
 for(const kind of ['focus','review','quiz','assignment']){
  const h=harness(payload([{...task,kind}]));
