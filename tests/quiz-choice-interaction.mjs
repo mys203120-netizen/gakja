@@ -480,7 +480,12 @@ export async function runPlannedQuizAutoStartChecks(){
   for(const planned of [true,false]){
     const value=planned?linked():fixture();value.session.state='completed';value.session.mode='answer';value.session.current_index=1;value.responses=[{id:'saved-answer',item_index:0,response:'직접 작성한 답변',outcome:null,data:{recall_state:'unchecked'}}];
     const h=harness(value);await h.settle();const rendered=nodes(h.state.tree),continuation=rendered.findIndex(node=>node.type==='TrainingContinuation'),details=rendered.findIndex(node=>node.props?.['aria-labelledby']==='quiz-result-review-title');
-    assert.ok(continuation>=0&&continuation<details,'the next plan step precedes the detailed answer report');assert.equal(rendered.some(node=>node.props?.['aria-labelledby']==='quiz-result-next-title'),!planned,'only free practice retains its general interview handoff');await h.unmount();
+    assert.ok(continuation>=0&&continuation<details,'the next plan step precedes the detailed answer report');assert.equal(rendered.some(node=>node.props?.['aria-labelledby']==='quiz-result-next-title'),!planned,'only free practice retains its general interview handoff');
+    assert.ok(text(h.state.tree).includes('돌아보기 전 · 미채점'));assert.ok(!text(h.state.tree).includes('다시 준비 · 미채점'),'saving without self reflection never claims that the student chose retry');await h.unmount();
+  }
+  for(const [recallState,outcome,timedOut,label] of [['uncertain',null,false,'다시 준비 · 미채점'],['remembered',null,false,'답변 저장 · 미채점'],['unchecked',false,false,'다시 확인'],['unchecked',null,true,'시간 초과']]){
+    const value=fixture();value.session.state='completed';value.session.mode='answer';value.session.current_index=1;value.responses=[{id:'status-answer',item_index:0,response:'실제 작성한 답변',outcome,timed_out:timedOut,rating:recallState==='uncertain'?'again':recallState==='remembered'?'good':'hard',data:{recall_state:recallState}}];
+    const h=harness(value);await h.settle();assert.ok(text(h.state.tree).includes(label),'actual retry, remembered, factual error and timeout retain their own status');await h.unmount();
   }
   {
     const h=harness(linked());await h.settle();assert.ok(!h.button('퀴즈 시작'),'the plan handoff shows its one existing countdown');await h.advance(1400);

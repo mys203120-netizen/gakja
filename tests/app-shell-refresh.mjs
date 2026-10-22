@@ -13,8 +13,8 @@ const fixture = marker => ({ user: { id: 'harin', name: '하린' }, marker, targ
 let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
 function all(value) { return Array.isArray(value) ? value.flatMap(all) : value && typeof value === 'object' ? [value, ...all(value.props?.children)] : []; }
-function harness({ storedSidebarPreference = null, storageUnavailable = false, selectionRemovalBlocked=false, draftGate=null, studyGate=null, authGate=null, authLogoutFails=false, initialData } = {}) {
-  const slots = [], effects = [], queued = [], requests = [], storageWrites = [],logoutSteps=[],navigations=[],seededIdentities=[];
+function harness({ storedSidebarPreference = null, storageUnavailable = false, selectionRemovalBlocked=false, draftGate=null, studyGate=null, authGate=null, authLogoutFails=false, draftFails=false, studyFails=false, initialData } = {}) {
+  const slots = [], effects = [], queued = [], requests = [], storageWrites = [],logoutSteps=[],navigations=[],seededIdentities=[],handoffs=[];
   let cursor = 0, disposed = false, disposedWrites = 0;
   const hooks = {
     createContext: () => ({ Provider: 'AppContextProvider' }), useContext: () => null,
@@ -39,7 +39,7 @@ function harness({ storedSidebarPreference = null, storageUnavailable = false, s
   const api = url => new Promise((resolve, reject) => { check(url === '/api/bootstrap', 'shell only requests bootstrap'); requests.push({ resolve, reject }); });
   const styles = { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
   const module = { exports: {} }, router = { replace() {}, push() {}, refresh() {} };
-  vm.runInNewContext(code, { module, exports: module.exports, console, setTimeout, clearTimeout, window:{location:{replace(path){logoutSteps.push('navigate');navigations.push(path);}}}, sessionStorage: { getItem: () => null,removeItem(key){logoutSteps.push('selection_remove');check(key==='gakja-target:harin','logout removes only the current fixture selection');if(selectionRemovalBlocked)throw new DOMException('Browser storage blocked','SecurityError');} }, localStorage: { getItem() { if (storageUnavailable) throw new Error('Storage unavailable'); return storedSidebarPreference; }, setItem(key, value) { if (storageUnavailable) throw new Error('Storage unavailable'); storageWrites.push([key, value]); } }, require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+  vm.runInNewContext(code, { module, exports: module.exports, console, setTimeout, clearTimeout,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}}, window:{dispatchEvent(event){logoutSteps.push('handoff');handoffs.push(event);return true;},location:{replace(path){logoutSteps.push('navigate');navigations.push(path);}}}, sessionStorage: { getItem: () => null,removeItem(key){logoutSteps.push('selection_remove');check(key==='gakja-target:harin','logout removes only the current fixture selection');if(selectionRemovalBlocked)throw new DOMException('Browser storage blocked','SecurityError');} }, localStorage: { getItem() { if (storageUnavailable) throw new Error('Storage unavailable'); return storedSidebarPreference; }, setItem(key, value) { if (storageUnavailable) throw new Error('Storage unavailable'); storageWrites.push([key, value]); } }, require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
     if (name === 'react') return hooks;
     if (name === 'react/jsx-runtime') return { jsx: (type, props, key) => ({ type, props, key }), jsxs: (type, props, key) => ({ type, props, key }) };
     if (name === 'next/link') return { __esModule: true, default: 'Link' };
@@ -48,8 +48,8 @@ function harness({ storedSidebarPreference = null, storageUnavailable = false, s
     if (name === './use-record-pages') return { useRecordPages: () => ({ items: [], page: { nextCursor: null, hasMore: false }, loading: false, error: '', reload: async () => {}, more: async () => {} }) };
     if (name.endsWith('.module.css')) return styles;
     if (name === './shared') return { api, seedClientRequestIdentity:id=>seededIdentities.push(id), post: async(url,input) => {check(url==='/api/auth'&&input.action==='logout','logout callback only sends the auth logout mutation');logoutSteps.push('auth_logout');if(authGate)await authGate;if(authLogoutFails)throw Error('auth offline');return {ok:true};}, Logo: 'Logo', Spinner: 'Spinner', Alert: 'Alert', Modal: 'Modal', Badge: 'Badge', FloatingNotice:'FloatingNotice', targetName: () => '', targetMajor: () => '' };
-    if(name==='@/lib/client/draft-save')return {flushPendingDrafts:async user=>{check(user==='harin','logout flush uses the current fixture owner');logoutSteps.push('drafts');if(draftGate)await draftGate;}};
-    if(name==='./study-session-provider')return {StudySessionProvider:'StudySessionProvider',finishStudySession:async reason=>{check(reason==='logout','study time ends for logout');logoutSteps.push('study_finish');if(studyGate)await studyGate;}};
+    if(name==='@/lib/client/draft-save')return {flushPendingDrafts:async user=>{check(user==='harin','logout flush uses the current fixture owner');logoutSteps.push('drafts');if(draftGate)await draftGate;if(draftFails)throw Error('draft failed');}};
+    if(name==='./study-session-provider')return {StudySessionProvider:'StudySessionProvider',finishStudySession:async reason=>{check(reason==='logout','study time ends for logout');logoutSteps.push('study_finish');if(studyGate)await studyGate;if(studyFails)throw Error('study failed');}};
     if (name === '@/lib/student-onboarding') return { studentOnboardingDestination: () => null };
     if (name === '@/lib/material-search') return { normalizeMaterialQuery: value => value.trim(), searchStudentMaterials: () => [] };
     if (name === '@/lib/app-navigation') return { STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], MOBILE_STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], mobileStudentActive: (path, href) => path === href, studentSection: () => 'today' };
@@ -57,7 +57,7 @@ function harness({ storedSidebarPreference = null, storageUnavailable = false, s
   } });
   const render = () => { cursor = 0; queued.length = 0; const tree = module.exports.AppShell({ children: 'Student screen', initialData }); while (queued.length) queued.shift()(); return tree; };
   const state = () => { const tree = render(), nodes = all(tree), sidebarToggle = nodes.find(node => node.props?.['aria-controls'] === 'desktop-navigation'); return { provider: nodes.find(node => node.type === 'AppContextProvider')?.props.value, alert: nodes.find(node => node.type === 'Alert')?.props.children, sidebarCollapsed: tree.props['data-sidebar-collapsed'],inert:tree.props.inert,ariaBusy:tree.props['aria-busy'], sidebarToggle: sidebarToggle.props,notice:nodes.find(node=>node.type==='FloatingNotice'),accountMenus:nodes.filter(node=>node.type==='AccountMenu') };  };
-  return { requests, render, state, storageWrites, logoutSteps,navigations,seededIdentities, strictReplay() { effects.forEach(effect => effect?.cleanup?.()); effects.forEach(effect => { if (effect) effect.cleanup = effect.effect(); }); }, dispose() { effects.forEach(effect => effect?.cleanup?.()); disposed = true; }, get disposedWrites() { return disposedWrites; } };
+  return { requests, render, state, storageWrites, logoutSteps,navigations,seededIdentities,handoffs, strictReplay() { effects.forEach(effect => effect?.cleanup?.()); effects.forEach(effect => { if (effect) effect.cleanup = effect.effect(); }); }, dispose() { effects.forEach(effect => effect?.cleanup?.()); disposed = true; }, get disposedWrites() { return disposedWrites; } };
 }
 
 // Server-authenticated data renders the real student screen immediately. It is
@@ -192,7 +192,8 @@ for(const compact of [false,true]){
  releaseStudy();await flush();check(h.logoutSteps.at(-1)==='auth_logout'&&h.state().inert===true&&h.state().ariaBusy===true,'the lock remains after study completion while authentication logout is pending');
  releaseAuth();await leaving;
  check(h.state().inert===true&&h.state().ariaBusy===true,'successful auth keeps the entire shell inert until full document replacement');
- check(h.logoutSteps.join(',')==='drafts,study_finish,auth_logout,selection_remove,navigate','the actual menu callback saves, closes authentication and navigates despite blocked optional storage');
+ check(h.logoutSteps.join(',')==='drafts,study_finish,auth_logout,selection_remove,handoff,navigate','the actual menu callback saves, closes authentication and navigates despite blocked optional storage');
+ check(h.handoffs.length===1&&h.handoffs[0].type==='gakja:logout-ready'&&h.handoffs[0].detail.userId==='harin','only the authenticated fixture owner receives a final navigation handoff');
  check(h.navigations.length===1&&h.navigations[0]==='/login','successful logout replaces the document with login exactly once');
  check(h.state().provider.data.marker==='logout-fixture','the old shell stays visually stable until document replacement rather than clearing its content');h.dispose();
 }
@@ -203,6 +204,10 @@ for(const compact of [false,true]){
  check(h.state().inert===true&&h.state().ariaBusy===true,'a pending auth response holds the shell lock even when the preceding draft writer has returned');
  releaseAuth();await failed;check(!h.state().inert&&!h.state().ariaBusy,'authentication failure unlocks the original learning screen for an explicit retry');
  check(h.navigations.length===0&&!h.logoutSteps.includes('selection_remove'),'auth failure propagates to the menu retry UI without replacing the document or clearing selection');h.dispose();
+}
+for(const stage of ['draft','study','auth']){
+ const h=harness({draftFails:stage==='draft',studyFails:stage==='study',authLogoutFails:stage==='auth'});h.render();h.requests[0].resolve(fixture('failure-'+stage));await flush();
+ await assert.rejects(h.state().accountMenus[0].props.onLogout(),/failed|offline/);check(h.handoffs.length===0&&h.navigations.length===0,stage+' failure never authorizes learning guards to leave');check(!h.state().inert,stage+' failure restores the interactive learning screen');h.dispose();
 }
 // A second identical save is another receipt: its React key must remount the notice
 // so the prior instance's cleanup cannot dismiss the new acknowledgement early.

@@ -6,6 +6,7 @@ const history=(id:string,offset:number,data:any={},rating='good',due=now+10000)=
 test('the entire eligible pool participates: old wrong items after position twelve are first',()=>{
   const result=selectQuizItems(pool,[history('m23',-1000,{correct:false})],now,6);
   assert.equal(result.items[0].id,'m23');assert.equal(result.wrong,1);assert.equal(result.items.length,6);
+  assert.equal(result.reason,'다시 확인할 1문항부터');
 });
 test('latest verified success supersedes an earlier wrong while due items precede unseen',()=>{
   const result=selectQuizItems(pool,[history('m23',-2000,{correct:false}),history('m23',-1000,{correct:true,assistance_recorded:true}),history('m19',-3000,{correct:true,assistance_recorded:true},'good',now-1)],now,6);
@@ -40,6 +41,7 @@ test('uncertain, confirmation-needed and unchecked self recall enter review with
     const row=history('m23',-1000,{correct:null,recall_state,assistance_recorded:true},'hard',now+86400_000);
     const original=JSON.stringify(row),result=selectQuizItems(pool,[row],now,6);
     assert.equal(result.wrong,1);assert.equal(result.items[0].id,'m23');assert.equal(result.due,0);assert.equal(JSON.stringify(row),original);
+    assert.equal(result.reason,'다시 확인할 1문항부터','review priority never implies that an unchecked student selected retry');
   }
   const remembered=selectQuizItems(pool,[history('m23',-1000,{correct:null,recall_state:'remembered',assistance_recorded:true})],now,6);
   assert.equal(remembered.wrong,0);assert.ok(!remembered.items.some(item=>item.id==='m23'));

@@ -13,8 +13,9 @@ export function PracticeHome(){
  const {data,target,targetId}=useApp(),suffix=targetId?'?targetId='+encodeURIComponent(targetId):'';
  const sessions=splitInterviewsByLearningTarget(data.interviews||[],target).current.filter(row=>row.state==='active');
  const active=sessions[0];
+ const resumeHref=active?.data?.trainingPlanId?'/my/train?planId='+encodeURIComponent(active.data.trainingPlanId):active?`/interview/${active.id}?kind=${active.kind}`:null;
  return <div className={ownedClassName('practice-home '+styles.practiceHome,true)}><PageTitle title="자유 연습"/>
- {active&&<div className={ownedClassName(styles.resume,true)}><span className={ownedClassName(undefined,true)}>하던 면접이 있어요</span><Link href={`/interview/${active.id}?kind=${active.kind}`}>저장한 답에서 이어가기<ArrowUpRight size={16}/></Link></div>}
+ {active&&<div className={ownedClassName(styles.resume,true)}><span className={ownedClassName(undefined,true)}>{active.data?.trainingPlanId?'이어서 할 오늘 훈련이 있어요':'하던 면접이 있어요'}</span><Link href={resumeHref!}>저장한 답에서 이어가기<ArrowUpRight size={16}/></Link></div>}
  <div className={ownedClassName(styles.practiceChoices,true)}>
   <Link href={'/quiz'+suffix}><Sparkles size={25} strokeWidth={1.5}/><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>퀴즈</h2><p className={ownedClassName(undefined,true)}>선택하고, 떠올리고, 소리 내어 답하기</p><span className={ownedClassName(undefined,true)}>10초 퀴즈 · Q&amp;A · 답변 녹음</span></div><ArrowUpRight size={20}/></Link>
   <Link href={'/interview/chat'+suffix}><MessagesSquare size={25} strokeWidth={1.5}/><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>Chat 면접</h2><p className={ownedClassName(undefined,true)}>글로 답하고 꼬리질문 이어가기</p><span className={ownedClassName(undefined,true)}>질문별 답변 · 피드백</span></div><ArrowUpRight size={20}/></Link>

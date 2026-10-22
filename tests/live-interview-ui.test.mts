@@ -389,7 +389,9 @@ test('resuming Live after a later logout failure re-arms its recording navigatio
   const h=harness();t.after(()=>h.cleanup());h.faults.appData.preferences={liveRecordingConsent:true};h.render();await h.flush();h.render();
   await flushPendingDrafts('student');assert.equal(h.controllers[0].state.phase,'paused');
   let prevented=false;const unload=()=>h.listeners.get('window:beforeunload')!({preventDefault(){prevented=true;},returnValue:null});
-  unload();assert.equal(prevented,false,'the verified logout handoff is allowed to leave');
+  unload();assert.equal(prevented,true,'saving drafts does not disarm navigation before authentication succeeds');
+  prevented=false;h.listeners.get('window:gakja:logout-ready')!({detail:{userId:'another-student'}});unload();assert.equal(prevented,true,'another owner cannot disarm this room');
+  prevented=false;h.listeners.get('window:gakja:logout-ready')!({detail:{userId:'student'}});unload();assert.equal(prevented,false,'the authenticated owner handoff is allowed to leave');
   // AppShell can fail while finishing the study session or revoking credentials, leaving this paused room mounted.
   button(h.render(),'계속하기').props.onClick();assert.equal(h.controllers[0].state.phase,'preparing');
   unload();assert.equal(prevented,true,'an explicit new voice start restores the warning before another recording');

@@ -125,4 +125,9 @@ equal(markup.indexOf('href="/interview/live?targetId=target"')<markup.indexOf('h
 equal(markup.indexOf('href="/armory"')<markup.indexOf('aria-label="약점 집중 훈련"'),true);
 equal(markup.includes('<strong>내 경험 정리</strong>'),true);
 context.data.interviews=[old];markup=renderToStaticMarkup(React.createElement(PracticeHome));equal(markup.includes('저장한 답에서 이어가기'),false);
+for(const purpose of ['diagnostic','focus','mixed']){
+ context.data.interviews=[{...current,data:{...current.data,trainingPlanId:'saved-plan',trainingPurpose:purpose}}];
+ markup=renderToStaticMarkup(React.createElement(PracticeHome));equal(markup.includes('href="/my/train?planId=saved-plan"'),true);equal(markup.includes('/interview/current?'),false);
+ equal(markup.includes('이어서 할 오늘 훈련이 있어요'),true);
+}
 console.log(`App navigation: ${checks} route/context/render checks passed; three shared menus, nested activity/material access, focused answer workspaces and frozen-target resume verified.`);

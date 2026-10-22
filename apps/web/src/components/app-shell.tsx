@@ -78,7 +78,7 @@ export function AppShell({children,admin=false,initialData}:{children:React.Reac
  const canSearch=Boolean(data&&(admin||data.targets?.length));
  const searchResults=canSearch?searchStudentMaterials(data?.learning,term,targetId):[]; const hasSearchTerm=Boolean(normalizeMaterialQuery(term));
  function openSearch(){if(!canSearch)return;setSearch(true);}
- async function logout(){setLoggingOut(true);try{if(data?.user?.id)await flushPendingDrafts(data.user.id);if(!admin)await finishStudySession('logout');await post('/api/auth',{action:'logout'});try{if(data?.user?.id)sessionStorage.removeItem(`gakja-target:${data.user.id}`);}catch{/* Cached selection cannot block a completed logout. */}window.location.replace('/login');}catch(cause){setLoggingOut(false);throw cause;}}
+ async function logout(){setLoggingOut(true);try{if(data?.user?.id)await flushPendingDrafts(data.user.id);if(!admin)await finishStudySession('logout');await post('/api/auth',{action:'logout'});try{if(data?.user?.id)sessionStorage.removeItem(`gakja-target:${data.user.id}`);}catch{/* Cached selection cannot block a completed logout. */}window.dispatchEvent(new CustomEvent('gakja:logout-ready',{detail:{userId:data?.user?.id}}));window.location.replace('/login');}catch(cause){setLoggingOut(false);throw cause;}}
  function openAssistant(event:React.MouseEvent){const pause=new Event('gakja:open-on',{cancelable:true});window.dispatchEvent(pause);if(pause.defaultPrevented)event.preventDefault();}
  const target=data?.targets?.find(t=>t.id===targetId); const notificationRecords=useRecordPages('notifications','',Boolean(notification&&data?.user?.role==='student'),data?.user?.id||'');
  const visibleNotifications=data?.preferences?.notificationsEnabled===false?[]:notificationRecords.items;

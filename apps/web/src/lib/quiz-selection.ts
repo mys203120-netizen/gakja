@@ -25,7 +25,7 @@ export function selectQuizItems(pool: SessionItem[], history: QuizHistory[], now
   ranked.sort((a, b) => a.category - b.category || (a.attempt ? new Date(a.attempt.created_at).getTime() : 0) - (b.attempt ? new Date(b.attempt.created_at).getTime() : 0) || a.index - b.index);
   const wrong = ranked.filter(row => row.wrong).length, due = ranked.filter(row => row.due && !row.wrong).length, unseen = ranked.filter(row => !row.attempt).length;
   const items = ranked.slice(0, Math.max(1, Math.min(30, limit))).map(row => row.item);
-  const reason = wrong ? `지난번 다시 준비한 ${wrong}문항부터` : due ? `복습할 때가 된 ${due}문항부터` : unseen ? `아직 연습하지 않은 ${unseen}문항부터` : items.length ? '최근에 덜 연습한 질문부터' : '발행된 연습 문항을 기다리고 있어요.';
+  const reason = wrong ? `다시 확인할 ${wrong}문항부터` : due ? `복습할 때가 된 ${due}문항부터` : unseen ? `아직 연습하지 않은 ${unseen}문항부터` : items.length ? '최근에 덜 연습한 질문부터' : '발행된 연습 문항을 기다리고 있어요.';
   return { items, wrong, due, unseen, reason };
 }
 

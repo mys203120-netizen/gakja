@@ -121,6 +121,7 @@ for(const kind of ['focus','review','quiz','assignment']){
 {
  const value=payload();value.readiness={items:[{id:'activity',kind:'activity',title:'수질 탐구',questionCount:2,mainAnswers:1,followupAnswers:2,textAttempts:1,audioAttempts:2,assistedAttempts:1,needsReview:['측정 원리 다시 설명하기'],unconfirmed:false,sourceHref:'/materials/activities/activity',editHref:'/materials/activities/activity',notes:[{id:'note',body:'같은 시간에 다시 측정하자고 제안했어요.',confirmedByStudent:true,createdAt:'2026-10-20T09:00:00+09:00'},{id:'draft',body:'아직 확인하지 않은 제안',confirmedByStudent:false,createdAt:'2026-10-20T09:00:00+09:00'}]}],summary:{total:1,practiced:1,unconfirmed:0}};
  const markup=harness(value,'PreparationOverview').markup();
+ assert.ok(markup.includes('답변한 항목 1개'),'one practiced item with several attempts is labeled as an item count, not one submitted answer');
  assert.ok(markup.includes('글 1')&&markup.includes('음성 2')&&markup.includes('꼬리질문 답변'));
  assert.ok(markup.includes('같은 시간에 다시 측정')&&!markup.includes('아직 확인하지 않은 제안'));
  assert.ok(markup.includes('/records/comparisons?activityId=activity&amp;targetId=a'));

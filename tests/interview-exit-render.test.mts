@@ -37,6 +37,7 @@ function harness(){
   return {render,flush,faults,values,listeners,posts,destinations,document,storage,source,cleanup:()=>cleanups.forEach(fn=>fn?.())};
 }
 function nodes(tree:any):any[]{return !tree||typeof tree!=='object'?[]:Array.isArray(tree)?tree.flatMap(nodes):[tree,...nodes(tree.props?.children)];}
+function text(tree:any):string{return Array.isArray(tree)?tree.map(text).join(''):tree&&typeof tree==='object'?text(tree.props?.children):tree==null?'':String(tree);}
 function click(h:ReturnType<typeof harness>,href:string){let prevented=false;h.listeners.get('document:click')!({target:{closest:()=>({href,target:'',hasAttribute:()=>false})},button:0,preventDefault(){prevented=true;},stopPropagation(){}});return prevented;}
 test('menu exit opens confirmation; continue keeps the session and save navigates only after finish',async()=>{
   const h=harness();h.render();await h.flush();h.render();
@@ -111,4 +112,30 @@ test('Chat AI help saves and pauses the exact question, refreshes observed help,
 test('failed Chat AI pause keeps its question and draft and does not navigate',async(t)=>{
   const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let tree=h.render();nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('저장 실패해도 보존할 초안');tree=h.render();h.faults.pause=true;
   await assert.rejects(nodes(tree).find(node=>node.type==='LearningHelp').props.beforeOpen,/pause offline/);tree=h.render();assert.equal(nodes(tree).find(node=>node.type==='ChatComposer').props.value,'저장 실패해도 보존할 초안');assert.equal(h.destinations.length,0);assert.equal(h.posts.some(post=>post.action==='answer'||post.action==='finish'),false);
+});
+
+
+test('Chat AI help acknowledges the pause draft immediately instead of leaving the cancelled debounce saving forever',async(t)=>{
+ const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let tree=h.render();nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('도움 전에 저장한 동일 질문 초안');tree=h.render();assert.match(text(tree),/초안 저장 중/);
+ const helper=nodes(tree).find(node=>node.type==='LearningHelp');assert.equal(await helper.props.beforeOpen(),true);tree=h.render();assert.match(text(tree),/초안 저장됨/);assert.equal(text(tree).includes('초안 저장 중'),false);assert.equal(h.posts.at(-1).draft,'도움 전에 저장한 동일 질문 초안');assert.equal(nodes(tree).find(node=>node.type==='ChatComposer').props.value,'도움 전에 저장한 동일 질문 초안');assert.equal(h.posts.some(post=>post.action==='answer'||post.action==='finish'),false);
+});
+
+
+test('a verified Chat logout draft allows login navigation without a revoked-cookie suspend or unload prompt',async(t)=>{
+ const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let tree=h.render();nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('로그아웃 전 반드시 보존할 최신 초안');h.render();await flushPendingDrafts('fixture');
+ h.listeners.get('window:gakja:logout-ready')!({detail:{userId:'fixture'}});
+ const before=h.posts.length;let prevented=false;h.listeners.get('window:beforeunload')!({preventDefault(){prevented=true;},returnValue:undefined});
+ assert.equal(prevented,false,'after verified saving, auth logout may replace the page without the interview cancelling it');assert.equal(h.posts.slice(before).some(post=>post.action==='suspend'),false,'no protected API is called after credentials were revoked');assert.equal(h.storage.get('gakja-interview:fixture:session:turn'),'로그아웃 전 반드시 보존할 최신 초안');assert.equal(h.posts.some(post=>post.action==='answer'||post.action==='finish'),false);
+});
+
+test('failed Chat draft preservation keeps the unload guard armed and cannot authorize logout navigation',async(t)=>{
+ const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();h.values[1]='보관이 확인되지 않은 초안';h.render();h.faults.pause=true;h.faults.storage=true;
+ await assert.rejects(flushPendingDrafts('fixture'),/초안을 보관하지 못했어요/);let prevented=false;h.listeners.get('window:beforeunload')!({preventDefault(){prevented=true;},returnValue:undefined});assert.equal(prevented,true);assert.equal(h.posts.some(post=>post.action==='answer'||post.action==='finish'),false);
+});
+
+
+for(const stage of ['other-writer','study-session','auth'])test(`a failed ${stage} after device-only Chat draft saving keeps active navigation guards armed`,async(t)=>{
+ const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();h.values[1]='서버 pause 실패 때도 기기에서 검증한 초안';h.render();h.faults.pause=true;
+ let unregister:undefined|(()=>void);if(stage==='other-writer'){unregister=registerDraftSaver('fixture',async()=>{throw Error('other writer failed');});t.after(()=>unregister?.());await assert.rejects(flushPendingDrafts('fixture'),/초안을 보관하지 못했어요/);}else await assert.rejects(async()=>{await flushPendingDrafts('fixture');throw Error(stage+' failed');},/failed/);
+ assert.equal(Boolean(h.source.session.data.paused),false,'the failed pause leaves this room active without a resume control');let prevented=false;h.listeners.get('window:beforeunload')!({preventDefault(){prevented=true;},returnValue:undefined});assert.equal(prevented,true,'saving a device draft alone cannot grant an auth navigation handoff');assert.equal(h.storage.get('gakja-interview:fixture:session:turn'),'서버 pause 실패 때도 기기에서 검증한 초안');
 });

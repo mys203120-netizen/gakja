@@ -20,20 +20,23 @@ export type LearningHelpProps={
 /** A sheet keeps the answer editor and recorder mounted under the exact owned attempt. */
 export function LearningHelp(props:LearningHelpProps){
   const {data,targetId,openResource}=useApp();
-  const [open,setOpen]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(false);
-  const opening=useRef(false),requested=useRef(0),latest=useRef(props);latest.current=props;
+  const scope=[data.user.id,props.targetId||targetId,props.interviewSessionId||props.quizSessionId||props.assignmentId||'',props.interviewTurnId??props.itemIndex??props.itemId??'',props.questionId||props.activityId,props.sourceType||'auto',props.sourceVersion||'current'].join(':');
+  const scopeRef=useRef({key:scope});if(scopeRef.current.key!==scope)scopeRef.current={key:scope};const scopeToken=scopeRef.current;
+  const [openedScope,setOpenedScope]=useState<object|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(false);
+  const opening=useRef<object|null>(null),requested=useRef(0),latest=useRef(props);latest.current=props;
+  useEffect(()=>{setError('');setLoading(false);},[scopeToken]);
   async function prepare(){
-    if(opening.current||latest.current.disabled)return false;
-    opening.current=true;setLoading(true);setError('');
-    try{return await latest.current.beforeOpen?.()!==false;}
-    catch(cause){setError((cause as Error).message||'작성 중인 답변을 확인한 뒤 다시 열어 주세요.');return false;}
-    finally{opening.current=false;setLoading(false);}
+    const capture=scopeRef.current;if(opening.current===capture||latest.current.disabled)return null;
+    opening.current=capture;setLoading(true);setError('');
+    try{return await latest.current.beforeOpen?.()!==false&&scopeRef.current===capture?capture:null;}
+    catch(cause){if(scopeRef.current===capture)setError((cause as Error).message||'작성 중인 답변을 확인한 뒤 다시 열어 주세요.');return null;}
+    finally{if(opening.current===capture)opening.current=null;if(scopeRef.current===capture)setLoading(false);}
   }
-  async function openHelp(){if(await prepare())setOpen(true);}
+  async function openHelp(){const capture=await prepare();if(capture&&scopeRef.current===capture)setOpenedScope(capture);}
   useEffect(()=>{const token=props.openRequest||0;if(token>requested.current){requested.current=token;void openHelp();}},[props.openRequest]);
-  const close=useCallback(()=>{setOpen(false);void Promise.resolve().then(()=>latest.current.onClose?.()).catch(cause=>setError(cause.message));},[]);
+  const close=useCallback(()=>{const capture=scopeRef.current;setOpenedScope(null);void Promise.resolve().then(()=>{if(scopeRef.current===capture)return latest.current.onClose?.();}).catch(cause=>{if(scopeRef.current===capture)setError(cause.message);});},[]);
   async function evidence(){
-    if(!await prepare())return;
+    const capture=await prepare();if(!capture)return;
     setLoading(true);setError('');
     try{
       let snapshot=props.snapshot;
@@ -48,31 +51,41 @@ export function LearningHelp(props:LearningHelpProps){
         }
         snapshot=await api('/api/learning-help?'+query.toString());
       }
+      if(scopeRef.current!==capture)return;
       if(props.interviewSessionId&&props.interviewTurnId)await post('/api/interviews',{action:'help',sessionId:props.interviewSessionId,turnId:props.interviewTurnId,helpKind:'evidence',requestId:crypto.randomUUID()});
       if(props.quizSessionId)await post('/api/quiz',{action:'assist',sessionId:props.quizSessionId,itemIndex:props.itemIndex,helpKind:'evidence'});
       if(props.assignmentId&&props.itemId)await post('/api/learning',{action:'assignment_help',assignmentId:props.assignmentId,itemId:props.itemId,helpKind:'evidence',requestId:crypto.randomUUID()});
-      await props.onAssisted?.();openResource({kind:props.questionId?'question':'activity',id:props.questionId||props.activityId,snapshot});
-    }catch(cause){setError((cause as Error).message);}finally{setLoading(false);}
+      if(scopeRef.current!==capture)return;
+      await props.onAssisted?.();if(scopeRef.current!==capture)return;openResource({kind:props.questionId?'question':'activity',id:props.questionId||props.activityId,snapshot});
+    }catch(cause){if(scopeRef.current===capture)setError((cause as Error).message);}finally{if(scopeRef.current===capture)setLoading(false);}
   }
   if(!props.questionId&&!props.activityId&&!props.interviewTurnId)return null;
-  const scope=[data.user.id,props.targetId||targetId,props.interviewSessionId||props.quizSessionId||props.assignmentId||'',props.interviewTurnId??props.itemIndex??props.itemId??'',props.questionId||props.activityId,props.sourceType||'auto',props.sourceVersion||'current'].join(':');
   return <div className={ownedClassName('learning-help',true)}>
     <div className={ownedClassName('learning-help-tools',true)}>
       {props.showEvidence!==false&&<button type="button" className={ownedClassName('text-link',true)} disabled={loading||props.disabled} onClick={()=>void evidence()}><BookOpen size={15}/>{loading?'근거 불러오는 중':'질문과 근거'}</button>}
       <button type="button" className={ownedClassName('text-link',true)} disabled={loading||props.disabled} onClick={()=>void openHelp()}><Sparkles size={15}/>AI 비서 도움받기</button>
     </div>
     {error&&<Alert>{error}</Alert>}
-    {open&&<Assistant key={scope} {...props} scope={scope} onClose={close}/>}
+    {openedScope===scopeToken&&<Assistant key={scope} {...props} scope={scope} onClose={close}/>}
   </div>;
 }
 
 function Assistant({onClose,scope,...props}:LearningHelpProps&{scope:string;onClose:()=>void}){
   const {data,targetId}=useApp();const selectedTarget=props.targetId||targetId;
   const key='gakja-learning-help:'+scope;
+  const visitRef=useRef({key,active:false});if(visitRef.current.key!==key)visitRef.current={key,active:false};const visit=visitRef.current;
+  useEffect(()=>{visit.active=true;return()=>{visit.active=false;};},[visit]);
   const [message,setMessage]=useState(''),[messages,setMessages]=useState<Item[]>([]),[threadId,setThreadId]=useState<string>(),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loadedKey,setLoadedKey]=useState('');
-  const dialog=useRef<HTMLElement>(null),lock=useRef(false),requestId=useRef(''),requestText=useRef('');
-  useEffect(()=>{try{const saved=JSON.parse(sessionStorage.getItem(key)||'{}');setMessage(typeof saved.draft==='string'?saved.draft:'');setMessages(Array.isArray(saved.messages)?saved.messages:[]);setThreadId(typeof saved.threadId==='string'?saved.threadId:undefined);}catch{setMessage('');setMessages([]);setThreadId(undefined);}setLoadedKey(key);},[key]);
-  useEffect(()=>{if(loadedKey===key)try{sessionStorage.setItem(key,JSON.stringify({draft:message,messages:messages.slice(-24),threadId}));}catch{/* Server receipts remain authoritative when browser storage is unavailable. */}},[key,loadedKey,message,messages,threadId]);
+  const dialog=useRef<HTMLElement>(null),lock=useRef(false),requestId=useRef(''),requestText=useRef(''),requestDraft=useRef('');
+  useEffect(()=>{
+    lock.current=false;setBusy(false);requestId.current='';requestText.current='';requestDraft.current='';
+    try{
+      const saved=JSON.parse(sessionStorage.getItem(key)||'{}');setMessage(typeof saved.draft==='string'?saved.draft:'');setMessages(Array.isArray(saved.messages)?saved.messages:[]);setThreadId(typeof saved.threadId==='string'?saved.threadId:undefined);
+      if(typeof saved.request?.id==='string'&&saved.request.id.length>=8&&saved.request.id.length<=100&&typeof saved.request.text==='string'&&saved.request.text.length<=6000&&typeof saved.request.draft==='string'&&typeof saved.draft==='string'&&saved.request.draft===saved.draft.trim()){requestId.current=saved.request.id;requestText.current=saved.request.text;requestDraft.current=saved.request.draft;}
+    }catch{setMessage('');setMessages([]);setThreadId(undefined);}setLoadedKey(key);
+  },[key]);
+  function persist(){try{sessionStorage.setItem(key,JSON.stringify({draft:message,messages:messages.slice(-24),threadId,...(requestId.current?{request:{id:requestId.current,text:requestText.current,draft:requestDraft.current}}:{})}));}catch{/* Server receipts remain authoritative when browser storage is unavailable. */}}
+  useEffect(()=>{if(loadedKey===key)persist();},[key,loadedKey,message,messages,threadId,busy]);
   useEffect(()=>{
     const old=document.activeElement as HTMLElement|null,overflow=document.body.style.overflow;document.body.style.overflow='hidden';dialog.current?.focus();
     function keyboard(event:KeyboardEvent){
@@ -85,23 +98,35 @@ function Assistant({onClose,scope,...props}:LearningHelpProps&{scope:string;onCl
     document.addEventListener('keydown',keyboard);return()=>{document.body.style.overflow=overflow;document.removeEventListener('keydown',keyboard);old?.focus();};
   },[onClose]);
   async function send(){
-    const text=message.trim();if(!text||lock.current)return;lock.current=true;setBusy(true);setError('');
+    const capture=visit,current=()=>visitRef.current===capture&&capture.active;
+    const text=message.trim();if(!current()||loadedKey!==key||!text||lock.current)return;lock.current=true;setBusy(true);setError('');
     const context=[props.questionPrompt?`현재 연습 중인 질문: ${props.questionPrompt}`:'',props.answerDraft?.trim()?`학생이 아직 제출하지 않은 초안: ${props.answerDraft}`:''].filter(Boolean).join('\n');
     const available=Math.max(0,6000-text.length-40),excerpt=context.slice(0,available);
-    const payloadMessage=excerpt?`${excerpt}\n\n이 질문에 대한 도움 요청: ${text}`:text;
-    if(requestText.current!==payloadMessage){requestId.current=crypto.randomUUID();requestText.current=payloadMessage;}
+    if(!requestId.current||requestDraft.current!==text){requestId.current=crypto.randomUUID();requestText.current=excerpt?`${excerpt}\n\n이 질문에 대한 도움 요청: ${text}`:text;requestDraft.current=text;}
+    const payloadMessage=requestText.current;persist();
     try{
       // Interview sessions resolve question, support target and version from their frozen server context.
       const selection=props.interviewSessionId&&props.interviewTurnId?{interviewSessionId:props.interviewSessionId,interviewTurnId:props.interviewTurnId}:{questionId:props.questionId||null,activityId:props.activityId||null,targetId:selectedTarget||null,...(props.sourceType?{sourceType:props.sourceType}:{}),...(props.sourceVersion?{sourceVersion:Number(props.sourceVersion)}:{})};
       const result=await post('/api/chat',{message:payloadMessage,requestId:requestId.current,...(threadId?{threadId}:{}),...selection,...(props.quizSessionId&&props.itemIndex!==undefined?{quizSessionId:props.quizSessionId,quizItemIndex:props.itemIndex}:{}),...(props.assignmentId&&props.itemId?{assignmentId:props.assignmentId,assignmentItemId:props.itemId}:{})});
-      setThreadId(result.threadId);setMessages(previous=>{const known=new Set(previous.map(item=>item.id));return [...previous,...[result.userMessage,result.message].filter(item=>item&&!known.has(item.id))];});
+      if(!current())return;
+      setThreadId(result.threadId);setMessages(previous=>{const merged=new Map(previous.map(item=>[item.id,item]));for(const item of [result.userMessage,result.message])if(item)merged.set(item.id,{...merged.get(item.id),...item});return [...merged.values()];});
       if(result.message?.status==='pending'){setError('앞선 응답을 작성 중이에요. 잠시 후 대화를 다시 불러와 주세요.');return;}
       if(result.message?.status==='failed')throw new Error(result.message?.data?.error||'답변을 가져오지 못했어요.');
       if(result.message?.role==='assistant'&&result.message.status==='completed'&&result.message.content?.trim())await props.onAssisted?.();
-      setMessage('');requestId.current='';requestText.current='';
-    }catch(cause){setError((cause as Error).message);}finally{lock.current=false;setBusy(false);}
+      if(!current())return;
+      setMessage('');requestId.current='';requestText.current='';requestDraft.current='';
+    }catch(cause){if(current())setError((cause as Error).message);}finally{if(current()){lock.current=false;setBusy(false);}}
   }
-  async function reload(){if(!threadId||busy)return;setBusy(true);try{const result=await api('/api/chat?threadId='+encodeURIComponent(threadId));setMessages(result.messages);setError('');if(result.messages?.some((item:Item)=>item.role==='assistant'&&item.status==='completed'&&item.content?.trim()))await props.onAssisted?.();}catch(cause){setError((cause as Error).message);}finally{setBusy(false);}}
+  async function reload(){
+    const capture=visit,current=()=>visitRef.current===capture&&capture.active;
+    if(!current()||!threadId||busy||lock.current)return;lock.current=true;setBusy(true);
+    try{
+      const result=await api('/api/chat?threadId='+encodeURIComponent(threadId));if(!current())return;
+      setMessages(result.messages);setError('');
+      if(result.messages?.some((item:Item)=>item.role==='assistant'&&item.status==='completed'&&item.content?.trim()))await props.onAssisted?.();
+    }catch(cause){if(current())setError((cause as Error).message);}
+    finally{if(current()){lock.current=false;setBusy(false);}}
+  }
   return <div className={ownedClassName('learning-help-overlay',true)}>
     <button className={ownedClassName('learning-help-backdrop',true)} tabIndex={-1} aria-label="도움 닫기" disabled={busy} onClick={onClose}/>
     <section className={ownedClassName('learning-help-panel',true)} role="dialog" aria-modal="true" aria-label="AI 비서 도움" tabIndex={-1} ref={dialog}>

@@ -277,8 +277,11 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     }
     await post('/api/interviews',{action:'suspend',sessionId:id});
     if((await Promise.all([...closingForStudent()].map(closeRealtime))).some(confirmed=>!confirmed))throw new Error('실시간 음성 연결 종료를 확인하지 못했어요. 다시 시도해 주세요.');
-    leaving.current=true;
   }),[id,studentId]);
+  useEffect(()=>{
+    const handoff=(event:Event)=>{if((event as CustomEvent<{userId?:string}>).detail?.userId===studentId)leaving.current=true;};
+    window.addEventListener('gakja:logout-ready',handoff);return()=>window.removeEventListener('gakja:logout-ready',handoff);
+  },[id,studentId]);
   useEffect(()=>{
     const turnId=question?.turnId;if(!turnId)return;
     let value=question.draft||'';

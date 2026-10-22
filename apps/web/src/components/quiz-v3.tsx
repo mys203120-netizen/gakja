@@ -535,7 +535,8 @@ export function QuizSession({id}:{id:string}) {
     const sourceQuestion=sessionLearning?.questions?.find((question:Item)=>question.id===savedItem.question_id||(savedItem.practice_kind==='concept'&&question.id===originalMemory?.question_id&&question.question_types?.includes('concept')&&question.prompt===savedItem.practice_prompt));
     const audio=dto.recordings?.find((record:Item)=>record.id===response.data?.recording_id);
     const outcome=response.outcome===true?'correct':needsReview(response)?'review':'saved';
-    const status=response.data?.response_mode==='text'&&response.data?.original_mode==='oral'?'글 답변 · 미채점':response.timed_out?'시간 초과':response.outcome===true?'정답':response.outcome===false?'다시 확인':needsReview(response)?'다시 준비 · 미채점':'답변 저장 · 미채점';
+    const unchecked=(response.data?.recall_state??response.data?.recallStatus)==='unchecked';
+    const status=response.data?.response_mode==='text'&&response.data?.original_mode==='oral'?'글 답변 · 미채점':response.timed_out?'시간 초과':response.outcome===true?'정답':response.outcome===false?'다시 확인':unchecked?'돌아보기 전 · 미채점':needsReview(response)?'다시 준비 · 미채점':'답변 저장 · 미채점';
     return <article className={ownedClassName("quiz-result-answer",true)} key={response.id} data-result={outcome} aria-labelledby={'quiz-result-'+response.id}>
       <header className={ownedClassName("quiz-result-answer-heading",true)}><span className={ownedClassName("quiz-result-index",true)} aria-label={`${response.item_index+1}번 문항`}>{String(response.item_index+1).padStart(2,'0')}</span><h3 id={'quiz-result-'+response.id} className={ownedClassName(undefined,true)}>{savedItem.prompt||response.data?.prompt}</h3><span className={ownedClassName('quiz-result-status '+outcome,true)}>{status}</span></header>
       <dl className={ownedClassName("quiz-result-answer-content",true)}>

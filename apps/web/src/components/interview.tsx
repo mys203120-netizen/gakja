@@ -92,7 +92,15 @@ export function ChatInterviewSession({ id, kind: initialKind,onTrainingUpdate }:
       if(paused.session?.id===id&&paused.session?.data?.paused===true&&latestOwner.current===ownerScope&&latestDraft.current.turnId===current.turnId)setInfo(previous=>previous?.session.id===id?{...previous,session:paused.session}:previous);
     }
     catch{if(!deviceSaved)throw new Error('작성 중인 답변을 보관하지 못했어요.');}
+    if(latestOwner.current===ownerScope){
+      if(latestDraft.current.turnId!==current.turnId||latestDraft.current.answer!==current.answer)throw new Error('새로 작성한 답변을 저장한 뒤 다시 로그아웃해 주세요.');
+      setDraftStatus('saved');
+    }
   }),[appData.user.id,id]);
+  useEffect(()=>{
+    const handoff=(event:Event)=>{if((event as CustomEvent<{userId?:string}>).detail?.userId===appData.user.id&&latestOwner.current===ownerScope)leaving.current=true;};
+    window.addEventListener('gakja:logout-ready',handoff);return()=>window.removeEventListener('gakja:logout-ready',handoff);
+  },[appData.user.id,id]);
   useEffect(() => { if (!recording) return; const timer = setInterval(() => setSeconds(Math.floor((speechCapture.current?.elapsedMs() ?? performance.now() - captureStarted.current) / 1000)), 250); return () => clearInterval(timer); }, [recording]);
   useEffect(() => { if (!waiting) return; const timer = setInterval(() => { void load(); }, 1200); return () => clearInterval(timer); }, [waiting, id]);
   useEffect(() => { if (paused || busy || completed) return; const timer = setInterval(() => setClockNow(Date.now()), 1000); return () => clearInterval(timer); }, [paused, busy, completed]);
@@ -162,14 +170,17 @@ export function ChatInterviewSession({ id, kind: initialKind,onTrainingUpdate }:
   async function prepareHelp(){
     if(recording||blob&&!uploaded){toast('녹음을 마치고 저장한 뒤 확인해 주세요.');return false;}
     if(busy||waiting||!question)return false;
+    const turnId=question.turnId,draft=answer;
     stopSpeech();helpWasPaused.current=Boolean(paused);setBusy(true);
     try{
       if(draftTimer.current)clearTimeout(draftTimer.current);
       await draftQueue.current.catch(()=>{});
-      const receipt=await post('/api/interviews',{action:'pause',sessionId:id,turnId:question.turnId,draft:answer});
-      if(receipt.session)setInfo(previous=>previous?{...previous,session:receipt.session}:previous);
+      const receipt=await post('/api/interviews',{action:'pause',sessionId:id,turnId,draft});
+      if(latestOwner.current!==ownerScope||latestDraft.current.turnId!==turnId)return false;
+      if(latestDraft.current.answer===draft)setDraftStatus('saved');
+      if(receipt.session)setInfo(previous=>previous?.session.id===id?{...previous,session:receipt.session}:previous);
       return true;
-    }finally{setBusy(false);}
+    }finally{if(latestOwner.current===ownerScope)setBusy(false);}
   }
   async function refreshHelp(){const fresh=await api(`/api/interviews?id=${id}`);if(fresh.question?.turnId!==question?.turnId)throw new Error('현재 질문의 도움 기록을 다시 확인해 주세요.');setInfo(fresh);}
 
