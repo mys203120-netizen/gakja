@@ -34,6 +34,7 @@ export class LiveInterviewController {
   private rerecording?:Promise<void>;
   private runRevision=0;
   private ignoredMediaIds=new Set<string>();
+  private discardedMediaScope?:{turnId:string;generation:number};
   private suspension:Promise<void>=Promise.resolve();
   private paused=true;
   private requested=false;
@@ -53,6 +54,23 @@ export class LiveInterviewController {
   }
   /** Stop safely before an explicit switch to typing; final chunks still reach persistence. */
   async preserveAnswer(){this.pause();if(this.capture){const recording=await this.capture.stop('interrupted');return recording;}return this.pending?.recording;}
+  /** Explicitly abandon only the current attempt, retiring late upload/capture callbacks. */
+  async discardAnswer(){
+    this.pause();this.runRevision++;this.ending=false;this.preserveOnly=false;
+    const pending=this.pending,recording=pending?.recording||this.snapshot.recording;
+    const question=pending?.question||this.snapshot.info.question;
+    if(question)this.discardedMediaScope={turnId:question.turnId,generation:pending?.generation??Number(this.snapshot.info.session.data.generation||0)};
+    if(pending?.mediaId)this.ignoredMediaIds.add(pending.mediaId);
+    this.capture?.dispose();this.capture=undefined;this.pending=undefined;
+    this.wake?.();this.wake=undefined;
+    await this.starting;await this.running;
+    // A paused upload can still acknowledge its media after discard was clicked.
+    if(pending?.mediaId)this.ignoredMediaIds.add(pending.mediaId);
+    if(this.disposed)return recording;
+    this.devicePrepared=false;this.services.release();
+    this.emit({phase:'paused',recording:undefined,progress:undefined,error:''});
+    return recording;
+  }
   /** Changing remembered device choices preserves unfinished audio before releasing its tracks. */
   async resetDevices(){this.pause();if(this.capture)await this.capture.stop('manual');this.devicePrepared=false;this.services.release();}
   async acceptTypedAnswer(info:LiveInfo){
@@ -74,6 +92,11 @@ export class LiveInterviewController {
   private rememberSavedMedia(info:LiveInfo){
     if(this.pending||!info.question)return;
     const generation=Number(info.session.data.generation||0);
+    const discarded=this.discardedMediaScope;
+    if(discarded&&discarded.turnId===info.question.turnId&&discarded.generation===generation){
+      for(const item of info.media||[])if(item.metadata?.kind==='answer_recording'&&item.metadata.turnId===info.question.turnId&&item.metadata.generation===generation)this.ignoredMediaIds.add(item.id);
+      return;
+    }
     const media=[...(info.media||[])].reverse().find(item=>!this.ignoredMediaIds.has(item.id)&&item.metadata?.kind==='answer_recording'&&item.metadata.turnId===info.question.turnId&&item.metadata.generation===generation);
     if(media)this.pending={question:info.question,generation,mediaId:media.id};
   }
@@ -227,6 +250,7 @@ export class LiveInterviewController {
             await this.services.beforeCapture?.(question,generation,speech.signal);
             await this.checkpoint(revision);if(speech.signal.aborted||this.ending)continue;
             this.capture=this.services.capture(progress=>{this.emit({progress});if(this.snapshot.phase!=='speaking')this.phase('listening');},question,generation);
+            this.discardedMediaScope=undefined;
           }
           await this.services.speak(question,generation,speech.signal);
           if(speech.signal.aborted||this.paused||this.ending)continue;
@@ -237,7 +261,7 @@ export class LiveInterviewController {
           if(speech.signal.aborted||this.ending)continue;
           this.emit({phase:'listening',progress:undefined,recording:undefined});
           if(speech.signal.aborted||this.paused)continue;
-          if(!this.capture)this.capture=this.services.capture(progress=>{this.emit({progress});this.phase('listening');},question,generation);
+          if(!this.capture){this.capture=this.services.capture(progress=>{this.emit({progress});this.phase('listening');},question,generation);this.discardedMediaScope=undefined;}
           }
         }catch(error){if(speech.signal.aborted||this.paused||this.ending)continue;throw error;}
         finally{if(this.speech===speech)this.speech=undefined;}

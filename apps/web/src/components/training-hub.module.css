@@ -1,7 +1,6 @@
 .hub { max-width:1120px; margin-inline:auto; color:var(--clarity-ink); font-size:var(--font-size-caption); line-height:1.65; }
-.header { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; margin-bottom:32px; }
-.header h1 { margin:0 0 8px; font-size:var(--font-size-title); line-height:1.35; font-weight:650; letter-spacing:-.035em; }
-.header p { margin:0; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.header { display:flex; justify-content:space-between; align-items:center; gap:24px; margin-bottom:16px; }
+.header h1 { margin:0; font-size:var(--font-size-title); line-height:1.35; font-weight:650; letter-spacing:-.035em; }
 .headerLinks { display:flex; align-items:center; flex-shrink:0; flex-wrap:wrap; gap:2px 18px; }
 .settingsLink { display:inline-flex; align-items:center; flex-shrink:0; gap:7px; min-height:44px; color:var(--clarity-muted); font-size:var(--font-size-caption); white-space:nowrap; }
 .focus { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:28px; align-items:center; padding:28px; border:1px solid var(--clarity-line); border-radius:16px; background:var(--clarity-surface); margin-bottom:26px; }
@@ -12,7 +11,7 @@
 .focusAction :global(.button) { white-space:nowrap; min-height:48px; }
 .subtleLink { display:inline-flex; align-items:center; min-height:40px; font-size:var(--font-size-caption); color:var(--clarity-muted); }
 .subtleLink { gap:7px; }
-.dayMeta { display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:20px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.dayMeta { display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:12px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
 .dayMeta>span { display:inline-flex; align-items:center; gap:5px; }
 .resume { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:0 2px 16px; font-size:var(--font-size-caption); }
 .resume>span,.resume>a { display:inline-flex; align-items:center; gap:8px; min-height:40px; }
@@ -239,15 +238,12 @@
 .taskTrigger { border:0; background:transparent; border-radius:14px; cursor:pointer; transition:background 180ms ease; }
 .taskTrigger:hover { background:var(--clarity-soft); }
 .taskTrigger:disabled { cursor:wait; opacity:.65; }
-.taskReason { display:block; margin-top:6px; color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.65; }
-.taskActivity { display:block; margin-top:7px; color:var(--clarity-green); font-size:var(--font-size-caption); line-height:1.7; word-break:keep-all; overflow-wrap:anywhere; }
 .taskArrow { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:38px; min-height:38px; color:var(--clarity-green); }
 @media(max-width:700px) {
- .focusAction[data-has-next=true]>:global(.button) { display:none; }
+ .focusAction[data-has-next=true] { display:none; }
  .taskTrigger,.taskStatic { gap:12px; padding-block:22px; }
  .taskTrigger .taskCopy,.taskStatic .taskCopy { flex:1; min-width:0; }
  .taskTrigger .taskNumber,.taskStatic .taskNumber { align-self:flex-start; }
- .taskReason { display:none; }
  .taskList>li :is(.complete,.taskState) { margin-left:0; }
  .taskArrow { width:28px; }
 }
@@ -255,7 +251,7 @@
 
 .mobileResources { display:none; }
 @media(max-width:700px) {
- .header { flex-direction:row; align-items:center; gap:12px; margin-bottom:20px; }
+ .header { flex-direction:row; align-items:center; gap:12px; margin-bottom:12px; }
  .headerLinks { margin-left:auto; gap:12px; }
  .headerLinks .settingsLink { font-size:var(--font-size-caption); min-height:44px; }
  .mobileResources { display:block; margin:0 0 20px; }
@@ -263,7 +259,6 @@
  .mobileResources>summary::-webkit-details-marker { display:none; }
  .mobileResources>nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 12px; padding:8px 0 12px; }
  .mobileResources a { display:flex; align-items:center; justify-content:space-between; min-height:44px; gap:8px; color:var(--clarity-ink); font-size:var(--font-size-caption); }
- .focus>div>p,.taskActivity { display:none; }
  .focus { margin-bottom:28px; }
  .section { margin-block:28px; }
  .sectionHeading>div>p { display:none; }

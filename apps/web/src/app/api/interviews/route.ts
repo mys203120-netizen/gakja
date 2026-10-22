@@ -35,7 +35,7 @@ const inputSchema = z.object({
   transcript: z.string().trim().max(12000).optional(), turnId: z.string().uuid().optional(), mediaId:z.string().uuid().optional(),requestId: z.string().min(8).max(100).optional(),
   questionCount: z.number().int().min(1).max(8).optional(),
   questionIds:z.array(z.string().min(1).max(200)).min(1).max(8).optional(),trainingPlanId:z.string().uuid().optional(),trainingPurpose:z.enum(['diagnostic','recall','focus','mixed']).optional(),trainingImprovement:z.string().trim().min(1).max(500).optional(),
-  generation:z.number().int().nonnegative().optional(),
+  generation:z.number().int().nonnegative().optional(),discardDraft:z.boolean().optional(),
 });
 function json(value: unknown, status = 200) { return Response.json(value, { status, headers: { 'Cache-Control': 'private, no-store' } }); }
 function turnView(turn: Record<string, any>) { return { ...turn, ...turn.data, question_id: turn.question_id }; }
@@ -288,7 +288,7 @@ export async function POST(request: Request) {
       });
       return json({ session: sessionView(session), turn: turnView(revised) });
     }
-    if (input.action === 'finish'||input.action==='report_feedback') return json(await finishSession(user.id,session,input.action==='report_feedback'));
+    if (input.action === 'finish'||input.action==='report_feedback') return json(await finishSession(user.id,session,input.action==='report_feedback',input.action==='finish'&&input.discardDraft===true));
     const automaticRecording=input.action==='answer_recording';
     if(automaticRecording&&(!input.turnId||!input.mediaId||input.generation===undefined||!input.requestId))throw new FeatureError(400,'제출할 녹음과 현재 질문 정보를 확인해 주세요.','RECORDING_ANSWER_SCOPE_REQUIRED');
     if(automaticRecording&&input.answer!==undefined)throw new FeatureError(400,'녹음 자동 제출에는 답변 글 대신 녹음만 선택해 주세요.','RECORDING_ANSWER_TEXT_FORBIDDEN');
@@ -386,7 +386,7 @@ export async function POST(request: Request) {
   } catch (error) { const result = featureError(error); return json({ error: result.error, code: result.code }, result.status); }
 }
 
-async function finishSession(studentId:string,session:Record<string,any>,retryFeedback=false){
+async function finishSession(studentId:string,session:Record<string,any>,retryFeedback=false,discardDraft=false){
   if(retryFeedback&&!aiEnabled())throw new FeatureError(503,'AI 피드백 연결을 확인한 뒤 다시 시도해 주세요.','AI_UNAVAILABLE');
   const completed = await transaction(async (client) => {
     const selected = await client.query('select * from interview_sessions where id=$1 and student_id=$2 for update', [session.id, studentId]);
@@ -404,6 +404,9 @@ async function finishSession(studentId:string,session:Record<string,any>,retryFe
     }
     if (locked.state === 'cancelled') throw new FeatureError(409, '취소된 면접은 리포트를 만들 수 없어요.', 'SESSION_CANCELLED');
     if (locked.data.processing && Date.now() - Number(locked.data.processingAt || 0) < 120000) throw new FeatureError(409, '답변 저장 후 면접을 종료해 주세요.', 'INTERVIEW_PENDING');
+    // Discard is explicit and scoped to unanswered turns. Submitted answers and
+    // their original media remain valid evidence for the resulting report.
+    if(discardDraft)await client.query("update interview_turns set data=data-'draft' where session_id=$1 and student_id=$2 and data->>'answer' is null",[session.id,studentId]);
     const turns = await client.query('select * from interview_turns where session_id=$1 and student_id=$2 order by created_at,id', [session.id, studentId]);
     const reportData = selfCheckReport(locked.data.context, turns.rows.map((turn) => ({ ...turn, question: turn.data.question, answer: turn.data.answer })));
     const previous = existing.rows[0]?.data;

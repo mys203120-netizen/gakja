@@ -42,7 +42,16 @@
 .session :global(.interview-capture-actions .button) { min-height: 38px; padding: 8px 15px; }
 .session :global(.recording-playback) { padding: 4px 0 12px; }
 .session :global(.interview-answer-block) { padding: 0; }
-.answerLabel { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: var(--clarity-muted); font-size: var(--font-size-caption); line-height: 1.6; }
+.answerLabel { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.6; }
+.answerLabel>label { margin-right:auto; }
+.answerLabel>:global(.learning-help) { flex:0 0 auto; }
+.answerLabel :global(.learning-help-tools) { margin:0; padding:0; }
+.answerTools { margin-top:10px; font-size:var(--font-size-caption); }
+.answerTools>summary { display:flex; align-items:center; justify-content:space-between; min-height:44px; width:fit-content; gap:12px; cursor:pointer; color:var(--clarity-muted); list-style:none; }
+.answerTools>summary::-webkit-details-marker { display:none; }
+.answerTools>summary::after { content:'+'; }
+.answerTools[open]>summary::after { content:'−'; }
+.answerTools>:global(.inline-actions) { gap:10px; padding:10px 0; }
 .answerLabel a { display: none; color: var(--clarity-muted); }
 .session :global(.interview-answer-block [data-chat-composer]) { padding-top: 8px; }
 .session :global(.interview-answer-block .transcript-processing) { margin: 8px 0; }

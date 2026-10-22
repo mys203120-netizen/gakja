@@ -1,6 +1,7 @@
 .question { flex-shrink:0; max-height:28dvh; overflow:auto; padding:14px 0 0; color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.65; word-break:keep-all; overflow-wrap:anywhere; }
-.question summary { cursor:pointer; font-weight:600; color:var(--clarity-ink); }
-.question p { margin:10px 0; }
+.question>summary { display:list-item; min-height:44px; padding:10px 0; cursor:pointer; font-weight:600; color:var(--clarity-ink); }
+.question[open]>summary { margin-bottom:12px; }
+.question>p { margin:0 0 18px; padding:0; line-height:1.8; }
 .question strong { font-size:var(--font-size-caption); }
 .footer { display:flex; justify-content:flex-end; flex-shrink:0; }
 @media(max-width:700px) { .footer>button { width:100%; justify-content:center; } }

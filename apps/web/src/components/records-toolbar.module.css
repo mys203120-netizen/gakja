@@ -1,4 +1,4 @@
-.toolbar { display:flex; align-items:center; gap:16px; margin-bottom:26px; }
+.toolbar { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
 .toolbar.toolbar :global(.subnav) { flex:1; min-width:0; margin:0; gap:24px; }
 .export { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:40px; height:40px; padding:0; border:0; border-radius:9px; background:transparent; color:var(--clarity-muted); cursor:pointer; }
 .export:hover { color:var(--clarity-ink); background:var(--clarity-soft); }
@@ -8,7 +8,8 @@
 /* Keep the full hover target padded, including its icon and trailing arrow. */
 :global(.app-shell) .view:global(.records-view) .reportRows { display:grid; gap:8px; margin-inline-start:0; border:0; }
 :global(.app-shell) .view:global(.records-view) .reportRow { display:grid; grid-template-columns:44px minmax(0,1fr) 22px; align-items:center; gap:18px; min-height:100px; padding:20px 24px; border:0; border-radius:16px; background:transparent; box-shadow:none; color:var(--clarity-ink); text-decoration:none; transition:background .16s,color .16s; }
-:global(.app-shell) .view .reportRow > :global(.records-row-icon) { display:grid; place-items:center; width:44px; height:44px; border-radius:14px; color:var(--clarity-action); background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); }
+:global(.app-shell) .view .reportRow > :global(.records-row-icon) { display:flex; align-items:center; justify-content:center; flex:none; width:44px; height:44px; padding:0; line-height:0; border-radius:14px; color:var(--clarity-action); background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); }
+:global(.app-shell) .view :global(.records-row-icon) > svg { display:block; flex-shrink:0; margin:0; }
 :global(.app-shell) .view .reportRow > div { min-width:0; }
 :global(.app-shell) .view .reportRow h2 { margin:0; color:var(--clarity-ink); font-size:var(--font-size-body); font-weight:600; line-height:1.5; }
 :global(.app-shell) .view .reportRow p { margin:6px 0 0; color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.6; }
@@ -20,7 +21,7 @@
 .reportSkeleton > span { display:block; width:min(200px,60%); height:16px; border-radius:8px; background:var(--clarity-muted); opacity:.1; }
 .reportSkeleton > span + span { width:min(320px,85%); height:12px; }
 
-@media(max-width:700px) { .toolbar { gap:10px; margin-bottom:22px; }.toolbar.toolbar :global(.subnav) { gap:17px; margin:0; }.toolbar :global(.subnav a) { font-size:var(--font-size-caption); white-space:nowrap; }.export { width:36px; height:40px; } }
+@media(max-width:700px) { .toolbar { gap:10px; margin-bottom:8px; }.toolbar.toolbar :global(.subnav) { gap:17px; margin:0; }.toolbar :global(.subnav a) { font-size:var(--font-size-caption); white-space:nowrap; }.export { width:36px; height:40px; } }
 @media(max-width:700px) {
   :global(.app-shell) .view:global(.records-view) .reportRow { grid-template-columns:36px minmax(0,1fr) 18px; gap:12px; min-height:92px; padding:18px 16px; border-radius:14px; }
   :global(.app-shell) .view .reportRow > :global(.records-row-icon) { width:36px; height:36px; border-radius:12px; }

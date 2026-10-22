@@ -36,9 +36,14 @@ check(text(tree).includes('녹음 기록이 없어요. 쉼·습관어는 녹음 
 check(nodes(tree).some(node=>node.type==='Link'&&node.props.href==='/quiz?mode=oral'),'empty report leads to recording');
 check(!nodes(tree).some(node=>node.props?.className==='speech-metrics'),'empty report never invents acoustic numbers');
 check(!text(tree).includes('도움 없이 정답 확인'),'mastery totals are not the report hero');
+check(!nodes(tree).some(node=>node.props?.className==='speech-growth-section content-growth'),'no empty comparison section repeats the next-practice action');
+check(!text(tree).includes('같은 질문의 다음 답변을 기다리고 있어요'),'missing comparisons do not add a waiting notice');
+check(nodes(tree).some(node=>node.type==='InfoTip'&&node.props.label==='다음 연습 안내'&&text(node)===base.next.reason),'the next-practice reason remains available on demand');
+check(!nodes(tree).some(node=>node.type==='p'&&text(node)===base.next.reason),'the next-practice reason does not repeat as a visible paragraph');
 const recorded={...base,speech:{recordings:[{id:'own-audio',kind:'quiz',prompt:'내 역할을 말해 주세요.',createdAt:'2026-01-01',playbackUrl:'/api/quiz?recordingId=own-audio',analysisAudioUrl:'/api/quiz?recordingId=own-audio',analysis:{timing:{durationMs:10000,silenceRatio:.3,longPauseCount:1,reliable:true,speechSegments:[{startMs:1000,endMs:7000}],pauses:[{startMs:3000,endMs:5000,durationMs:2000,long:true}]},transcript:null,limitations:['원전사 확인 전이에요.']}}],trend:null}};
 tree=render({},[recorded,scope,'','',false]);
-check(nodes(tree).some(node=>node.type==='SchoolPicker'&&node.props.label==='분석할 답변'),'record selector uses the shared searchable picker');
+check(!nodes(tree).some(node=>node.type==='SchoolPicker'),'one recording does not create a redundant recording selector');
+check(nodes(tree).filter(node=>node.type==='h3'&&node.props.className==='speech-question'&&text(node)===recorded.speech.recordings[0].prompt).length===1,'one recording keeps its question heading once');
 check(!nodes(tree).some(node=>node.type==='select'),'no native select overlay is introduced');
 check(nodes(tree).some(node=>typeof node.type==='function'&&node.props.label==='확인한 습관어'&&node.props.value==='—'),'missing raw STT does not become zero fillers');
 check(nodes(tree).some(node=>typeof node.type==='function'&&node.props.label==='말하기 속도'&&node.props.value==='—'),'missing raw STT does not invent a speaking rate');
@@ -49,6 +54,10 @@ const transcribe=nodes(tree).find(node=>node.type==='button'&&text(node)==='전�
 const transcribing=transcribe.props.onClick();await new Promise(resolve=>setImmediate(resolve));
 check(posts[0].url==='/api/reports'&&posts[0].body.action==='transcribe'&&posts[0].body.recordingId==='own-audio','quiz STT action uses its recording ID, not a typed answer');
 pending.at(-1).resolve(recorded);await transcribing;
+const sameNext={...recorded,next:{...base.next,questionId:'own-question',prompt:recorded.speech.recordings[0].prompt,href:'/interview/new?questionId=own-question'}};
+tree=render({},[sameNext,scope,'','',false]);
+check(!nodes(tree).some(node=>node.props?.className==='speech-next'),'a retry of the analyzed question does not create a second question card');
+check(nodes(tree).some(node=>node.type==='Link'&&node.props.href===sameNext.next.href&&text(node).includes('다시 말하기')),'the retry action stays available beside the speech heading');
 tree=render({reportId:'new-report'},[recorded,JSON.stringify(['old-report','','']),'','',false]);
 check(nodes(tree).some(node=>node.type==='Spinner'),'a new route hides previous report data before its effect runs');
 check(!text(tree).includes('내 역할을 말해 주세요.'),'old report question never flashes in a new report scope');
@@ -98,6 +107,9 @@ check(text(tree).includes('바로 재답변')&&text(tree).includes('도움 사�
 check(nodes(tree).some(node=>node.props?.['aria-label']==='이번 질문의 검수된 요소'),'question-specific criteria remain labeled separately from generic cues');
 check(text(tree).includes('달라진 문장')&&!text(tree).includes('더 구체화한 문장'),'a longer or added sentence is not automatically called an improvement');
 check(!text(tree).includes('결과·한계'),'a role-only question does not receive unrelated missing result dimensions');
+const newsOnly={...reviewed,content:{comparisons:[],newsComparisons:[{...reviewed.content.comparisons[0],articleId:'news-only',sourceHref:'/materials/briefings/news-only',retryHref:'/interview/new?briefingId=news-only'}]}};
+tree=render({},[newsOnly,scope,'','',false]);
+check(!text(tree).includes('답변 내용의 변화')&&text(tree).includes('기사에서 면접 답변으로'),'an actual news comparison remains visible without an empty ordinary-comparison section');
 for(const saved of [{target_id:'school-a',common_revision:3,turn_id:'turn-school-a'},{target_id:'school-b',common_revision:4,turn_id:'turn-school-b'}]){
   const comparison=reviewed.content.comparisons[0];
   const scoped={...reviewed,content:{...reviewed.content,comparisons:[{...comparison,questionId:'common_motivation',after:{...comparison.after,...saved,source_type:'general_practice',content_version:8}}]}};
@@ -117,6 +129,7 @@ const silentDiagnostic={...recorded.speech.recordings[0],id:'silent-diagnostic',
 const diagnostics={...recorded,speech:{...recorded.speech,defaultRecordingId:'own-audio',recordings:[silentDiagnostic,...recorded.speech.recordings],trend:null}};
 tree=render({},[diagnostics,scope,'','',false]);
 check(nodes(tree).some(node=>node.type==='SchoolPicker'&&node.props.value==='own-audio'),'latest silent diagnostic does not displace a normal utterance as default');
+check(!nodes(tree).some(node=>node.type==='h3'&&node.props.className==='speech-question'),'multiple recordings use their picker without repeating its selected prompt in a heading');
 check(nodes(tree).find(node=>node.type==='SchoolPicker').props.choices.some(choice=>choice.id==='silent-diagnostic'&&choice.detail.includes('비교 제외')),'diagnosed silent file stays explicitly labeled and selectable in recording archive');
 tree=render({},[diagnostics,scope,'','silent-diagnostic',false]);
 check(text(tree).includes('말하기 변화 비교에는 포함하지 않아요.')&&text(tree).includes('다시 녹음'),'explicit diagnostic selection explains its exclusion and a recording recovery');

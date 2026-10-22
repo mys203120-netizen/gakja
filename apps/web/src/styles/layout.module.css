@@ -1677,7 +1677,7 @@
 :global(.app-shell):not(:global(.admin-shell)) .panel:has(> .section-heading),
 :global(.app-shell):not(:global(.admin-shell)) .panel:has(> h2) { padding: 24px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 :global(.app-shell):not(:global(.admin-shell)) :global(.detail-section) > .section-heading { margin-bottom: 20px; }
-:global(.app-shell) .page-title { gap: 12px; margin-bottom: var(--clarity-section-gap); }
+:global(.app-shell) .page-title { gap: 12px; margin-bottom: 16px; }
 :global(.app-shell) .page-title .subtitle { margin-top: 10px; }
 :global(.app-shell) :global(.linked-row) .row-text strong { font-size: var(--font-size-body); }
 :global(.app-shell) :global(.linked-row) .row-text > span { font-size: var(--font-size-caption); }

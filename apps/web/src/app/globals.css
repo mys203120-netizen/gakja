@@ -46,10 +46,10 @@
   --clarity-motion: 160ms;
   /* Four sizes across mobile, desktop and embedded app controls.
      Hierarchy within a size uses weight and colour rather than extra steps. */
-  --font-size-caption: 14px;
-  --font-size-body: 16px;
-  --font-size-section: 20px;
-  --font-size-title: 28px;
+  --font-size-caption: 13px;
+  --font-size-body: 15px;
+  --font-size-section: 18px;
+  --font-size-title: 24px;
   --clarity-title-size: var(--font-size-title);
   --clarity-title-mobile-size: var(--font-size-title);
   --clarity-section-size: var(--font-size-section);

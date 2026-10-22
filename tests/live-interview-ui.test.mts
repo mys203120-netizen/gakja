@@ -27,6 +27,7 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture(),rec
     async start(){calls.push({controller:'start'});this.emit({phase:'preparing'});}
     async rerecord(){calls.push({controller:'rerecord'});this.emit({phase:'preparing'});}
     async preserveAnswer(){calls.push({controller:'preserveAnswer'});this.pause();await draftFaults.preservePending;if(draftFaults.preserveError)throw draftFaults.preserveError;return draftFaults.preservedRecording??this.state.recording;}
+    async discardAnswer(){calls.push({controller:'discardAnswer'});const recording=this.state.recording;this.emit({phase:'paused',recording:undefined});return recording;}
     async resetDevices(){calls.push({controller:'resetDevices'});this.pause();this.services.release();}
     async acceptTypedAnswer(info:any){calls.push({controller:'acceptTypedAnswer'});this.emit({info,phase:'paused'});}
     restoreRecording(recording:any,question:any,generation:number){calls.push({controller:'restoreRecording',recording,question,generation});this.emit({recording});return true;}
@@ -142,6 +143,9 @@ test('text alternative opens only on explicit selection and preserves the active
   const h=harness();let tree=h.render();assert.equal(nodes(tree).some(node=>node.type==='ChatComposer'),false);
   button(tree,'이번 질문은 글로 답하기').props.onClick();await h.flush();tree=h.render();
   const composer=nodes(tree).find(node=>node.type==='ChatComposer');assert.ok(composer);
+  assert.equal(nodes(tree).filter(node=>node.type==='h2'&&text(node)==='나의 답변').length,1);
+  assert.equal(text(tree).includes('현재 답변 방식')||text(tree).includes('같은 질문에 글로 답하고 있어요.'),false);
+  assert.ok(nodes(tree).some(node=>node.props?.className==='recordingSettings'));assert.ok(nodes(tree).some(node=>node.type==='LearningHelp'));
   assert.equal(nodes(tree).find(node=>node.type==='LiveInterviewerStage').props.question,'맡은 역할은 무엇인가요?');assert.ok(text(tree).includes('고려대학교'));
   composer.props.onChange('팀원의 자료 형식을 하나로 정리했습니다.');tree=h.render();
   assert.equal(nodes(tree).find(node=>node.type==='ChatComposer').props.value,'팀원의 자료 형식을 하나로 정리했습니다.');
@@ -245,6 +249,23 @@ test('completed unified training delegates its answer history to the wrapper whi
 test('exit confirmation pauses first and finishing remains an explicit action',()=>{
   const h=harness();h.render();let tree=emit(h,{phase:'listening'});button(tree,'면접 종료').props.onClick();tree=h.render();assert.ok(nodes(tree).some(node=>node.type==='Modal'));assert.equal(h.controllers[0].state.phase,'paused');assert.ok(!h.calls.some(call=>call.controller==='finish'));
   button(tree,'저장 후 종료').props.onClick();assert.equal(h.calls.filter(call=>call.controller==='finish').length,1);h.cleanup();
+});
+test('Live unsaved exit clears only the current typed draft and never submits or saves it first',async()=>{
+  const info=fixture();info.session.data.trainingPurpose='diagnostic';info.turns=[{id:'previous',answer:'이미 보낸 답변'}];
+  const h=harness(undefined,info);h.render();await h.flush();let tree=h.render();
+  const composer=nodes(tree).find(node=>node.type==='ChatComposer');composer.props.onChange('버릴 초안');tree=h.render();
+  h.storage.set('gakja-live-text:student:live-session:other','다른 질문 초안');
+  button(tree,'면접 종료').props.onClick();tree=h.render();await button(tree,'저장하지 않고 종료').props.onClick();await h.flush();h.render();
+  assert.equal(h.calls.filter(call=>call.body?.action==='finish'&&call.body.discardDraft===true).length,1);
+  assert.equal(h.calls.some(call=>call.body?.action==='draft'||call.body?.action==='answer'||call.upload||call.controller==='finish'),false);
+  assert.equal(h.storage.has('gakja-live-text:student:live-session:turn'),false);assert.equal(h.storage.get('gakja-live-text:student:live-session:other'),'다른 질문 초안');
+  assert.deepEqual(h.destinations,['/records/history']);assert.equal(info.turns[0].answer,'이미 보낸 답변');h.cleanup();
+});
+test('Live unsaved recording exit discards the exact attempt instead of uploading or transcribing it',async()=>{
+  const h=harness();h.render();await h.flush();let tree=emit(h,{phase:'paused',recording:{recoveryKey:'exact-discarded-attempt',blob:new Blob(['draft']),durationMs:1000}});
+  button(tree,'면접 종료').props.onClick();tree=h.render();await button(tree,'저장하지 않고 종료').props.onClick();await h.flush();h.render();
+  assert.ok(h.calls.some(call=>call.controller==='discardAnswer'));assert.ok(h.calls.some(call=>call.recovery==='removed'&&call.key==='exact-discarded-attempt'));
+  assert.equal(h.calls.some(call=>call.upload||call.body?.action==='answer_recording'||call.body?.action==='transcribe'),false);h.cleanup();
 });
 test('explicit error exit preserves the recording and explains why unfinished transcription is not a submitted answer',()=>{
   const h=harness();h.render();let tree=emit(h,{phase:'error',error:'음성을 확인하지 못했어요.'});button(tree,'면접 종료').props.onClick();tree=h.render();

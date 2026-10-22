@@ -19,6 +19,7 @@ async function query(sql:string,args:any[]){
   if(sql.startsWith('select')&&sql.includes('from interview_turns'))return turns;
   if(sql.startsWith('select'))return [];
   writes++;
+  if(sql.startsWith('update interview_turns')&&sql.includes("data=data-'draft'")){for(const turn of turns)if(turn.data.answer==null)delete turn.data.draft;return [];}
   if(sql.startsWith('update interview_sessions')){
     const value=JSON.parse(args[2]);
     session.data=sql.includes('data=$3')?value:{...session.data,...value};
@@ -47,7 +48,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync('apps/web/src/app/api/intervi
   }
 });
 function setup(extra:any={}){const now=Date.now();session={id,student_id:'owner',state:'active',data:{context:{},elapsedMs:2000,activeSince:now-5000,timerLeaseUntil:now+25000,generation:3,...extra}};report=null;turns=[];writes=0;aiAvailable=false;coachCalls=0;coachGate=undefined;deferred.length=0;}
-async function action(action:string){const r=await mod.exports.POST(new Request('http://localhost/api/interviews',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,sessionId:id})}));return {status:r.status,body:await r.json()};}
+async function action(action:string,extra:Record<string,unknown>={}){const r=await mod.exports.POST(new Request('http://localhost/api/interviews',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,sessionId:id,...extra})}));return {status:r.status,body:await r.json()};}
 test('suspend during AI processing preserves generation and in-flight answer',async()=>{
   setup({processing:'in-flight',processingAt:Date.now()});const r=await action('suspend');
   assert.equal(r.status,200);assert.equal(session.data.paused,true);assert.equal(session.data.activeSince,null);
@@ -68,6 +69,12 @@ test('finish saves the frozen duration, and later heartbeat cannot restart it',a
   setup();await action('suspend');const elapsed=session.data.elapsedMs;
   const r=await action('finish');assert.equal(r.status,200);assert.equal(session.state,'completed');assert.equal(report.data.durationSeconds,Math.floor(elapsed/1000));
   const before=writes;await action('heartbeat');assert.equal(writes,before);assert.equal(session.data.activeSince,null);
+});
+test('explicit unsaved exit clears only unanswered drafts and keeps already submitted evidence valid',async()=>{
+  setup({questionQueue:[{id:'a'},{id:'b'}]});turns=[{question_id:'a',data:{question:'첫 질문',answer:'이미 보낸 답변',draft:'과거 초안',rootQuestionId:'a',assistance_recorded:true}},{question_id:'b',data:{question:'현재 질문',answer:null,draft:'버릴 초안',rootQuestionId:'b'}}];
+  const result=await action('finish',{discardDraft:true});assert.equal(result.status,200);assert.equal(session.state,'completed');
+  assert.equal(turns[0].data.answer,'이미 보낸 답변');assert.equal(turns[0].data.draft,'과거 초안');assert.equal(turns[1].data.draft,undefined);
+  assert.equal(result.body.session.data.trainingProgress.answeredRootCount,1);assert.equal(result.body.session.data.trainingProgress.allRootsAnswered,false);
 });
 test('cancel also stops time and neither suspend nor heartbeat can modify foreign data',async()=>{
   setup();assert.equal((await action('cancel')).status,200);assert.equal(session.state,'cancelled');assert.equal(session.data.activeSince,null);

@@ -49,7 +49,9 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
  assert.ok(markup.includes('오늘 가능 2시간')&&markup.includes('준비 목표 전'));
  assert.equal(h.posts.length,0);
  assert.ok(markup.includes('href="#training-calendar"')&&markup.includes('계획과 면접 일정'),'today exposes the actual combined calendar');
- assert.ok(markup.includes('권장 25분')&&markup.includes('본질문 → 꼬리질문 → 보완 → 재답변'),'the plan exposes its actual activities and a recommended time');
+ assert.ok(markup.includes('권장 25분')&&markup.includes('내 역할 설명하기'),'the compact plan preserves its concrete task and recommended time');
+ assert.ok(!markup.includes('오늘 가능한 시간에 맞춰 순서대로 준비해요.')&&!markup.includes('새 답변과 가능한 시간이 바뀌면 우선순위를 다시 맞춰요.'),'repeated introductory explanations are omitted');
+ assert.ok(!markup.includes('본질문 → 꼬리질문 → 보완 → 재답변')&&!markup.includes(task.reason),'the overview omits repeated workflow and selection explanations');
  assert.ok(!markup.includes('aria-label="필요한 연습 직접 선택"')&&!markup.includes('직접 연습 선택'),'tools are no longer buried in a second navigation at the bottom');
 }
 // Missing availability and missing questions cannot masquerade as a completed day.
@@ -107,8 +109,8 @@ for(const kind of ['focus','review','quiz','assignment']){
 {
  const quiz={...task,id:'quiz',kind:'quiz',title:'질문 속 개념 확인하기',minutes:12},assignment={...task,id:'assignment',kind:'assignment',title:'받은 과제 마치기',minutes:15};
  const markup=harness(payload([quiz,assignment])).markup();
- assert.ok(markup.includes('퀴즈 · 권장 12분')&&markup.includes('질문·개념 확인 → 퀴즈 답변'));
- assert.ok(markup.includes('받은 과제 · 권장 15분')&&markup.includes('받은 과제 → 답변 제출'));
+ assert.ok(markup.includes('퀴즈 · 권장 12분')&&markup.includes(quiz.title));
+ assert.ok(markup.includes('받은 과제 · 권장 15분')&&markup.includes(assignment.title));
 }
 // A response to the old school cannot navigate after the student switches their target.
 {

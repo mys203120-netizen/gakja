@@ -8,6 +8,15 @@ const originalNow=Date.now,originalPut=IDBObjectStore.prototype.put;
 beforeEach(()=>{Object.assign(globalThis,{indexedDB:new IDBFactory(),IDBKeyRange});});
 afterEach(()=>{Date.now=originalNow;IDBObjectStore.prototype.put=originalPut;});
 
+test('an owning writer can explicitly discard recorded chunks while stale callbacks cannot erase a replacement',async()=>{
+  const first=await beginRecordingRecovery(scope,'audio/webm');await first.append(new Blob(['discarded']),100);
+  await first.discard();assert.equal(await readRecordingRecovery(scope),null);
+  await assert.rejects(first.append(new Blob(['late']),200));
+  const replacement=await beginRecordingRecovery(scope,'audio/webm');await replacement.append(new Blob(['keep']),100);
+  await first.discard();assert.equal(await (await readRecordingRecovery(scope))!.blob.text(),'keep');
+  await replacement.discard();
+});
+
 test('committed chunks survive independently before final stop and assemble in event order',async()=>{
   const writer=await beginRecordingRecovery(scope,'');
   await writer.append(new Blob(['first'],{type:'audio/mp4'}),240);

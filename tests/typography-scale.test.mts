@@ -6,10 +6,10 @@ import postcss from 'postcss';
 
 const sourceRoot=path.resolve('apps/web/src');
 const scale=new Map([
-  ['--font-size-caption','14px'],
-  ['--font-size-body','16px'],
-  ['--font-size-section','20px'],
-  ['--font-size-title','28px'],
+  ['--font-size-caption','13px'],
+  ['--font-size-body','15px'],
+  ['--font-size-section','18px'],
+  ['--font-size-title','24px'],
 ]);
 const sizeReferences=new Set([...scale.keys()].map(token=>`var(${token})`));
 function cssFiles(directory:string):string[]{

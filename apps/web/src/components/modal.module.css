@@ -98,7 +98,7 @@
   .backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions)>:global(.button) { width:100%; min-width:0; padding-inline:12px; }
 }
 
-.backdrop:global(.native-modal)::backdrop { background:color-mix(in srgb,var(--soft-accent-ink) 18%,transparent); }
+.backdrop:global(.native-modal)::backdrop { background:rgb(24 29 35 / 38%); }
 .backdrop:global(.native-modal) .surface:global(.modal) { padding:30px; border:0; border-radius:30px; background:var(--clarity-surface); box-shadow:var(--soft-shadow-raised); }
 .backdrop:global(.native-modal) .surface:global(.modal) .heading :global(.icon-button) { border:0; border-radius:16px; background:var(--clarity-soft); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-inset); }
 .backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions)>:global(.button) { border:0; border-radius:var(--soft-control-radius); }
@@ -108,4 +108,5 @@
 @media(max-width:700px) {
  .backdrop:global(.native-modal) { padding:16px; }
  .backdrop:global(.native-modal) .surface:global(.modal) { max-height:calc(100dvh - 32px); border-radius:20px; }
+ .backdrop:global(.native-modal) .surface:global(.modal)>:global(.inline-actions):has(>button:nth-child(3):last-child)>:global(.button.primary):last-child { grid-column:1/-1; }
 }

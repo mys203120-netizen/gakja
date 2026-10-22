@@ -57,6 +57,34 @@ test('unmount requests a preserving stop and never submits the late final record
   const capture=h.state.captures[0];h.controller.dispose();await tick();
   assert.deepEqual(capture.stopCalls,['interrupted']);assert.equal(capture.disposeCalls,0);assert.equal(h.calls('upload').length,0);assert.equal(h.calls('answer').length,0);
 });
+test('explicit discard retires the active capture without upload or an invented answer and retains submitted turns',async()=>{
+  const h=harness();h.state.info.turns.push({id:'previous',answer:'이미 보낸 답변'});
+  await h.controller.start();await h.until(()=>h.state.captures.length===1);
+  await h.controller.discardAnswer();
+  assert.equal(h.state.captures[0].disposeCalls,1);assert.deepEqual(h.state.captures[0].stopCalls,[]);
+  assert.equal(h.calls('upload').length,0);assert.equal(h.calls('answer').length,0);assert.equal(h.calls('finish').length,0);
+  assert.equal(h.controller.state.phase,'paused');assert.equal(h.controller.state.recording,undefined);
+  assert.equal(h.state.info.turns[0].answer,'이미 보낸 답변');h.controller.dispose();
+});
+test('discard waits for an upload already in flight and prevents its transcription or submission',async()=>{
+  const h=harness(),upload=deferred<string>();h.state.overrides.upload=()=>upload.promise;
+  await h.controller.start();await h.until(()=>h.state.captures.length===1);h.state.captures[0].resolve(recording());await h.until(()=>h.calls('upload').length===1);
+  const discarded=h.controller.discardAnswer();upload.resolve('already-stored-media');await discarded;
+  assert.equal(h.calls('transcribe').length,0);assert.equal(h.calls('answer').length,0);assert.equal(h.controller.state.recording,undefined);h.controller.dispose();
+});
+test('resuming after a failed finish cannot recover media acknowledged by an upload during explicit discard',async()=>{
+  const h=harness(),upload=deferred<string>();h.state.overrides.upload=()=>upload.promise;
+  await h.controller.start();await h.until(()=>h.state.captures.length===1);h.state.captures[0].resolve(recording());await h.until(()=>h.calls('upload').length===1);
+  const discard=h.controller.discardAnswer();h.state.info.media.push({id:'discarded-upload',metadata:{kind:'answer_recording',turnId:'t1',generation:7}});upload.resolve('discarded-upload');await discard;
+  await h.controller.start();await h.until(()=>h.state.captures.length===2);
+  assert.equal(h.calls('transcribe').length,0);assert.equal(h.calls('answer').length,0);assert.equal(h.calls('speak').length,2);h.controller.dispose();
+});
+test('a fresh server read after failed finish cannot revive an explicitly discarded saved-media attempt',async()=>{
+  const h=harness();h.state.info.media.push({id:'old-media',metadata:{kind:'answer_recording',turnId:'t1',generation:7}});
+  h.state.overrides.transcribe=async()=>{throw Error('전사 실패');};await h.controller.start();await h.until(()=>h.controller.state.phase==='error');
+  assert.equal(h.calls('transcribe').length,1);await h.controller.discardAnswer();await h.controller.start();await h.until(()=>h.state.captures.length===1);
+  assert.equal(h.calls('transcribe').length,1);assert.equal(h.calls('answer').length,0);h.controller.dispose();
+});
 test('a recovered device recording is bound to the exact turn and generation before explicit save',async()=>{
   const h=harness(),saved=recording({partial:true,reason:'interrupted'});
   assert.equal(h.controller.restoreRecording(saved,{...h.state.questions[0],turnId:'other-turn'},7),false);

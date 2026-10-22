@@ -21,5 +21,5 @@ test('readable report keeps human content and meaningful labels while omitting t
 test('long readable text is visibly identified and the standalone report has exactly four font sizes',()=>{
   const article=readableReportArticle('user_answers',{script:'가'.repeat(200001)});assert.match(article,/긴 글의 나머지는 전체 JSON 백업/);
   const header=readableReportHeader({name:'학생',email:'student@example.com'},'2026-10-22T00:00:00Z');
-  const sizes=new Set([...header.matchAll(/(?:font-size:|font:)(\d+)px/g)].map(match=>Number(match[1])));assert.deepEqual([...sizes].sort((a,b)=>a-b),[14,16,20,28]);
+  const sizes=new Set([...header.matchAll(/(?:font-size:|font:)(\d+)px/g)].map(match=>Number(match[1])));assert.deepEqual([...sizes].sort((a,b)=>a-b),[13,15,18,24]);
 });

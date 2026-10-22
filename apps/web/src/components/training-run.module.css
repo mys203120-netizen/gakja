@@ -3,7 +3,7 @@
  .intro{padding:24px 0 0}
  .eyebrow{display:none}
  .intro h1{font-size:var(--font-size-title);margin:0 0 14px}
- .context{border-bottom:0;font-size:var(--font-size-caption);padding:0 0 24px}
+ .context{border-bottom:0;font-size:var(--font-size-caption);padding:0 0 16px}
  .questionList{margin:28px 0 36px}
  .questionList li{padding:0;border:0;margin-bottom:24px}
  .questionList li:last-child{margin-bottom:0}
@@ -86,3 +86,5 @@
  .context>:last-child { margin-left:auto; }
  .intro { padding-top:8px; }
 }
+
+.context .contextTitle { margin:0; font-size:var(--font-size-caption); font-weight:600; line-height:1.5; }

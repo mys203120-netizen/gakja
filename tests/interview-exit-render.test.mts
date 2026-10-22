@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import {registerDraftSaver,flushPendingDrafts} from '../apps/web/src/lib/client/draft-save';
 import * as timer from '../apps/web/src/lib/interview-timer';
+import {InterviewerAvatarSignal} from '../apps/web/src/lib/client/interviewer-avatar';
 
 function harness(){
   const values:any[]=[],deps:any[]=[],cleanups:any[]=[],effects:any[]=[],storage=new Map<string,string>();
@@ -21,6 +22,8 @@ function harness(){
     module:mod,exports:mod.exports,Date,URL,crypto:{randomUUID},document,location,window:{...events('window:'),navigation:events('navigation:')},sessionStorage:{getItem:()=>null,setItem(){},removeItem(){}},localStorage:{getItem:(key:string)=>storage.get(key)??null,setItem:(key:string,value:string)=>{if(faults.storage)throw Error('storage blocked');storage.set(key,value);},removeItem:(key:string)=>storage.delete(key)},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
     fetch:async(_url:string,init:any)=>{posts.push(JSON.parse(init.body));return {ok:true};},
     require(name:string){if(name==='@/lib/client/device-storage'||name==='./client/device-storage')return {setDeviceItem:(storage:any,key:string,value:string)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:Promise.resolve(),close(){}})};if(name==='@/lib/privacy-policy')return {PRIVACY_POLICY_VERSION:'2026-10-22'};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
+      if(name==='@/lib/client/interviewer-avatar')return {InterviewerAvatarSignal};
+      if(name==='@/lib/client/interviewer-audio-output')return {InterviewerAudioOutput:class{dispose(){}}};
       if(name==='react')return react;
       if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props}),Fragment:'Fragment'};
       if(name==='next/navigation')return {useRouter:()=>({push:(url:string)=>destinations.push(url)})};
@@ -45,10 +48,18 @@ test('menu exit opens confirmation; continue keeps the session and save navigate
   let tree=h.render();assert.ok(nodes(tree).some(n=>n.type==='Modal'&&n.props.title==='면접을 종료하고 저장할까요?'));
   nodes(tree).find(n=>n.type==='button'&&n.props.children==='면접 계속하기').props.onClick();
   assert.equal(nodes(h.render()).some(n=>n.type==='Modal'),false);assert.equal(h.posts.length,0);
-  h.values[1]='미제출 테스트 초안';h.render();click(h,'http://localhost/my');tree=h.render();nodes(tree).find(n=>n.type==='button'&&n.props.children==='종료하고 저장').props.onClick();await h.flush();
+  h.values[1]='미제출 테스트 초안';h.render();click(h,'http://localhost/my');tree=h.render();nodes(tree).find(n=>n.type==='button'&&n.props.children==='저장 후 종료').props.onClick();await h.flush();
   assert.deepEqual(h.posts.map(p=>p.action),['draft','finish']);assert.equal(h.posts[0].draft,'미제출 테스트 초안');
   assert.equal(h.posts.find(p=>p.action==='finish')?.sessionId,'session');assert.deepEqual(h.destinations,['/my']);
   h.cleanup();assert.equal(h.posts.filter(p=>p.action==='suspend').length,0);
+});
+test('Chat unsaved exit removes only the current local draft and asks the server to retain submitted answers',async()=>{
+  const h=harness();h.source.turns.push({id:'earlier',answer:'이전 제출'});h.render();await h.flush();h.render();h.values[1]='버릴 초안';h.render();
+  h.storage.set('gakja-interview:fixture:session:other','다른 질문 초안');click(h,'http://localhost/my');const tree=h.render();
+  await nodes(tree).find(node=>node.type==='button'&&node.props.children==='저장하지 않고 종료').props.onClick();await h.flush();h.render();
+  assert.equal(h.posts.some(post=>post.action==='draft'||post.action==='answer'),false);assert.equal(h.posts.find(post=>post.action==='finish')?.discardDraft,true);
+  assert.equal(h.storage.has('gakja-interview:fixture:session:turn'),false);assert.equal(h.storage.get('gakja-interview:fixture:session:other'),'다른 질문 초안');
+  assert.equal(h.source.turns[0].answer,'이전 제출');assert.deepEqual(h.destinations,['/my']);h.cleanup();
 });
 test('same-page anchor stays available; hiding and unmounting suspend without finishing',async()=>{
   const h=harness();h.render();await h.flush();h.render();
@@ -67,9 +78,9 @@ test('browser back is intercepted when cancellable; refresh uses native confirma
 
 test('failed save keeps confirmation and recording blocks destructive navigation',async()=>{
   const h=harness();h.render();await h.flush();h.render();h.faults.finish=true;
-  click(h,'http://localhost/my');let tree=h.render();nodes(tree).find(n=>n.type==='button'&&n.props.children==='종료하고 저장').props.onClick();await h.flush();
+  click(h,'http://localhost/my');let tree=h.render();nodes(tree).find(n=>n.type==='button'&&n.props.children==='저장 후 종료').props.onClick();await h.flush();
   tree=h.render();assert.equal(h.destinations.length,0);assert.ok(nodes(tree).some(n=>n.type==='Modal'));assert.ok(nodes(tree).some(n=>n.type==='Alert'&&n.props.children==='저장 실패 테스트'));
-  h.values[6]=true;tree=h.render();assert.equal(nodes(tree).find(n=>n.type==='button'&&n.props.children==='종료하고 저장').props.disabled,true);h.cleanup();
+  h.values[6]=true;tree=h.render();assert.equal(nodes(tree).find(n=>n.type==='button'&&n.props.children==='저장 후 종료').props.disabled,true);h.cleanup();
 });
 
 

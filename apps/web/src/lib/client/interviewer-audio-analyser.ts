@@ -48,7 +48,11 @@ export class InterviewerAudioAnalyser{
     this.attachedStream=this.stream;
   }
   start(){
-    this.stop();if(this.disposed)return;if(!this.graph){void this.unlock().then(()=>{if(this.graph&&!this.disposed&&!this.element.paused&&!this.element.ended)this.start();});return;}
+    this.stop();if(this.disposed)return;if(!this.graph||this.graph.context.state!=='running'){
+      // Device permission dialogs and Safari audio interruptions can suspend the
+      // observer while the remote HTML stream remains audible. Resume at playback too.
+      void this.unlock().then(()=>{if(this.graph?.context.state==='running'&&!this.disposed&&!this.element.paused&&!this.element.ended)this.start();});return;
+    }
     const samples=new Float32Array(this.graph.analyser.fftSize);this.last=performance.now();
     const tick=(now:number)=>{
       if(this.disposed||!this.graph||this.element.paused||this.element.ended){this.stop();return;}

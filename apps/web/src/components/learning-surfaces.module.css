@@ -37,7 +37,7 @@
 .materialChildren a:focus-visible { outline:2px solid var(--clarity-action); outline-offset:3px; border-radius:2px; }
 .materialEntries { margin-top:8px!important; padding:0 0 20px!important; }
 .materialEntries > a > strong { font-size:var(--font-size-section)!important; font-weight:450!important; }
-.report :global(.speech-growth-view) { margin-top:26px; gap:28px; }
+.report :global(.speech-growth-view) { margin-top:8px; gap:24px; }
 .report :global(.speech-growth-section h2) { font-size:var(--font-size-section); font-weight:600; }
 .report :global(.speech-growth-section .section-heading) { margin-bottom:17px; }
 .report :global(.content-growth-question) { padding-top:10px; }
@@ -123,7 +123,7 @@
 .materialNavigation :global(.materials-nav),.materialChildren { gap:10px; border:0; }
 .materialNavigation :global(.materials-nav a),.materialChildren a { min-height:44px; padding:10px 16px; border:0; border-radius:var(--soft-control-radius); background:transparent; }
 .materialNavigation :global(.materials-nav a.active),.materialNavigation :global(.materials-nav a[aria-current=page]),.materialChildren a[aria-current=page] { border:0; background:var(--clarity-mint); color:var(--soft-accent-ink); box-shadow:var(--soft-shadow-inset); }
-.report :global(.speech-next) { margin-top:20px; padding:24px; border:0; border-radius:var(--soft-radius); background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); }
+.report :global(.speech-next) { margin-top:0; padding:20px; border:0; border-radius:var(--soft-radius); background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); }
 .report :global(.speech-next .button) { min-height:44px; border-radius:var(--soft-control-radius); }
 .materialEntries>a>strong { display:inline-flex; align-items:center; justify-content:center; min-width:36px; min-height:32px; padding:4px 11px; border-radius:999px; background:var(--soft-accent-gradient); box-shadow:var(--soft-shadow-small); color:var(--soft-accent-ink); font-size:var(--font-size-caption)!important; font-weight:650!important; font-variant-numeric:tabular-nums; }
 .knowledge :global(.knowledge-count) { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:32px; padding:5px 12px; border-radius:999px; background:var(--soft-accent-gradient); box-shadow:var(--soft-shadow-small); color:var(--soft-accent-ink); font-variant-numeric:tabular-nums; }

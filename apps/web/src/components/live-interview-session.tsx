@@ -68,6 +68,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
   const [exiting,setExiting]=useState(false);
   const [assistantRequest,setAssistantRequest]=useState({turnId:'',token:0});
   const writer=useRef<RecordingRecoveryWriter|null>(null),preparationAbort=useRef<(()=>void)|null>(null),readyOnce=useRef(false),skipReady=useRef<(()=>void)|null>(null),thinkingUntil=useRef(0),textRef=useRef(''),textRequest=useRef<{turnId:string;answer:string;requestId:string}|null>(null);
+  const activeRecovery=useRef<RecordingRecoveryWriter|null>(null),discarding=useRef(false),textDraftTimer=useRef<ReturnType<typeof setTimeout>|null>(null),textDraftQueue=useRef<Promise<unknown>>(Promise.resolve());
   const uploadedRecordings=useRef(new WeakMap<LiveAnswerRecording,{mediaId:string;turnId:string;generation:number}>());
   textRef.current=textAnswer;
   const recoveryScope=(current:Item,generation:number)=>({studentId,sessionId:`${id}:${current.turnId}:${generation}`,itemIndex:0,kind:'interview' as const});
@@ -150,7 +151,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
         if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.error||'질문 음성을 준비하지 못했어요. 다시 연결해서 계속해 주세요.');}
         const blob=await response.blob();if(signal.aborted)throw new DOMException('일시정지','AbortError');
         const player=audio.current??(audio.current=new Audio()),url=URL.createObjectURL(blob);
-        audioOutput.current??=new InterviewerAudioOutput(player,avatarSignal.current);audioOutput.current.clear();audioOutput.current.select(current.speakerId||'');
+        audioOutput.current??=new InterviewerAudioOutput(player,avatarSignal.current);audioOutput.current.clear();audioOutput.current.select(current.speakerId||'A');
         await new Promise<void>((resolve,reject)=>{
           let ended=false;
           const done=(error?:Error)=>{if(ended)return;ended=true;clearTimeout(timeout);signal.removeEventListener('abort',abort);player.onended=null;player.onerror=null;player.pause();URL.revokeObjectURL(url);error?reject(error):resolve();};
@@ -182,7 +183,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
       },
       capture(onProgress){
         if(!stream.current||!writer.current)throw new Error('마이크와 기기 임시 저장을 확인해 주세요.');
-        const recovery=writer.current;
+        const recovery=writer.current;activeRecovery.current=recovery;
         recovery.assertFresh();
         realtime.current?.startInput();
         preparationAbort.current?.();preparationAbort.current=null;
@@ -252,6 +253,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
   useEffect(()=>{if(video.current&&stream.current)video.current.srcObject=stream.current;},[phase,camera]);
   const loadedTextTurn=useRef('');
   useEffect(()=>registerDraftSaver(studentId,async()=>{
+    if(discarding.current)throw new Error('면접 종료를 마친 뒤 다시 로그아웃해 주세요.');
     const room=controller.current;
     if(!room||room.state.phase==='complete')return;
     const current=room.state.info.question;
@@ -292,16 +294,34 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     loadedTextTurn.current=turnId;setTextTurn(turnId);setTextAnswer(value);setTextStatus(value?'보관한 초안을 불러왔어요.':'');textRequest.current=null;
   },[id,studentId,question?.turnId]);
   useEffect(()=>{
-    if(phase==='complete'||!textMode||!question?.turnId||textTurn!==question.turnId||textBusy)return;
+    if(discarding.current||phase==='complete'||!textMode||!question?.turnId||textTurn!==question.turnId||textBusy)return;
     const turnId=question.turnId,key=`gakja-live-text:${studentId}:${id}:${turnId}`,draft=textAnswer;
     try{setDeviceItem(localStorage,key,draft);setTextStatus('이 기기에 초안 보관됨');}catch{setTextStatus('기기 저장을 확인하지 못했어요. 답변을 보내기 전 화면을 닫지 마세요.');}
-    const timer=setTimeout(()=>{void post('/api/interviews',{action:'draft',sessionId:id,turnId,draft}).then(()=>{if(loadedTextTurn.current===turnId&&textRef.current===draft)setTextStatus('초안 저장됨');}).catch(()=>{if(loadedTextTurn.current===turnId)setTextStatus('기기에 보관됨 · 연결 후 다시 저장해 주세요.');});},600);
+    const timer=setTimeout(()=>{if(discarding.current)return;const request=post('/api/interviews',{action:'draft',sessionId:id,turnId,draft});textDraftQueue.current=request;void request.then(()=>{if(loadedTextTurn.current===turnId&&textRef.current===draft)setTextStatus('초안 저장됨');}).catch(()=>{if(loadedTextTurn.current===turnId)setTextStatus('기기에 보관됨 · 연결 후 다시 저장해 주세요.');});},600);textDraftTimer.current=timer;
     return()=>clearTimeout(timer);
   },[id,studentId,question?.turnId,textTurn,textMode,textAnswer,textBusy,phase]);
   useEffect(()=>{if(!state.recording){setDownload('');return;}const url=URL.createObjectURL(state.recording.blob);setDownload(url);return()=>URL.revokeObjectURL(url);},[state.recording]);
   useEffect(()=>{if(phase!=='complete')return;leaving.current=true;void refresh();if(destination.current){const url=new URL(destination.current,location.href);if(url.origin===location.origin)router.push(url.pathname+url.search+url.hash);else location.assign(url.href);}},[phase]);
   useEffect(()=>{if(phase==='error'||phase==='complete')setExiting(false);},[phase]);
   const finish=()=>{if(exiting)return;setExiting(true);destination.current=leaveHref;setLeaveHref(null);setExitOpen(false);setLocalStatus('답변과 녹음 원본의 저장을 확인하고 있어요.');if(textMode){setTextBusy(true);void (async()=>{try{if(question)await post('/api/interviews',{action:'draft',sessionId:id,turnId:question.turnId,draft:textAnswer});const receipt=await post('/api/interviews',{action:'finish',sessionId:id});controller.current?.dispose();setState(previous=>({phase:'complete',info:{...previous.info,session:receipt.session||previous.info.session,report:receipt.report||previous.info.report,question:null},error:''}));}catch(cause){setExiting(false);setState(previous=>({...previous,error:(cause as Error).message}));}finally{setTextBusy(false);}})();}else{if(error)setLocalStatus('녹음 원본은 보관하고, 제출한 답변까지 면접 기록에 남겨요.');else prepareAudio();void controller.current?.finish({preserveOnly:Boolean(error)});}};
+  async function discardAndFinish(){
+    if(exiting||discarding.current)return;
+    discarding.current=true;setExiting(true);setTextBusy(true);
+    if(textDraftTimer.current)clearTimeout(textDraftTimer.current);
+    const current=question;
+    try{
+      const recording=await controller.current?.discardAnswer();
+      await textDraftQueue.current.catch(()=>{});
+      await activeRecovery.current?.discard();activeRecovery.current=null;
+      if(recording?.recoveryKey)await removeRecordingRecovery(recording.recoveryKey);
+      if(current)localStorage.removeItem(`gakja-live-text:${studentId}:${id}:${current.turnId}`);
+      const receipt=await post('/api/interviews',{action:'finish',sessionId:id,discardDraft:true});
+      textRef.current='';textRequest.current=null;setTextAnswer('');
+      destination.current=leaveHref||'/records/history';leaving.current=true;setLeaveHref(null);setExitOpen(false);
+      controller.current?.dispose();setState(previous=>({phase:'complete',info:{...previous.info,session:receipt.session||{...previous.info.session,state:'completed'},report:receipt.report||previous.info.report,question:null},error:''}));
+    }catch(cause){discarding.current=false;setExiting(false);setState(previous=>({...previous,error:(cause as Error).message}));}
+    finally{setTextBusy(false);}
+  }
   async function switchToText(){let switched=false;setTextBusy(true);try{await controller.current?.preserveAnswer();setTextMode(true);switched=true;}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}finally{setTextBusy(false);if(switched)revealTypedAnswer();}}
   async function prepareHelp(){
     const room=controller.current,current=room?.state.info.question;
@@ -343,8 +363,8 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
   }
   const hint=phase==='listening'?progress?.endingSoon?'답변을 마치셨다면 곧 다음 질문으로 넘어가요. 계속 말하면 녹음이 이어져요.':progress&&!progress.measurementAvailable?'자동 음성 감지를 사용할 수 없어요. 말한 뒤 답변 마침을 눌러 주세요.':'말을 마친 뒤 5초 동안 조용하면 자동으로 저장하고 다음 질문으로 넘어가요.':undefined;
   return <div className={ownedClassName(styles.page,true)} data-answer-mode={textMode?'text':'voice'}>
-    <Breadcrumb items={settings.trainingPlanId?[{label:'오늘 훈련',href:'/my'},{label:'답변 훈련'}]:[{label:'연습',href:'/learn'},{label:'Live 면접'}]}/>
-    <header className={ownedClassName(styles.heading,true)}><div className={ownedClassName(undefined,true)}><span className={ownedClassName(styles.eyebrow,true)}>{settings.trainingPlanId?'오늘 훈련':'모의면접'}</span><h1 className={ownedClassName(undefined,true)}>{trainingLabel}</h1><div className={ownedClassName(styles.meta,true)}><span className={ownedClassName(undefined,true)}>{targetName(info.session.supportTarget)} {info.session.supportTarget?.department}</span><span className={ownedClassName(undefined,true)}>답변 {turns.length}개 저장</span>{info.session.practiceLabel&&<span className={ownedClassName(undefined,true)}>{info.session.practiceLabel}</span>}</div>{settings.practiceScope==='personal_record'&&settings.practiceNotice&&<p className={ownedClassName(styles.note,true)}>{settings.practiceNotice}</p>}</div>{started&&phase!=='complete'&&<button className={ownedClassName("button secondary",true)} disabled={exiting} onClick={()=>{controller.current?.pause();setExitOpen(true);}}><Square size={15}/>{settings.trainingPlanId?'훈련 종료':'면접 종료'}</button>}</header>
+    {!onTrainingUpdate&&<Breadcrumb items={settings.trainingPlanId?[{label:'오늘 훈련',href:'/my'},{label:'답변 훈련'}]:[{label:'연습',href:'/learn'},{label:'Live 면접'}]}/>}
+    <header className={ownedClassName(styles.heading,true)}><div className={ownedClassName(undefined,true)}>{!onTrainingUpdate&&<h1 className={ownedClassName(undefined,true)}>{trainingLabel}</h1>}<div className={ownedClassName(styles.meta,true)}><span className={ownedClassName(undefined,true)}>{targetName(info.session.supportTarget)} {info.session.supportTarget?.department}</span><span className={ownedClassName(undefined,true)}>답변 {turns.length}개 저장</span>{info.session.practiceLabel&&<span className={ownedClassName(undefined,true)}>{info.session.practiceLabel}</span>}</div>{settings.practiceScope==='personal_record'&&settings.practiceNotice&&<p className={ownedClassName(styles.note,true)}>{settings.practiceNotice}</p>}</div>{(started||textMode)&&phase!=='complete'&&<button className={ownedClassName("button secondary",true)} disabled={exiting} onClick={()=>{controller.current?.pause();setExitOpen(true);}}><Square size={15}/>{settings.trainingPlanId?'훈련 종료':'면접 종료'}</button>}</header>
     {error&&<div className={ownedClassName(styles.error,true)} role="alert">{error}{camera&&!stream.current&&<button className={ownedClassName("button secondary",true)} disabled={!consent||preferenceBusy} onClick={()=>{void (async()=>{if(await saveRecordingSettings({liveCameraEnabled:false}))begin();})();}}>카메라 없이 계속</button>}{download&&<div className={ownedClassName(undefined,true)}><a className={ownedClassName("text-link",true)} href={download} download={`live-answer.${state.recording?.blob.type.includes('mp4')?'mp4':'webm'}`}><Download size={15}/>보관한 녹음 내려받기</a></div>}</div>}
     {localStatus&&<p className={ownedClassName(styles.note,true)} role="status">{localStatus}</p>}
     {realtimeNotice&&<p className={ownedClassName(styles.note,true)} role="status">{realtimeNotice}</p>}
@@ -353,8 +373,8 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     {countdown>0&&<div className={ownedClassName(styles.ready,true)} role="status">마이크 연결됨 · {countdown}초 뒤 답변 녹음을 시작해요.<button className={ownedClassName("button secondary",true)} onClick={()=>skipReady.current?.()}>준비 시간 건너뛰기</button><button className={ownedClassName("text-link",true)} onClick={()=>controller.current?.pause()}>잠깐 대기</button></div>}
     {exiting&&<p role="status" className={ownedClassName(styles.note,true)}>저장을 확인하는 중이에요. AI 피드백은 저장 후 정리해요.</p>}{phase==='complete'?<section className={ownedClassName(styles.complete,true)}><Check size={32}/><h2 className={ownedClassName(undefined,true)}>{diagnostic?'진단 답변을 저장했어요':'여기까지 저장했어요'}</h2><p className={ownedClassName(undefined,true)}>답변 {turns.length}개를 기록했어요. {settings.trainingProgress?.allRootsAnswered===false?'답하지 않은 질문은 미확인으로 남아요.':'저장한 답변에서 보완할 내용을 확인해 보세요.'}</p><div className={ownedClassName(styles.actions,true)}>{info.report?.id&&<Link className={ownedClassName("button primary")} href={`/records/reports/${info.report.id}`}>면접 리포트 보기</Link>}<Link className={ownedClassName("button secondary")} href={settings.trainingPlanId?"/my":"/learn"}>{settings.trainingPlanId?"오늘 훈련으로":"연습으로 돌아가기"}</Link></div></section>:<div className={ownedClassName(styles.workspace,true)}>
       <LiveInterviewerStage diagnostic={diagnostic} answerMode={textMode?'text':'voice'} avatarSignal={avatarSignal.current} people={people} speakerId={question?.speakerId} phase={phase} question={question?.prompt} questionNumber={Number(question?.rootIndex??settings.index??0)+1} questionCount={settings.questionCount} questionKind={question?.questionKind} statusText={diagnostic&&textMode?'생각나는 내용부터 적어 주세요. 답변하지 않은 질문은 미확인으로 남아요.':hint} answerSeconds={progress?progress.durationMs/1000:undefined}/>
-      {textMode&&question&&<section className={ownedClassName(styles.typedAnswer,true)} data-live-typed-answer aria-label="같은 질문에 글로 답하기"><h2 className={ownedClassName(undefined,true)}>같은 질문에 글로 답하기</h2><p className={ownedClassName(styles.note+' '+styles.typedIntro,true)}>현재 학교와 질문을 그대로 이어가요. 작성한 글은 초안으로 보관하고, 보낸 답변만 학습 기록에 남겨요.</p><ChatComposer enterToSend={appData?.preferences?.enterToSend!==false} inputId="live-text-answer" label="글 답변" value={textAnswer} onChange={value=>{textRef.current=value;setTextAnswer(value);}} onSend={()=>void submitTyped()} maxLength={12000} busy={textBusy} disabled={textBusy} sendLabel="글 답변 보내기" placeholder="나의 행동을 한 문장으로 시작해 보세요." showCount/><p className={ownedClassName(styles.note,true)} role="status">{textStatus}</p></section>}
-      <aside className={ownedClassName(styles.cameraPanel,true)} aria-label="내 면접 상태"><h2 className={ownedClassName(undefined,true)}>{textMode?'현재 답변 방식':'내 면접 화면'}</h2>{camera&&started&&!textMode&&stream.current?<video ref={video} className={ownedClassName(styles.cameraVideo,true)} autoPlay playsInline muted aria-label="내 카메라 미리보기"/>:<div className={ownedClassName(styles.cameraPlaceholder,true)}>{camera&&!textMode?<Camera size={24}/>:<Mic size={24}/>}<span className={ownedClassName(undefined,true)}>{textMode?'같은 질문에 글로 답하고 있어요.':camera?'시작하면 내 모습을 확인할 수 있어요.':'카메라 없이 목소리로 면접해요.'}</span></div>}
+      {textMode&&question&&<section className={ownedClassName(styles.typedAnswer,true)} data-live-typed-answer aria-label="같은 질문에 글로 답하기"><h2 className={ownedClassName(undefined,true)}>나의 답변</h2><ChatComposer enterToSend={appData?.preferences?.enterToSend!==false} inputId="live-text-answer" label="글 답변" value={textAnswer} onChange={value=>{textRef.current=value;setTextAnswer(value);}} onSend={()=>void submitTyped()} maxLength={12000} busy={textBusy} disabled={textBusy} sendLabel="글 답변 보내기" placeholder="나의 행동을 한 문장으로 시작해 보세요." showCount/><p className={ownedClassName(styles.note,true)} role="status">{textStatus}</p></section>}
+      <aside className={ownedClassName(styles.cameraPanel,true)} aria-label="내 면접 상태">{!textMode&&<><h2 className={ownedClassName(undefined,true)}>내 면접 화면</h2>{camera&&started&&stream.current?<video ref={video} className={ownedClassName(styles.cameraVideo,true)} autoPlay playsInline muted aria-label="내 카메라 미리보기"/>:<div className={ownedClassName(styles.cameraPlaceholder,true)}>{camera?<Camera size={24}/>:<Mic size={24}/>}<span className={ownedClassName(undefined,true)}>{camera?'시작하면 내 모습을 확인할 수 있어요.':'카메라 없이 목소리로 면접해요.'}</span></div>}</>}
         <div className={ownedClassName(styles.controls,true)}>
           <details className={ownedClassName(styles.recordingSettings,true)} open={!consent||recordingSettingsOpen} onToggle={event=>setRecordingSettingsOpen(event.currentTarget.open)}><summary className={ownedClassName(undefined,true)}><span className={ownedClassName(undefined,true)}>녹음 설정</span><span className={ownedClassName(undefined,true)}>{preferenceBusy?'저장 중':consent?'설정됨':'처음 한 번 설정'}</span></summary><div className={ownedClassName(styles.recordingSettingsBody,true)}>
             <label className={ownedClassName(styles.consent,true)}><span className={ownedClassName(undefined,true)}>음성·영상 저장과 답변 전사에 동의해요.</span><span className={ownedClassName("motion-toggle-field",true)}><input className={ownedClassName("motion-toggle-input",true)} type="checkbox" checked={consent} disabled={preferenceBusy||active} onChange={event=>void saveRecordingSettings({liveRecordingConsent:event.target.checked})}/><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></span></label>
@@ -375,6 +395,6 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
       </aside>
     </div>}
     {turns.length>0&&!(phase==='complete'&&onTrainingUpdate)&&<details className={ownedClassName(styles.history,true)}><summary className={ownedClassName(undefined,true)}>저장한 답변 {turns.length}개 보기</summary>{turns.map(turn=><article key={turn.id} className={ownedClassName(styles.historyItem,true)}><h3 className={ownedClassName(undefined,true)}>{turn.question}</h3><p className={ownedClassName(undefined,true)}>{turn.answer}</p><small className={ownedClassName(undefined,true)}>{turn.submissionSource==='recording'||turn.speechSource?'음성 답변 · 자동 전사':'글 답변'}</small></article>)}</details>}
-    {(exitOpen||leaveHref)&&<Modal title="여기까지 면접을 마칠까요?" onClose={()=>{setExitOpen(false);setLeaveHref(null);begin();}}><p className={ownedClassName(undefined,true)}>{error&&!textMode?'녹음 원본은 보관하고 제출한 답변까지 저장해요. 전사를 마치지 못한 녹음은 답변 수에 포함하지 않아요.':'진행 중인 답변과 지금까지의 기록을 저장한 뒤 면접을 마쳐요.'}</p><div className={ownedClassName('inline-actions '+styles.actions,true)}><button className={ownedClassName("button secondary",true)} onClick={()=>{setExitOpen(false);setLeaveHref(null);begin();}}>면접 계속하기</button><button className={ownedClassName('button primary '+styles.finishButton,true)} data-single-line onClick={finish}>저장 후 종료</button></div></Modal>}
+    {(exitOpen||leaveHref)&&<Modal title="면접을 마칠까요?" onClose={()=>{if(!exiting){setExitOpen(false);setLeaveHref(null);if(!textMode)begin();}}}><p className={ownedClassName(undefined,true)}>{error&&!textMode?'녹음 원본은 보관하고 제출한 답변까지 저장해요. 전사를 마치지 못한 녹음은 답변 수에 포함하지 않아요.':'보낸 답변은 남아요. 작성 중인 답변과 녹음은 저장하거나 버릴 수 있어요.'}</p>{error&&<p role="alert">{error}</p>}<div className={ownedClassName('inline-actions '+styles.actions,true)}><button className={ownedClassName("button secondary",true)} disabled={exiting} onClick={()=>{setExitOpen(false);setLeaveHref(null);if(!textMode)begin();}}>면접 계속하기</button><button className={ownedClassName("button secondary",true)} disabled={exiting} onClick={()=>void discardAndFinish()}>저장하지 않고 종료</button><button className={ownedClassName('button primary '+styles.finishButton,true)} disabled={exiting} data-single-line onClick={finish}>저장 후 종료</button></div></Modal>}
   </div>;
 }
