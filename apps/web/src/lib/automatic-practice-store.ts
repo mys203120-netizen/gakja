@@ -62,14 +62,15 @@ export async function synchronizeAutomaticPractice(studentId:string,context:Cont
     await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+studentId]);
     const registered=(await db.query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null for share",[studentId])).rows;
     if(registered.length!==context.schoolTargets.length||registered.some(row=>!context.schoolTargets.some(saved=>saved.id===row.id&&knowledgeTargetKey(saved.data)===knowledgeTargetKey(row.data))))return [];
-    const rows=(await db.query("select *,to_char(planned_date,'YYYY-MM-DD') as date from student_plans where student_id=$1 and planned_date>=$2::date and planned_date<$3::date order by created_at desc,id for update",[studentId,today,shiftPlanDay(today,7)])).rows;
+    const rows=(await db.query("select *,to_char(planned_date,'YYYY-MM-DD') as date from student_plans where student_id=$1 and ((planned_date>=$2::date and planned_date<$3::date) or (target->'calendarPlacement'->>'operationId' is not null and planned_date>=$2::date)) order by created_at desc,id for update",[studentId,today,shiftPlanDay(today,7)])).rows;
     const events=context.events;
     const currentPreferences=(await db.query("select jsonb_build_object('trainingAvailability',data->'trainingAvailability','automaticPractice',data->'automaticPractice') as data from student_preferences where student_id=$1",[studentId])).rows[0]?.data||{};
     // A concurrent availability save must not be followed by the legacy 20-minute fallback.
     if(normalizeTrainingAvailability(currentPreferences.trainingAvailability))return [];
     const preferences=currentPreferences.automaticPractice||{};
     const fresh={...context,events},decorated:Value[]=rows.map(row=>presentPlan(row,fresh));
-    const fixed=decorated.filter(plan=>!plan.target?.automaticPractice||plan.completed||plan.performedAt);
+    const fixed=decorated.filter(plan=>!plan.target?.automaticPractice||plan.completed||plan.performedAt||plan.target?.calendarPlacement?.operationId);
+    const deferredKeys=new Set(fixed.filter(plan=>plan.target?.calendarPlacement?.operationId&&plan.target.calendarPlacement.originalDate!==plan.date).map(plan=>planKey({...plan,date:plan.target.calendarPlacement.originalDate})));
     const configs=context.schoolTargets.flatMap(school=>{
       const current={...school.data,id:school.id};
       const configured=preferences[school.id];
@@ -88,7 +89,7 @@ export async function synchronizeAutomaticPractice(studentId:string,context:Cont
       const active=configs.filter(config=>config.drafts.some(plan=>plan.date===date));
       const cap=active.length?Math.max(...active.map(config=>config.minutes)):0;
       let slots=Math.max(0,Math.floor((cap-fixed.filter(plan=>plan.date===date).reduce((sum,plan)=>sum+Number(plan.target?.automaticPractice?.minutes||10),0))/10));
-      const queues=active.map(config=>config.drafts.filter(plan=>plan.date===date&&!fixed.some(existing=>planKey(existing)===planKey(plan))).map(plan=>({...plan,config})));
+      const queues=active.map(config=>config.drafts.filter(plan=>plan.date===date&&!deferredKeys.has(planKey(plan))&&!fixed.some(existing=>planKey(existing)===planKey(plan))).map(plan=>({...plan,config})));
       // A full daily workload is shared across schools, not multiplied by their count.
       while(slots>0&&queues.some(queue=>queue.length))for(const queue of queues){if(!slots)break;const next=queue.shift();if(next){desired.push(next);slots--;}}
     }
@@ -104,7 +105,7 @@ export async function synchronizeAutomaticPractice(studentId:string,context:Cont
       const saved=(await db.query('insert into student_plans(student_id,title,planned_date,kind,target) values($1,$2,$3,$4,$5) returning id',[studentId,plan.title,plan.date,plan.kind,JSON.stringify({...plan.target,automaticPractice})])).rows[0];used.add(saved.id);
     }
     for(const plan of decorated){
-      if(!plan.target?.automaticPractice||plan.completed||plan.performedAt||used.has(plan.id)||plan.target.automaticPractice.status==='superseded')continue;
+      if(!plan.target?.automaticPractice||plan.completed||plan.performedAt||plan.target?.calendarPlacement?.operationId||used.has(plan.id)||plan.target.automaticPractice.status==='superseded')continue;
       await db.query("update student_plans set target=jsonb_set(target,'{automaticPractice}',(target->'automaticPractice')||$3::jsonb),revision=revision+1,updated_at=now() where id=$1 and student_id=$2",[plan.id,studentId,JSON.stringify({status:'superseded',supersededAt:new Date().toISOString(),reason:'남은 날짜·실제 연습·하루 시간에 맞춰 새 계획으로 조정했어요.'})]);
     }
     return configs.map(config=>({targetId:config.school.id,enabled:config.enabled,date:config.deadline.date,dateSource:config.deadline.source,dateLabel:config.deadline.label,daysLeft:config.days,phase:practicePhase(config.days),phaseLabel:practicePhaseLabels[practicePhase(config.days)],dailyMinutes:config.minutes,status:!config.enabled?'paused':config.days<0?'passed':config.days===0?'today':config.days>180?'far_future':'ready',plannedToday:desired.filter(plan=>plan.date===today&&plan.target.targetId===config.school.id).length}));

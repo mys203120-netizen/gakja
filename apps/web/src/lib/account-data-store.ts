@@ -142,6 +142,11 @@ export async function moveAccountDataToTrash(db:PoolClient,user:Profile,picks:Da
   await lockData(db,user.id);const meta=await dataMetadata(db),receipts:AccountDataReceipt[]=[];
   // Validate every requested owner before changing a single row. Overlapping selections are folded into their parent snapshot.
   for(const pick of picks){const [owned]=(await db.query(`select id from ${tableSql(meta,DATA_TABLES[pick.type])} where id::text=$1 and student_id=$2`,[pick.id,user.id])).rows;if(!owned)throw new ApiError(404,'정리할 자료를 찾을 수 없어요. 목록을 새로 불러와 주세요.');}
+  // Proposal results are a transient retry cache, not a second copy of trashed
+  // text. Clear it under the preference row lock before locking the data graph.
+  // Existing cards/drafts remain in the reversible trash snapshot; a pending
+  // generator loses its reservation and cannot write its late result back.
+  await db.query("update student_preferences set data=data-'thoughtWritingReceipts',updated_at=now() where student_id=$1 and data ? 'thoughtWritingReceipts'",[user.id]);
   const priority=(pick:DataPick)=>({school:0,interview:1,quiz:1,thread:1,experience:1,study:1,report:2,assignment:3} as Record<string,number>)[pick.type]??4;
   for(const pick of [...picks].sort((a,b)=>priority(a)-priority(b))){
     const table=DATA_TABLES[pick.type],snapshot=await graphSnapshot(db,meta,user.id,table,pick.id);if(!snapshot)continue;

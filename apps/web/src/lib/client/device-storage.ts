@@ -9,6 +9,8 @@ const lockName=(userId:string)=>`gakja:private-device-data:${userId}`;
 const generation=(userId:string)=>{try{return window.localStorage.getItem(generationKey(userId))||'initial';}catch{return null;}};
 export function deviceStorageOwner(key:string){for(const family of families){const prefix=family+':';if(key.startsWith(prefix))return key.slice(prefix.length).split(':')[0]||null;}return null;}
 export class DeviceDataClearedError extends Error{constructor(){super('이 기기의 자료가 정리됐어요. 새로고침한 뒤 이어서 작성해 주세요.');this.name='DeviceDataClearedError';}}
+/** Async UI proposals must not restore cleared text through a late apply. */
+export function assertDeviceDocumentCurrent(userId:string){const scope=scopes.get(userId);if(scope&&typeof window!=='undefined'&&scope.generation!==null){const current=generation(userId);if(current!==null&&scope.generation!==current)throw new DeviceDataClearedError();}}
 export function setDeviceItem(storage:Pick<Storage,'setItem'>,key:string,value:string){
   const owner=deviceStorageOwner(key),scope=owner?scopes.get(owner):null;
   if(scope&&typeof window!=='undefined'&&scope.generation!==null){const current=generation(scope.userId);if(current!==null&&scope.generation!==current)throw new DeviceDataClearedError();}

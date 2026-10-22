@@ -119,9 +119,28 @@ async function saveSchoolSelection(client:Pick<PoolClient,'query'>,studentId:str
 export async function registerStudentSchool(studentId: string, raw: unknown) {
   const input=schoolRegistrationSchema.parse(raw);
   const firstRegistration=!input.calendarReview&&(await query("select id from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null limit 1",[studentId])).length===0;
-  const prepared=await prepareSchoolRegistration(input,firstRegistration),{data,reference,calendarRegistration}=prepared;
+  const prepared=await prepareSchoolRegistration(input,firstRegistration);
   return transaction(async client => {
     await client.query('select pg_advisory_xact_lock(hashtext($1))',[`school-register:${studentId}`]);
+    return persistSchoolRegistration(client,studentId,prepared);
+  });
+}
+/** Validate every reviewed selection before committing any of the batch. The
+ * same student lock and canonical identity check make a lost-response retry safe. */
+export async function registerStudentSchools(studentId:string,raw:unknown) {
+  const {registrations}=z.object({registrations:z.array(schoolRegistrationSchema).min(1).max(20)}).parse(raw);
+  const prepared:PreparedSchoolRegistration[]=[];
+  for(const input of registrations)prepared.push(await prepareSchoolRegistration(input,true));
+  if(prepared.some((item,index)=>prepared.slice(0,index).some(previous=>sameSchoolRegistrationTarget(previous.data,item.data))))throw new ApiError(400,'같은 학교·학과·전형이 중복됐어요. 선택한 지원 정보를 확인해 주세요.');
+  return transaction(async client=>{
+    await client.query('select pg_advisory_xact_lock(hashtext($1))',[`school-register:${studentId}`]);
+    const targets=[];
+    for(const item of prepared)targets.push(await persistSchoolRegistration(client,studentId,item));
+    return targets;
+  });
+}
+async function persistSchoolRegistration(client:PoolClient,studentId:string,prepared:PreparedSchoolRegistration) {
+    const {input,data,reference,calendarRegistration}=prepared;
     const ownedTargets = await client.query("select id,data from support_targets where student_id=$1 and coalesce(data->>'admission_year',data->>'year')=$2 order by (nullif(data->>'archived_at','') is not null),created_at,id for update",[studentId,String(input.admissionYear)]);
     const existing={rows:ownedTargets.rows.filter(row=>sameSchoolRegistrationTarget(row.data,data)).slice(0,1)};
     let result = existing.rows[0] || (await client.query('insert into support_targets(id,student_id,data) values($1,$2,$3) returning id,data',[`target_${randomUUID()}`,studentId,JSON.stringify(data)])).rows[0];
@@ -136,7 +155,6 @@ export async function registerStudentSchool(studentId: string, raw: unknown) {
     if(restoring)await client.query("insert into audit_logs(actor_id,student_id,action,data) values($1,$1,'school.self_restore',$2)",[studentId,JSON.stringify({targetId:result.id})]);
     if(calendarRegistration&&existing.rows[0]?.data?.admission_calendar_registration?.fingerprint!==calendarRegistration.fingerprint)await client.query("insert into audit_logs(actor_id,student_id,action,data) values($1,$1,'school.calendar_register',$2)",[studentId,JSON.stringify({targetId:result.id,status:calendarRegistration.status,fingerprint:calendarRegistration.fingerprint,admissionYear:input.admissionYear})]);
     return registrationView(result,prepared);
-  });
 }
 const schoolTargetIdSchema=z.object({targetId:z.string().trim().min(1).max(200)});
 export async function updateStudentSchool(studentId:string,raw:unknown) {

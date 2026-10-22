@@ -40,3 +40,20 @@
 .reflection textarea { padding:16px; font-size:var(--font-size-body); border:0; border-radius:var(--soft-control-radius); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 .detailLinks :is(a,button),.thoughtActions :is(a,button),.nextActions :is(a,button) { min-height:44px; border-radius:var(--soft-control-radius); }
 @media(max-width:767px) { .reflectionBody,.nextBody { padding:16px; }.list { gap:30px; } }
+
+/* Override the shared reader's 70ch excerpt limit for this full-width feed. */
+.news.news { width:100%; max-width:none; }
+.news.news .list { width:100%; gap:24px; }
+.news.news .article { grid-template-columns:140px minmax(0,1fr); gap:8px 24px; padding:0 0 24px; }
+.news.news .article h2,.news.news .article h2 a { max-width:none; width:100%; }
+.news.news .article p { display:block; max-width:none; width:100%; overflow:visible; -webkit-line-clamp:unset; white-space:normal; font-size:var(--font-size-body); line-height:1.8; }
+.detail.detail { width:100%; max-width:none; }
+.detail.detail .readerTitle { margin:0 0 14px; font-size:var(--font-size-title); line-height:1.55; font-weight:600; overflow-wrap:anywhere; }
+.reader { margin:24px 0 18px; padding:22px 24px; border-radius:var(--soft-control-radius); background:var(--clarity-surface); }
+.reader .lead { max-width:none; margin:0; color:var(--clarity-ink); font-size:var(--font-size-body); line-height:1.9; }
+.reader .readerNotice { margin:14px 0 0; color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.6; }
+@media(max-width:800px) {
+ .news.news .article { grid-template-columns:minmax(0,1fr); gap:8px; }
+ .news.news .article p { font-size:var(--font-size-body); }
+ .reader { padding:18px 16px; }
+}

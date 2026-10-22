@@ -30,6 +30,7 @@ vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,Set,JSO
  if(name==='./interview')return{InterviewSetup:'InterviewSetup',InterviewSession:'InterviewSession'};
  if(name==='./chat-composer')return{ChatComposer:'ChatComposer'};
  if(name==='./chat-history')return{ChatHistory:'ChatHistory'};
+ if(name==='./thought-writing')return{ThoughtWriting:'ThoughtWriting'};
  if(name==='@/lib/assistant-stream-model')return streamModule.exports;
  if(name==='@/lib/assistant-delta-buffer')return deltaModule.exports;
  if(name==='@/lib/client/draft-save')return{registerDraftSaver(userId,save){const savers=draftSavers.get(userId)||new Set();savers.add(save);draftSavers.set(userId,savers);return()=>savers.delete(save);}};
@@ -88,7 +89,7 @@ const commonValues=[];commonValues[9]=commonKey;commonValues[11]=state.previewRe
 tree=render({params:'questionId=common_motivation&targetId=school-owned',data:{...currentData,package:null},values:commonValues});
 check(!nodes(tree).find(node=>node.type==='ChatComposer').props.disabled,'a loaded common question enables the composer without personal content publication');
 check(nodes(tree).some(node=>node.type==='h2'&&node.props.children===common.prompt),'the same common question is visible before writing');
-const onward=nodes(tree).find(node=>node.type==='PageTitle').props.aside.props.href;
+const onward=nodes(tree).find(node=>node.type==='Link'&&node.props.href?.startsWith('/interview/new?')).props.href;
 const onwardQuery=new URL(onward,'http://local').searchParams;
 check(onwardQuery.get('questionId')===common.id&&onwardQuery.get('targetId')==='school-owned'&&onwardQuery.get('sourceVersion')==='1'&&onwardQuery.get('count')==='1','continuing into an interview preserves question, school, revision and one-question practice');
 nodes(tree).find(node=>node.type==='button'&&node.props.children==='질문 근거').props.onClick();

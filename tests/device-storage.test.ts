@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {afterEach,test} from 'node:test';
-import {DeviceDataClearedError,markDeviceStorageCleared,openDeviceDocumentScope,setDeviceItem,withDeviceCleanupLock} from '../apps/web/src/lib/client/device-storage.ts';
+import {assertDeviceDocumentCurrent,DeviceDataClearedError,markDeviceStorageCleared,openDeviceDocumentScope,setDeviceItem,withDeviceCleanupLock} from '../apps/web/src/lib/client/device-storage.ts';
 
 const originalWindow=Object.getOwnPropertyDescriptor(globalThis,'window');
 afterEach(()=>{if(originalWindow)Object.defineProperty(globalThis,'window',originalWindow);else Reflect.deleteProperty(globalThis,'window');});
@@ -26,8 +26,10 @@ test('another open authenticated document blocks cleanup without deleting text; 
 test('cleanup generation refuses stale autosave and pagehide writes until a new document is mounted',async()=>{
   const {storage}=fixture(),locks=new BrowserLocks(),scope=openDeviceDocumentScope('generation-test',locks as any);await scope.ready;
   setDeviceItem(storage,'gakja-draft:generation-test:q','before');
+  assert.doesNotThrow(()=>assertDeviceDocumentCurrent('generation-test'));
   await withDeviceCleanupLock('generation-test',async()=>markDeviceStorageCleared('generation-test'));
   assert.throws(()=>setDeviceItem(storage,'gakja-draft:generation-test:q','old pagehide draft'),DeviceDataClearedError);
+  assert.throws(()=>assertDeviceDocumentCurrent('generation-test'),DeviceDataClearedError);
   assert.equal(storage.getItem('gakja-draft:generation-test:q'),'before');
   setDeviceItem(storage,'gakja-draft:other-user:q','other unchanged scope');
   scope.close();const reloaded=openDeviceDocumentScope('generation-test',locks as any);await reloaded.ready;setDeviceItem(storage,'gakja-draft:generation-test:q','fresh document');assert.equal(storage.getItem('gakja-draft:generation-test:q'),'fresh document');reloaded.close();

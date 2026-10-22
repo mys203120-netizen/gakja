@@ -87,7 +87,7 @@ export async function getHybridTraining(studentId:string,targetId?:string|null,t
     const targets=context.schoolTargets.map(school=>{const support=interviewSupportForTarget(school.data);return {...school.data,id:school.id,interviewSupported:support.supported,interviewSupportReason:support.reason};});
     const settings=Object.fromEntries(context.schoolTargets.flatMap(school=>{const value=preferences.automaticPractice?.[school.id];return value?.targetSnapshot&&recordMatchesCurrentTarget({targetId:school.id,targetSnapshot:value.targetSnapshot},[{...school.data,id:school.id}])?[[school.id,value]]:[];}));
     const deadlines=hybridDeadlines({today,targets,schedules:calendar.interviewSchedules,coverage:calendar.interviewScheduleCoverage.targets,availability,settings});
-    const rows=(await db.query(`select ${columns} from student_plans where student_id=$1 and planned_date>=$2 and planned_date<$3 order by planned_date,created_at,id for update`,[studentId,today,shiftPlanDay(today,7)])).rows;
+    const rows=(await db.query(`select ${columns} from student_plans where student_id=$1 and ((planned_date>=$2 and planned_date<$3) or (target->'calendarPlacement'->>'operationId' is not null and planned_date>=$2)) order by planned_date,created_at,id for update`,[studentId,today,shiftPlanDay(today,7)])).rows;
     const practiceCompletions=await trainingPracticeCompletions(studentId,rows,db);
     const tasks=rows.map(row=>presentTask(row,fresh,today,completedSessions,practiceCompletions));
     const decorated=rows.map((row,index)=>({...row,performedAt:tasks[index].performedAt}));
@@ -103,7 +103,9 @@ export async function getHybridTraining(studentId:string,targetId?:string|null,t
       diagnostic.activeFocusCategories=(diagnostic.focusCategories||[]).filter((category:string)=>activeSelections.has('category:'+category));
     }
     const activeDeadlines=deadlines.filter(deadline=>settings[deadline.targetId]?.enabled!==false);
-    const days=hybridTrainingDays({today,availability,deadlines:activeDeadlines,questions,assignments,diagnostics,fixedTasks:tasks.filter(task=>fixedIds.has(task.id))});
+    // Moving a generated task preserves its original identity; do not recreate or count it on its old day.
+    const deferredTaskKeys=rows.filter(row=>row.target?.calendarPlacement?.operationId&&row.target.calendarPlacement.originalDate!==row.date).map(row=>autoOf(row)?.hybrid?.key).filter(Boolean);
+    const days=hybridTrainingDays({today,availability,deadlines:activeDeadlines,questions,assignments,diagnostics,fixedTasks:tasks.filter(task=>fixedIds.has(task.id)),deferredTaskKeys});
     if(availability){
       const used=new Set<string>();
       for(const day of days)for(let index=0;index<day.tasks.length;index++){

@@ -2,6 +2,7 @@
 .tabs button { display:inline-flex; align-items:center; gap:5px; min-height:40px; background:transparent; border:0; padding:8px 10px; color:var(--clarity-muted); font-size:var(--font-size-caption); border-radius:10px; }
 .tabs button[aria-pressed=true] { background:var(--clarity-soft); color:var(--clarity-ink); }
 .list { display:flex; flex-direction:column; gap:3px; }
+.historyChoice { margin:16px 0 12px; }
 .row { position:relative; display:flex; align-items:center; gap:4px; min-width:0; border-radius:10px; color:var(--clarity-muted); }
 .row:hover { background:var(--clarity-surface); }
 .row>a { display:block!important; flex:1; min-width:0!important; padding:12px 8px!important; font-size:var(--font-size-caption)!important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:none!important; color:inherit; }

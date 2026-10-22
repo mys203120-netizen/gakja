@@ -76,6 +76,7 @@ function loadComponent(name) {
     if (id === 'next/navigation') return { useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push() {} }) };
     if(id==='./use-record-pages')return {useRecordPages:kind=>({items:kind==='interviews'?[previous,own,completed,cancelled]:[],page:{hasMore:false},loading:false,error:'',more(){}}),useRecordDetail:()=>({item:null,loading:false,error:''})};
     if (id === './app-shell') return { useApp: () => app };
+    if (id === './sliding-choice') return {MotionSwitch:'MotionSwitch',SlidingChoice:'SlidingChoice'};
     if (id === './shared') return shared;
     if (id === 'lucide-react') return new Proxy({}, { get: (_, key) => String(key) });
     if (id.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
@@ -142,7 +143,7 @@ tree = render(() => history.ChatHistory({ threads, onChange() {} }), []);
 check(nodes(tree).some(node => node.type === 'Link' && node.props.href === '/on/thread-own' && text(node) === threads[0].title), 'actual chat history opens metadata-only threads');
 let menu = openedHistoryMenu(tree);
 check(nodes(menu).some(node => node.type === 'button' && text(node).includes('이름 바꾸기')) && nodes(menu).some(node => node.type === 'button' && text(node).includes('보관')) && nodes(menu).some(node => node.type === 'button' && text(node).includes('삭제')), 'rename, archive and delete controls remain available with summary records');
-nodes(tree).find(node => node.type === 'button' && text(node).includes('보관함')).props.onClick();
+nodes(tree).find(node => node.type === 'SlidingChoice').props.onChange('archived');
 render(() => history.ChatHistory({ threads, onChange() {} }));
 await Promise.all(queuedEffects.map(callback => callback()));
 await new Promise(resolve => setImmediate(resolve));

@@ -13,6 +13,7 @@ import { getQuizHelpContext, recordQuizHelp } from '@/lib/quiz-assistance';
 import { assertPublishedAccess, coach, coachStream, FeatureError, featureError, getLearningContext, openai, requireStudent, type LearningContext } from '@/lib/ai';
 import { chatAttachmentInputs, chatAttachmentView, type ChatAttachmentRow } from '@/lib/chat-attachments';
 import { interviewAnswerEvidence } from '@/lib/interview-answer-evidence';
+import {ownedWritingReceipt} from '@/lib/thought-writing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ const id = z.string().min(1).max(160);
 const postSchema = z.object({
   message: z.string().trim().max(6000).default(''), threadId: z.string().uuid().optional(), targetId: id.nullish(), activityId: id.nullish(), questionId: id.nullish(), briefingId: z.string().uuid().nullish(),
   quizSessionId:z.string().uuid().optional(),quizItemIndex:z.number().int().min(0).max(10000).optional(),interviewSessionId:z.string().uuid().optional(),interviewTurnId:z.string().uuid().optional(),assignmentId:z.string().uuid().optional(),assignmentItemId:id.optional(),
-  sourceType:z.enum(['personal','common']).optional(),sourceVersion: z.number().int().positive().max(100000).optional(), requestId: z.string().min(8).max(100).optional(), stream: z.boolean().optional(), attachmentIds: z.array(z.string().uuid()).max(3).default([]),
+  sourceType:z.enum(['personal','common']).optional(),sourceVersion: z.number().int().positive().max(100000).optional(), requestId: z.string().min(8).max(100).optional(),writingRequestId:z.string().uuid().optional(), stream: z.boolean().optional(), attachmentIds: z.array(z.string().uuid()).max(3).default([]),
 }).refine(input => Boolean(input.message || input.attachmentIds.length), { path: ['message'] });
 const patchSchema = z.object({ threadId: z.string().uuid(), action: z.enum(['rename', 'archive', 'restore', 'delete']), title: z.string().trim().min(1).max(100).optional() });
 function json(value: unknown, status = 200) { return Response.json(value, { status, headers: { 'Cache-Control': 'private, no-store' } }); }
@@ -148,6 +149,7 @@ export async function POST(request: Request) {
       if (duplicate.rows.length && (JSON.stringify(duplicate.rows.find(message=>message.role==='assistant')?.data?.quizHelp || null)!==JSON.stringify(quizHelp || null)||JSON.stringify(duplicate.rows.find(message=>message.role==='assistant')?.data?.assignmentHelp || null)!==JSON.stringify(input.assignmentId?{assignmentId:input.assignmentId,itemId:input.assignmentItemId}:null)))throw new FeatureError(409,'같은 요청의 학습 시도를 유지해 주세요.','HELP_CONTEXT_MISMATCH');
       if (duplicate.rows.length && JSON.stringify(duplicate.rows.find(message=>message.role==='assistant')?.data?.interviewHelp || null)!==JSON.stringify(interviewHelp || null)) throw new FeatureError(409,'같은 요청의 면접 질문을 유지해 주세요.','HELP_CONTEXT_MISMATCH');
       if (duplicate.rows.length) return { duplicate: true, userMessage: duplicate.rows.find(message => message.role === 'user'), assistant: duplicate.rows.find(message => message.role === 'assistant'), history: [], attachmentRows: [] as ChatAttachmentRow[],studentAnswerEvidence:undefined };
+      const writingHelp=input.writingRequestId?await ownedWritingReceipt(user.id,input.writingRequestId,context):undefined;
       const answerEvidence=interviewHelp?interviewAnswerEvidence(currentInterviewTurn!,interviewHelp):input.threadId?await savedThreadInterviewEvidence(client,user.id,thread.id,context):undefined;
       if(interviewHelp&&!answerEvidence)throw new FeatureError(409,'현재 면접 답변을 다시 확인해 주세요.','HELP_CONTEXT_MISMATCH');
       const active = await client.query("select id from chat_messages where thread_id=$1 and student_id=$2 and status='pending'", [thread.id, user.id]);
@@ -160,7 +162,7 @@ export async function POST(request: Request) {
       const attachmentRows = [...selected.rows, ...previousAttachments.rows.filter(row => !input.attachmentIds.includes(row.id))].slice(0, 3);
       if (attachmentRows.filter(row => row.kind === 'text').reduce((sum, row) => sum + (row.extracted_text?.length || 0), 0) > 160000) throw new FeatureError(413, '한 요청의 첨부 텍스트는 16만 자까지 읽을 수 있어요.', 'ATTACHMENT_CONTEXT_TOO_LONG');
       const views = selected.rows.map(chatAttachmentView);
-      const sent = await client.query("insert into chat_messages(thread_id,student_id,role,content,request_id,status,data) values($1,$2,'user',$3,$4,'completed',$5) returning *", [thread.id, user.id, content, requestId, JSON.stringify({ attachments: views, ...(interviewHelp?{interviewHelp}:{}),...(answerEvidence?{studentAnswerEvidence:answerEvidence}:{}) })]);
+      const sent = await client.query("insert into chat_messages(thread_id,student_id,role,content,request_id,status,data) values($1,$2,'user',$3,$4,'completed',$5) returning *", [thread.id, user.id, content, requestId, JSON.stringify({ attachments: views, ...(interviewHelp?{interviewHelp}:{}),...(answerEvidence?{studentAnswerEvidence:answerEvidence}:{}),...(writingHelp?{writingHelp}:{}) })]);
       if (selected.rows.length) await client.query('update chat_attachments set thread_id=$1,message_id=$2 where id=any($3::uuid[]) and student_id=$4 and message_id is null', [thread.id, sent.rows[0].id, input.attachmentIds, user.id]);
       const pending = await client.query("insert into chat_messages(thread_id,student_id,role,content,request_id,status,data) values($1,$2,'assistant','',$3,'pending',$4) returning *", [thread.id, user.id, requestId,JSON.stringify({... (interviewHelp?{interviewHelp}:{}),...(quizHelp?{quizHelp}:{}),...(input.assignmentId?{assignmentHelp:{assignmentId:input.assignmentId,itemId:input.assignmentItemId}}:{})})]);
       await client.query('update chat_threads set updated_at=now() where id=$1 and student_id=$2', [thread.id, user.id]);

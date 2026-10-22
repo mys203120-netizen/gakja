@@ -91,6 +91,8 @@ const attachment = load('apps/web/src/lib/chat-attachments.ts', { '@/lib/auth': 
 // help is covered separately; fail closed if an unscoped fixture reaches it.
 const unexpectedHelp = name => () => { throw new Error(`Unexpected learning-help dependency in ordinary chat fixture: ${name}`); };
 const helpModules = {
+  '@/lib/student-records':{getStudentRecords:unexpectedHelp('getStudentRecords')},
+  '@/lib/thought-writing': {ownedWritingReceipt:unexpectedHelp('ownedWritingReceipt')},
   '@gakja/content-contracts': { learningTargetIdentityMatches: unexpectedHelp('learningTargetIdentityMatches') },
   '@/lib/school-quiz': { schoolQuizTargetIdentity: unexpectedHelp('schoolQuizTargetIdentity') },
   '@/lib/interview-assistance': Object.fromEntries(['ownedInterviewHelpScope', 'ownedInterviewChatContext', 'assertInterviewHelpContext', 'recordInterviewHelp', 'settleInterviewHelp', 'lockInterviewHelpScope'].map(name => [name, unexpectedHelp(name)])),

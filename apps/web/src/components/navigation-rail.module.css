@@ -48,7 +48,7 @@
 .sectionNavigation>a:hover { color:var(--clarity-ink); }
 .sectionNavigation>a:focus-visible { outline:2px solid var(--clarity-green); outline-offset:-2px; }
 .sectionNavigation>.factLink { margin-left:auto; font-size:var(--font-size-caption); }
-.practiceHome { max-width:1130px; }
+.practiceHome { max-width:1120px; margin-inline:auto; }
 .practiceHome header>p { margin:0 0 8px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
 .practiceHome :global(.page-title) { margin:0 0 16px; }
 .practiceHome h1 { margin:0; font-size:var(--font-size-title); line-height:1.35; font-weight:650; }

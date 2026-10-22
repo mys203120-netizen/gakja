@@ -151,7 +151,7 @@ for(const kind of ['focus','review','quiz','assignment']){
  const questionRow=value.readiness.items[1];questionRow.id='question:practiced';
  markup=h.markup();assert.ok(markup.includes('href="/records/comparisons?activityId=question%3Apracticed&amp;targetId=a"'),'question card action keeps the exact question and selected school');
  assert.ok(!markup.includes('href="/records/comparisons/question"'),'unscoped question history is not a prominent action or a misleading source link');
- value.needsAvailability=true;assert.ok(h.markup().includes('학습 가능 시간을 설정해요.'));
+ value.needsAvailability=true;assert.ok(h.markup().includes('학습 시간 설정'));
 }
 console.log('Training hub passed: real period labels, capacity, missing data, manual tasks, server start/complete, stale school guards and unified activity evidence.');
 

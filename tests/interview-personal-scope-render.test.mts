@@ -23,6 +23,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync('apps/web/src/components/inte
     if(name==='./app-shell')return {useApp:()=>app};
     if(name==='./learning-help')return {LearningHelp:'LearningHelp'};
     if(name==='./question-experience-picker')return {QuestionExperiencePicker:'QuestionExperiencePicker'};
+    if(name==='./sliding-choice')return {MotionSwitch:'MotionSwitch'};
     if(name==='./shared')return {api:async(url:string,options:any)=>{calls.push({url,body:JSON.parse(options.body)});return {session:{id:'new-session'}};},ActionButton:'ActionButton',PageTitle:'PageTitle',Breadcrumb:'Breadcrumb',Alert:'Alert',targetName:(value:any)=>value.university};
     if(name==='@/lib/interview-flow')return flow;
     if(name==='@/lib/school-interview-scope')return scope;

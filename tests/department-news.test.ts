@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
-import { cleanNewsText, feedArticleURL, majorNewsConnection, majorNewsTopic, matchingNewsKeywords, newsPracticeQuestion, newsPublishedAt, parseNewsFeed, parsePublisherFeed, filterNewsTopic, type NewsTopic } from '../apps/web/src/lib/department-news-model.ts';
+import { balanceNewsPublishers, cleanNewsText, feedArticleURL, majorNewsConnection, majorNewsTopic, matchingNewsKeywords, newsPracticeQuestion, newsPublishedAt, parseNewsFeed, parsePublisherFeed, filterNewsTopic, type NewsTopic } from '../apps/web/src/lib/department-news-model.ts';
 import { readFileSync } from 'node:fs';
 // Next resolves this marker internally. Standalone Node tests resolve its bundled
 // empty implementation explicitly, without NODE_PATH or any product-code change.
@@ -131,7 +131,26 @@ test('collector partial failures preserve successful results; total failure is e
   const partial = await collectDepartmentNews({ ...topic, feeds: ['water', 'environment'] }, { now, fetcher: async url => { if (String(url).includes('hkbs')) throw new Error('offline'); return new Response(feed(item()), { headers: { 'content-type': 'application/xml' } }); } });
   assert.equal(partial.articles.length, 1); assert.equal(partial.successfulSources, 1); assert.deepEqual(partial.failedSources, ['environment']);
   const all = await collectDepartmentNews(topic, { now, fetcher: async () => { throw new Error('offline'); } });
-  assert.equal(all.articles.length, 0); assert.equal(all.successfulSources, 0); assert.equal(all.failedSources.length, 3);
+  assert.equal(all.articles.length, 0); assert.equal(all.successfulSources, 0); assert.equal(all.failedSources.length, topic.feeds.length);
+});
+test('a finite news snapshot balances publishers instead of letting the newest desk occupy every slot',()=>{
+ const articles=Array.from({length:25},(_,index)=>({title:`도시 교통 계획 ${index}`,url:`https://one.test/${index}`,publisher:'같은 신문',publishedAt:new Date(now.getTime()-index*1000).toISOString()}));
+ articles.push({title:'다른 지역의 교통 대책',url:'https://two.test/1',publisher:'다른 신문',publishedAt:new Date(now.getTime()-29*1000).toISOString()});
+ articles.push({title:'지속 가능한 도시 정책',url:'https://three.test/1',publisher:'세 번째 신문',publishedAt:new Date(now.getTime()-30*1000).toISOString()});
+ const selected=balanceNewsPublishers(articles,20);
+ assert.equal(selected.length,20);assert.deepEqual(selected.slice(0,3).map(item=>item.publisher),['같은 신문','다른 신문','세 번째 신문']);
+ assert.equal(articles.length,27,'selection never mutates the source list');
+});
+test('syndicated breaking-news labels do not create duplicate headlines',()=>{
+ const article={title:'도시 교통 정책 발표',url:'https://one.test/1',publisher:'신문 A',publishedAt:now.toISOString()};
+ assert.equal(balanceNewsPublishers([article,{...article,title:'[속보] 도시 교통 정책 발표',url:'https://two.test/2',publisher:'신문 B'}]).length,1);
+ assert.deepEqual(balanceNewsPublishers([article],0),[]);
+});
+test('even majors whose primary desks belong to one publisher have alternate general-news sources',()=>{
+ for(const major of ['심리학과','사회학과','언어학과','경제학과']){
+  const feeds=majorNewsTopic(major)!.feeds;
+  assert.ok(feeds.includes('digital')&&feeds.includes('economy')&&feeds.includes('technology'),major);
+ }
 });
 test('oversized responses and HTML are failures; no scraping follow-up request happens', async () => {
   const { collectDepartmentNews } = await import('../apps/web/src/lib/department-news.ts');

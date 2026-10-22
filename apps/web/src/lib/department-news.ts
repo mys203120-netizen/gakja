@@ -1,7 +1,7 @@
 import 'server-only';
 import type { Profile } from './auth';
 import { ApiError, query, transaction } from './db';
-import { NEWS_FEEDS, NEWS_TOPIC_REVISION, majorNewsConnection, matchingNewsKeywords, newsPracticeQuestion, parsePublisherFeed, filterNewsTopic, type DepartmentNewsData, type NewsArticle, type NewsFeedKey, type NewsTopic } from './department-news-model';
+import { NEWS_FEEDS, NEWS_TOPIC_REVISION, balanceNewsPublishers, majorNewsConnection, matchingNewsKeywords, newsPracticeQuestion, parsePublisherFeed, filterNewsTopic, type DepartmentNewsData, type NewsArticle, type NewsFeedKey, type NewsTopic } from './department-news-model';
 import { schoolDirectoryForTarget } from './school-directory';
 
 const CACHE_TTL_MS = 60 * 60_000;
@@ -71,17 +71,11 @@ async function boundedFeed(key: NewsFeedKey, fetcher: typeof fetch) {
 /** Injectable fetch is for deterministic tests only; URLs always come from NEWS_FEEDS. */
 export async function collectDepartmentNews(topic: NewsTopic, options: { now?: Date; fetcher?: typeof fetch } = {}) {
   const now = options.now || new Date(), fetcher = options.fetcher || fetch;
-  const keys = topic.feeds.slice(0, 3).filter(key => Object.hasOwn(NEWS_FEEDS, key));
+  const keys = [...new Set(topic.feeds)].filter(key => Object.hasOwn(NEWS_FEEDS, key));
   const results = await Promise.allSettled(keys.map(async key => filterNewsTopic(await publisherArticles(key,now,fetcher,!options.fetcher),topic)));
   const failedSources: string[] = [], articles: Omit<NewsArticle, 'id'>[] = [];
   results.forEach((result, index) => { if (result.status === 'fulfilled') articles.push(...result.value); else failedSources.push(keys[index]); });
-  const urls = new Set<string>(), headlines = new Set<string>();
-  const deduped = articles.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).filter(article => {
-    const title = article.title.replace(/[\s\p{P}]/gu, '').toLocaleLowerCase('ko-KR');
-    if (urls.has(article.url) || headlines.has(title)) return false;
-    urls.add(article.url); headlines.add(title); return true;
-  }).slice(0, MAX_ARTICLES);
-  return { articles: deduped, failedSources, successfulSources: keys.length - failedSources.length };
+  return { articles: balanceNewsPublishers(articles, MAX_ARTICLES), failedSources, successfulSources: keys.length - failedSources.length };
 }
 /** Claim in PostgreSQL before fetching: independent web workers share one lease. */
 export async function refreshDepartmentNews(topic: NewsTopic, options: { force?: boolean } = {}) {
@@ -138,7 +132,8 @@ export async function getDepartmentNews(user: Profile, input: { targetId?: strin
   // publishers are temporarily offline. It remains explicitly stale and each
   // headline is rechecked against the current topic before display.
   if((!cache || cache.status==='error')&&!cache?.article_ids?.length){
-    const [previous]=await query<CacheRow>('select * from department_news_cache where topic_key=$1',['v1:'+topic.key]);
+    const [previousV2]=await query<CacheRow>('select * from department_news_cache where topic_key=$1',['v2:'+topic.key]);
+    const previous=previousV2?.article_ids?.length?previousV2:(await query<CacheRow>('select * from department_news_cache where topic_key=$1',['v1:'+topic.key]))[0];
     if(previous?.article_ids?.length)cache={...previous,...cache,status:'error',article_ids:previous.article_ids,fetched_at:previous.fetched_at};
   }
   let rows = cache?.article_ids?.length ? await query<ArticleRow>('select * from department_news_articles where id=any($1::uuid[]) and published_at>=now()-interval \'30 days\' and published_at<=now() order by published_at desc limit 20', [cache.article_ids]) : [];
@@ -155,7 +150,12 @@ export async function getDepartmentNews(user: Profile, input: { targetId?: strin
     query('select article_id,content,revision,updated_at from department_news_thoughts where student_id=$1 and article_id=any($2::uuid[])', [user.id, rows.map(row => row.id)]),
     query('select article_id,briefing_id from department_news_practice where student_id=$1 and target_id=$2 and major=$3 and article_id=any($4::uuid[])', [user.id, targetId || '', major, rows.map(row => row.id)]),
   ]);
-  const articles = rows.map(row => ({ ...viewArticle(row, topic), thought: (() => { const thought = thoughts.find(item => item.article_id === row.id); return thought ? { content: thought.content, revision: thought.revision, updatedAt: iso(thought.updated_at)! } : null; })(), practiceBriefingId: practices.find(item => item.article_id === row.id)?.briefing_id || null }));
+  const mapped = rows.map(row => ({ ...viewArticle(row, topic), thought: (() => { const thought = thoughts.find(item => item.article_id === row.id); return thought ? { content: thought.content, revision: thought.revision, updatedAt: iso(thought.updated_at)! } : null; })(), practiceBriefingId: practices.find(item => item.article_id === row.id)?.briefing_id || null }));
+  const articles = balanceNewsPublishers(mapped, rows.length);
+  // A saved historical link remains addressable even if its headline matches a
+  // newer syndicated item that the public list intentionally deduplicates.
+  const selected = input.articleId ? mapped.find(article => article.id === input.articleId) : null;
+  if (selected && !articles.some(article => article.id === selected.id)) articles.push(selected);
   const latest = articles.filter(row => new Date(row.publishedAt).getTime() >= Date.now() - 30 * 86_400_000);
   const stale = cache?.status === 'error' || !cache?.fetched_at || Date.now() - new Date(cache.fetched_at).getTime() >= CACHE_TTL_MS;
   const status = !latest.length ? stale ? 'unavailable' : 'empty' : stale ? 'stale' : 'fresh';

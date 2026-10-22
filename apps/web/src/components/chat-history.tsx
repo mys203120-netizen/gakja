@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { Archive, ArchiveRestore, Check, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import { api, Alert, Modal, type Item } from './shared';
 import styles from './chat-history.module.css';
+import {SlidingChoice} from './sliding-choice';
 
 type Management = 'rename' | 'archive' | 'restore' | 'delete';
 function ThreadMenu({ thread, archived, disabled, onAction }: { thread: Item; archived: boolean; disabled?: boolean; onAction: (action: Management) => void }) {
@@ -64,7 +65,7 @@ export function ChatHistory({ threads, currentId, busy, onChange,hasMore=false,l
   const list = view === 'archived' ? archived : threads;
   const history = <>
     <Link href="/on" onClick={()=>{if(mobileHistory.current)mobileHistory.current.open=false;}} className={ownedClassName("button ghost full")}><Plus size={17} />새 대화</Link>
-    <div className={ownedClassName(styles.tabs,true)} aria-label="대화 목록"><button type="button" aria-pressed={view === 'active'} onClick={() => setView('active')} className={ownedClassName(undefined,true)}>대화</button><button type="button" aria-pressed={view === 'archived'} onClick={() => setView('archived')} className={ownedClassName(undefined,true)}><Archive size={13} />보관함</button></div>
+    <div className={ownedClassName(styles.historyChoice,true)}><SlidingChoice label="대화 목록" value={view} onChange={setView} options={[{value:'active',label:'대화'},{value:'archived',label:<><Archive size={13}/>보관함</>}]}/></div>
     <div className={ownedClassName(styles.list,true)}>{list.map(thread => <div key={thread.id} className={ownedClassName(`${styles.row} ${thread.id === currentId ? styles.active : ''}`,true)}>
       <Link href={`/on/${thread.id}`} onClick={()=>{if(mobileHistory.current)mobileHistory.current.open=false;}} title={thread.title || '새 대화'} aria-current={thread.id === currentId ? 'page' : undefined}>{thread.title || '새 대화'}</Link>
       <ThreadMenu thread={thread} archived={view === 'archived'} disabled={busy || saving} onAction={action => { if (action === 'rename' || action === 'delete') choose(action, thread); else void manage(action, thread); }} />

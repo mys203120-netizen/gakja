@@ -12,6 +12,7 @@ import { api, post, action, PageTitle, Alert, Logo, targetName, targetMajor, typ
 import { InterviewSetup, InterviewSession } from './interview';
 import { ChatComposer } from './chat-composer';
 import { ChatHistory } from './chat-history';
+import {ThoughtWriting} from './thought-writing';
 import { readAssistantStream } from '@/lib/assistant-stream-model';
 import { createAssistantDeltaBuffer } from '@/lib/assistant-delta-buffer';
 import { MarkdownMessage } from './markdown-message';
@@ -81,10 +82,11 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
  const draftScope=sessionId||(quizSessionId?`quiz:${quizSessionId}:${quizItemIndex??''}`:null);
  const draftKey=chatDraftKey(data.user.id,threadId,{...selection,sourceVersion:version(pinnedVersion)},draftScope),pendingResponse=messages.some(m=>m.role==='assistant'&&m.status==='pending');
  const latestDraft=useRef({key:draftKey,loaded:draftLoaded,message,attachments}),uploadFlight=useRef<Promise<void>|null>(null);
+ const writing=useRef<{key:string;requestId:string;original:string}|null>(null);
  latestDraft.current={key:draftKey,loaded:draftLoaded,message,attachments};
  const ready=Boolean(threadId?thread?.resources:needsPreview?currentPreview:data.package)&&!previewError;
  const archived=Boolean(thread?.archived_at),disabled=!ready||loading||previewLoading||busy||uploading||pendingResponse||archived||Boolean(sessionId&&!assisted)||Boolean(quizSessionId&&!quizAssisted)||draftLoaded!==draftKey;
- function draftSnapshot(key:string,text:string,files:Item[]){return JSON.stringify({draft:text,attachments:cachedChatAttachments(files),updatedAt:Date.now(),requestId:request.current.key===key?request.current.id:'',requestText:request.current.key===key?request.current.text:''});}
+ function draftSnapshot(key:string,text:string,files:Item[]){return JSON.stringify({draft:text,attachments:cachedChatAttachments(files),updatedAt:Date.now(),requestId:request.current.key===key?request.current.id:'',requestText:request.current.key===key?request.current.text:'',...(writing.current?.key===key?{writing:{requestId:writing.current.requestId,original:writing.current.original}}:{})});}
  useEffect(()=>registerDraftSaver(data.user.id,async()=>{
    await uploadFlight.current;
    const current=latestDraft.current;
@@ -104,7 +106,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
  // Detach the old controller before aborting so its late frames cannot update the new context.
  useEffect(()=>{sending.current=false;setBusy(false);if(!threadId)setMessages([]);return()=>{streamGeneration.current++;const previous=streamController.current;streamController.current=null;sending.current=false;previous?.abort();};},[draftKey]);
  useEffect(()=>{let disposed=false;setPreview(null);setPreviewKey('');setPreviewError('');setPreviewLoading(needsPreview);if(!needsPreview)return;if(params.get('sourceVersion')&&!version(params.get('sourceVersion'))){setPreviewError('자료 발행본을 확인해 주세요.');setPreviewLoading(false);return;}if(sessionId&&!assisted||quizSessionId&&!quizAssisted)return;api(sessionId&&assisted?.question?.turnId?`/api/learning-help?interviewSessionId=${encodeURIComponent(sessionId)}&interviewTurnId=${encodeURIComponent(assisted.question.turnId)}`:`/api/learning-help?${selectionKey}${selection.sourceType?'&sourceType='+selection.sourceType:''}`).then(r=>{if(!disposed){setPreview(r);setPreviewKey(selectionKey);}}).catch(err=>{if(!disposed)setPreviewError(err.message);}).finally(()=>{if(!disposed)setPreviewLoading(false);});return()=>{disposed=true;};},[needsPreview,selectionKey,sessionId,assisted?.session?.id,quizSessionId,quizAssisted?.quizScope?.sessionId]);
- useEffect(()=>{const saved=readChatDraft(draftKey);let restored:Item|undefined;try{restored=JSON.parse(saved);}catch{}setMessage(restored&&typeof restored.draft==='string'?restored.draft:saved);setAttachments(cachedChatAttachments(restored?.attachments));request.current={key:draftKey,text:typeof restored?.requestText==='string'?restored.requestText:'',id:typeof restored?.requestId==='string'?restored.requestId:''};setDraftLoaded(draftKey);},[draftKey]);
+ useEffect(()=>{const saved=readChatDraft(draftKey);let restored:Item|undefined;try{restored=JSON.parse(saved);}catch{}writing.current=restored?.writing&&typeof restored.writing.original==='string'&&restored.writing.original.length<=6000&&typeof restored.writing.requestId==='string'&&/^[\da-f-]{36}$/i.test(restored.writing.requestId)?{key:draftKey,requestId:restored.writing.requestId,original:restored.writing.original}:null;setMessage(restored&&typeof restored.draft==='string'?restored.draft:saved);setAttachments(cachedChatAttachments(restored?.attachments));request.current={key:draftKey,text:typeof restored?.requestText==='string'?restored.requestText:'',id:typeof restored?.requestId==='string'?restored.requestId:''};setDraftLoaded(draftKey);},[draftKey]);
  useEffect(()=>{if(draftLoaded!==draftKey)return;if(message||attachments.length){try{setDeviceItem(sessionStorage,draftKey,draftSnapshot(draftKey,message,attachments));}catch{}}else clearChatDraft(draftKey);},[message,attachments,draftKey,draftLoaded,busy]);
  useEffect(()=>{const frame=requestAnimationFrame(()=>{const scroller=bottom.current?.closest('.chat-messages');if(scroller&&followReply.current)scroller.scrollTo({top:messages.length?scroller.scrollHeight:0,behavior:'instant'});});return()=>cancelAnimationFrame(frame);},[messages]);
  // Announce newly completed requests, never the full saved history or a pending reply.
@@ -115,7 +117,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
   const text=(recommendedText??message).trim();
   if(!text||sending.current||disabled)return;
   const restoreInputFocus=Boolean(textarea.current&&document.activeElement===textarea.current&&!window.matchMedia('(pointer: coarse)').matches);
-  if(recommendedText!==undefined)setMessage(text);
+  if(recommendedText!==undefined){writing.current=null;setMessage(text);}
   sending.current=true;followReply.current=true;setReplyAnnouncement('');setBusy(true);setError('');
   const attachmentKey=attachments.map(item=>item.id).join(',');
   const requestText=attachmentKey?`${text}\n[attachments:${attachmentKey}]`:text;
@@ -126,7 +128,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
   const controller=new AbortController(),generation=streamGeneration.current;streamController.current=controller;
   const deltas=createAssistantDeltaBuffer(delta=>{if(streamController.current===controller)setMessages(items=>items.map(item=>item.id===assistantId?{...item,content:(item.content||'')+delta,status:'pending'}:item));},{schedule:callback=>setTimeout(callback,32),cancel:handle=>clearTimeout(handle)});
   try{
-   const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,threadId,targetId:selection.targetId,activityId,questionId,briefingId,...(requestVersion?{sourceVersion:requestVersion}:{}),requestId:request.current.id,...(selection.sourceType?{sourceType:selection.sourceType}:{}),...(quizSessionId&&quizItemIndex!==undefined?{quizSessionId,quizItemIndex}:{}),...(sessionId&&assisted?.question?.turnId?{interviewSessionId:sessionId,interviewTurnId:assisted.question.turnId}:{}),stream:true,attachmentIds:attachments.map(item=>item.id)}),signal:controller.signal});
+   const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,...(writing.current?.key===draftKey?{writingRequestId:writing.current.requestId}:{}),threadId,targetId:selection.targetId,activityId,questionId,briefingId,...(requestVersion?{sourceVersion:requestVersion}:{}),requestId:request.current.id,...(selection.sourceType?{sourceType:selection.sourceType}:{}),...(quizSessionId&&quizItemIndex!==undefined?{quizSessionId,quizItemIndex}:{}),...(sessionId&&assisted?.question?.turnId?{interviewSessionId:sessionId,interviewTurnId:assisted.question.turnId}:{}),stream:true,attachmentIds:attachments.map(item=>item.id)}),signal:controller.signal});
    await readAssistantStream(response,async event=>{
     if(streamController.current!==controller)return;
     if(event.threadId)resolvedThreadId=event.threadId;
@@ -140,7 +142,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
      deltas.discard();completed=true;contextChanged=Boolean(event.contextChanged);
      setMessages(items=>{const kept=items.filter(item=>item.id!==optimistic.id&&item.id!==assistantId&&item.id!==event.message?.id);const known=new Set(kept.map(item=>item.id));return[...kept,...[event.userMessage,event.message].filter((item):item is Item=>Boolean(item&&!known.has(item.id)))];});
      setChanged(contextChanged);announceCompletedReply(event.message);
-     setMessage('');setAttachments([]);clearChatDraft(draftKey);request.current={key:draftKey,text:'',id:''};
+     setMessage('');setAttachments([]);writing.current=null;clearChatDraft(draftKey);request.current={key:draftKey,text:'',id:''};
     }else if(event.type==='pending'){
      deltas.discard();setMessages(items=>items.map(item=>item.id===assistantId?{...item,...event.message}:item));
      setError('이전 답변을 작성 중이에요. 잠시 후 대화를 다시 불러와 주세요.');
@@ -221,6 +223,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
  {messages.map(m=><div key={m.id} className={ownedClassName(`message ${m.role}`,true)} role="article" aria-label={`${m.role==='assistant'?'AI 비서':data.user.name} 메시지`}>
   <div className={ownedClassName("message-avatar",true)}>{m.role==='assistant'?<Logo size={23} wordmark={false}/>:data.user.name.slice(0,1)}</div>
   <div className={ownedClassName("message-body",true)}><span className={ownedClassName("message-author",true)}>{m.role==='assistant'?'AI 비서':data.user.name}</span>
+   {m.role==='user'&&m.data?.writingHelp&&<small className={ownedClassName('chat-interrupted-note')}>AI 문장 정리 사용</small>}
    {(m.attachments||m.data?.attachments)?.length>0&&<div className={ownedClassName("chat-attached-sources",true)}>{(m.attachments||m.data.attachments).map((file:Item)=><a key={file.id} href={file.url||`/api/chat/attachments/${file.id}`} target="_blank" rel="noopener" className={ownedClassName(undefined,true)}><Paperclip size={14}/>{file.name}</a>)}</div>}
    <div className={ownedClassName("message-content",true)} data-streaming={m.status==='pending'}>{m.role==='assistant'&&m.content?<MarkdownMessage content={m.content} humanizeLearningStatuses/>:m.content||(m.status==='pending'?<span className={ownedClassName("typing-dots",true)} aria-label="응답 작성 중"><i className={ownedClassName(undefined,true)}/><i className={ownedClassName(undefined,true)}/><i className={ownedClassName(undefined,true)}/></span>:m.status==='failed'?m.error||m.data?.error||'응답이 중단됐어요.':'')}{m.status==='pending'&&m.content&&<span className={ownedClassName("chat-stream-cursor",true)} aria-hidden="true"/>}</div>
    {m.status==='failed'&&m.content&&<small className={ownedClassName("chat-interrupted-note",true)}>응답이 여기서 중단됐어요.</small>}
@@ -232,7 +235,7 @@ function Chat({threadId:routeThreadId}:{threadId?:string}) {
  {pendingResponse&&!busy&&!error&&<button className={ownedClassName("text-link",true)} onClick={reload}>대화 다시 불러오기</button>}
  <input ref={attachmentInput} type="file" className={ownedClassName("sr-only",true)} tabIndex={-1} aria-label="첨부 파일 선택" accept=".pdf,.docx,.txt,.md,image/png,image/jpeg,image/webp,image/gif" multiple onChange={event=>void uploadAttachments(event.target.files)}/>
  {(attachments.length>0||uploading)&&<div className={ownedClassName("chat-attachment-queue",true)}>{attachments.map(file=><div key={file.id} className={ownedClassName(undefined,true)}><Paperclip size={14}/><span className={ownedClassName(undefined,true)}>{file.name}</span><small className={ownedClassName(undefined,true)}>{Math.max(1,Math.round(file.size/1024))} KB</small><button type="button" disabled={busy||uploading} aria-label={`${file.name} 첨부 취소`} onClick={()=>void removeAttachment(file.id)} className={ownedClassName(undefined,true)}><X size={14}/></button></div>)}{uploading&&<span className={ownedClassName(undefined,true)}><LoaderCircle size={14} className={ownedClassName("spin")}/>자료 읽는 중</span>}</div>}
- <ChatComposer enterToSend={data.preferences?.enterToSend!==false} variant="conversation" textareaRef={textarea} label="AI 비서 메시지" placeholder={ready?briefingId?'이 기사에 대해 이야기해 보세요.':question?'이 질문에 대해 물어보세요.':activity?'내 경험에 대해 물어보세요.':'궁금한 점을 물어보세요.':previewLoading||loading?'질문을 불러오는 중이에요.':'질문이나 활동을 먼저 선택해 주세요.'} value={message} onChange={setMessage} onSend={send} maxLength={6000} busy={busy} disabled={disabled} actions={<><button type="button" className={ownedClassName("button ghost small",true)} disabled={disabled||attachments.length>=3} onClick={()=>attachmentInput.current?.click()}><Paperclip size={15}/>자료 첨부</button>{busy&&<button type="button" className={ownedClassName("button ghost small",true)} onClick={()=>streamController.current?.abort()}><Square size={13} fill="currentColor"/>응답 멈추기</button>}</>} />
+ <ChatComposer enterToSend={data.preferences?.enterToSend!==false} variant="conversation" textareaRef={textarea} label="AI 비서 메시지" placeholder={ready?briefingId?'이 기사에 대해 이야기해 보세요.':question?'이 질문에 대해 물어보세요.':activity?'내 경험에 대해 물어보세요.':'궁금한 점을 물어보세요.':previewLoading||loading?'질문을 불러오는 중이에요.':'질문이나 활동을 먼저 선택해 주세요.'} value={message} onChange={value=>{if(!value.trim())writing.current=null;setMessage(value);}} onSend={send} maxLength={6000} busy={busy} disabled={disabled} actions={<><ThoughtWriting userId={data.user.id} kind="chat" scopeId={draftKey} scopeKey={draftKey} value={message} savedOriginal={writing.current?.key===draftKey?writing.current.original:undefined} context={{...(threadId?{threadId}:{}),...selection,...(requestVersion?{sourceVersion:requestVersion}:{}),...(quizSessionId&&quizItemIndex!==undefined?{quizSessionId,quizItemIndex}:{}),...(sessionId&&assisted?.question?.turnId?{interviewSessionId:sessionId,interviewTurnId:assisted.question.turnId}:{})}} disabled={disabled} onApply={(text,receipt)=>{writing.current={key:draftKey,requestId:receipt.requestId||writing.current?.requestId||'',original:writing.current?.key===draftKey?writing.current.original:receipt.original};setMessage(text);}}/><button type="button" className={ownedClassName("button ghost small",true)} disabled={disabled||attachments.length>=3} onClick={()=>attachmentInput.current?.click()}><Paperclip size={15}/>자료 첨부</button>{busy&&<button type="button" className={ownedClassName("button ghost small",true)} onClick={()=>streamController.current?.abort()}><Square size={13} fill="currentColor"/>응답 멈추기</button>}</>} />
  </section></div></div>;
 }
 

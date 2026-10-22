@@ -16,7 +16,7 @@ const school=schoolDirectory.find(item=>item.canonicalName==='서울시립대학
 const environment=school.departments.find(item=>item.name==='환경공학부')!;
 const economics=school.departments.find(item=>item.name==='경제학부')!;
 const studentId='fixture-school-owner';
-const state={snapshot:{catalogue:overlayOfficialCalendar(base,official),official,officialSchools:8,stale:false,lastRefreshFailed:false,refreshDue:false},targets:[] as any[],preferences:new Map<string,any>(),audits:[] as any[],queries:[] as any[],user:{id:studentId,role:'student'} as any,writeCount:0,history:[{target_id:'kept-target',answer:'학생의 기존 답변',snapshot:{university:'이전 학교'}}]};
+const state={snapshot:{catalogue:overlayOfficialCalendar(base,official),official,officialSchools:8,stale:false,lastRefreshFailed:false,refreshDue:false},targets:[] as any[],preferences:new Map<string,any>(),audits:[] as any[],queries:[] as any[],user:{id:studentId,role:'student'} as any,writeCount:0,failWriteAt:0,history:[{target_id:'kept-target',answer:'학생의 기존 답변',snapshot:{university:'이전 학교'}}]};
 (globalThis as any).__schoolManagementTest=state;
 const modules:Record<string,string>={
   'server-only':'module.exports={};',
@@ -31,7 +31,7 @@ const modules:Record<string,string>={
         if(sql.includes('is not null)'))rows.sort((a,b)=>Number(Boolean(a.data.archived_at))-Number(Boolean(b.data.archived_at)));
         return structuredClone(sql.includes('limit 1')?rows.slice(0,1):rows);
       }
-      if(sql.startsWith('insert into support_targets')){s.writeCount++;const row={id:args[0],student_id:args[1],data:JSON.parse(args[2])};s.targets.push(row);return structuredClone([row]);}
+      if(sql.startsWith('insert into support_targets')){if(s.failWriteAt===s.writeCount+1)throw new Error('simulated storage failure');s.writeCount++;const row={id:args[0],student_id:args[1],data:JSON.parse(args[2])};s.targets.push(row);return structuredClone([row]);}
       if(sql.startsWith('update support_targets')){const row=s.targets.find(row=>row.id===args[1]&&row.student_id===args[2]);if(!row)return [];s.writeCount++;row.data=JSON.parse(args[0]);return structuredClone([row]);}
       if(sql.startsWith('select')&&sql.includes('student_preferences'))return s.preferences.has(args[0])?[{data:structuredClone(s.preferences.get(args[0]))}]:[];
       if(sql.startsWith('insert into student_preferences')){s.preferences.set(args[0],{...s.preferences.get(args[0]),...JSON.parse(args[1])});return [];}
@@ -57,7 +57,7 @@ const {previewSchoolAdmissionCalendar}=await import('../apps/web/src/lib/school-
 const input={referenceId:school.id,departmentId:environment.id,admissionYear:2027,track:'학생부종합전형Ⅰ(면접형)',onboarding:true};
 const rawTarget=(major=environment.name)=>({university:school.university,school_reference_id:school.id,campus:'본교',department:major,major,admission_type:input.track,admission_year:2027});
 async function reviewed(major=environment){return {...input,departmentId:major.id,calendarReview:{fingerprint:(await previewSchoolAdmissionCalendar(rawTarget(major.name))).fingerprint,acknowledged:true}};}
-function reset(){state.targets=[];state.preferences.clear();state.audits=[];state.queries=[];state.writeCount=0;state.user={id:studentId,role:'student'};}
+function reset(){state.targets=[];state.preferences.clear();state.audits=[];state.queries=[];state.writeCount=0;state.failWriteAt=0;state.user={id:studentId,role:'student'};}
 async function route(method:'POST'|'PATCH'|'DELETE',body:unknown,origin='http://fixture.test'){
   return routes[method](new Request('http://fixture.test/api/schools',{method,headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)}));
 }
@@ -105,4 +105,33 @@ test('re-adding an archived identity restores its original ID and history and re
   reset();const history=structuredClone(state.history);state.targets.push({id:'kept-target',student_id:studentId,data:{...rawTarget(),archived_at:'2026-10-16T01:00:00Z',historyKey:'keep',interview_date:'2026-11-29T14:20:00+09:00'}});
   const approved=await reviewed(),first=await service.registerStudentSchool(studentId,approved),second=await service.registerStudentSchool(studentId,approved);
   assert.equal(first.id,'kept-target');assert.equal(second.id,first.id);assert.equal(first.archived_at,undefined);assert.equal(first.historyKey,'keep');assert.equal(first.interview_date,'2026-11-29T14:20:00+09:00');assert.equal(state.targets.length,1);assert.deepEqual(state.history,history);assert.equal(state.preferences.get(studentId).selectedTargetId,first.id);
+});
+
+async function secondUniversity(){
+ const selected=schoolDirectory.find(item=>item.canonicalName==='서울교육대학교')!,major=selected.departments.find(item=>item.name==='초등교육학과')!;
+ const target={university:selected.university,school_reference_id:selected.id,campus:major.campus,department:major.name,admission_type:'미정',admission_year:2027};
+ const initial=await previewSchoolAdmissionCalendar(target),track=initial.tracks[0];assert.ok(track);
+ const calendar=await previewSchoolAdmissionCalendar({...target,admission_type:track});assert.equal(calendar.canReview,true);
+ return {referenceId:selected.id,departmentId:major.id,admissionYear:2027,track,onboarding:true,calendarReview:{fingerprint:calendar.fingerprint,acknowledged:true}};
+}
+test('multiple universities are saved together and response-loss retries reuse every target',async()=>{
+ reset();const registrations=[await reviewed(),await secondUniversity()];
+ const first=await route('POST',{registrations,studentId:'other-student'});assert.equal(first.status,200);const result=await first.json();
+ assert.equal(result.targets.length,2);assert.equal(new Set(result.targets.map((item:any)=>item.university)).size,2);assert.equal(state.targets.length,2);assert.ok(state.targets.every(item=>item.student_id===studentId));
+ const ids=result.targets.map((item:any)=>item.id),audits=state.audits.length;
+ const retry=await route('POST',{registrations});assert.equal(retry.status,200);assert.deepEqual((await retry.json()).targets.map((item:any)=>item.id),ids);assert.equal(state.targets.length,2);assert.equal(state.audits.length,audits);
+ assert.equal(state.preferences.get(studentId).selectedTargetId,ids.at(-1));
+});
+test('one stale or unacknowledged school prevents the entire batch and duplicated identities are rejected',async()=>{
+ for(const badReview of [undefined,{fingerprint:'f'.repeat(64),acknowledged:true}]){
+  reset();const registrations=[await reviewed(),{...await secondUniversity(),calendarReview:badReview}];
+  const response=await route('POST',{registrations});assert.equal(response.status,badReview?409:400);assert.equal(state.writeCount,0);assert.equal(state.targets.length,0);assert.equal(state.preferences.size,0);
+ }
+ reset();const approved=await reviewed();assert.equal((await route('POST',{registrations:[approved,approved]})).status,400);assert.equal(state.writeCount,0);
+ assert.equal((await route('POST',{registrations:[]})).status,400);assert.equal((await route('POST',{registrations:Array.from({length:21},()=>approved)})).status,400);
+});
+test('a failure while saving the second university rolls back the first target and preferences',async()=>{
+ reset();state.failWriteAt=2;const registrations=[await reviewed(),await secondUniversity()];
+ assert.equal((await route('POST',{registrations})).status,500);assert.equal(state.targets.length,0);assert.equal(state.preferences.size,0);assert.equal(state.audits.length,0);assert.equal(state.writeCount,0);
+ state.failWriteAt=0;assert.equal((await route('POST',{registrations})).status,200);assert.equal(state.targets.length,2);
 });

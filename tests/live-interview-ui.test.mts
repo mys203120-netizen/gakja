@@ -102,9 +102,17 @@ test('saved account consent and camera choice reopen collapsed without device ac
   assert.equal(nodes(tree).find(node=>node.props?.className==='recordingSettings').props.open,false);
   assert.equal(h.calls.some(call=>call.mockDevice||call.audio||call.action==='preference'),false);
   h.faults.allowDevice=true;await h.controllers[0].services.prepare();
-  const camera=nodes(tree).find(node=>node.type==='label'&&text(node).includes('카메라 함께 사용'));
-  assert.equal(nodes(camera).find(node=>node.type==='input').props.checked,false);
+  const camera=nodes(tree).find(node=>node.type==='MotionSwitch'&&node.props.label==='카메라 함께 사용');
+  assert.equal(camera.props.checked,false);
   assert.equal(h.calls.filter(call=>call.mockDevice).length,1);assert.equal(h.calls.find(call=>call.mockDevice).constraints.video,false);h.cleanup();
+});
+test('the common camera switch saves only its camera preference and keeps explicit recording consent intact',async()=>{
+ const h=harness();h.faults.appData.preferences={liveRecordingConsent:true,liveCameraEnabled:false};let tree=h.render();await h.flush();tree=h.render();
+ const camera=nodes(tree).find(node=>node.type==='MotionSwitch'&&node.props.label==='카메라 함께 사용');assert.ok(camera);assert.equal(camera.props.checked,false);
+ await camera.props.onChange(true);await h.flush();tree=h.render();
+ assert.deepEqual(JSON.parse(JSON.stringify(h.calls.find(call=>call.action==='preference').payload)),{liveCameraEnabled:true});
+ assert.equal(consent(tree).props.checked,true);assert.equal(nodes(tree).find(node=>node.type==='MotionSwitch'&&node.props.label==='카메라 함께 사용').props.checked,true);
+ assert.equal(h.calls.some(call=>call.mockDevice||call.audio),false,'changing a setting never starts recording');h.cleanup();
 });
 test('a failed or pending consent save cannot enable recording and revocation persists for another room',async()=>{
   const h=harness();let release!:()=>void;h.faults.preferencePending=new Promise<void>(resolve=>release=resolve);let tree=h.render();

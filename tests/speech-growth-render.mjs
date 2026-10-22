@@ -5,6 +5,7 @@ import ts from 'typescript';
 import { tsImport } from 'tsx/esm/api';
 
 const studyLinks=await tsImport('../apps/web/src/lib/study-record-links.ts',import.meta.url);
+const changeSnapshot=await tsImport('../apps/web/src/lib/answer-change-snapshot.ts',import.meta.url);
 
 // Actual report component; lightweight hooks/JSX preserve scope and event behavior.
 const source=fs.readFileSync(new URL('../apps/web/src/components/speech-growth.tsx',import.meta.url),'utf8');
@@ -22,6 +23,8 @@ vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,AbortCo
     if(name==='./school-picker')return {SchoolPicker:'SchoolPicker'};
     if(name==='@/lib/client/speech-recorder')return {decodeRecordingTelemetry:()=>{throw new Error('No private file decoding in a render test.');}};
     if(name==='@/lib/study-record-links')return studyLinks;
+    if(name==='@/lib/answer-change-snapshot')return changeSnapshot;
+    if(name.endsWith('.module.css'))return {default:new Proxy({},{get:(_,key)=>String(key)})};
     if(name==='./shared')return {InfoTip:'InfoTip',Alert:'Alert',Spinner:'Spinner',dateLabel:value=>String(value),api:(url,options)=>new Promise(resolve=>pending.push({url,options,resolve})),post:async(url,body)=>{posts.push({url,body});return {cleanupStatus:'completed'};}};
     throw new Error('Unexpected import '+name);
   }});
@@ -105,7 +108,7 @@ check(text(tree).indexOf('다음 연습')<text(tree).indexOf('녹음 기록이 �
 check(!nodes(tree).some(node=>node.type==='h3'&&text(node)==='목소리의 변화는 녹음부터'),'missing audio does not occupy a large hero heading');
 check(text(tree).includes('바로 재답변')&&text(tree).includes('도움 사용'),'retry interval and actual assistance appear together');
 check(nodes(tree).some(node=>node.props?.['aria-label']==='이번 질문의 검수된 요소'),'question-specific criteria remain labeled separately from generic cues');
-check(text(tree).includes('달라진 문장')&&!text(tree).includes('더 구체화한 문장'),'a longer or added sentence is not automatically called an improvement');
+check(nodes(tree).some(node=>node.type?.name==='AnswerChangeSnapshot'&&node.props.elements[0].afterEvidence[0]==='제 담당은 측정표 작성이었습니다.')&&!text(tree).includes('더 구체화한 문장'),'a longer or added sentence is not automatically called an improvement');
 check(!text(tree).includes('결과·한계'),'a role-only question does not receive unrelated missing result dimensions');
 const newsOnly={...reviewed,content:{comparisons:[],newsComparisons:[{...reviewed.content.comparisons[0],articleId:'news-only',sourceHref:'/materials/briefings/news-only',retryHref:'/interview/new?briefingId=news-only'}]}};
 tree=render({},[newsOnly,scope,'','',false]);

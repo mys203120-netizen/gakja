@@ -25,7 +25,8 @@ import {registerDraftSaver} from '@/lib/client/draft-save';
 import { LiveInterviewSession } from './live-interview-session';
 import {InterviewerAvatarSignal} from '@/lib/client/interviewer-avatar';
 import {InterviewerAudioOutput} from '@/lib/client/interviewer-audio-output';
-function Switch({ label, value, disabled, onChange }: { label: string; value: boolean; disabled?: boolean; onChange: () => void }) { return <label className={ownedClassName("toggle-row",true)}><span className={ownedClassName(undefined,true)}>{label}</span><button type="button" role="switch" aria-label={label} aria-checked={value} disabled={disabled} className={ownedClassName("motion-toggle-button",true)} onClick={onChange}><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></button></label>; }
+import {MotionSwitch} from './sliding-choice';
+function Switch({ label, value, disabled, onChange }: { label: string; value: boolean; disabled?: boolean; onChange: () => void }) { return <div className={ownedClassName("toggle-row",true)}><span className={ownedClassName(undefined,true)}>{label}</span><MotionSwitch label={label} checked={value} disabled={disabled} onChange={onChange}/></div>; }
 export { InterviewSetup } from './interview-setup';
 export function InterviewSession({ id,onTrainingUpdate }: { id: string; kind: 'chat' | 'video';onTrainingUpdate?:(info:Item)=>void }) {
   const [info,setInfo]=useState<Item|null>(null),[error,setError]=useState('');

@@ -295,3 +295,19 @@
 .savedItem>div>span { color:var(--clarity-ink); font-size:var(--font-size-body); font-weight:550; }
 .savedItem p { font-size:var(--font-size-caption); margin-top:5px; }
 @media(max-width:700px) { .savedHeading h2 { font-size:var(--font-size-section); } .savedSection { padding-inline:0; } .savedList { gap:12px; } .savedItem { gap:14px; } }
+
+.batchSchools { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:0 0 24px; }
+.batchSchools button { display:inline-flex; align-items:center; gap:8px; min-height:44px; max-width:100%; padding:9px 12px; border:0; border-radius:14px; background:var(--clarity-soft); color:var(--clarity-muted); font:inherit; font-size:var(--font-size-caption); text-align:left; cursor:pointer; }
+.batchSchools button > span { display:grid; place-items:center; flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--clarity-surface); color:var(--clarity-action); font-variant-numeric:tabular-nums; }
+.batchSchools button[aria-current=step] { background:var(--clarity-mint); color:var(--clarity-action); font-weight:600; }
+.batchSchools button:disabled { opacity:1; cursor:default; }
+.selectionActions { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-top:24px; }
+.selectionActions > span { color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.6; }
+.selectionActions :global(.button) { flex-shrink:0; min-height:44px; gap:10px; font-size:var(--font-size-caption); }
+.schoolList button:disabled { opacity:.5; cursor:default; }
+@media(max-width:700px) {
+ .batchSchools { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:thin; padding-block:2px 6px; margin-bottom:20px; }
+ .batchSchools button { flex-shrink:0; }
+ .selectionActions { gap:12px; }
+ .selectionActions :global(.button) { padding-inline:14px; }
+}

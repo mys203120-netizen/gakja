@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BookOpen, Bookmark, Search, ArrowUpRight, MessagesSquare, Check, Save, ChevronRight, FileText, History, Flag, ListOrdered } from 'lucide-react';
 import {useRecordPages,useRecordDetail} from './use-record-pages';
 import { useApp } from './app-shell';
-import { action, PageTitle as BasePageTitle, Breadcrumb, Badge, Empty, Alert, LinkedRow, Modal, Spinner, api, post, type Item } from './shared';
+import { action, PageTitle as BasePageTitle, Badge, Empty, Alert, LinkedRow, Modal, Spinner, api, post, type Item } from './shared';
 import { DepartmentNews } from './department-news';
 import styles from './learning-surfaces.module.css';
 import { MaterialNavigation } from './material-navigation';
@@ -19,10 +19,7 @@ const tabs=[['','전체'],['activities','활동'],['questions','예상 질문'],
 function PageTitle(props:ComponentProps<typeof BasePageTitle>){return <><BasePageTitle {...props}/><MaterialNavigation/></>;}
 export function Materials({slug=[]}:{slug?:string[]}){
   const{data}=useApp();const section=slug[0]||'';
-  const breadcrumbs=section==='briefings'
-    ?[{label:'준비 현황',href:'/preparation'},{label:'시사 브리핑',href:slug[1]?'/materials/briefings':undefined},...(slug[1]?[{label:'기사'}]:[])]
-    :[{label:'준비 현황',href:'/preparation'},{label:'학생부·교재',href:section?'/materials':undefined},...(section?[{label:tabs.find(t=>t[0]===section)?.[1]||'자료',href:slug[1]?`/materials/${section}`:undefined}]:[]),...(slug[1]?[{label:'상세'}]:[])];
-  return <><Breadcrumb items={breadcrumbs}/>{section==='briefings'?(slug[1]==='news'?<DepartmentNews articleId={slug[2]}/>:slug[1]?<Briefings key={slug[1]} id={slug[1]}/>:<DepartmentNews/>):!data.package?<><PageTitle title="내 교재"/><Empty title="자료가 준비 중이에요" href="/interview" label="공통 질문 연습"/></>:section==='guidebook'||section==='handbook'?<BookReader key={section} kind={section}/>:section==='activities'?slug[1]?<ActivityDetail key={slug[1]} id={slug[1]}/>:<ActivityList/>:section==='questions'?slug[1]?<QuestionDetail key={slug[1]} id={slug[1]}/>:<QuestionList/>:section==='answers'?slug[1]?<AnswerEditor key={slug[1]} id={slug[1]}/>:<QuestionList answers/>:<MaterialsOverview/>}</>;
+  return <>{section==='briefings'?(slug[1]==='news'?<DepartmentNews articleId={slug[2]}/>:slug[1]?<Briefings key={slug[1]} id={slug[1]}/>:<DepartmentNews/>):!data.package?<><PageTitle title="내 교재"/><Empty title="자료가 준비 중이에요" href="/interview" label="공통 질문 연습"/></>:section==='guidebook'||section==='handbook'?<BookReader key={section} kind={section}/>:section==='activities'?slug[1]?<ActivityDetail key={slug[1]} id={slug[1]}/>:<ActivityList/>:section==='questions'?slug[1]?<QuestionDetail key={slug[1]} id={slug[1]}/>:<QuestionList/>:section==='answers'?slug[1]?<AnswerEditor key={slug[1]} id={slug[1]}/>:<QuestionList answers/>:<MaterialsOverview/>}</>;
 }
 
 function MaterialsOverview(){

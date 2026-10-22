@@ -165,4 +165,4 @@
  .page.page .workspace :global(.on-starter-list button) { height:100%; align-items:center; text-align:left; }
  .page.page .workspace :global(.on-activity-list a svg),.page.page .workspace :global(.on-starter-list button svg) { flex-shrink:0; }
 }
-@media(max-width:1000px) { .desktopAction { display:none; } .page.page .workspace :global(.chat-context):has(:global(.on-reference-tools):empty):not(:has(.targetContext)) { display:none; } }
+@media(max-width:1000px) { .page.page .workspace :global(.chat-context)>.desktopAction { display:none; } .page.page .workspace :global(.chat-context):has(:global(.on-reference-tools):empty):not(:has(.targetContext)) { display:none; } }

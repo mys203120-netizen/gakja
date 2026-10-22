@@ -14,6 +14,7 @@ import {registerDraftSaver} from '@/lib/client/draft-save';
 import {readQuickStartStream} from '@/lib/quick-start-stream';
 import {resetEnterSequence,sendOnEnter} from '@/lib/client/enter-send';
 import styles from './quick-start.module.css';
+import {MotionSwitch} from './sliding-choice';
 
 type Entry={question:string;answer:string};
 type DraftRequest={body:{sessionId:string;targetId:string|null;thoughts:string;history:Entry[];requestId:string};entry:Entry};
@@ -141,7 +142,7 @@ export function QuickStart(){
   {done?<><blockquote className={ownedClassName(styles.savedAnswer,true)}>{answer}</blockquote><div className={ownedClassName(styles.actions,true)}><Link className={ownedClassName("button primary")} href={data.targets.length?'/my':'/schools/new?onboarding=1'}>{data.targets.length?'오늘 훈련으로':'학교 등록하기'}<ArrowRight size={17}/></Link><button className={ownedClassName("text-link",true)} onClick={()=>{try{localStorage.removeItem(key);}catch{}setDone(false);setStarted(false);setSession(null);setAnswer('');setThoughts('');setConversation([]);setFollowup(null);setEdited(false);setAiMode(true);}}>다른 답변 만들기</button></div></>:<>
    <div className={ownedClassName(styles.question,true)}><h2 className={ownedClassName(undefined,true)}>{question?.prompt}</h2></div>
    {!started?<div className={ownedClassName(styles.actions,true)}><ActionButton className={ownedClassName("button primary")} pending={busy} disabled={!question} onClick={()=>void start()}>답변 시작하기<ArrowRight size={17}/></ActionButton><Link className={ownedClassName(styles.schoolLink)} href={data.targets.length?'/my':'/schools/new?onboarding=1'}>{data.targets.length?'오늘로 돌아가기':'학교부터 등록할게요'}</Link></div>:<>
-    <div className={ownedClassName(styles.toggleRow,true)}><span className={ownedClassName(undefined,true)}>AI와 함께 정리</span><button type="button" role="switch" aria-label="AI와 함께 정리" aria-checked={aiMode} disabled={busy||aiBusy} className={ownedClassName("motion-toggle-button",true)} onClick={()=>setAiMode(value=>!value)}><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></button></div>
+    <div className={ownedClassName(styles.toggleRow,true)}><span className={ownedClassName(undefined,true)}>AI와 함께 정리</span><MotionSwitch label="AI와 함께 정리" checked={aiMode} disabled={busy||aiBusy} onChange={setAiMode}/></div>
     {aiMode&&<>
      {conversation.length>0&&<details className={ownedClassName(styles.conversation,true)}><summary className={ownedClassName(undefined,true)}>앞서 나눈 이야기</summary>{conversation.map((entry,index)=><article key={index} className={ownedClassName(undefined,true)}>{index>0&&<p className={ownedClassName(styles.priorQuestion,true)}>{entry.question}</p>}<p className={ownedClassName(undefined,true)}>{entry.answer}</p></article>)}</details>}
      {followup&&<div className={ownedClassName(styles.followup,true)}><Sparkles size={18}/><p className={ownedClassName(undefined,true)}>{followup}</p></div>}

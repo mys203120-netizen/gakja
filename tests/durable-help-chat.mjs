@@ -33,6 +33,8 @@ async function query(sql,params=[]){
 const db={query:async(sql,params)=>({rows:await query(sql,params)})};
 async function transaction(callback){const prior=structuredClone({messages:state.messages,turn:state.turn,helpCalls:state.helpCalls});try{return await callback(db);}catch(error){Object.assign(state,prior);throw error;}}
 const dependencies={
+  '@/lib/student-records':{getStudentRecords:async()=>{throw new Error('Unrequested records read');}},
+  '@/lib/thought-writing':{ownedWritingReceipt:async()=>{throw new Error('Unrequested writing receipt');}},
   '@/lib/interview-answer-evidence':evidenceModule.exports,
   '@/lib/auth':{requireUser:async()=>({id:state.user,role:'student'}),checkOrigin:()=>{}},
   '@/lib/db':{query,transaction},

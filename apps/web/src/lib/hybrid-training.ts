@@ -63,7 +63,7 @@ export function hybridQuestionObservation(question:HybridQuestion,diagnostics:Va
 export function preserveHybridPlan(plan:Value,today:string){
   const auto=plan.target?.automaticPractice;
   if(!auto)return true;
-  if(plan.completed||plan.performedAt||plan.date<today)return true;
+  if(plan.completed||plan.performedAt||plan.date<today||plan.target?.calendarPlacement?.operationId)return true;
   const started=auto.startedAt||auto.hybrid?.startedAt;
   return Boolean(started&&plan.date===today);
 }
@@ -89,10 +89,12 @@ const minutes=(value:unknown)=>Number.isFinite(Number(value))?Math.max(0,Math.ro
 const questionScopeKey=(question:{targetId?:string|null;sourceType?:string;sourceVersion?:number;id:string})=>JSON.stringify([question.targetId,question.sourceType,question.sourceVersion,question.id]);
 
 /** One student's daily capacity is shared by every school. Seven days is a detail window, not a course length. */
-export function hybridTrainingDays(input:{today:string;availability:unknown;deadlines:HybridDeadline[];questions:HybridQuestion[];assignments?:HybridAssignment[];diagnostics?:Value;fixedTasks?:HybridTask[];windowDays?:number}):HybridDay[]{
+export function hybridTrainingDays(input:{today:string;availability:unknown;deadlines:HybridDeadline[];questions:HybridQuestion[];assignments?:HybridAssignment[];diagnostics?:Value;fixedTasks?:HybridTask[];deferredTaskKeys?:string[];windowDays?:number}):HybridDay[]{
   const availability=normalizeTrainingAvailability(input.availability,input.today),diagnostics=input.diagnostics||{},fixedTasks=(input.fixedTasks||[]).filter(task=>task.manual||task.kind!=='break');
   const counts=new Map<string,number>(),questionDates=new Map<string,string>();
   const assigned=new Set(fixedTasks.flatMap(task=>task.practice?.kind==='assignment'?[task.practice.assignmentId]:[]));
+  const deferredKeys=new Set(input.deferredTaskKeys||[]);
+  const deferredSlots=new Set((input.deferredTaskKeys||[]).map(key=>key.split(':').slice(0,4).join(':')));
   const days:HybridDay[]=[];
   for(let offset=0;offset<(input.windowDays??7);offset++){
     const date=shiftPlanDay(input.today,offset),capacityMinutes=availabilityMinutesForDate(availability,date);
@@ -160,6 +162,8 @@ export function hybridTrainingDays(input:{today:string;availability:unknown;dead
       const task:HybridTask={id:taskKey(date,slot.kind,sequence,question),title:(slot.kind==='focus'?`${titles.focus} · ${question.title}`:titles[slot.kind]).slice(0,160),kind:slot.kind,minutes:slot.minutes,reason:reasons[slot.kind],targetId:question.targetId,questionId:question.id,sourceType:question.sourceType,sourceVersion:question.sourceVersion,activityIds:question.activityIds,href:question.href||null,status:'pending',date,sequence:sequence++};
       if(slot.kind==='quiz')task.practice=question.quiz;
       if(slot.assignment){task.id+=':'+slot.assignment.id;task.practice={kind:'assignment',assignmentId:slot.assignment.id};}
+      // A task explicitly moved in the calendar cannot count as practice or workload on its old day.
+      if(deferredKeys.has(task.id)||deferredSlots.has(task.id.split(':').slice(0,4).join(':')))continue;
       tasks.push(task);budget-=task.minutes;
       if(!['break','review'].includes(slot.kind)){const key=questionScopeKey(question);counts.set(question.targetId,(counts.get(question.targetId)||0)+slot.minutes/10);todayUsed.set(key,(todayUsed.get(key)||0)+1);questionDates.set(key,date);previous=question;}
     }

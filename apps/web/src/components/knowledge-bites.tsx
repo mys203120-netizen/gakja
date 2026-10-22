@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpRight, BookOpen, Bookmark, Check, ChevronRight, ExternalLink, History, Play, Search, Timer } from 'lucide-react';
 import { useApp } from './app-shell';
-import { Alert, Breadcrumb, Empty, Modal, PageTitle, Spinner, api, post, type Item } from './shared';
+import { Alert, Empty, Modal, PageTitle, Spinner, api, post, type Item } from './shared';
 import { KNOWLEDGE_FOCUS, type KnowledgeContext, type KnowledgeFocus, type KnowledgeMatch, type KnowledgeSearch, type KnowledgeActivity, type KnowledgeProgress, type KnowledgeQuestion } from '@/lib/knowledge-bites-catalog';
 import { knowledgeCheckPrompt, knowledgeTargetKey } from '@/lib/knowledge-flow-model';
 import { LearningHelp } from './learning-help';
@@ -40,7 +40,6 @@ function KnowledgePage({ slug }: { slug: string[] }) {
   const selected = slug[0] ? content?.videos.find(item => item.id === slug[0]) : null;
   function update(videoId: string, progress: KnowledgeProgress) { setContent(previous => previous ? { ...previous, videos: previous.videos.map(item => item.id === videoId ? { ...item, progress } : item) } : previous); }
   return <section className={ownedClassName("knowledge-page",true)}>
-    <Breadcrumb items={[{ label: '지식한입', href: slug[0] ? `/knowledge${contextQuery(questionId, flow, sessionId,targetId)}` : undefined }, ...(slug[0] ? [{ label: selected?.label || '학습 자료' }] : [])]} />
     {loadedScope===requestScope&&error&&<Alert>{error}<button className={ownedClassName("text-link",true)} onClick={load}>다시 불러오기</button></Alert>}
     {loadedScope!==requestScope?<Spinner/>:!content ? !error && <Spinner /> : slug[0] ? selected ? <KnowledgeDetail key={`${data.user.id}:${selected.id}:${questionId || ''}:${targetId || ''}:${selectionScope}`} video={selected} onUpdate={update} contextQuestion={content.contextQuestion} flow={flow} /> : <Empty title="연결된 자료가 없어요" href={`/knowledge${contextQuery(questionId, flow,null,targetId)}`} label="자료 목록" /> : <KnowledgeList key={`${content.selectedTarget?.id || 'record'}:${selectionScope}`} content={content} />}
   </section>;

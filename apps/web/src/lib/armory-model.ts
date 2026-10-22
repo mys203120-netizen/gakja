@@ -5,6 +5,8 @@ const experienceFields = z.object({
  confirmed:z.boolean(), pinned:z.boolean().default(false),
  sourceNote:z.string().trim().max(400).default('학생이 직접 작성한 경험'),
  originalText:z.string().max(6000).optional(),
+ writingOriginals:z.object({situation:z.string().max(2000).optional(),action:z.string().max(2000).optional(),result:z.string().max(2000).optional()}).strict().optional(),
+ writingAssistance:z.array(z.object({requestId:z.string().uuid(),field:z.enum(['situation','action','result']),at:z.string().datetime()})).max(30).optional(),
 });
 /** A draft can be incomplete, including its optional title and confirmation fields. */
 export const experienceDraftSchema = experienceFields.extend({title:z.string().trim().max(120).default('')}).transform(value=>({...value,confirmed:false}));

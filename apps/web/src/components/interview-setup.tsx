@@ -12,10 +12,11 @@ import { api, ActionButton, PageTitle, Breadcrumb, Alert, targetName, type Item 
 import { hasInterviewSelection, interviewPreviewHref, interviewSetupHref, interviewSetupState, sourceVersionInput, type InterviewSetupState } from '@/lib/interview-flow';
 import { learningScopeIdentity } from '@/lib/learning-target-scope';
 import {interviewSupportForTarget} from '@/lib/school-interview-scope';
+import {MotionSwitch} from './sliding-choice';
 
 const modes = [{ id: 'basic', name: '기본', copy: '한 질문씩 차근차근' }, { id: 'document', name: '서류 집중', copy: '내 역할과 활동 과정' }, { id: 'major', name: '전공 심화', copy: '개념과 탐구의 깊이' }, { id: 'university', name: '대학 맞춤', copy: '지원처에 연결한 경험' }] as const;
 function Switch({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
-  return <label className={ownedClassName("toggle-row",true)}><span className={ownedClassName(undefined,true)}>{label}</span><button type="button" role="switch" aria-label={label} aria-checked={value} className={ownedClassName("motion-toggle-button",true)} onClick={onChange}><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></button></label>;
+  return <div className={ownedClassName("toggle-row",true)}><span className={ownedClassName(undefined,true)}>{label}</span><MotionSwitch label={label} checked={value} onChange={onChange}/></div>;
 }
 
 export function InterviewSetup({ kind }: { kind: 'chat' | 'video' }) {

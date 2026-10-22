@@ -189,6 +189,8 @@ check(state.claims === 1 && state.fetches === topic.feeds.length, 'scheduled cal
 function clientLoader(replies, { abortAt = -1 } = {}) {
   const urls = [], delays = [], shown = [], controller = new AbortController();
   const component = compile('../apps/web/src/components/department-news.tsx', name => {
+    if (name === '@/lib/client/device-storage') return { setDeviceItem() {} };
+    if (name === './owned-class-name') return { ownedClassName: value => value };
     if (name === './shared') return { api: async (url, options) => { urls.push(url); assert.equal(options.signal, controller.signal); if (urls.length === abortAt) controller.abort(new Error('scope changed')); const reply = replies[Math.min(urls.length - 1, replies.length - 1)]; if (reply instanceof Error) throw reply; return reply; } };
     if (name === 'react/jsx-runtime' || name === 'react' || name === 'lucide-react' || name === './app-shell' || name === './material-navigation' || name === 'next/navigation') return {};
     if (name === 'next/link' || name.endsWith('.css')) return { default: {} };

@@ -101,6 +101,7 @@ const setup=compile('../apps/web/src/components/interview-setup.tsx',name=>{
   if(name==='lucide-react')return new Proxy({},{get:(_,key)=>String(key)});
   if(name==='./app-shell')return {useApp:()=>app};
   if(name==='./learning-help')return {LearningHelp:()=>null};
+  if(name==='./sliding-choice')return {MotionSwitch:()=>null};
   if(name==='./shared')return {ActionButton:actionButton,api:(url,options)=>new Promise(resolve=>requests.push({url,options,resolve})),PageTitle:()=>null,Breadcrumb:()=>null,Alert:()=>null,targetName:target=>target.university};
   if(name==='@/lib/learning-target-scope')return scopeModel;
   if(name==='@/lib/interview-flow')return {hasInterviewSelection:()=>false,interviewPreviewHref:(_params,targetId)=>'/preview?targetId='+targetId,interviewSetupState:()=>({panelistCount:1,mode:'basic',count:1,timing:'end'}),interviewSetupHref:()=>'/interview/chat',sourceVersionInput:()=>undefined};

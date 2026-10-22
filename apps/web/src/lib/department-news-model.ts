@@ -11,7 +11,7 @@ export const NEWS_FEEDS = {
 } as const;
 export type NewsFeedKey = keyof typeof NEWS_FEEDS;
 export type NewsTopic = { key: string; label: string; keywords: string[]; feeds: NewsFeedKey[] };
-export const NEWS_TOPIC_REVISION = 'v2';
+export const NEWS_TOPIC_REVISION = 'v3';
 export type NewsMajorMetadata = { category?: string; field?: string };
 export type NewsConnection = { basis: 'major_topic' | 'related_field' | 'common' | 'keyword'; label: string; category?: string; field?: string };
 export type NewsArticle = { id: string; title: string; url: string; publisher: string; snippet: string; publishedAt: string; fetchedAt: string; keywords: string[]; feedKey: NewsFeedKey };
@@ -52,7 +52,7 @@ function topicByKey(key: string) { return topics.find(row=>row.topic.key===key)?
 export function majorNewsConnection(major: string, metadata: NewsMajorMetadata = {}): { topic: NewsTopic | null; connection: NewsConnection | null } {
   const clean = major.trim().replace(/\s+/g, ' ');
   if (!clean || /^(미정|선택|미선택|없음)$/.test(clean)) return {topic:null,connection:null};
-  const related = (topic:NewsTopic,basis:NewsConnection['basis']) => ({topic,connection:{basis,label:topic.label,...metadata}});
+  const related = (topic:NewsTopic,basis:NewsConnection['basis']) => ({topic:{...topic,feeds:diverseNewsFeeds(topic.feeds)},connection:{basis,label:topic.label,...metadata}});
   const broad = /자유전공|자율전공|무전공|자율학부|광역|통합모집|기타모집단위|새내기|전공자유|열린전공|도전탐색|학부대학|스크랜튼|인터칼리지|혁신칼리지|아너스|진리자유|기초학부/.test(clean);
   const matched = topics.find(item => item.match.test(clean)&&!(item.topic.key==='computing'&&/로봇|모빌리티|반도체|전기|전자/.test(clean)));
   if (matched) return related(matched.topic,broad?'related_field':'major_topic');
@@ -65,6 +65,31 @@ export function majorNewsConnection(major: string, metadata: NewsMajorMetadata =
   return keyword.length >= 2 ? related({ key: `major:${keyword}`, label: clean, keywords: [keyword], feeds: ['society', 'science', 'economy'] },'keyword') : {topic:null,connection:null};
 }
 export function majorNewsTopic(major: string, metadata: NewsMajorMetadata = {}): NewsTopic | null { return majorNewsConnection(major,metadata).topic; }
+
+/** Add general news desks; relevance still requires this major's headline keywords. */
+export function diverseNewsFeeds(feeds: readonly NewsFeedKey[]): NewsFeedKey[] {
+  return [...new Set<NewsFeedKey>([...feeds, 'digital', 'economy', 'technology'])];
+}
+
+/** Each publisher gets a turn before a prolific desk fills the finite snapshot. */
+export function balanceNewsPublishers<T extends Pick<NewsArticle, 'title' | 'url' | 'publisher' | 'publishedAt'>>(articles: readonly T[], limit = 20): T[] {
+  const groups = new Map<string, T[]>(), urls = new Set<string>(), headlines = new Set<string>();
+  for (const article of [...articles].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))) {
+    const headline = article.title.replace(/^\s*(?:\[(?:속보|종합|단독|포토뉴스|포토)\]\s*)+/u, '').replace(/[\s\p{P}]/gu, '').toLocaleLowerCase('ko-KR');
+    if (urls.has(article.url) || headlines.has(headline)) continue;
+    urls.add(article.url); headlines.add(headline);
+    const publisher = article.publisher.trim().toLocaleLowerCase('ko-KR');
+    const rows = groups.get(publisher) || []; rows.push(article); groups.set(publisher, rows);
+  }
+  const ordered = [...groups.values()], result: T[] = [];
+  while (result.length < Math.max(0, limit) && ordered.some(rows => rows.length)) {
+    for (const rows of ordered) {
+      if (result.length >= limit) break;
+      const article = rows.shift(); if (article) result.push(article);
+    }
+  }
+  return result;
+}
 
 export function cleanNewsText(value: string, max = 220): string {
   let text = value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');

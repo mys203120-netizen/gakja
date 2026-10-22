@@ -113,8 +113,8 @@
   background: none;
   line-height: 1.65;
 }
-:global(.interview-quick-start) .alert { margin-top: 18px; }:global(.plan-form)>div:not(:global(.form-actions)):not(.alert){display:grid;grid-template-columns:1fr 1fr;gap:15px;}
-@media(max-width:700px){:global(.plan-form)>div:not(:global(.form-actions)):not(.alert){grid-template-columns:1fr;}}:global(.learning-help)>.alert{margin:10px 0;}:global(.learning-help-panel)>.alert{max-height:120px;overflow:auto;flex-shrink:0;font-size:var(--font-size-caption);}
+:global(.interview-quick-start) .alert { margin-top: 18px; }:global(.plan-form)>div:not(:global(.form-actions)):not(.alert):not(:global(.plan-select-field)){display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+@media(max-width:700px){:global(.plan-form)>div:not(:global(.form-actions)):not(.alert):not(:global(.plan-select-field)){grid-template-columns:1fr;}}:global(.learning-help)>.alert{margin:10px 0;}:global(.learning-help-panel)>.alert{max-height:120px;overflow:auto;flex-shrink:0;font-size:var(--font-size-caption);}
 :global(.native-modal) :global(.modal) .notification-item {
   padding: 16px 0;
   border-bottom-color: var(--clarity-line);
@@ -125,7 +125,7 @@
 :global(.auth-page):global(.auth-centered) .alert { border-radius: 8px; }
 :global(.auth-page):global(.auth-centered) .success-message { border-radius: 8px; }
 :global(.app-shell):not(:global(.admin-shell)) :is(:global(.page-title) h1,:global(.row-text) strong,:global(.row-text) > span,.notification-item p) { word-break:keep-all; overflow-wrap:anywhere; }
-:global(.native-modal) :global(.plan-form) > div:not(:global(.form-actions)):not(.alert) { gap:16px; }
+:global(.native-modal) :global(.plan-form) > div:not(:global(.form-actions)):not(.alert):not(:global(.plan-select-field)) { gap:16px; }
 :global(.app-shell) :is(.alert,.error-message) { background:#fff0ef; color:var(--clarity-danger); }
 :global(.auth-page):global(.auth-centered) .alert,
 :global(.auth-page):global(.auth-centered) .success-message { margin-bottom: 20px; padding: 13px 16px; font-size: var(--font-size-caption); line-height: 1.7; }

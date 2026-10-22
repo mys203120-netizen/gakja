@@ -21,6 +21,7 @@ import {InterviewerAudioOutput} from '@/lib/client/interviewer-audio-output';
 import {connectRealtimeInterview,type RealtimeInterviewConnection} from '@/lib/client/realtime-interview';
 import {ChatComposer} from './chat-composer';
 import {LearningHelp} from './learning-help';
+import {MotionSwitch} from './sliding-choice';
 import styles from './live-interview-session.module.css';
 
 // Reuse the gesture-unlocked audio element for every interviewer question (including Safari).
@@ -378,7 +379,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
         <div className={ownedClassName(styles.controls,true)}>
           <details className={ownedClassName(styles.recordingSettings,true)} open={!consent||recordingSettingsOpen} onToggle={event=>setRecordingSettingsOpen(event.currentTarget.open)}><summary className={ownedClassName(undefined,true)}><span className={ownedClassName(undefined,true)}>녹음 설정</span><span className={ownedClassName(undefined,true)}>{preferenceBusy?'저장 중':consent?'설정됨':'처음 한 번 설정'}</span></summary><div className={ownedClassName(styles.recordingSettingsBody,true)}>
             <label className={ownedClassName(styles.consent,true)}><span className={ownedClassName(undefined,true)}>음성·영상 저장과 답변 전사에 동의해요.</span><span className={ownedClassName("motion-toggle-field",true)}><input className={ownedClassName("motion-toggle-input",true)} type="checkbox" checked={consent} disabled={preferenceBusy||active} onChange={event=>void saveRecordingSettings({liveRecordingConsent:event.target.checked})}/><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></span></label>
-            <label className={ownedClassName(styles.consent,true)}><span className={ownedClassName(undefined,true)}>카메라 함께 사용</span><span className={ownedClassName("motion-toggle-field",true)}><input className={ownedClassName("motion-toggle-input",true)} type="checkbox" checked={camera} disabled={preferenceBusy||active} onChange={event=>void saveRecordingSettings({liveCameraEnabled:event.target.checked})}/><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></span></label>
+            <div className={ownedClassName(styles.consent,true)}><span className={ownedClassName(undefined,true)}>카메라 함께 사용</span><MotionSwitch label="카메라 함께 사용" checked={camera} disabled={preferenceBusy||active} onChange={value=>void saveRecordingSettings({liveCameraEnabled:value})}/></div>
             <Link href="/privacy" className={ownedClassName("text-link")}>개인정보 처리방침 · 녹음·AI 처리 안내</Link><div className={ownedClassName(styles.settingsHelp,true)}><span className={ownedClassName(undefined,true)}>계정에 저장됨</span><InfoTip label="녹음 설정과 권한 안내">동의와 카메라 선택은 다음 면접에도 유지돼요. 마이크 연결은 면접 시작을 눌렀을 때 확인하며, 브라우저가 요청하는 권한은 직접 허용해야 해요. 녹음은 비공개로 저장되고 AI 전사·피드백에 사용돼요. 일시정지 후 동의를 끌 수 있으며, 이미 저장한 답변은 유지돼요.</InfoTip></div>
           </div></details>
           {preferenceError&&<p className={ownedClassName(styles.error,true)} role="alert">{preferenceError}</p>}

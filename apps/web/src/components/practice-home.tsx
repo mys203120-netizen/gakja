@@ -7,7 +7,7 @@ import {useApp} from './app-shell';
 import {splitInterviewsByLearningTarget} from '@/lib/learning-target-scope';
 import styles from './navigation-rail.module.css';
 import {FocusTraining} from './focus-training';
-import {PageTitle} from './shared';
+import {TrainingHeader} from './training-hub';
 import {LearningDiscovery} from './learning-discovery';
 
 export function PracticeHome(){
@@ -15,7 +15,7 @@ export function PracticeHome(){
  const sessions=splitInterviewsByLearningTarget(data.interviews||[],target).current.filter(row=>row.state==='active');
  const active=sessions[0];
  const resumeHref=active?.data?.trainingPlanId?'/my/train?planId='+encodeURIComponent(active.data.trainingPlanId):active?`/interview/${active.id}?kind=${active.kind}`:null;
- return <div className={ownedClassName('practice-home '+styles.practiceHome,true)}><PageTitle title="자유 연습"/>
+ return <div className={ownedClassName('practice-home '+styles.practiceHome,true)}><TrainingHeader title="자유 연습"/>
  {active&&<div className={ownedClassName(styles.resume,true)}><span className={ownedClassName(undefined,true)}>{active.data?.trainingPlanId?'진행 중인 훈련':'진행 중인 면접'}</span><Link href={resumeHref!}>이어 하기<ArrowUpRight size={16}/></Link></div>}
  <div className={ownedClassName(styles.practiceChoices,true)}>
   <Link href={'/quiz'+suffix}><Sparkles size={25} strokeWidth={1.5}/><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>퀴즈</h2><p className={ownedClassName(undefined,true)}>선택하고, 떠올리고, 소리 내어 답하기</p></div><ArrowUpRight size={20}/></Link>

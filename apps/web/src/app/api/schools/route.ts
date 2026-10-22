@@ -1,6 +1,6 @@
 import { requireUser,checkOrigin } from '@/lib/auth';
 import { featureError,requireStudent } from '@/lib/ai';
-import { studentSchoolContext,studentSchoolRegistrations,commonInterviewQuestions,registerStudentSchool,updateStudentSchool,archiveStudentSchool } from '@/lib/school-learning';
+import { studentSchoolContext,studentSchoolRegistrations,commonInterviewQuestions,registerStudentSchool,registerStudentSchools,updateStudentSchool,archiveStudentSchool } from '@/lib/school-learning';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 function json(value:unknown,status=200) { return Response.json(value,{status,headers:{'Cache-Control':'private, no-store'}}); }
@@ -12,7 +12,9 @@ export async function GET(request:Request) {
   } catch(error) { const result=featureError(error);return json({error:result.error,code:result.code},result.status); }
 }
 export async function POST(request:Request) {
-  try { checkOrigin(request);const user=await requireUser();requireStudent(user);const target=await registerStudentSchool(user.id,await request.json());return json({target}); }
+  try { checkOrigin(request);const user=await requireUser();requireStudent(user);const input=await request.json();
+    if(input&&typeof input==='object'&&'registrations' in input){const targets=await registerStudentSchools(user.id,input);return json({targets,target:targets.at(-1)});}
+    const target=await registerStudentSchool(user.id,input);return json({target}); }
   catch(error) { const result=featureError(error);return json({error:result.error,code:result.code},result.status); }
 }
 export async function PATCH(request:Request) {
