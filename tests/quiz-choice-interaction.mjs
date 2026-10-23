@@ -248,6 +248,8 @@ export async function runQuizChoiceInteractionChecks() {
 
   {
     const h = harness(); await h.begin();
+    check(nodes(h.state.tree).some(node=>node.props?.role==='group'&&node.props['aria-label']?.includes('하나를 선택')),'answer choices explain their single immediate submission');
+    check(!nodes(h.state.tree).filter(node=>node.type==='button'&&text(node).includes('합성 보기')).some(node=>node.props['aria-pressed']!==undefined||node.props.role==='checkbox'),'immediate answer actions are buttons rather than independent toggles');
     await h.click(/합성 보기 1-1/);
     check(!!h.review(), 'untimed answer remains in an explicit review section after item-change effects');
     check(text(h.review()).includes(items[0].prompt) && text(h.review()).includes(items[0].options[1].text), 'review shows the answered question and reviewed correct choice');
@@ -374,7 +376,7 @@ export async function runQuizChoiceInteractionChecks() {
     const value=fixture(),key='gakja-quiz:synthetic-student:choice-session:0:choice';value.session.state='paused';
     const storage=new Map([[key,JSON.stringify({studentId:'synthetic-student',sessionId:'choice-session',itemIndex:0,memoryItemId:items[0].id,selectedOptionId:items[0].options[2].id})]]);
     const h=harness(value,storage);await h.settle();await h.begin();
-    check(h.button(/합성 보기 1-3/).props['aria-pressed']===true,'returning to an unanswered current item restores only its scoped local selection');
+    check(h.button(/합성 보기 1-3/).props['data-selected']===true,'returning to an unanswered current item restores only its scoped local selection');
     await h.state.logoutSaver();await h.settle();
     check(h.calls('answer').length===0&&h.calls('draft').length===0&&h.state.server.responses.length===0,'choice logout never creates a server draft or marks a response');
     check(h.state.local.has(key)&&h.state.server.session.state==='paused','choice selection is preserved locally while its clock pauses');
@@ -404,7 +406,7 @@ export async function runQuizChoiceInteractionChecks() {
     const value=fixture(),key='gakja-quiz:synthetic-student:choice-session:0:choice';value.session.state='paused';
     const storage=new Map([[key,JSON.stringify({studentId:'other-student',sessionId:'choice-session',itemIndex:0,memoryItemId:items[0].id,selectedOptionId:items[0].options[2].id})]]);
     const h=harness(value,storage);await h.settle();await h.begin();
-    check(h.button(/합성 보기 1-3/).props['aria-pressed']===false&&h.calls('answer').length===0,'a local selection from another student is never restored or submitted');
+    check(h.button(/합성 보기 1-3/).props['data-selected']===false&&h.calls('answer').length===0,'a local selection from another student is never restored or submitted');
   }
   {
     const h=harness();await h.settle();const gate=deferred();
@@ -480,7 +482,7 @@ export async function runPlannedQuizAutoStartChecks(){
   for(const planned of [true,false]){
     const value=planned?linked():fixture();value.session.state='completed';value.session.mode='answer';value.session.current_index=1;value.responses=[{id:'saved-answer',item_index:0,response:'직접 작성한 답변',outcome:null,data:{recall_state:'unchecked'}}];
     const h=harness(value);await h.settle();const rendered=nodes(h.state.tree),continuation=rendered.findIndex(node=>node.type==='TrainingContinuation'),details=rendered.findIndex(node=>node.props?.['aria-labelledby']==='quiz-result-review-title');
-    assert.ok(continuation>=0&&continuation<details,'the next plan step precedes the detailed answer report');assert.equal(rendered.some(node=>node.props?.['aria-labelledby']==='quiz-result-next-title'),!planned,'only free practice retains its general interview handoff');
+    assert.ok(continuation>=0&&continuation<details,'the next plan step precedes the detailed answer report');assert.equal(rendered.find(node=>node.props?.['aria-labelledby']==='quiz-result-review-title').type,'details','detailed answer report begins collapsed');assert.equal(rendered.find(node=>node.props?.['aria-labelledby']==='quiz-result-review-title').props.open,undefined);
     assert.ok(text(h.state.tree).includes('돌아보기 전 · 미채점'));assert.ok(!text(h.state.tree).includes('다시 준비 · 미채점'),'saving without self reflection never claims that the student chose retry');await h.unmount();
   }
   for(const [recallState,outcome,timedOut,label] of [['uncertain',null,false,'다시 준비 · 미채점'],['remembered',null,false,'답변 저장 · 미채점'],['unchecked',false,false,'다시 확인'],['unchecked',null,true,'시간 초과']]){

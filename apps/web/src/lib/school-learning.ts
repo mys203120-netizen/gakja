@@ -206,7 +206,7 @@ export async function archiveStudentSchool(studentId:string,raw:unknown) {
 async function publishedCommonQuestionRows(referenceId:string|null,revision?:number){
   return query("select * from (select distinct on(id) * from common_interview_questions where ($2::int is null or revision=$2) order by id,revision desc) q where status='published' and (school_reference_id is null or school_reference_id=$1) order by (school_reference_id is null),id",[referenceId,revision ?? null]);
 }
-export async function commonInterviewQuestions(studentId: string, targetId: string | null = null, revision?:number) {
+export async function commonInterviewQuestions(studentId: string, targetId: string | null = null, revision?:number, options?:{readOnly?:boolean}) {
   let referenceId: string | null = null;
   let selectedTarget:Record<string,any>|null=null;
   if (targetId) {
@@ -216,7 +216,7 @@ export async function commonInterviewQuestions(studentId: string, targetId: stri
     selectedTarget=target.data;
   }
   if(selectedTarget&&revision===undefined&&!interviewSupportForTarget(selectedTarget).supported)return [];
-  if(selectedTarget&&(revision===undefined||revision===1)){
+  if(!options?.readOnly&&selectedTarget&&(revision===undefined||revision===1)){
     const departmentQuestions=departmentPracticeQuestions(selectedTarget);
     if(departmentQuestions.length)await query("insert into common_interview_questions(id,revision,prompt,source_type,status,school_reference_id,data,source) select item->>'id',1,item->>'prompt','general_practice','published',item->>'school_reference_id',item,item->'source_snapshot' from jsonb_array_elements($1::jsonb) item on conflict(id,revision) do nothing",[JSON.stringify(departmentQuestions)]);
   }

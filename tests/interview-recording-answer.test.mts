@@ -1,3 +1,5 @@
+import * as interviewPolicyModule from '../apps/web/src/lib/interview-policy';
+import * as interviewFeedbackModule from '../apps/web/src/lib/interview-feedback';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -21,7 +23,7 @@ const ai={FeatureError,requireStudent(){},assertPublishedAccess:async()=>{},aiEn
   getLearningContext:async()=>({...state.session.data.context,target:null,targetId:null,sourceKind:'personal',packageId:'fixture-package',questions:state.session.data.questionQueue}),
   normalizeMode:(mode:string)=>mode,interviewQuestions:(context:any)=>context.questions,planRootQuestions:(questions:any[],count:number)=>({questions:questions.slice(0,count),plan:{basis:'training'}}),
   entityText:(value:any,key:string)=>value[key]||'',PROMPT_VERSION:'synthetic-test',
-  coach:async(...args:any[])=>{state.coachCalls.push(args);if(state.coachGate)await state.coachGate;return {content:'그 선택을 한 이유는 무엇인가요?',sources:[],model:'synthetic-provider',promptVersion:'fixture'};},
+  coach:async(...args:any[])=>{state.coachCalls.push(args);if(state.coachGate)await state.coachGate;return {content:state.coachContent||'그 선택을 한 이유는 무엇인가요?',sources:[],model:'synthetic-provider',promptVersion:'fixture'};},
   featureError:(error:any)=>({status:error.status||(error.name==='ZodError'?400:500),error:error.message,code:error.code})};
 async function query(sql:string,args:any[]=[]):Promise<any[]>{
   if(sql.startsWith('select')&&sql.includes('from interview_sessions'))return state.session.id===args[0]&&state.session.student_id===args[1]?[structuredClone(state.session)]:[];
@@ -61,7 +63,7 @@ const database={query,transaction:async(fn:any)=>{
 }};
 function load(file:string){const mod={exports:{} as any};vm.runInNewContext(ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
   module:mod,exports:mod.exports,Response,Request,URL,Date,console,process:{env:{}},
-  require(name:string){
+  require(name:string){if(name==='@/lib/interview-policy')return interviewPolicyModule;if(name==='@/lib/interview-feedback')return interviewFeedbackModule;
     if(name==='server-only')return {};
     if(name==='@/lib/auth')return {requireUser:async()=>({id:state.actor,role:'student'}),checkOrigin(){}};
     if(name==='@/lib/db')return database;
@@ -123,7 +125,7 @@ test('concurrent retries submit once and durable receipts remain recoverable aft
 test('follow-up generation receives the saved transcript and cannot overwrite a later cancellation generation',async()=>{
   reset();state.ai=true;state.session.data.followups=true;let release!:()=>void;state.coachGate=new Promise<void>(resolve=>release=resolve);
   const pending=call();while(!state.coachCalls.length)await new Promise(resolve=>setTimeout(resolve,0));
-  assert.ok(state.coachCalls[0][3][0].content.includes(display));
+  assert.ok(state.coachCalls[0][3][0].content.includes(raw));
   const cancel=await call({action:'cancel'});assert.equal(cancel.status,200);release();const result=await pending;assert.equal(result.status,200);
   assert.equal(state.session.state,'cancelled');assert.equal(state.session.data.paused,true);assert.equal(state.session.data.generation,4);assert.equal(state.turns[1].question_id,'q2');assert.equal(state.events.length,1);assert.equal(result.body.nextQuestion,null);
   reset();state.ai=true;state.session.data.followups=true;const generated=await call();assert.equal(generated.status,200);assert.equal(generated.body.nextQuestion.questionKind,'generated');assert.equal(generated.body.nextQuestion.speakerId,'A');assert.equal(state.turns[1].data.parentTurnId,turnId);
@@ -159,4 +161,19 @@ test('new Live sessions exclude room setup time; Chat sessions retain their runn
 });
 test('manual text submission continues to use the student answer without a media selection',async()=>{
   reset();const result=await call({action:'answer',answer:'직접 입력한 답변',mediaId:undefined,generation:undefined});assert.equal(result.status,200);assert.equal(state.turns[0].data.answer,'직접 입력한 답변');assert.equal(state.turns[0].data.speechSource,undefined);
+});
+
+
+test('real policy rejects help, typing, correction and retry before writes or paid work',async()=>{
+ for(const action of ['help','answer','draft','settings','retry','use_transcript','transcript']){reset();state.session.data.sessionMode='real';const result=await call({action,answer:'작성 답변',draft:'초안',transcript:'수정'});assert.equal(result.status,403,action);assert.equal(result.body.code,'REAL_INTERVIEW_POLICY');assert.equal(state.writes,0);assert.equal(state.coachCalls.length,0);}
+});
+test('real recording evaluation is stored but not released before completion',async()=>{
+ reset();state.session.data.sessionMode='real';state.ai=true;const result=await call();assert.equal(result.status,200,JSON.stringify(result.body));assert.ok(state.turns[0].data.feedback);assert.equal(result.body.feedback,null);assert.equal(result.body.turn.feedback,null);assert.equal(result.body.turn.data.feedback,null);assert.equal(result.body.turn.evaluation,null);
+});
+test('practice retry versions draft evidence and retains the original media',async()=>{
+ reset();Object.assign(state.turns[0].data,{draft:'이전 초안',rawTranscript:raw,rawTranscriptMediaId:mediaId,mediaId});const result=await call({action:'retry'});assert.equal(result.status,200,JSON.stringify(result.body));assert.equal(state.session.data.generation,4);assert.equal(state.session.data.paused,true);assert.equal(state.turns[0].data.draft,'');assert.equal(state.turns[0].data.attempts[0].rawTranscript,raw);assert.equal(state.assets[0].id,mediaId);assert.equal(state.assets[0].text,raw);
+});
+test('follow-up ceilings apply to ordinary and pressure sessions and sufficient answers advance',async()=>{
+ for(const [pressure,depth,expected] of [[false,1,1],[true,1,2],[true,2,1]] as const){reset();state.ai=true;state.session.data.followups=true;state.session.data.pressure=pressure;state.turns[0].data.followupDepth=depth;await call();assert.equal(state.coachCalls.length,expected);}
+ reset();state.ai=true;state.session.data.followups=true;state.coachContent='[NEXT]';const result=await call();assert.equal(result.body.nextQuestion.id,'q2');
 });

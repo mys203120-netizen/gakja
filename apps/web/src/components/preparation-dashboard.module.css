@@ -1,0 +1,81 @@
+.dashboard { max-width:1090px; margin:12px auto 32px; }
+.heading { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:32px; }
+.eyebrow { margin:0 0 8px; color:var(--clarity-green); font-size:var(--font-size-caption); font-weight:600; }
+.heading h1 { font-weight:700; }
+.heading>div>p:last-child { margin-top:10px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.settings { display:grid; place-items:center; flex:none; width:44px; height:44px; border-radius:16px; background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); color:var(--clarity-green); }
+.summary { display:grid; grid-template-columns:1.08fr .85fr 1.07fr; gap:22px; }
+.card { min-width:0; padding:26px; border:1px solid rgb(255 255 255 / 85%); border-radius:28px; background:var(--clarity-surface); box-shadow:var(--soft-shadow-raised); }
+.cardHeading { display:flex; align-items:center; gap:10px; margin-bottom:24px; }
+.cardHeading h2 { margin:0; font-size:var(--font-size-body); font-weight:650; }
+.cardHeading>span:last-child,.cardHeading>a:last-child { margin-left:auto; }
+.symbol { display:grid; place-items:center; width:34px; height:34px; border-radius:12px; background:var(--clarity-mint); color:var(--clarity-green); }
+.today { background:var(--soft-accent-gradient); }
+.today>a { display:flex; margin-top:24px; width:100%; }
+.countdown { display:block; margin-top:26px; font-size:var(--font-size-title); line-height:1.1; letter-spacing:-.05em; font-weight:750; font-variant-numeric:tabular-nums; }
+.school { margin-top:22px; font-size:var(--font-size-body); font-weight:650; }
+.caption,.date { color:var(--clarity-muted); font-size:var(--font-size-caption); line-height:1.6; }
+.date { margin-top:12px; }
+.emptyNumber { display:block; font-size:var(--font-size-title); margin:28px 0; }
+.inlineLink { display:inline-flex; align-items:center; gap:5px; margin-top:20px; min-height:44px; color:var(--clarity-green); font-size:var(--font-size-caption); }
+.activityCard .cardHeading { justify-content:space-between; margin-bottom:18px; }
+.weekTotal { font-size:var(--font-size-title); line-height:1; }
+.weekTotal small { margin-left:4px; font-weight:400; color:var(--clarity-muted); }
+.chartNote { margin-top:14px; font-size:var(--font-size-caption); color:var(--clarity-muted); }
+.middle { display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:24px; }
+.description { margin:-4px 0 20px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.description strong { color:var(--clarity-ink); font-weight:600; }
+.details { margin-top:22px; border-top:1px solid var(--clarity-line); }
+.details summary { display:flex; align-items:center; justify-content:space-between; min-height:50px; cursor:pointer; list-style:none; color:var(--clarity-green); font-size:var(--font-size-caption); }
+.details summary::-webkit-details-marker { display:none; }
+.details[open] summary>svg { rotate:180deg; }
+.details>a { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 0; border-top:1px solid var(--clarity-line); font-size:var(--font-size-caption); }
+.details small { display:block; margin-top:5px; color:var(--clarity-muted); }
+.details>p { color:var(--clarity-muted); font-size:var(--font-size-caption); padding-bottom:12px; }
+.schoolCard .cardHeading { margin-bottom:10px; }
+.schoolCard .cardHeading>a { display:grid; place-items:center; width:36px; height:36px; color:var(--clarity-muted); }
+.schools>a { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:19px 0; border-top:1px solid var(--clarity-line); }
+.schools>a:first-child { border-top:0; }
+.schools strong { display:block; font-size:var(--font-size-body); font-weight:600; }
+.schools small { display:block; color:var(--clarity-muted); font-size:var(--font-size-caption); margin-top:4px; }
+.schoolDate { display:flex; flex:none; align-items:center; gap:7px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.calendarSection { margin-top:32px; }
+.recordsEntry { display:flex; align-items:center; gap:16px; margin-top:28px; padding:24px 28px; border-radius:24px; background:var(--soft-accent-gradient); box-shadow:var(--soft-shadow-small); }
+.recordSymbol { display:grid; place-items:center; width:48px; height:48px; flex:none; border-radius:16px; background:white; color:var(--clarity-green); box-shadow:var(--soft-shadow-small); }
+.recordsEntry>span:nth-child(2) { flex:1; min-width:0; }
+.recordsEntry strong { display:block; font-size:var(--font-size-body); font-weight:650; }
+.recordsEntry small { display:block; margin-top:5px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.recordsEntry>svg { color:var(--clarity-green); }
+.tools { display:flex; gap:24px; flex-wrap:wrap; justify-content:flex-end; margin-top:22px; }
+.tools>a { display:flex; align-items:center; gap:6px; min-height:44px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.loading { min-height:300px; display:grid; place-content:center; gap:20px; }
+.dashboard a:focus-visible,.dashboard summary:focus-visible { outline:2px solid var(--clarity-green); outline-offset:4px; border-radius:12px; }
+@media(max-width:1180px) and (min-width:701px) { .summary { grid-template-columns:1fr 1fr; }.activityCard { grid-column:1/-1; }.activityCard>div:nth-child(2) { max-width:520px; }.card { padding:24px; } }
+@media(max-width:960px) and (min-width:701px) { .today { grid-column:1/-1; }.activityCard { grid-column:auto; } }
+@media(max-width:700px) {
+ .dashboard { margin-top:18px; }.heading { gap:16px; margin-bottom:26px; }
+ .summary { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; }
+ .card { padding:22px; border-radius:24px; }
+ .today { grid-column:1/-1; display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; }
+ .today .cardHeading { margin:0; grid-column:1/-1; }
+ .today>div:nth-child(2) { grid-column:1/-1; }
+ .today>a { grid-column:1/-1; margin-top:6px; width:100%; padding-inline:18px; }
+ .deadlineCard,.activityCard { padding:20px 16px; }
+ .deadlineCard .symbol { display:none; }
+ .deadlineCard .cardHeading,.activityCard .cardHeading { min-height:28px; gap:6px; margin-bottom:12px; }
+ .deadlineCard .cardHeading h2,.activityCard .cardHeading h2 { font-size:var(--font-size-caption); }
+ .countdown { font-size:var(--font-size-title); margin-top:16px; }
+ .deadlineCard .school { margin-top:14px; font-size:var(--font-size-caption); }
+ .deadlineCard .caption,.deadlineCard .date { font-size:var(--font-size-caption); }
+ .activityCard .weekTotal { font-size:var(--font-size-section); white-space:nowrap; }
+ .activityCard .chartNote { display:none; }
+ .deadlineCard .inlineLink { min-height:44px; }
+ .middle { grid-template-columns:1fr; gap:20px; }
+ .cardHeading { margin-bottom:20px; }
+ .calendarSection { margin-top:26px; }
+ .recordsEntry { padding:22px; border-radius:24px; gap:12px; }
+ .tools { gap:20px; justify-content:flex-start; }
+ .schools>a { flex-wrap:wrap; }.schoolDate { margin-left:auto; }
+ .heading>div>p:last-child { max-width:260px; }
+}
+@media(max-width:350px) { .summary { gap:12px; }.deadlineCard,.activityCard { padding:18px 12px; }.activityCard .cardHeading { flex-wrap:wrap; } }

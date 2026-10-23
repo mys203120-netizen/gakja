@@ -13,5 +13,5 @@ export function nextTrainingStep<T extends TrainingFlowTask>(tasks:readonly T[],
 }
 
 export function trainingStepHref(task:TrainingFlowTask){
- return task.manual?task.href||'/my':'/my/train?planId='+encodeURIComponent(task.id);
+ return task.manual?task.href||'/training':'/my/train?planId='+encodeURIComponent(task.id);
 }

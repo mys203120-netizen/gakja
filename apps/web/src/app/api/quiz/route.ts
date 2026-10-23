@@ -115,9 +115,9 @@ export async function GET(request:Request) {
     ]);
     const activity=selectedQuizActivity(learning,url.searchParams.get('activityId'));
     const schoolItems=targetSnapshotStale?[]:schoolQuizItems(common,target,{activity,sourceRefs:learning.source_refs});
-    const pools=general?{choice:[],answer:schoolItems,oral:schoolItems}:{choice:scopedPersonalItems(learning,'choice',target),answer:[...scopedPersonalItems(learning,'answer',target),...schoolItems],oral:[...scopedPersonalItems(learning,'oral',target),...schoolItems]};
+    const pools={choice:general?[]:scopedPersonalItems(learning,'choice',target),answer:[] as SessionItem[],oral:[] as SessionItem[]};
     const requestedMode=url.searchParams.has('mode')?mode.parse(url.searchParams.get('mode')):null;
-    const today=selectQuizItems(requestedMode?pools[requestedMode]:pools.choice.length?pools.choice:pools.answer,history);
+    const today=selectQuizItems(pools.choice,history);
     let requested:any=null;
     const memoryItemId=url.searchParams.get('memoryItemId'),questionId=url.searchParams.get('questionId'),activityId=url.searchParams.get('activityId');
     const all=[...pools.choice,...pools.answer];
@@ -178,12 +178,14 @@ export async function POST(request:Request) {
     const raw=await request.json(),trainingPlanId=uuid.optional().parse(raw.trainingPlanId);
     const input=z.object({action:z.enum(['create','start','pause','draft','answer','hint','assist','end']),sessionId:uuid.optional(),targetId:z.string().min(1).max(160).nullish(),activityId:z.string().min(1).max(160).nullish(),sourceType:z.enum(['common','personal']).optional(),sourceVersion:z.number().int().min(1).max(100000).optional(),mode:mode.optional(),focus:z.enum(['today','free']).optional(),timed:z.boolean().optional(),itemIds:z.array(z.string().min(1).max(160)).min(1).max(30).optional(),itemIndex:z.number().int().min(0).optional(),response:z.string().max(10_000).optional(),selectedOptionId:z.string().max(160).nullable().optional(),timedOut:z.boolean().optional(),rating:z.enum(['again','hard','good','easy']).optional(),recallStatus:z.enum(['remembered','uncertain','needs_confirmation','unchecked']).optional(),helpKind:z.enum(['evidence','video','writing']).optional(),hintUsed:z.boolean().optional(),recordingId:uuid.optional(),responseMode:z.enum(['text','voice']).optional(),requestId:uuid.optional()}).parse(raw);
     if(input.action==='create') {
+      if(input.mode&&input.mode!=='choice')throw new ApiError(400,'퀴즈는 정답이 있는 4지선다로 진행해요. 글쓰기·말하기는 답변 연습에서 시작해 주세요.');
+      if(input.timed===false)throw new ApiError(400,'퀴즈는 문항당 10초로 진행해요.');
       const selectedMode=input.mode||'choice',registeredTarget=await quizTarget(user.id,input.targetId),personalVersion=input.sourceType==='personal'?input.sourceVersion:undefined;
       const [{learning,package:pack},common]=await Promise.all([getLearning(user.id,personalVersion),selectedMode==='choice'?Promise.resolve([]):commonInterviewQuestions(user.id,registeredTarget?.id || null,input.sourceType==='common'?input.sourceVersion:undefined)]);
       if(personalVersion&&!pack)throw new ApiError(404,'발행된 자료를 찾을 수 없어요.');
       const {target,targetSnapshotStale}=versionedQuizTarget(learning,registeredTarget,personalVersion);
       const activity=selectedQuizActivity(learning,input.activityId);
-      const eligible=[...scopedPersonalItems(learning,selectedMode,target),...(targetSnapshotStale?[]:schoolQuizItems(common,target,{activity,sourceRefs:learning.source_refs}))],contentVersion=pack?.active_version || 0,targetSnapshot=schoolQuizTargetIdentity(target),timed=selectedMode==='choice'&&input.timed!==false,focus=input.focus||'today';
+      const eligible=scopedPersonalItems(learning,'choice',target).filter(item=>!activity||item.activity_ids.includes(activity.id)),contentVersion=pack?.active_version || 0,targetSnapshot=schoolQuizTargetIdentity(target),timed=true,focus=input.focus||'today';
       const row=await transaction(async db=>{
         if(trainingPlanId){
           const {assertTrainingQuizPlan}=await import('@/lib/training-practice-store');await assertTrainingQuizPlan(db,user.id,trainingPlanId,{...input,mode:selectedMode},target);

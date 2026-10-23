@@ -1,3 +1,5 @@
+import * as interviewPolicyModule from '../apps/web/src/lib/interview-policy';
+import * as interviewFeedbackModule from '../apps/web/src/lib/interview-feedback';
 // Real PostgreSQL predicate and pure completion agree; temporary synthetic records are rolled back.
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';

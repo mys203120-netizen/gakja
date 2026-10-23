@@ -16,6 +16,7 @@ import {SchoolLogo} from './school-logo';
 import {SettingsSelect} from './settings-select';
 import {useCalendarEditor} from './calendar-editor';
 import {calendarPlanMovable} from '@/lib/calendar-edit';
+import calendarStyles from './calendar-editor.module.css';
 export type InterviewScheduleItem={id:string;schoolReferenceId:string;university:string;targetId:string;admissionYear:number;campus:string;trackLabel:string;departmentLabel?:string;matchedDepartment?:string;departmentCount?:number|null;startDate:string;endDate:string;rawDate?:string;note?:string;format?:'video_submission';sourceUrl:string;sourceLabel:string;checkedAt:string;applicability:'track_match'|'school_reference';schoolHref:string};
 type OfficialScheduleDecision={trackLabel:string;departments:string[];status:'no_interview'|'date_pending'|'unpublished'|'unverified';reason:string;sourceUrl:string;sourceLabel?:string;checkedAt?:string};
 type ScheduleCoverageStatus='available'|'needs_review'|'not_listed'|'source_missing'|'no_interview'|'date_pending'|'unpublished'|'unverified'|'year_mismatch'|'campus_mismatch';
@@ -29,7 +30,7 @@ function DecisionSource({decision,checkedAt}:{decision:OfficialScheduleDecision;
   return <div className={ownedClassName("calendar-source-evidence",true)}>{url?<a href={url} target="_blank" rel="noreferrer" className={ownedClassName(undefined,true)}>{label==='관리자'?'관리자 참고 출처':label==='입학처'?'입학처 원문':label?`${label} 원문`:'일정 원문'}<ChevronRight size={12}/></a>:label&&<span className={ownedClassName(undefined,true)}>{label} 설정</span>}{at&&<time dateTime={at} className={ownedClassName(undefined,true)}>{scheduleDateLabel(at)} 확인</time>}</div>;
 }
 type CalendarEvent={id:string;date?:string;start?:string;end?:string;title:string;kind:'plan'|'interview'|'assignment';plan?:Item;href?:string;personalAt?:string;schoolSchedule?:InterviewScheduleItem;targetId?:string};
-const trainingKindLabels:Record<string,string>={diagnostic:'첫 진단',recall:'복습',focus:'집중 보완',mixed:'연결 면접',review:'정리',break:'휴식'};
+const trainingKindLabels:Record<string,string>={diagnostic:'답변 연습',recall:'복습',focus:'화상 답변 연습',mixed:'실전 화상 면접',review:'정리',break:'휴식'};
 function localDay(value?:string){if(!value)return '';const date=new Date(value);return Number.isFinite(date.getTime())?koreaToday(date):'';}
 export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],interviewScheduleCoverage,loaded=true,automaticPractice=[],onAutomaticPractice,hybrid=false,onMonthChange}:{plans:Item[];onPlans:(plans:Item[])=>void;tasks:Item[];interviewSchedules?:InterviewScheduleItem[];interviewScheduleCoverage?:InterviewScheduleCoverage;loaded?:boolean;automaticPractice?:Item[];onAutomaticPractice?:(items:Item[])=>void;hybrid?:boolean;onMonthChange?:(month:string)=>void}) {
   const {data}=useApp(),today=koreaToday(),[month,setMonth]=useState(today.slice(0,7)),[selected,setSelected]=useState(today),[adding,setAdding]=useState(false),[editing,setEditing]=useState<Item|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
@@ -121,7 +122,7 @@ export function DashboardPlanner({plans,onPlans,tasks,interviewSchedules=[],inte
       {event.plan&&!event.plan.target?.automaticPractice?.hybrid&&<button className={ownedClassName("text-link plan-edit",true)} onClick={()=>setEditing(event.plan!)}>수정</button>}
     </div>;
   }
-  return <section className={ownedClassName("dashboard-planner dashboard-calendar-panel",true)} id="dashboard-planner" tabIndex={-1} aria-labelledby="dashboard-calendar-title">
+  return <section className={ownedClassName(`dashboard-planner dashboard-calendar-panel ${calendarStyles.calendarRoot}`,true)} id="dashboard-planner" tabIndex={-1} aria-labelledby="dashboard-calendar-title">
     <div className={ownedClassName("section-heading",true)}><h2 id="dashboard-calendar-title" className={ownedClassName(undefined,true)}>계획과 면접 일정{(data.targets.length>0||interviewScheduleCoverage?.source)&&<InfoTip label="일정 범위와 확인 시점">{data.targets.length>0&&<p className={ownedClassName(undefined,true)}>지원 학교 전체 · {registeredSchools}개 학교{data.targets.length>registeredSchools?` · ${data.targets.length}개 지원처`:''}</p>}{interviewScheduleCoverage?.source&&<p className={ownedClassName(undefined,true)}>{interviewScheduleCoverage.source.admissionYear}학년도 수시{hasOfficialSource&&interviewScheduleCoverage.officialCheckedAt?<> · 입학처 · <time dateTime={interviewScheduleCoverage.officialCheckedAt} className={ownedClassName(undefined,true)}>{scheduleDateLabel(interviewScheduleCoverage.officialCheckedAt)}</time> 확인</>:interviewScheduleCoverage.source.checkedAt&&<> · <time dateTime={interviewScheduleCoverage.source.checkedAt} className={ownedClassName(undefined,true)}>{scheduleDateLabel(interviewScheduleCoverage.source.checkedAt)}</time> 확인</>}{hasManagedSource&&' · 관리자 설정'}</p>}</InfoTip>}</h2><button className={ownedClassName("text-link",true)} onClick={()=>setAdding(true)}><Plus size={15}/>계획 추가</button></div>
     {hybrid?<nav className={ownedClassName("calendar-training-note",true)} aria-label="캘린더 설정"><Link href="/availability">학습 시간 수정<ArrowRight size={13}/></Link></nav>:<AutomaticPracticePlan plans={plans} onPlans={onPlans} configuration={automaticPractice} onConfiguration={onAutomaticPractice}/>}
     {calendarEditor.controls}
@@ -189,7 +190,7 @@ function PlanForm({initialDate,initialPlan,onClose,onSave}:{initialDate:string;i
   const preserveTarget=Boolean(initialPlan)&&targetValue===initialTargetValue;
   const targetOptions=[{value:'',label:'직접 적을게요'},...(initialPlan?.target&&!targets.some(item=>`${item.kind}:${item.id}`===initialTargetValue)?[{value:initialTargetValue,label:(initialPlan.target.title||initialPlan.title)+' · 저장한 자료'}]:[]),...targets.map(item=>({value:`${item.kind}:${item.id}`,label:item.title}))];
   function chooseTarget(value:string){const item=targets.find(item=>`${item.kind}:${item.id}`===value);setTargetValue(value);if(item){setTitle((previous:string)=>previous.trim()?previous:item.title.slice(0,160));if(!initialPlan)setKind(item.common?'interview':item.kind==='video'?'reading':item.kind==='question'||item.kind==='assignment'?'quiz':'study');}}
-  return <form className={ownedClassName("plan-form",true)} onSubmit={async event=>{
+  return <form className={ownedClassName(`plan-form ${calendarStyles.planForm}`,true)} onSubmit={async event=>{
     event.preventDefault();if(busy)return;setBusy(true);
     try{const result=await post('/api/planner',{action:initialPlan?'update':'create',...(initialPlan?{id:initialPlan.id,expectedRevision:initialPlan.revision}:{}),title,date,kind,...(preserveTarget?{}:{target:target?{kind:target.kind,id:target.id,...(selectedTargetId||target.targetId?{targetId:selectedTargetId||target.targetId}:{}),...(target.sourceType?{sourceType:target.sourceType}:{}),...(target.sourceVersion?{sourceVersion:target.sourceVersion}:{})}:null})});onSave(result.plan);}
     catch(e){setError((e as Error).message);}finally{setBusy(false);}

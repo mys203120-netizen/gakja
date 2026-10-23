@@ -8,6 +8,9 @@ export type LiveInterviewServices = {
   load():Promise<LiveInfo>;
   prepare():Promise<void>;
   mute(paused:boolean):void;
+  /** Half duplex: disable only audio input while the approved question is audible. */
+  inputMuted?(muted:boolean):void;
+  retry?(question:LiveInfo,generation:number):Promise<void>;
   suspend():Promise<void>;
   resume():Promise<void>;
   speak(question:LiveInfo,generation:number,signal:AbortSignal):Promise<void>;
@@ -137,10 +140,20 @@ export class LiveInterviewController {
     this.requested=false;this.intent++;this.paused=true;this.capture?.pause();this.speech?.abort();this.services.mute(true);this.emit({phase:'paused'});
     void this.control(()=>this.services.suspend()).catch(()=>this.emit({error:'일시정지를 서버에 저장하지 못했어요. 연결 후 계속해 주세요.'}));
   }
-  finishAnswer(){if(!this.paused)this.capture?.stop('manual');}
+  finishAnswer(){if(!this.paused&&this.snapshot.phase==='listening')this.capture?.stop('manual');}
+  async replayQuestion(){
+    const question=this.snapshot.info.question,capture=this.capture;
+    if(!question||!capture||this.paused||this.snapshot.phase!=='listening')return;
+    const revision=this.runRevision,speech=new AbortController();this.speech=speech;
+    capture.pause();this.services.inputMuted?.(true);this.emit({phase:'speaking'});
+    try{await this.services.speak(question,Number(this.snapshot.info.session.data.generation||0),speech.signal);}
+    catch(error){if(!speech.signal.aborted)await this.fail(error);}
+    finally{if(this.speech===speech)this.speech=undefined;if(!this.disposed&&!this.paused&&revision===this.runRevision){this.services.inputMuted?.(false);capture.resume();this.emit({phase:'listening'});}}
+  }
   /** An explicit new attempt preserves server files and drafts, but skips the old audio locally. */
   rerecord():Promise<void>{
     if(this.disposed||this.snapshot.phase==='complete')return Promise.resolve();
+    if(this.snapshot.info.session.data.sessionMode==='real')return Promise.reject(new Error('실전 면접에서는 다시 답할 수 없어요.'));
     if(this.rerecording)return this.rerecording;
     const work=this.replaceRecording().finally(()=>{if(this.rerecording===work)this.rerecording=undefined;});this.rerecording=work;return work;
   }
@@ -163,9 +176,19 @@ export class LiveInterviewController {
       this.emit({phase:'preparing',error:''});
       // A paused loop may still own a pending upload or answer. Retire it before
       // clearing pending data; its late result must never become the new attempt.
-      this.runRevision++;this.capture?.dispose();this.wake?.();this.wake=undefined;
+      this.runRevision++;
+      // Save the previous attempt before creating a new generation. Never discard
+      // original speech just because the student requests a practice retry.
+      const captured=this.capture?await this.capture.stop('manual'):previous?.recording;
+      this.capture=undefined;this.wake?.();this.wake=undefined;
       await this.running;if(changed())return;
       info=await this.load();if(changed())return;assertCurrent(info);
+      if(this.services.retry&&!answered(info)){
+        if(captured&&!previous?.mediaId)await this.services.upload(captured,question,generation,{deferTranscription:true});
+        if(changed())return;
+        await this.services.retry(question,generation);
+        info=await this.load();if(changed())return;
+      }
       if(previous?.mediaId)this.ignoredMediaIds.add(previous.mediaId);
       for(const media of info.media||[])if(media.metadata?.kind==='answer_recording'&&media.metadata.turnId===question.turnId&&Number(media.metadata.generation)===generation)this.ignoredMediaIds.add(media.id);
       this.pending=undefined;this.emit({recording:undefined,progress:undefined,error:''});
@@ -245,22 +268,17 @@ export class LiveInterviewController {
         try{
           if(this.capture){this.emit({phase:'listening'});}
           else{
-          const earlyCapture=this.services.captureDuringQuestion?.()===true;
-          if(earlyCapture){
-            await this.services.beforeCapture?.(question,generation,speech.signal);
-            await this.checkpoint(revision);if(speech.signal.aborted||this.ending)continue;
-            this.capture=this.services.capture(progress=>{this.emit({progress});if(this.snapshot.phase!=='speaking')this.phase('listening');},question,generation);
-            this.discardedMediaScope=undefined;
-          }
+          this.services.inputMuted?.(true);
           await this.services.speak(question,generation,speech.signal);
           if(speech.signal.aborted||this.paused||this.ending)continue;
-          if(!earlyCapture)await this.services.beforeCapture?.(question,generation,speech.signal);
+          await this.services.beforeCapture?.(question,generation,speech.signal);
           await this.checkpoint(revision);
           // Pausing can release a prepared recording reservation while this await
           // is pending. Reacquire it before creating a recorder after resume.
           if(speech.signal.aborted||this.ending)continue;
           this.emit({phase:'listening',progress:undefined,recording:undefined});
           if(speech.signal.aborted||this.paused)continue;
+          this.services.inputMuted?.(false);
           if(!this.capture){this.capture=this.services.capture(progress=>{this.emit({progress});this.phase('listening');},question,generation);this.discardedMediaScope=undefined;}
           }
         }catch(error){if(speech.signal.aborted||this.paused||this.ending)continue;throw error;}
@@ -274,7 +292,8 @@ export class LiveInterviewController {
           throw new Error('아직 목소리가 들리지 않았어요. 마이크를 확인하고 같은 질문에 다시 답해 주세요.');
         }
         this.pending={question,generation,recording};
-        if(recording.partial&&recording.reason!=='limit')throw new Error(recording.issue||'녹음 연결이 끊겼어요. 보관한 답변을 저장한 뒤 계속할 수 있어요.');
+        if(recording.reason==='limit')throw new Error('3분 녹음을 보관했어요. 이 답변을 저장하고 계속하거나 처음부터 다시 답해 주세요.');
+        if(recording.partial)throw new Error(recording.issue||'녹음 연결이 끊겼어요. 보관한 답변을 저장한 뒤 계속할 수 있어요.');
       }
     }catch(error){if(revision===this.runRevision)await this.fail(error);}
   }

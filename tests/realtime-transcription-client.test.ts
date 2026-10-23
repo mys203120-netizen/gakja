@@ -60,9 +60,9 @@ test('remote hangup retries one transient failure without duplicating close or t
   h.connection.close();await flush();assert.equal(h.requests.filter(request=>request.init.method==='DELETE').length,2);
 });
 
-test('persistent remote hangup failure stops after two attempts',async()=>{
-  const h=harness({deleteStatuses:[502,502,200]});await h.connection.ready;h.connection.close();await flush();h.connection.close();await flush();
-  assert.equal(h.requests.filter(request=>request.init.method==='DELETE').length,2);assert.equal(h.cloned.stops,1);assert.equal(h.source.stops,0);assert.equal(h.source.enabled,true);
+test('persistent hangup failure is bounded and an explicit later close may retry',async()=>{
+  const h=harness({deleteStatuses:[502,502,200]});await h.connection.ready;assert.equal(await h.connection.close(),false);await flush();assert.equal(await h.connection.close(),true);await flush();
+  assert.equal(h.requests.filter(request=>request.init.method==='DELETE').length,3);assert.equal(h.cloned.stops,1);assert.equal(h.source.stops,0);assert.equal(h.source.enabled,true);
 });
 
 test('turn reconciliation replaces provisional text and orders out-of-order completions by committed predecessor',()=>{

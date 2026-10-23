@@ -43,7 +43,7 @@ test('ordinary Chat entry enables personal record practice and suppresses school
   const university=nodes(tree).find(node=>node.type==='input'&&node.props.value==='university');assert.equal(university.props.disabled,true);
   assert.ok(JSON.stringify(tree).includes(preview.practiceNotice));
   await action.props.onClick();
-  assert.equal(calls[0].body.mode,'basic');assert.equal(calls[0].body.panelistCount,2,'official four-person profile is not used for general practice');
+  assert.equal(calls[0].body.mode,'basic');assert.equal(calls[0].body.panelistCount,5,'fixed five-character practice does not inherit the official school panel count');
   assert.equal(calls[0].body.targetId,target.id);assert.equal(calls[1].href,'/interview/new-session?kind=chat');
 });
 test('an exact old question CTA keeps its source version while blocked public practice stays disabled',async()=>{

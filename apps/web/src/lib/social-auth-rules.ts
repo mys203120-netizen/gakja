@@ -5,7 +5,7 @@ export function socialNext(value: unknown, role: 'student' | 'staff' | 'admin' =
   if (typeof value !== 'string' || value.length > 1000 || !value.startsWith('/') || value.startsWith('//') || /[\\\r\n]/.test(value)) return '/my';
   try {
     const path = new URL(value, 'https://gakja.invalid');
-    if (path.origin !== 'https://gakja.invalid' || !/^\/(my|quiz|interview|records|reports|knowledge|on|materials|account|onboarding)(\/|$)/.test(path.pathname)) return '/my';
+    if (path.origin !== 'https://gakja.invalid' || !/^\/(my|training|preparation|quiz|interview|records|reports|knowledge|on|materials|account|onboarding)(\/|$)/.test(path.pathname)) return '/my';
     return path.pathname + path.search;
   } catch { return '/my'; }
 }

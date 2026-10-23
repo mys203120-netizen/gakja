@@ -181,3 +181,5 @@
 .home:global(.quiz-home) .resumeRow { padding:18px 0; border:0; }
 .home:global(.quiz-home) .resumeActions :global(.button),.resumeActions>button { min-height:44px; border-radius:var(--soft-control-radius); }
 @media(max-width:767px) { .pendingRecording,.recordingPreparation,.liveTranscript { padding:16px; }.recallState .recallOptions label { width:100%; } }
+
+.weakAreas{font-size:var(--font-size-body);line-height:1.65;color:var(--muted);margin:16px 0}.home :global(.quiz-today){border-radius:var(--soft-radius,28px);background:var(--soft-gradient);box-shadow:var(--soft-shadow-raised)}.home :global(.quiz-today) h2{font-size:var(--font-size-title);line-height:1.4}.home :global(.quiz-today) p{font-size:var(--font-size-body);line-height:1.65}

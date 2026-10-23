@@ -1,0 +1,19 @@
+.summary { padding:20px; margin:18px 0; border-radius:20px; background:var(--clarity-surface); box-shadow:var(--soft-shadow-small); }
+.summary header { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.summary h4 { margin:0; font-size:var(--font-size-body); font-weight:650; }
+.summary header p { margin-top:6px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.summary header>strong { flex:none; font-size:var(--font-size-section); color:var(--clarity-green); font-variant-numeric:tabular-nums; }
+.summary header small { color:var(--clarity-muted); font-size:var(--font-size-caption); font-weight:400; }
+.summary details { margin-top:16px; border-top:1px solid var(--clarity-line); }
+.summary summary { padding:14px 0 4px; cursor:pointer; min-height:44px; font-size:var(--font-size-caption); color:var(--clarity-green); }
+.summary ul { padding:0; margin:12px 0 0; list-style:none; }
+.summary li { padding:16px 0; border-top:1px solid var(--clarity-line); }
+.summary li>div { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.summary li strong { font-size:var(--font-size-caption); font-weight:600; }
+.summary li span { padding:3px 8px; border-radius:8px; background:var(--clarity-soft); color:var(--clarity-muted); font-size:var(--font-size-caption); white-space:nowrap; }
+.summary li span[data-level='2'] { color:var(--clarity-green); background:var(--clarity-mint); }
+.summary li>p { margin-top:8px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.summary blockquote { font-size:var(--font-size-caption); margin:12px 0 0; }
+.notice { margin-top:12px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+@media(max-width:420px) { .summary { padding:18px; }.summary header { align-items:flex-start; flex-wrap:wrap; gap:12px; } }
+.examplePart { margin-top:14px; padding:14px; border-radius:12px; background:var(--clarity-soft); font-size:var(--font-size-caption); }.examplePart p { margin-top:6px; color:var(--clarity-muted); }

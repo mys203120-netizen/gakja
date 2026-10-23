@@ -1,0 +1,122 @@
+[
+  {
+    "composer": {
+      "bottom": 844,
+      "height": 132,
+      "width": 358,
+      "x": 16,
+      "y": 712
+    },
+    "direction": "column",
+    "documentWidth": 390,
+    "messageScroll": "auto",
+    "nav": {
+      "bottom": 123,
+      "height": 45,
+      "width": 358,
+      "x": 16,
+      "y": 78
+    },
+    "page": {
+      "bottom": 844,
+      "height": 705,
+      "width": 358,
+      "x": 16,
+      "y": 139
+    },
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  {
+    "composer": {
+      "bottom": 844,
+      "height": 132,
+      "width": 668,
+      "x": 16,
+      "y": 712
+    },
+    "direction": "column",
+    "documentWidth": 700,
+    "messageScroll": "auto",
+    "nav": {
+      "bottom": 123,
+      "height": 45,
+      "width": 668,
+      "x": 16,
+      "y": 78
+    },
+    "page": {
+      "bottom": 844,
+      "height": 705,
+      "width": 668,
+      "x": 16,
+      "y": 139
+    },
+    "viewport": {
+      "height": 844,
+      "width": 700
+    }
+  },
+  {
+    "composer": {
+      "bottom": 844,
+      "height": 142,
+      "width": 451,
+      "x": 212,
+      "y": 702
+    },
+    "direction": "column",
+    "documentWidth": 691,
+    "messageScroll": "auto",
+    "nav": {
+      "bottom": 131,
+      "height": 45,
+      "width": 451,
+      "x": 212,
+      "y": 86
+    },
+    "page": {
+      "bottom": 844,
+      "height": 697,
+      "width": 451,
+      "x": 212,
+      "y": 147
+    },
+    "viewport": {
+      "height": 844,
+      "width": 701
+    }
+  },
+  {
+    "composer": {
+      "bottom": 844,
+      "height": 142,
+      "width": 782,
+      "x": 448,
+      "y": 702
+    },
+    "direction": "column",
+    "documentWidth": 1270,
+    "messageScroll": "auto",
+    "nav": {
+      "bottom": 131,
+      "height": 45,
+      "width": 1006,
+      "x": 224,
+      "y": 86
+    },
+    "page": {
+      "bottom": 844,
+      "height": 697,
+      "width": 1006,
+      "x": 224,
+      "y": 147
+    },
+    "viewport": {
+      "height": 844,
+      "width": 1280
+    }
+  }
+]

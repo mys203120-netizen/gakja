@@ -180,9 +180,10 @@ export async function POST(request: Request) {
     const history = [...(reserved.history || []).map(item => ({ role: item.role as 'user' | 'assistant', content: item.content as string })), { role: 'user' as const, content }];
     // Reviewed thread sources stay pinned. Current owned speech/draft evidence is refreshed per send.
     const responseContext={...context,studentAnswerEvidence:reserved.studentAnswerEvidence};
+    const responseTask=interviewHelp?`${task} 지금은 면접 중 도움이다. 완성 답변·모범답안·1인칭 대필을 주지 않는다. 학생이 말할 방향을 찾는 짧은 힌트 1~2문장과 필요한 확인 질문 하나만 제공한다. 승인 원문과 학생 진술만 근거로 쓴다.`:task;
     if (!input.stream) {
       const inputs = await chatAttachmentInputs(reserved.attachmentRows);
-      const reply = inputs.length ? await coachStream(user.id, responseContext, task, history, 'chat', thread.id, () => {}, inputs, request.signal) : await coach(user.id, responseContext, task, history, 'chat', thread.id);
+      const reply = inputs.length ? await coachStream(user.id, responseContext, responseTask, history, 'chat', thread.id, () => {}, inputs, request.signal) : await coach(user.id, responseContext, responseTask, history, 'chat', thread.id);
       const message = await transaction(async client => {
         if(interviewHelp)await client.query('select id from interview_sessions where id=$1 and student_id=$2 for update',[interviewHelp.sessionId,user.id]);
         const saved = await client.query("update chat_messages set content=$2,status='completed',data=data || $3::jsonb where id=$1 and student_id=$4 and status='pending' returning *", [reserved.assistant.id,reply.content,JSON.stringify(reply),user.id]);
@@ -214,7 +215,7 @@ export async function POST(request: Request) {
             return;
           }
           const inputs = await chatAttachmentInputs(reserved.attachmentRows);
-          const reply = await coachStream(user.id, responseContext, task, history, 'chat', thread.id, async delta => {
+          const reply = await coachStream(user.id, responseContext, responseTask, history, 'chat', thread.id, async delta => {
             if (cancelled || abort.signal.aborted) throw new FeatureError(499, '응답 연결이 중단됐어요. 기록을 다시 불러와 주세요.', 'RESPONSE_INTERRUPTED');
             partial += delta;
             // Persist the first visible text and help receipt before releasing that text.

@@ -11,6 +11,7 @@ import type { ChatAttachmentInput } from '@/lib/chat-attachments';
 import { schoolTalentForTarget } from '@/lib/school-talent-model';
 import { publishedQuestionMatchesTarget } from '@/lib/published-question-scope';
 import type { InterviewAnswerEvidence } from '@/lib/interview-answer-evidence';
+import {interviewEvaluationEvidence} from './interview-policy';
 import {departmentLearningContext} from './department-learning';
 
 export const PROMPT_VERSION = 'gakjadap-student-record-department-2026-10-17';
@@ -154,6 +155,8 @@ export async function getLearningContext(studentId: string, selection: { targetI
   const context = (learning.student_context && typeof learning.student_context === 'object' ? learning.student_context : {}) as Record<string, unknown>;
   // Personal identifiers have no role in generating interview coaching.
   const studentContext = Object.fromEntries(Object.entries(context).filter(([key]) => !/name|email|phone|birth|address|student_id/i.test(key)));
+  const documentAnalysis=learning.student_document as {guidelines?:unknown}|undefined;
+  if(documentAnalysis?.guidelines)studentContext.operating_guidelines=documentAnalysis.guidelines;
   let briefing: LearningEntity | null = null;
   if (selection.briefingId) {
     if (!z.string().uuid().safeParse(selection.briefingId).success) throw new FeatureError(404, '자료를 찾을 수 없어요.', 'CONTEXT_NOT_FOUND');
@@ -215,7 +218,7 @@ export function contextSources(context: LearningContext): SourceCard[] {
   return [
     ...context.activities.map((item) => ({ id: item.id, type: 'activity', title: entityText(item, 'title'), href: `/materials/activities/${encodeURIComponent(item.id)}` })),
     ...context.questions.map((item) => ({ id: item.id, type: 'question', title: entityText(item, 'prompt'), href: item.common_revision ? `/interview/chat?questionId=${encodeURIComponent(item.id)}${context.targetId ? `&targetId=${encodeURIComponent(context.targetId)}` : ''}` : `/materials/questions/${encodeURIComponent(item.id)}` })),
-    ...context.sources.map((item) => ({ id: item.id, type: 'source', title: entityText(item, 'title', 'area') || '원문 근거', href: item.type === 'school_reference' || item.type === 'school_talent' ? `/schools${context.targetId ? `/${encodeURIComponent(context.targetId)}` : ''}` : '/materials/guidebook', quote: entityText(item, 'quote'), ...(item.type==='school_talent' && /^https:\/\//.test(entityText(item,'source_url')) ? {source_url:entityText(item,'source_url')} : {}) })),
+    ...context.sources.map((item) => ({ id: item.id, type: 'source', title: entityText(item, 'title', 'area') || '원문 근거', href: item.type==='student_document'?`/student-document#page-${Number(item.page)||1}`:item.type === 'school_reference' || item.type === 'school_talent' ? `/schools${context.targetId ? `/${encodeURIComponent(context.targetId)}` : ''}` : '/materials/guidebook', quote: entityText(item, 'quote'), ...(item.type==='school_talent' && /^https:\/\//.test(entityText(item,'source_url')) ? {source_url:entityText(item,'source_url')} : {}) })),
     ...(context.briefing ? [briefingSource(context.briefing)] : []),
   ];
 }
@@ -228,7 +231,7 @@ export function compactContext(context: LearningContext) {
   const sourceIds = new Set([...activities, ...questions].flatMap((item) => ids(item.source_ref_ids)));
   const sources = sourceIds.size ? context.sources.filter((item) => sourceIds.has(item.id)) : context.sources.slice(0, 16);
   return {
-    version: context.contentVersion, source_kind:context.sourceKind || 'personal', support_target_status:context.practiceScope==='personal_record'?'기록 연결용 지원처. 이 연습은 일반 경험 면접이며 학교별 전형·출제 기준·합격 가능성을 판단하지 않는다.':context.targetSnapshotStale ? '이전 발행본의 지원처. 현재 지원 정보와 달라 공식 맞춤 기준으로 쓰지 않는다.' : '선택한 지원처', practice_basis:context.practiceNotice|| (context.sourceKind === 'common' ? '일반 연습. 개인 경험이나 공식 학교별 출제 비율을 만들지 않는다.' : '개인 승인 자료와 별도로 표시한 일반 연습'), support_target: context.target, student_context: context.studentContext,
+    version: context.contentVersion, source_kind:context.sourceKind || 'personal', support_target_status:context.practiceScope==='personal_record'?'기록 연결용 지원처. 이 연습은 일반 경험 면접이며 학교별 전형·출제 기준·합격 가능성을 판단하지 않는다.':context.targetSnapshotStale ? '이전 발행본의 지원처. 현재 지원 정보와 달라 공식 맞춤 기준으로 쓰지 않는다.' : '선택한 지원처', practice_basis:context.practiceNotice||context.studentContext.record_basis|| (context.sourceKind === 'common' ? '일반 연습. 개인 경험이나 공식 학교별 출제 비율을 만들지 않는다.' : '개인 승인 자료와 별도로 표시한 일반 연습'), support_target: context.target, student_context: context.studentContext,
     activities, questions, approved_answer_scripts: context.answerScripts.filter((item) => questions.some((q) => q.id === item.question_id)), sources,
     approved_briefing: context.briefing || null,
     school_talent: questions.filter(item=>item.talent_profile).map(item=>({...(item.talent_profile as Record<string,unknown>),source:item.source_snapshot,question_basis:'training',official_past_question:false})),
@@ -470,6 +473,8 @@ export function selfCheckReport(context: LearningContext, turns: { question_id: 
     metrics: { answeredQuestions: answered.length, recordedCharacters: answered.reduce((sum, turn) => sum + (turn.answer?.length || 0), 0), speechMeasurement: 'not_measured' },
     sections: answered.map((turn) => ({
       questionId: turn.question_id, question: turn.question, answer: turn.answer,
+      evaluationEvidence:interviewEvaluationEvidence({...turn.data,answer:turn.answer}),
+      feedback:turn.data?.feedback||null,evaluation:turn.data?.evaluation||null,submittedMediaId:turn.data?.submittedMediaId||turn.data?.speechSource?.mediaId||null,attempts:turn.data?.attempts||[],
       turnId: turn.id, assisted: Boolean(turn.data?.assisted), speakerId: turn.data?.speakerId, questionKind: turn.data?.questionKind, derivedFromCorrectedTranscript: Boolean(turn.data?.derivedFromCorrectedTranscript),
       sourceType:turn.data?.sourceType || 'personal', sourceSnapshot:turn.data?.sourceSnapshot || null, commonRevision:turn.data?.commonRevision || null, practiceLabel:turn.data?.practiceLabel || null,
       briefingId: context.briefingId || null,

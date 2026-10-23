@@ -52,20 +52,23 @@ function harness({ storedSidebarPreference = null, storageUnavailable = false, s
     if(name==='./study-session-provider')return {StudySessionProvider:'StudySessionProvider',finishStudySession:async reason=>{check(reason==='logout','study time ends for logout');logoutSteps.push('study_finish');if(studyGate)await studyGate;if(studyFails)throw Error('study failed');}};
     if (name === '@/lib/student-onboarding') return { studentOnboardingDestination: () => null };
     if (name === '@/lib/material-search') return { normalizeMaterialQuery: value => value.trim(), searchStudentMaterials: () => [] };
+    // Device persistence is already ready in these bootstrap/logout fixtures.
+    if (name === '@/lib/client/device-storage') return {setDeviceItem:(storage,key,value)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:{then(ready){ready();return {catch(){}};}},close(){}})};
+    if (name === '@/lib/client/device-data') return {isDeviceCleanupOnLogout:()=>false,clearDeviceData:async()=>{}};
     if (name === '@/lib/app-navigation') return { STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], MOBILE_STUDENT_NAVIGATION: [{ id: 'today', href: '/my', label: '오늘' }], mobileStudentActive: (path, href) => path === href, studentSection: () => 'today' };
     return new Proxy({}, { get: (_, key) => String(key) });
   } });
   const render = () => { cursor = 0; queued.length = 0; const tree = module.exports.AppShell({ children: 'Student screen', initialData }); while (queued.length) queued.shift()(); return tree; };
-  const state = () => { const tree = render(), nodes = all(tree), sidebarToggle = nodes.find(node => node.props?.['aria-controls'] === 'desktop-navigation'); return { provider: nodes.find(node => node.type === 'AppContextProvider')?.props.value, alert: nodes.find(node => node.type === 'Alert')?.props.children, sidebarCollapsed: tree.props['data-sidebar-collapsed'],inert:tree.props.inert,ariaBusy:tree.props['aria-busy'], sidebarToggle: sidebarToggle.props,notice:nodes.find(node=>node.type==='FloatingNotice'),accountMenus:nodes.filter(node=>node.type==='AccountMenu') };  };
+  const state = () => { render(); const tree = render(), nodes = all(tree), sidebarToggle = nodes.find(node => node.props?.['aria-controls'] === 'desktop-navigation'); return { provider: nodes.find(node => node.type === 'AppContextProvider')?.props.value, alert: nodes.find(node => node.type === 'Alert')?.props.children, sidebarCollapsed: tree.props['data-sidebar-collapsed'],inert:tree.props.inert,ariaBusy:tree.props['aria-busy'], sidebarToggle: sidebarToggle.props,notice:nodes.find(node=>node.type==='FloatingNotice'),accountMenus:nodes.filter(node=>node.type==='AccountMenu') };  };
   return { requests, render, state, storageWrites, logoutSteps,navigations,seededIdentities,handoffs, strictReplay() { effects.forEach(effect => effect?.cleanup?.()); effects.forEach(effect => { if (effect) effect.cleanup = effect.effect(); }); }, dispose() { effects.forEach(effect => effect?.cleanup?.()); disposed = true; }, get disposedWrites() { return disposedWrites; } };
 }
 
-// Server-authenticated data renders the real student screen immediately. It is
-// an initial value only; explicit refreshes still own ordering and invalidation.
+// Server-authenticated data waits for device scope before exposing student data.
+// The seed is an initial value; explicit refreshes still own ordering.
 {
   const initialData={...fixture('server initial'),targets:[{id:'first'},{id:'saved'}],preferences:{selectedTargetId:'saved'}};
   const h=harness({initialData}),first=h.render();
-  check(all(first).some(node=>node.type==='AppContextProvider'),'SSR bootstrap renders the provider on its very first render without a shell spinner');
+  check(all(first).some(node=>node.type==='Spinner'),'initial render waits for the current actor device scope before exposing the provider');
   check(h.requests.length===0,'server bootstrap prevents the duplicate mount-time /api/bootstrap request');
   check(h.seededIdentities.join(',')==='harin','the verified server owner seeds only this client shell initializer');
   check(h.state().provider.data===initialData&&h.state().provider.targetId==='saved','initial content and selected support target are available together');
@@ -101,6 +104,7 @@ function harness({ storedSidebarPreference = null, storageUnavailable = false, s
     if(name==='react/jsx-runtime')return {jsx:(type,props,key)=>({type,props,key})};
     if(name==='next/navigation')return {redirect:path=>{throw Object.assign(Error('redirect'),{path});}};
     if(name==='@/lib/auth')return {getUser:async()=>actor};
+    if(name==='@/lib/public-site')return {privateMetadata:title=>({title})};
     if(name==='@/components/app-shell')return {AppShell:'AppShell'};
     if(name==='@/lib/data')return {bootstrap:async user=>{calls.push(user.id);return {...fixture(user.id),user};}};
     throw Error(name);

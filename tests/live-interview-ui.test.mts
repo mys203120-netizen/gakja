@@ -1,3 +1,5 @@
+import * as interviewPolicyModule from '../apps/web/src/lib/interview-policy';
+import * as interviewFeedbackModule from '../apps/web/src/lib/interview-feedback';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -18,7 +20,7 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture(),rec
   const rtcFaults={enabled:false,playError:undefined as Error|undefined,closeResult:true,closePending:undefined as Promise<void>|undefined,capture:false,captureOptions:null as any};
   let index=0;
   const events=(prefix:string)=>({addEventListener:(name:string,fn:Function)=>listeners.set(prefix+name,fn),removeEventListener:(name:string)=>listeners.delete(prefix+name)});
-  const document={...events('document:'),visibilityState:'visible',scrollingElement:{},getElementById:()=>faults.textInput,querySelector:()=>({getBoundingClientRect:()=>({bottom:64})})};
+  const document={body:{dataset:{} as Record<string,string>},...events('document:'),visibilityState:'visible',scrollingElement:{},getElementById:()=>faults.textInput,querySelector:()=>({getBoundingClientRect:()=>({bottom:64})})};
   const location={href:'http://fixture.test/interview/live-session',origin:'http://fixture.test',pathname:'/interview/live-session',search:'',assign:(url:string)=>destinations.push(url)};
   class Controller {
     state:any;services:any;changed:Function;
@@ -47,17 +49,18 @@ function harness(file='live-interview-session.tsx',initialInfo:any=fixture(),rec
     Audio:class {src='';onended:Function|null=null;onerror:Function|null=null;async play(){calls.push({audio:'unlock'});if(this.src.startsWith('blob:'))this.onended?.();}pause(){}},
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
     fetch:async(_url:string,init:any)=>{calls.push({keepalive:!!init.keepalive,body:JSON.parse(init.body)});return {ok:true,blob:async()=>new Blob(['synthetic interviewer output'],{type:'audio/mpeg'})};},
-    require(name:string){if(name==='@/lib/client/device-storage'||name==='./client/device-storage')return {setDeviceItem:(storage:any,key:string,value:string)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:Promise.resolve(),close(){}})};if(name==='@/lib/privacy-policy')return {PRIVACY_POLICY_VERSION:'2026-10-22'};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
+    require(name:string){if(name==='@/lib/interview-policy')return interviewPolicyModule;if(name==='@/lib/interview-feedback')return interviewFeedbackModule;if(name==='@/lib/client/device-storage'||name==='./client/device-storage')return {setDeviceItem:(storage:any,key:string,value:string)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:Promise.resolve(),close(){}})};if(name==='@/lib/privacy-policy')return {PRIVACY_POLICY_VERSION:'2026-10-22'};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value:string|undefined)=>value};
       if(name==='react')return react;
       if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props}),Fragment:'Fragment'};
       if(name==='next/link')return {__esModule:true,default:'Link'};
       if(name==='next/navigation')return {useRouter:()=>({push:(href:string)=>destinations.push(href)})};
       if(name==='./app-shell')return {useApp:()=>({data:faults.appData,refresh:async()=>{calls.push({refresh:true});await faults.refreshPending;if(faults.refreshUpdatesPreferences&&faults.serverPreferences)faults.appData.preferences=structuredClone(faults.serverPreferences);}})};
-      if(name==='./shared')return {action:async(action:string,payload:any)=>{calls.push({action,payload});await faults.preferencePending;if(faults.preferenceError)throw faults.preferenceError;faults.serverPreferences={...(faults.serverPreferences||faults.appData.preferences),...payload};if(faults.reflectPreferenceInBootstrap)faults.appData.preferences=structuredClone(faults.serverPreferences);return {preferences:structuredClone(faults.serverPreferences)};},api:async(url:string)=>{calls.push({api:url});return url==='/api/interviews/realtime'?{enabled:rtcFaults.enabled}:structuredClone(faults.apiInfo);},post:async(url:string,body:any)=>{calls.push({url,body});if(body.action==='draft'&&draftFaults.draftError)throw draftFaults.draftError;if(body.action==='pause'&&draftFaults.helpPauseError)throw draftFaults.helpPauseError;if(body.action==='suspend'){await faults.suspend;if(draftFaults.suspendError)throw draftFaults.suspendError;}return {};},Breadcrumb:'Breadcrumb',InfoTip:'InfoTip',Modal:'Modal',Alert:'Alert',targetName:(target:any)=>target?.university||'지원처 미등록'};
+      if(name==='./shared')return {action:async(action:string,payload:any)=>{calls.push({action,payload});await faults.preferencePending;if(faults.preferenceError)throw faults.preferenceError;faults.serverPreferences={...(faults.serverPreferences||faults.appData.preferences),...payload};if(faults.reflectPreferenceInBootstrap)faults.appData.preferences=structuredClone(faults.serverPreferences);return {preferences:structuredClone(faults.serverPreferences)};},api:async(url:string)=>{calls.push({api:url});return url==='/api/interviews/transcription'?{enabled:rtcFaults.enabled}:structuredClone(faults.apiInfo);},post:async(url:string,body:any)=>{calls.push({url,body});if(body.action==='draft'&&draftFaults.draftError)throw draftFaults.draftError;if(body.action==='pause'&&draftFaults.helpPauseError)throw draftFaults.helpPauseError;if(body.action==='suspend'){await faults.suspend;if(draftFaults.suspendError)throw draftFaults.suspendError;}return {};},Breadcrumb:'Breadcrumb',InfoTip:'InfoTip',Modal:'Modal',Alert:'Alert',targetName:(target:any)=>target?.university||'지원처 미등록'};
       if(name==='@/lib/client/draft-save')return {registerDraftSaver:(userId:string,save:()=>Promise<void>)=>{calls.push({draftSaver:'registered',userId});const remove=registerDraftSaver(userId,save);return()=>{calls.push({draftSaver:'removed',userId});remove();};}};
       if(name==='@/lib/client/live-interview-controller')return {LiveInterviewController:Controller};
       if(name==='@/lib/client/interviewer-avatar')return {InterviewerAvatarSignal};
       if(name==='@/lib/client/interviewer-audio-output')return {InterviewerAudioOutput:class{constructor(public element:any,private signal:InterviewerAvatarSignal){}async unlock(){}syncState(state:any,id:string){this.signal.state(state,id);}select(id:string){this.signal.state('thinking',id);}stop(){this.element.pause();this.signal.silence();}clear(){this.stop();}dispose(){this.stop();}}};
+      if(name==='@/lib/client/realtime-transcription')return {connectLiveTranscription:(stream:any,scope:any,update:Function)=>{calls.push({rtc:'connect',stream,scope});if(rtcFaults.playError)update({phase:'unavailable',text:''});return {ready:Promise.resolve(),start(){calls.push({rtc:'startInput'});update({phase:'listening',text:'자막 미리보기 원문'});},mute(muted:boolean){calls.push({rtc:'mute',muted});},finish(){calls.push({rtc:'finishInput'});},async close(){calls.push({rtc:'close'});await rtcFaults.closePending;return rtcFaults.closeResult;}};}};
       if(name==='@/lib/client/realtime-interview')return {connectRealtimeInterview:(stream:any,scope:any,question:any,output:any,update:Function)=>{if(!rtcFaults.enabled)throw Error('Unexpected RTC access while the flag is off');calls.push({rtc:'connect',stream,scope,question,output});return {async playQuestion(){calls.push({rtc:'playQuestion'});if(rtcFaults.playError)throw rtcFaults.playError;},startInput(){calls.push({rtc:'startInput'});update({phase:'listening',preview:'자막 미리보기 원문'});},finishInput(){calls.push({rtc:'finishInput'});},async close(){calls.push({rtc:'close'});await rtcFaults.closePending;return rtcFaults.closeResult;}};}};
       if(name==='@/lib/client/live-interview-recorder')return {createLiveAnswerCapture:(_stream:any,options:any)=>{calls.push({recorder:true});if(!rtcFaults.capture)throw Error('Unexpected recorder access');rtcFaults.captureOptions=options;return {stop(){}};}};
       if(name==='@/lib/client/recording-recovery')return {
@@ -94,7 +97,7 @@ test('a first diagnostic opens its question and typed answer without a device or
  const info=fixture();info.session.data.trainingPurpose='diagnostic';info.session.data.trainingPlanId='diagnostic-plan';
  const h=harness('live-interview-session.tsx',info);h.render();await h.flush();const tree=h.render();
  assert.ok(nodes(tree).some(node=>node.type==='ChatComposer'));assert.equal(nodes(tree).find(node=>node.type==='LiveInterviewerStage').props.diagnostic,true);
- assert.equal(h.calls.some(call=>call.mockDevice||call.audio||call.controller==='start'),false);assert.match(text(tree),/첫 진단/);assert.ok(button(tree,'음성으로 답하기'));h.cleanup();
+ assert.equal(h.calls.some(call=>call.mockDevice||call.audio||call.controller==='start'),false);assert.match(text(tree),/답변 연습/);assert.ok(button(tree,'음성으로 답하기'));h.cleanup();
 });
 test('saved account consent and camera choice reopen collapsed without device access until the student starts',async()=>{
   const h=harness();h.faults.appData.preferences={liveRecordingConsent:true,liveCameraEnabled:false};h.render();await h.flush();let tree=h.render();
@@ -140,12 +143,12 @@ test('camera-without-video recovery starts only after a successful save using th
   h.faults.preferenceError=undefined;button(tree,'카메라 없이 계속').props.onClick();await h.flush();assert.equal(h.calls.filter(call=>call.controller==='start').length,1);
   h.faults.allowDevice=true;await h.controllers[0].services.prepare();assert.equal(h.calls.find(call=>call.mockDevice).constraints.video,false);assert.equal(h.faults.serverPreferences.liveCameraEnabled,false);h.cleanup();
 });
-test('voice mode stays handsfree with explicit thinking and same-question text alternatives',()=>{
+test('voice mode waits for explicit completion and supports a separate preserved practice retry',()=>{
   const h=harness();h.render();const tree=emit(h,{phase:'listening',progress:{durationMs:3200,measurementAvailable:true,endingSoon:false}});
-  assert.deepEqual(nodes(tree).filter(node=>node.type==='button').map(text).sort(),['답변 마침','면접 종료','일시정지','잠깐 생각할게요','이번 질문은 글로 답하기'].sort());
-  button(tree,'답변 마침').props.onClick();assert.ok(h.calls.some(call=>call.controller==='finishAnswer'));
+  assert.deepEqual(nodes(tree).filter(node=>node.type==='button').map(text).sort(),['답변 완료','면접 종료','일시정지','처음부터 다시 답하기','이번 질문은 글로 답하기'].sort());
+  button(tree,'답변 완료').props.onClick();assert.ok(h.calls.some(call=>call.controller==='finishAnswer'));
   button(tree,'일시정지').props.onClick();assert.equal(h.controllers[0].state.phase,'paused');
-  const paused=h.render();assert.ok(button(paused,'계속하기'));assert.ok(!nodes(paused).some(node=>node.type==='button'&&text(node)==='답변 마침'));h.cleanup();
+  const paused=h.render();assert.ok(button(paused,'계속하기'));assert.ok(!nodes(paused).some(node=>node.type==='button'&&text(node)==='답변 완료'));h.cleanup();
 });
 test('text alternative opens only on explicit selection and preserves the active question without a microphone',async()=>{
   const h=harness();let tree=h.render();assert.equal(nodes(tree).some(node=>node.type==='ChatComposer'),false);
@@ -234,24 +237,24 @@ test('permission recovery still requires consent if the student withdraws it',as
 test('recording recovery offers a distinct same-question rerecord action gated by consent',async()=>{
   const h=harness();let tree=h.render();consent(tree).props.onChange({target:{checked:true}});await h.flush();
   tree=emit(h,{phase:'error',error:'음성 전사를 다시 시도해 주세요.',recording:{blob:new Blob(['synthetic audio'],{type:'audio/webm'}),measurementAvailable:true,speechStarted:true,durationMs:2000}});
-  assert.ok(button(tree,'보관한 답변 저장하고 계속'));assert.equal(button(tree,'같은 질문 다시 녹음').props.disabled,false);
-  button(tree,'같은 질문 다시 녹음').props.onClick();await h.flush();assert.equal(h.calls.filter(call=>call.controller==='rerecord').length,1);assert.equal(h.calls.some(call=>call.controller==='start'),false);
-  tree=emit(h,{phase:'error'});consent(tree).props.onChange({target:{checked:false}});await h.flush();tree=h.render();assert.equal(button(tree,'같은 질문 다시 녹음').props.disabled,true);button(tree,'같은 질문 다시 녹음').props.onClick();assert.equal(h.calls.filter(call=>call.controller==='rerecord').length,1);h.cleanup();
+  assert.ok(button(tree,'보관한 답변 저장하고 계속'));assert.equal(button(tree,'처음부터 다시 답하기').props.disabled,false);
+  button(tree,'처음부터 다시 답하기').props.onClick();await h.flush();assert.equal(h.calls.filter(call=>call.controller==='rerecord').length,1);assert.equal(h.calls.some(call=>call.controller==='start'),false);
+  tree=emit(h,{phase:'error'});consent(tree).props.onChange({target:{checked:false}});await h.flush();tree=h.render();assert.equal(button(tree,'처음부터 다시 답하기').props.disabled,true);button(tree,'처음부터 다시 답하기').props.onClick();assert.equal(h.calls.filter(call=>call.controller==='rerecord').length,1);h.cleanup();
 });
 test('the completed room links to its report and cannot restart recording',()=>{
   const info=fixture();info.session.state='completed';info.report={id:'saved-report'};info.turns=[{id:'answered',question:'역할은?',answer:'자료를 정리했습니다.'}];
-  const h=harness(undefined,info),tree=h.render();assert.ok(nodes(tree).some(node=>node.type==='Link'&&node.props.href==='/records/reports/saved-report'));assert.equal(nodes(tree).some(node=>node.type==='button'||node.type==='input'),false);assert.ok(!nodes(tree).some(node=>node.type==='LiveInterviewerStage'));h.cleanup();
+  const h=harness(undefined,info),tree=h.render();assert.ok(nodes(tree).some(node=>node.type==='Link'&&node.props.href==='/reports/reports/saved-report'));assert.equal(nodes(tree).some(node=>node.type==='button'||node.type==='input'),false);assert.ok(!nodes(tree).some(node=>node.type==='LiveInterviewerStage'));h.cleanup();
 });
 
-test('completed unified training delegates its answer history to the wrapper while active and standalone rooms keep history',()=>{
+test('completed rooms show collapsed question reviews and exact report links, including embedded training',()=>{
   const info=fixture();info.turns=[{id:'answer',question:'질문 원문',answer:'저장한 답변 원문',submissionSource:'text'}];
   const updates:any[]=[],training=harness(undefined,info,null,(value:any)=>updates.push(value));
   assert.ok(nodes(training.render()).some(node=>node.type==='details'&&node.props.className==='history'),'the ongoing room retains saved-answer access');
-  const completed={...info,session:{...info.session,state:'completed'}};
+  const completed={...info,session:{...info.session,state:'completed'},report:{id:'report-id'}};
   const completeTraining=emit(training,{phase:'complete',info:completed});
-  assert.ok(!nodes(completeTraining).some(node=>node.type==='details'&&node.props.className==='history'),'the wrapper supplies the single completed answer and feedback disclosure');
+  const review=nodes(completeTraining).find(node=>node.props['aria-label']==='질문별 답변 복기');assert.ok(review);assert.ok(nodes(review).some(node=>node.type==='details'&&!node.props.open));assert.match(text(review),/저장한 답변 원문/);assert.match(text(review),/평가는 아직 확인/);assert.ok(nodes(review).some(node=>node.props.href==='/reports/reports/report-id?turnId=answer#turn-answer'));
   assert.equal(updates.at(-1).turns[0].answer,'저장한 답변 원문','the callback retains the actual answer for the wrapper');
-  const standalone=harness(undefined,completed);assert.ok(nodes(standalone.render()).some(node=>node.type==='details'&&node.props.className==='history'));assert.equal(completed.turns.length,1);
+  const standalone=harness(undefined,completed);assert.ok(nodes(standalone.render()).some(node=>node.props['aria-label']==='질문별 답변 복기'));assert.equal(completed.turns.length,1);
   training.cleanup();standalone.cleanup();
 });
 test('exit confirmation pauses first and finishing remains an explicit action',()=>{
@@ -327,10 +330,10 @@ test('a checkpoint still in use by another tab is neither restored nor deleted',
   assert.match(text(tree),/다른 탭에서 이 질문을 녹음 중/);assert.equal(h.calls.some(call=>call.controller==='restoreRecording'||call.recovery==='removed'||call.recovery==='cancelled'),false);assert.equal(h.calls.some(call=>call.mockDevice||call.upload),false);h.cleanup();
 });
 
-test('aborting the Live preparation countdown cancels only its reserved writer attempt',async()=>{
-  const info=recoverableInfo(),h=harness(undefined,info);h.render();await h.flush();h.render();const abort=new AbortController();h.faults.recoveryKey='new-preparation-attempt-C';
-  const preparing=h.controllers[0].services.beforeCapture(info.question,0,abort.signal);await h.flush();const tree=h.render();assert.match(text(tree),/3초 뒤 답변 녹음을 시작/);abort.abort();await assert.rejects(preparing,{name:'AbortError'});h.render();
-  assert.deepEqual(h.calls.filter(call=>call.recovery==='begin').map(call=>call.key),['new-preparation-attempt-C']);const cancelled=h.calls.filter(call=>call.recovery==='cancelled');assert.ok(cancelled.length>0);assert.deepEqual([...new Set(cancelled.map(call=>call.key))],['new-preparation-attempt-C']);assert.equal(h.calls.some(call=>call.recovery==='removed'||call.upload||call.controller==='restoreRecording'),false);h.cleanup();
+test('preparation has no artificial countdown and abort releases only its reserved writer',async(t)=>{
+ const info=recoverableInfo(),h=harness(undefined,info);t.after(()=>h.cleanup());h.render();await h.flush();h.faults.recoveryKey='new-preparation-attempt-C';const abort=new AbortController();
+ await h.controllers[0].services.beforeCapture(info.question,0,abort.signal);assert.doesNotMatch(text(h.render()),/3초 뒤|준비 시간 건너뛰기/);abort.abort();await h.flush();
+ assert.deepEqual(h.calls.filter(call=>call.recovery==='cancelled').map(call=>call.key),['new-preparation-attempt-C']);assert.equal(h.calls.some(call=>call.recovery==='removed'||call.upload),false);
 });
 
 test('a signal already aborted after reserving a writer releases that exact reservation without scope deletion',async()=>{
@@ -340,19 +343,19 @@ test('a signal already aborted after reserving a writer releases that exact rese
 
 test('aborting after the preparation countdown and before recorder capture still releases only that reservation',async()=>{
   const info=recoverableInfo(),h=harness(undefined,info);h.render();await h.flush();h.render();h.faults.recoveryKey='between-countdown-and-capture-attempt-E';const abort=new AbortController();
-  const preparing=h.controllers[0].services.beforeCapture(info.question,0,abort.signal);await h.flush();button(h.render(),'준비 시간 건너뛰기').props.onClick();await preparing;assert.equal(h.calls.some(call=>call.recovery==='cancelled'),false);abort.abort();await h.flush();
+  const preparing=h.controllers[0].services.beforeCapture(info.question,0,abort.signal);await h.flush();await preparing;assert.equal(h.calls.some(call=>call.recovery==='cancelled'),false);abort.abort();await h.flush();
   assert.deepEqual(h.calls.filter(call=>call.recovery==='cancelled').map(call=>call.key),['between-countdown-and-capture-attempt-E']);assert.equal(h.calls.some(call=>call.recovery==='removed'||call.mockDevice||call.upload),false);h.cleanup();
 });
 
 test('a reservation that loses its lease during preparation is cancelled before the recorder opens',async()=>{
   const info=recoverableInfo(),h=harness(undefined,info);h.render();await h.flush();h.render();h.faults.recoveryKey='expired-during-preparation-attempt-F';h.faults.assertActiveError=Error('녹음 예약이 만료됐어요.');
-  const preparing=h.controllers[0].services.beforeCapture(info.question,0,new AbortController().signal);await h.flush();button(h.render(),'준비 시간 건너뛰기').props.onClick();await assert.rejects(preparing,/예약이 만료/);
+  await assert.rejects(()=>h.controllers[0].services.beforeCapture(info.question,0,new AbortController().signal),/예약이 만료/);
   assert.deepEqual(h.calls.filter(call=>call.recovery==='assertActive').map(call=>call.key),['expired-during-preparation-attempt-F']);assert.deepEqual(h.calls.filter(call=>call.recovery==='cancelled').map(call=>call.key),['expired-during-preparation-attempt-F']);assert.equal(h.calls.some(call=>call.recorder||call.recovery==='removed'),false);h.cleanup();
 });
 
 test('a lease that expires after preparation is checked synchronously before opening the recorder',async()=>{
   const info=recoverableInfo(),h=harness(undefined,info);h.faults.allowDevice=true;h.render();await h.flush();h.render();const services=h.controllers[0].services;await services.prepare();h.faults.recoveryKey='expired-before-capture-attempt-G';
-  const preparing=services.beforeCapture(info.question,0,new AbortController().signal);await h.flush();button(h.render(),'준비 시간 건너뛰기').props.onClick();await preparing;h.faults.assertFreshError=Error('녹음 예약이 만료됐어요.');assert.throws(()=>services.capture(()=>{}),/예약이 만료/);
+  const preparing=services.beforeCapture(info.question,0,new AbortController().signal);await h.flush();await preparing;h.faults.assertFreshError=Error('녹음 예약이 만료됐어요.');assert.throws(()=>services.capture(()=>{}),/예약이 만료/);
   assert.deepEqual(h.calls.filter(call=>call.recovery==='assertFresh').map(call=>call.key),['expired-before-capture-attempt-G']);assert.equal(h.calls.some(call=>call.recorder||call.recovery==='removed'),false);services.release();await h.flush();assert.deepEqual(h.calls.filter(call=>call.recovery==='cancelled').map(call=>call.key),['expired-before-capture-attempt-G']);h.cleanup();
 });
 
@@ -428,18 +431,18 @@ test('resuming Live after a later logout failure re-arms its recording navigatio
   assert.equal(h.calls.some(call=>call.body?.action==='finish'||call.body?.action==='answer'||call.body?.action==='answer_recording'),false);
 });
 
-test('enabled RTC voices the approved question, sends input only at durable capture and leaves existing answer storage authoritative',async(t)=>{
+test('transcription-only connection starts input with durable capture while existing TTS reads the approved question',async(t)=>{
   const info=fixture(),h=harness(undefined,info);t.after(()=>h.cleanup());h.rtcFaults.enabled=true;h.rtcFaults.capture=true;h.faults.allowDevice=true;h.faults.appData.preferences={liveRecordingConsent:true,liveCameraEnabled:false};h.render();await h.flush();let tree=h.render();button(tree,'면접 시작').props.onClick();const services=h.controllers[0].services;await services.prepare();await services.speak(info.question,0,new AbortController().signal);
-  const connected=h.calls.find(call=>call.rtc==='connect');assert.equal(connected.scope.turnId,'turn');assert.equal(connected.scope.generation,0);assert.equal(connected.question.prompt,info.question.prompt);assert.equal(h.calls.some(call=>call.rtc==='startInput'||call.upload||call.body?.action==='speech'),false);
-  const preparing=services.beforeCapture(info.question,0,new AbortController().signal);await h.flush();button(h.render(),'준비 시간 건너뛰기').props.onClick();await preparing;services.capture(()=>{});assert.ok(h.calls.findIndex(call=>call.rtc==='startInput')<h.calls.findIndex(call=>call.recorder));tree=h.render();assert.match(text(tree),/자막 미리보기 원문/);assert.equal(h.calls.some(call=>call.upload||call.body?.action==='answer_recording'),false,'a preview never becomes an answer');
+  const connected=h.calls.find(call=>call.rtc==='connect');assert.equal(connected.scope.turnId,'turn');assert.equal(connected.scope.generation,0);assert.equal(h.calls.some(call=>call.body?.action==='speech'),true);assert.equal(h.calls.some(call=>call.rtc==='startInput'||call.upload),false);
+  const preparing=services.beforeCapture(info.question,0,new AbortController().signal);await h.flush();await preparing;services.capture(()=>{});assert.ok(h.calls.findIndex(call=>call.rtc==='startInput')<h.calls.findIndex(call=>call.recorder));tree=h.render();assert.match(text(tree),/자막 미리보기 원문/);assert.equal(h.calls.some(call=>call.upload||call.body?.action==='answer_recording'),false,'a preview never becomes an answer');
   const recording={blob:new Blob(['real durable chunks']),durationMs:2000};await h.rtcFaults.captureOptions.onComplete(recording);assert.ok(h.calls.some(call=>call.rtc==='finishInput'));assert.ok(h.calls.some(call=>call.recovery==='finish'));assert.equal((recording as any).recoveryKey,h.faults.recoveryKey);
   const mediaId=await services.upload(recording,info.question,0);await services.answer(mediaId,info.question,0);const answer=h.calls.find(call=>call.body?.action==='answer_recording');assert.equal(answer.body.mediaId,'new-server-media');assert.equal(answer.body.turnId,'turn');assert.equal(answer.body.generation,0);assert.equal(answer.body.answer,undefined);
 });
 
-test('RTC question failure closes its connection and replays the same server turn through existing TTS',async(t)=>{
+test('transcription preview failure leaves the existing TTS question and durable recording available',async(t)=>{
   const info=fixture(),h=harness(undefined,info);t.after(()=>h.cleanup());h.rtcFaults.enabled=true;h.rtcFaults.playError=Error('RTC output mismatch');h.faults.allowDevice=true;h.faults.appData.preferences={liveRecordingConsent:true};h.render();await h.flush();button(h.render(),'면접 시작').props.onClick();const services=h.controllers[0].services;await services.prepare();await services.speak(info.question,0,new AbortController().signal);
-  assert.ok(h.calls.some(call=>call.rtc==='close'));const speech=h.calls.find(call=>call.body?.action==='speech');assert.equal(speech.body.turnId,'turn');assert.equal(speech.body.generation,0);assert.equal(speech.body.questionId,'question');assert.match(text(h.render()),/같은 질문을 다시 들려드릴게요/);assert.equal(h.calls.some(call=>call.rtc==='startInput'||call.body?.action==='answer_recording'),false);
-  await services.speak(info.question,0,new AbortController().signal);assert.equal(h.calls.filter(call=>call.rtc==='connect').length,1,'the failing RTC path remains disabled in this room');
+  const speech=h.calls.find(call=>call.body?.action==='speech');assert.equal(speech.body.turnId,'turn');assert.equal(speech.body.generation,0);assert.equal(speech.body.questionId,'question');assert.match(text(h.render()),/실시간 전사를 연결하지 못했어요/);assert.equal(h.calls.some(call=>call.rtc==='startInput'||call.body?.action==='answer_recording'),false);
+  await services.speak(info.question,0,new AbortController().signal);assert.equal(h.calls.filter(call=>call.rtc==='connect').length,1,'replay does not duplicate the transcription attempt');
 });
 
 test('Live logout waits for owned RTC hangup receipt and keeps a failed close retryable without finishing or submitting',async(t)=>{
@@ -451,18 +454,16 @@ test('Live logout waits for owned RTC hangup receipt and keeps a failed close re
 test('pausing before logout retains pending and failed RTC shutdown receipts until an acknowledged retry',async(t)=>{
   const info=fixture(),h=harness(undefined,info);t.after(()=>h.cleanup());h.rtcFaults.enabled=true;h.faults.allowDevice=true;h.faults.appData.preferences={liveRecordingConsent:true};h.render();await h.flush();button(h.render(),'면접 시작').props.onClick();const services=h.controllers[0].services;await services.prepare();await services.speak(info.question,0,new AbortController().signal);
   let release!:()=>void;h.rtcFaults.closePending=new Promise<void>(resolve=>release=resolve);h.rtcFaults.closeResult=false;services.mute(true);const saving=flushPendingDrafts('student');let settled=false;void saving.then(()=>settled=true,()=>settled=true);await h.flush();assert.equal(settled,false,'a prior pause cannot discard the outstanding close');release();await assert.rejects(()=>saving,/초안을 보관하지 못했어요/);
-  h.rtcFaults.closePending=undefined;h.rtcFaults.closeResult=true;await flushPendingDrafts('student');assert.ok(h.calls.filter(call=>call.rtc==='close').length>=3);assert.equal(h.calls.some(call=>call.body?.action==='finish'||call.body?.action==='answer_recording'),false);
+  h.rtcFaults.closePending=undefined;h.rtcFaults.closeResult=true;await flushPendingDrafts('student');assert.ok(h.calls.filter(call=>call.rtc==='close').length>=2);assert.equal(h.calls.some(call=>call.body?.action==='finish'||call.body?.action==='answer_recording'),false);
 });
 
 
-test('Live AI help pauses the current recorder without finishing, uploading or discarding it and returns to the same question',async(t)=>{
-  const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();const recording={blob:new Blob(['unfinished durable audio']),recoveryKey:'current-attempt'};
-  let tree=emit(h,{phase:'listening',recording}),helper=nodes(tree).find(node=>node.type==='LearningHelp');assert.ok(helper);
-  const offset=h.calls.length;assert.equal(await helper.props.beforeOpen(),true);tree=h.render();const actions=h.calls.slice(offset);
-  assert.equal(h.controllers[0].state.phase,'paused');assert.equal(h.controllers[0].state.recording,recording);assert.equal(h.controllers[0].state.info.question.turnId,'turn');
-  assert.equal(actions.some(call=>call.controller==='preserveAnswer'||call.controller==='finish'||call.upload||call.recovery==='removed'||call.recovery==='cancelled'),false);
-  assert.equal(actions.find(call=>call.body?.action==='pause').body.turnId,'turn');assert.equal(actions.some(call=>call.body?.action==='answer'||call.body?.action==='finish'),false);
-  helper=nodes(tree).find(node=>node.type==='LearningHelp');helper.props.onClose();assert.equal(h.destinations.length,0);assert.ok(button(h.render(),'보관한 답변 저장하고 계속'));
+test('named stage help pauses and retains the same answer and returns to the same question',async(t)=>{
+ const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();const recording={blob:new Blob(['unfinished durable audio']),recoveryKey:'current-attempt'};
+ let tree=emit(h,{phase:'listening',recording});const offset=h.calls.length;nodes(tree).find(node=>node.type==='LiveInterviewerStage').props.onHelp('C');await h.flush();tree=h.render();const helper=nodes(tree).find(node=>node.type==='InterviewCoach');assert.ok(helper);assert.equal(helper.props.characterId,'C');
+ assert.equal(h.controllers[0].state.phase,'paused');assert.equal(h.controllers[0].state.recording,recording);assert.equal(h.controllers[0].state.info.question.turnId,'turn');
+ assert.equal(nodes(tree).find(node=>node.type==='LiveInterviewerStage').props.speakerId,'C');
+ assert.equal(h.calls.slice(offset).some(call=>call.upload||call.recovery==='removed'||call.body?.action==='answer'),false);helper.props.onClose();tree=h.render();assert.ok(button(tree,'보관한 답변 저장하고 계속'));assert.equal(nodes(tree).find(node=>node.type==='LiveInterviewerStage').props.speakerId,'A');
 });
 
 test('Live typed help preserves the latest answer draft and refreshes its assisted receipt without submitting an answer',async(t)=>{
@@ -475,14 +476,12 @@ test('Live typed help preserves the latest answer draft and refreshes its assist
   helper=nodes(tree).find(node=>node.type==='LearningHelp');assert.equal(helper.props.interviewSessionId,'live-session');assert.equal(helper.props.interviewTurnId,'turn');
 });
 
-test('Live helper refuses processing turns and fails closed when the server cannot pause the same turn',async(t)=>{
-  const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let tree=emit(h,{phase:'saving'});let helper=nodes(tree).find(node=>node.type==='LearningHelp');assert.equal(helper.props.disabled,true);assert.equal(await helper.props.beforeOpen(),false);
-  tree=emit(h,{phase:'paused'});helper=nodes(tree).find(node=>node.type==='LearningHelp');h.draftFaults.helpPauseError=Error('서버 연결을 확인해 주세요.');await assert.rejects(helper.props.beforeOpen,/서버 연결/);
-  assert.equal(h.destinations.length,0);assert.equal(h.controllers[0].state.info.question.turnId,'turn');assert.equal(h.calls.some(call=>call.body?.action==='answer'||call.body?.action==='finish'),false);
+test('named helper is absent while saving and fails closed when the server cannot pause',async(t)=>{
+ const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let tree=emit(h,{phase:'saving'});assert.equal(nodes(tree).find(node=>node.type==='LiveInterviewerStage').props.onHelp,undefined);
+ tree=emit(h,{phase:'paused'});h.draftFaults.helpPauseError=Error('서버 연결을 확인해 주세요.');nodes(tree).find(node=>node.type==='LiveInterviewerStage').props.onHelp('A');await h.flush();tree=h.render();assert.match(text(tree),/서버 연결/);assert.equal(nodes(tree).some(node=>node.type==='InterviewCoach'),false);
 });
 
-test('opening the AI tab during Live opens its current sheet and a later question does not inherit that request',async(t)=>{
-  const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let prevented=false;h.listeners.get('window:gakja:open-on')!({preventDefault(){prevented=true;}});
-  let tree=h.render();assert.equal(prevented,true);assert.equal(nodes(tree).find(node=>node.type==='LearningHelp').props.openRequest,1);assert.equal(h.destinations.length,0);
-  tree=emit(h,{info:{...fixture(),question:{...fixture().question,turnId:'next-turn'}}});assert.equal(nodes(tree).find(node=>node.type==='LearningHelp').props.openRequest,0);
+test('opening the AI tab invokes the same-stage helper and a later question clears it',async(t)=>{
+ const h=harness();t.after(()=>h.cleanup());h.render();await h.flush();let prevented=false;h.listeners.get('window:gakja:open-on')!({preventDefault(){prevented=true;}});h.render();await h.flush();let tree=h.render();assert.equal(prevented,true);assert.equal(nodes(tree).find(node=>node.type==='InterviewCoach').props.turnId,'turn');assert.equal(h.destinations.length,0);
+ emit(h,{info:{...fixture(),question:{...fixture().question,turnId:'next-turn'}}});tree=h.render();assert.equal(nodes(tree).some(node=>node.type==='InterviewCoach'),false);
 });

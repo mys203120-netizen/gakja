@@ -5,6 +5,7 @@ import { enrichSchoolTarget } from './school-directory';
 import {adminTrainingSummary} from './admin-training';
 import {readStudentModel} from './student-read-model';
 import {koreaToday} from './planner-model';
+import {studentDocumentSummary} from './student-document-service';
 
 export const emptyLearning = { activities: [], questions: [], memory_items: [], source_refs: [], answer_scripts: [], support_targets: [], student_context: { core_keywords: [], representative_activity_ids: [], confirmed_goals: [] } };
 export async function getLearning(studentId: string, version?: number) {
@@ -58,7 +59,7 @@ export async function bootstrap(user: Profile) {
   if (user.role !== 'student') return { user, targets: [], package: null, documents: [], learning: emptyLearning, answers: [], memoryAttempts: [], memoryHistory: [], threads: [], interviews: [], reports: [], confirmations: [], notifications: [], admin: await getAdminData(user) };
   // Only one current published package and bounded shell state are transported.
   // Answer bodies, old sessions and report JSON belong to owned list/detail APIs.
-  const [content,targets,interviews,preferences,readingProgress,counts] = await Promise.all([
+  const [content,targets,interviews,preferences,readingProgress,counts,studentDocument] = await Promise.all([
     getLearning(user.id),
     query("select * from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null order by id",[user.id]),
     query(`select distinct on(target_id,kind) id,student_id,kind,mode,target_id,content_version,state,created_at,updated_at,completed_at,
@@ -94,9 +95,10 @@ export async function bootstrap(user: Profile) {
       (select count(*)::int from memory_attempts where student_id=$1) as memory,
       (select count(*)::int from student_confirmations where student_id=$1) as confirmations,
       (select count(*)::int from notifications where student_id=$1 and read_at is null) as unread_notifications`,[user.id]);return row||{};}),
+    studentDocumentSummary(user.id),
   ]);
   return {user,...content,targets:targets.map(row=>enrichSchoolTarget({id:row.id,student_id:row.student_id,...row.data})),
-    interviews,preferences:preferences[0]?.data??{},readingProgress,summary:counts||{},
+    interviews,preferences:preferences[0]?.data??{},readingProgress,summary:counts||{},studentDocument,
     // Empty compatibility slots are never presented as loaded history. Consumers
     // must use their own loading/error states and cursor APIs.
     answers:[],memoryAttempts:[],memoryHistory:[],threads:[],reports:[],confirmations:[],notifications:[],briefings:[],preparationStates:[],

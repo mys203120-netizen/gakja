@@ -14,32 +14,33 @@
   --ui-peach: #f0faf4;
   --ui-shadow: var(--soft-shadow-raised);
   --clarity-brand: #00ed77;
-  --clarity-bg: #f7f8fa;
+  --clarity-bg: #f5f9f6;
   --clarity-surface: #ffffff;
-  --clarity-soft: #f1f3f5;
-  --clarity-mint: #e4faee;
-  --clarity-ink: #22272b;
-  --clarity-muted: #687078;
-  --clarity-action: #008747;
-  --clarity-action-hover: #008747;
+  --clarity-soft: #edf3ef;
+  --clarity-mint: #e3faed;
+  --clarity-ink: #20392d;
+  --clarity-muted: #617169;
+  --clarity-action: #087543;
+  --clarity-action-hover: #065c35;
   --clarity-on-action: #ffffff;
-  --clarity-on-brand: #220D2A;
-  --clarity-green: #008747;
-  --clarity-green-hover: #008747;
+  --clarity-on-brand: #143425;
+  --clarity-green: #00743e;
+  --clarity-green-hover: #005d32;
   --clarity-banner: #f0faf4;
-  --clarity-line: #e5e8eb;
+  --clarity-line: #dfe9e2;
   --clarity-blue: #008747;
   --soft-mint: #00ed77;
   --soft-leaf: #00ed77;
-  --soft-accent-ink: #008747;
+  --soft-accent-ink: #00743e;
   /* The original logo green is the primary accent; neutral surfaces carry depth. */
-  --soft-gradient: linear-gradient(#00ed77, #00ed77);
-  --soft-accent-gradient: linear-gradient(#e4faee, #e4faee);
-  --soft-shadow-raised: 0 2px 10px rgb(28 38 48 / 4%), 0 0 0 1px rgb(28 38 48 / 5%);
-  --soft-shadow-small: 0 1px 4px rgb(28 38 48 / 5%);
-  --soft-shadow-inset: none;
-  --soft-radius: 20px;
-  --soft-control-radius: 12px;
+  --soft-gradient: linear-gradient(145deg, #48f79c 0%, #00ed77 78%);
+  --soft-accent-gradient: linear-gradient(145deg, #fcfffd 0%, #e8f9ef 100%);
+  --soft-shadow-raised: 8px 12px 28px rgb(48 91 65 / 7%), -5px -5px 18px rgb(255 255 255 / 90%), inset 1px 1px 1px rgb(255 255 255 / 95%), inset -1px -2px 4px rgb(48 91 65 / 3%);
+  --soft-shadow-small: 3px 5px 12px rgb(48 91 65 / 7%), -2px -2px 8px rgb(255 255 255 / 85%), inset 1px 1px 1px rgb(255 255 255 / 90%), inset -1px -1px 2px rgb(48 91 65 / 4%);
+  --soft-shadow-inset: inset 3px 3px 7px rgb(48 91 65 / 7%), inset -3px -3px 7px rgb(255 255 255 / 95%);
+  --clay-button-shadow: 0 6px 14px rgb(0 144 72 / 14%), inset 2px 2px 4px rgb(255 255 255 / 55%), inset -2px -3px 5px rgb(0 126 62 / 12%), 0 1px 1px rgb(255 255 255 / 90%);
+  --soft-radius: 28px;
+  --soft-control-radius: 16px;
   --soft-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6d63' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --clarity-warning: #926521;
   --clarity-danger: #bf403e;
@@ -56,8 +57,8 @@
   --clarity-body-size: var(--font-size-body);
   --clarity-secondary-size: var(--font-size-caption);
   --clarity-line-height: 1.7;
-  --clarity-control-radius: 12px;
-  --clarity-section-gap: 28px;
+  --clarity-control-radius: 16px;
+  --clarity-section-gap: 32px;
   --bg: var(--clarity-bg);
   --surface: var(--clarity-surface);
   --surface2: var(--clarity-soft);
@@ -67,7 +68,7 @@
   --accent: var(--clarity-green);
   --link: var(--clarity-green);
   --line: var(--clarity-line);
-  --radius: 20px;
+  --radius: 28px;
   --gakja-keyframe-spin: spin;
   --gakja-keyframe-dot: dot;
   --gakja-keyframe-resource-enter: resource-enter;
@@ -102,6 +103,7 @@ html {
 
 body {
   margin: 0;
+  background-image: radial-gradient(ellipse at 90% 0%, rgb(0 237 119 / 4%), transparent 45%);
 }
 
 a {
@@ -125,7 +127,7 @@ h1,
 h2,
 h3,
 h4,
-p {
+  p {
   margin: 0;
 }
 

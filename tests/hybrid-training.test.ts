@@ -106,7 +106,7 @@ test('deadline and observed diagnosis change time ratios; D-3 without evidence s
   assert.ok(duration(foundational,'focus')>duration(close,'focus'));
   assert.ok(duration(foundational,'mixed')<duration(close,'mixed'));
   const repair=hybridAllocation(today,[q('qa','a',[{at:'2026-10-19T09:00:00Z',assisted:true}])],[deadline('a','2026-10-23')],diagnostics);
-  assert.equal(repair.mode,'rehearsal');assert.equal(repair.mixedShare,.4);
+  assert.equal(repair.mode,'repair');assert.ok(repair.mixedShare<.4,'remaining review precedes deadline-driven rehearsal');
 });
 
 test('a date-specific time change reuses a stable task identity while changing its stored minutes',()=>{

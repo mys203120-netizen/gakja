@@ -5,7 +5,7 @@ import {ownedClassName} from './owned-class-name';
 import Link from 'next/link';
 import {useEffect, useRef, useState} from 'react';
 import {useRouter} from 'next/navigation';
-import {Camera, Check, Download, Mic, Pause, Play, Square} from 'lucide-react';
+import {Camera, Check, Mic, Pause, Play, Square} from 'lucide-react';
 import {useApp} from './app-shell';
 import {registerDraftSaver} from '@/lib/client/draft-save';
 import {action, api, post, Breadcrumb, InfoTip, Modal, targetName, type Item} from './shared';
@@ -18,9 +18,12 @@ import {beginRecordingRecovery, readRecordingRecovery, removeRecordingRecovery, 
 import type {LiveAnswerRecording} from '@/lib/client/live-interview-recorder';
 import {InterviewerAvatarSignal} from '@/lib/client/interviewer-avatar';
 import {InterviewerAudioOutput} from '@/lib/client/interviewer-audio-output';
+import {INTERVIEW_CHARACTERS,interviewPolicy,interviewEvaluationEvidence,requestedInterviewHelper} from '@/lib/interview-policy';
+import {connectLiveTranscription,type LiveTranscription} from '@/lib/client/realtime-transcription';
 import {connectRealtimeInterview,type RealtimeInterviewConnection} from '@/lib/client/realtime-interview';
 import {ChatComposer} from './chat-composer';
 import {LearningHelp} from './learning-help';
+import {InterviewCoach} from './interview-coach';
 import {MotionSwitch} from './sliding-choice';
 import styles from './live-interview-session.module.css';
 
@@ -56,32 +59,39 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
   const controller=useRef<LiveInterviewController|null>(null),stream=useRef<MediaStream|null>(null),video=useRef<HTMLVideoElement|null>(null),audio=useRef<HTMLAudioElement|null>(null);
   const avatarSignal=useRef(new InterviewerAvatarSignal()),audioOutput=useRef<InterviewerAudioOutput|null>(null);
   const realtime=useRef<RealtimeInterviewConnection|null>(null),realtimeEnabled=useRef(false),realtimeRun=useRef(0);
-  const realtimeClosing=useRef(new Map<string,Set<RealtimeInterviewConnection>>());
+  const realtimeClosing=useRef(new Map<string,Set<{close():Promise<boolean>}>>());
   const closingForStudent=()=>{let pending=realtimeClosing.current.get(studentId);if(!pending){pending=new Set();realtimeClosing.current.set(studentId,pending);}return pending;};
-  const closeRealtime=(connection:RealtimeInterviewConnection|null)=>{
+  const closeRealtime=(connection:{close():Promise<boolean>}|null)=>{
     if(!connection)return Promise.resolve(true);
     const pending=closingForStudent();pending.add(connection);
     return connection.close().then(confirmed=>{if(confirmed)pending.delete(connection);return confirmed;});
   };
+  const transcription=useRef<LiveTranscription|null>(null),transcriptionEnabled=useRef(false),transcriptionScope=useRef('');
+  const [cameraPreview,setCameraPreview]=useState(false);
   const [realtimePreview,setRealtimePreview]=useState(''),[realtimeNotice,setRealtimeNotice]=useState('');
   const cameraChoice=useRef(camera),leaving=useRef(false),destination=useRef<string|null>(null);cameraChoice.current=camera;
-  const [recoveryChecked,setRecoveryChecked]=useState(false),[localStatus,setLocalStatus]=useState(''),[countdown,setCountdown]=useState(0),[textMode,setTextMode]=useState(initialInfo.session.data?.trainingPurpose==='diagnostic'),[textAnswer,setTextAnswer]=useState(''),[textTurn,setTextTurn]=useState(''),[textBusy,setTextBusy]=useState(false),[textStatus,setTextStatus]=useState('');
+  const [recoveryChecked,setRecoveryChecked]=useState(false),[localStatus,setLocalStatus]=useState(''),[textMode,setTextMode]=useState(initialInfo.session.data?.trainingPurpose==='diagnostic'),[textAnswer,setTextAnswer]=useState(''),[textTurn,setTextTurn]=useState(''),[textBusy,setTextBusy]=useState(false),[textStatus,setTextStatus]=useState('');
   const [exiting,setExiting]=useState(false);
+  const [helperId,setHelperId]=useState<string|null>(null);
   const [assistantRequest,setAssistantRequest]=useState({turnId:'',token:0});
-  const writer=useRef<RecordingRecoveryWriter|null>(null),preparationAbort=useRef<(()=>void)|null>(null),readyOnce=useRef(false),skipReady=useRef<(()=>void)|null>(null),thinkingUntil=useRef(0),textRef=useRef(''),textRequest=useRef<{turnId:string;answer:string;requestId:string}|null>(null);
+  const writer=useRef<RecordingRecoveryWriter|null>(null),preparationAbort=useRef<(()=>void)|null>(null),textRef=useRef(''),textRequest=useRef<{turnId:string;answer:string;requestId:string}|null>(null);
   const activeRecovery=useRef<RecordingRecoveryWriter|null>(null),discarding=useRef(false),textDraftTimer=useRef<ReturnType<typeof setTimeout>|null>(null),textDraftQueue=useRef<Promise<unknown>>(Promise.resolve());
   const uploadedRecordings=useRef(new WeakMap<LiveAnswerRecording,{mediaId:string;turnId:string;generation:number}>());
   textRef.current=textAnswer;
   const recoveryScope=(current:Item,generation:number)=>({studentId,sessionId:`${id}:${current.turnId}:${generation}`,itemIndex:0,kind:'interview' as const});
   const {phase,info,error,progress}=state;const settings=info.session.data||{},question=info.question;
-  const diagnostic=settings.trainingPurpose==='diagnostic',trainingLabel=diagnostic?'첫 진단':settings.trainingPlanId?'답변 훈련':'Live 면접';
+  const diagnostic=settings.trainingPurpose==='diagnostic',trainingLabel=diagnostic?'답변 연습':settings.sessionMode==='real'?'실전 면접':'연습 면접';
   useEffect(()=>{onTrainingUpdate?.(info);},[info,onTrainingUpdate]);
   const turns:Item[]=(info.turns||[]).filter((turn:Item)=>turn.answer&&!turn.invalidated);
-  const people=settings.panelists?.length?settings.panelists:[{id:'A',name:'면접관 A',gender:'female'},{id:'B',name:'면접관 B',gender:'male'}];
+  const policy=interviewPolicy(settings);
+  const people=INTERVIEW_CHARACTERS.map(person=>({...person}));
+  const calledHelper=policy.helpAllowed?requestedInterviewHelper(realtimePreview):null;
   const started=!['idle','complete'].includes(phase),active=!['idle','paused','error','complete'].includes(phase);
   const prepareAudio=()=>{audio.current??=new Audio();audioOutput.current??=new InterviewerAudioOutput(audio.current,avatarSignal.current);void audioOutput.current.unlock();audio.current.src=SILENT_WAV;void audio.current.play().catch(()=>{});};
   useEffect(()=>{const next=phase==='listening'?'listening':['preparing','speaking','saving','recovering'].includes(phase)?'thinking':'idle';if(audioOutput.current)audioOutput.current.syncState(next,question?.speakerId||'');else avatarSignal.current.state(next,question?.speakerId||'');},[phase,question?.speakerId]);
-  useEffect(()=>{let alive=true;realtimeEnabled.current=false;void api('/api/interviews/realtime').then(value=>{if(alive)realtimeEnabled.current=value.enabled===true;}).catch(()=>{});return()=>{alive=false;void closeRealtime(realtime.current);realtime.current=null;};},[id,studentId]);
+  useEffect(()=>{let alive=true;realtimeEnabled.current=false;void api('/api/interviews/transcription').then(value=>{if(alive)transcriptionEnabled.current=value.enabled===true;}).catch(()=>{});return()=>{alive=false;void closeRealtime(transcription.current);transcription.current=null;void closeRealtime(realtime.current);realtime.current=null;};},[id,studentId]);
+  useEffect(()=>{document.body.dataset.interviewActive=info.session.state==='active'?'true':'false';return()=>{delete document.body.dataset.interviewActive;};},[info.session.state]);
+  useEffect(()=>{if(video.current&&stream.current)video.current.srcObject=stream.current;},[cameraPreview,phase]);
   useEffect(()=>{
     if(!appData?.user?.id)return;
     const scope=appData.user.id,savedConsent=appData.preferences?.liveRecordingConsent===true,savedCamera=appData.preferences?.liveCameraEnabled!==false;
@@ -114,7 +124,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     let mounted=true;
     const roomSuspension=initialInfo.session.state==='active'?post('/api/interviews',{action:'suspend',sessionId:id}):Promise.resolve();
     void roomSuspension.catch(()=>{});
-    const release=()=>{void closeRealtime(realtime.current);realtime.current=null;stream.current?.getTracks().forEach(track=>track.stop());stream.current=null;audioOutput.current?.stop();audio.current?.pause();avatarSignal.current.silence();const pending=writer.current;writer.current=null;void pending?.cancel().catch(()=>{});};
+    const release=()=>{void closeRealtime(transcription.current);transcription.current=null;transcriptionScope.current='';void closeRealtime(realtime.current);realtime.current=null;stream.current?.getTracks().forEach(track=>track.stop());stream.current=null;audioOutput.current?.stop();audio.current?.pause();avatarSignal.current.silence();const pending=writer.current;writer.current=null;void pending?.cancel().catch(()=>{});};
     const instance=new LiveInterviewController(initialInfo,{
       load:()=>api(`/api/interviews?id=${id}`),
       async prepare(){
@@ -129,11 +139,22 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
           stream.current=next;if(video.current)video.current.srcObject=next;
         }catch{throw new Error(cameraChoice.current?'마이크·카메라 권한을 확인해 주세요. 카메라가 없으면 카메라 사용을 끄고 음성으로 시작할 수 있어요.':'마이크 사용 권한과 연결을 확인한 뒤 다시 시작해 주세요.');}
       },
-      mute(paused){stream.current?.getTracks().forEach(track=>{track.enabled=!paused;});if(paused){void closeRealtime(realtime.current);realtime.current=null;avatarSignal.current.silence();const pending=writer.current;writer.current=null;void pending?.cancel().catch(()=>{});}},
+      retry:async(current,generation)=>{await post('/api/interviews',{action:'retry',sessionId:id,turnId:current.turnId,generation});void closeRealtime(transcription.current);transcription.current=null;transcriptionScope.current='';setRealtimePreview('');},
+      inputMuted(muted){stream.current?.getAudioTracks().forEach(track=>{track.enabled=!muted;});transcription.current?.mute(muted);},
+      mute(paused){transcription.current?.mute(paused);stream.current?.getTracks().forEach(track=>{track.enabled=!paused;});if(paused){void closeRealtime(realtime.current);realtime.current=null;avatarSignal.current.silence();const pending=writer.current;writer.current=null;void pending?.cancel().catch(()=>{});}},
       async suspend(){await post('/api/interviews',{action:'suspend',sessionId:id});},
       async resume(){await post('/api/interviews',{action:'resume',sessionId:id});},
       async speak(current,generation,signal){
-        setRealtimePreview('');setRealtimeNotice('');
+        const scopeKey=`${current.turnId}:${generation}`;
+        if(transcriptionEnabled.current&&stream.current&&transcriptionScope.current!==scopeKey){
+          void closeRealtime(transcription.current);transcriptionScope.current=scopeKey;setRealtimePreview('');setRealtimeNotice('');
+          const connection=connectLiveTranscription(stream.current,{sessionId:id,turnId:current.turnId,generation,attemptId:crypto.randomUUID()},snapshot=>{
+            if(!mounted||transcriptionScope.current!==scopeKey)return;
+            if(snapshot.text)setRealtimePreview(snapshot.text);
+            if(snapshot.phase==='unavailable')setRealtimeNotice('실시간 전사를 연결하지 못했어요. 녹음 원본은 저장 후 전사해요.');
+          },'/api/interviews/transcription');transcription.current=connection;
+          void connection.ready.then(()=>{if(mounted&&transcription.current===connection&&controller.current?.state.phase==='listening')connection.start();});
+        }
         if(realtimeEnabled.current&&stream.current&&audioOutput.current){
           void closeRealtime(realtime.current);
           const run=++realtimeRun.current;
@@ -142,7 +163,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
             if(snapshot.preview)setRealtimePreview(snapshot.preview);
             if(['speaking','listening','thinking'].includes(snapshot.phase))audioOutput.current?.syncState(snapshot.phase as 'speaking'|'listening'|'thinking',current.speakerId||'A');
             if(snapshot.phase==='unavailable')setRealtimeNotice('연결이 끊겨도 녹음 원본은 계속 보관해요.');
-          },{allowBargeIn:true,onInterruption:()=>{readyOnce.current=true;}});realtime.current=connection;
+          },{allowBargeIn:false});realtime.current=connection;
           const stop=()=>{void closeRealtime(connection);};signal.addEventListener('abort',stop,{once:true});
           try{await connection.playQuestion();if(signal.aborted)throw new DOMException('일시정지','AbortError');return;}
           catch(error){void closeRealtime(connection);if(realtime.current===connection)realtime.current=null;if(signal.aborted)throw error;realtimeEnabled.current=false;setRealtimeNotice('같은 질문을 다시 들려드릴게요.');}
@@ -163,22 +184,12 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
           if(signal.aborted)abort();
         });
       },
-      captureDuringQuestion:()=>realtimeEnabled.current,
       async beforeCapture(current,generation,signal){
         const pending=await beginRecordingRecovery(recoveryScope(current,generation),'');writer.current=pending;
         const cancel=()=>{void pending.cancel().catch(()=>{});if(writer.current===pending)writer.current=null;};
         signal.addEventListener('abort',cancel,{once:true});preparationAbort.current=()=>signal.removeEventListener('abort',cancel);
         try{
         if(signal.aborted)throw new DOMException('일시정지','AbortError');
-        if(!readyOnce.current){
-          await new Promise<void>((resolve,reject)=>{
-            let remaining=3,settled=false;setCountdown(remaining);
-            const finish=()=>{if(settled)return;settled=true;clearTimeout(timer);signal.removeEventListener('abort',abort);skipReady.current=null;setCountdown(0);resolve();};
-            const abort=()=>{if(settled)return;settled=true;clearTimeout(timer);skipReady.current=null;setCountdown(0);reject(new DOMException('일시정지','AbortError'));};
-            const tick=()=>{remaining--;setCountdown(remaining);if(remaining<=0)finish();else timer=setTimeout(tick,1000);};
-            let timer=setTimeout(tick,1000);skipReady.current=finish;signal.addEventListener('abort',abort,{once:true});
-          });readyOnce.current=true;
-        }
         await pending.assertActive();if(signal.aborted)throw new DOMException('일시정지','AbortError');
         }catch(cause){signal.removeEventListener('abort',cancel);preparationAbort.current=null;await pending.cancel().catch(()=>{});if(writer.current===pending)writer.current=null;throw cause;}
       },
@@ -186,11 +197,11 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
         if(!stream.current||!writer.current)throw new Error('마이크와 기기 임시 저장을 확인해 주세요.');
         const recovery=writer.current;activeRecovery.current=recovery;
         recovery.assertFresh();
-        realtime.current?.startInput();
+        realtime.current?.startInput();transcription.current?.start();
         preparationAbort.current?.();preparationAbort.current=null;
-        let capture;try{capture=createLiveAnswerCapture(stream.current,{onProgress,autoStop:()=>controller.current?.state.phase==='listening'&&avatarSignal.current.snapshot.state!=='speaking'&&Date.now()>=thinkingUntil.current,
+        let capture;try{capture=createLiveAnswerCapture(stream.current,{onProgress,autoStop:()=>false,
           onChunk:(blob,kind,durationMs)=>{void (kind==='primary'?recovery.append(blob,durationMs):recovery.appendAnalysis(blob)).catch(()=>{if(mounted)setLocalStatus('기기 저장을 확인하지 못했어요. 화면을 닫기 전에 답변을 저장해 주세요.');});},
-          async onComplete(recording){realtime.current?.finishInput();recording.recoveryKey=recovery.key;await recovery.finish({durationMs:recording.durationMs,telemetry:recording.telemetry,analysisAudio:recording.analysisAudio});if(mounted)setLocalStatus('기기에 보관됨 · 서버 저장 확인 전까지 유지해요.');},
+          async onComplete(recording){realtime.current?.finishInput();transcription.current?.finish();recording.recoveryKey=recovery.key;await recovery.finish({durationMs:recording.durationMs,telemetry:recording.telemetry,analysisAudio:recording.analysisAudio});if(mounted)setLocalStatus('기기에 보관됨 · 서버 저장 확인 전까지 유지해요.');},
         });}catch(cause){void recovery.cancel().catch(()=>{});throw cause;}finally{writer.current=null;}
         return capture;
       },
@@ -222,7 +233,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
           if(saved?.inUse){if(mounted)setLocalStatus('다른 탭에서 이 질문을 녹음 중이에요. 그 탭에서 마친 뒤 면접을 다시 열어 주세요.');}
           else if(saved&&mounted){
             const restored:LiveAnswerRecording={recoveryKey:saved.key,blob:saved.blob,analysisAudio:saved.analysisAudio,durationMs:saved.durationMs,telemetry:saved.telemetry as LiveAnswerRecording['telemetry'],reason:'interrupted',partial:!saved.complete,speechStarted:true,measurementAvailable:false};
-            instance.restoreRecording(restored,current,generation);setLocalStatus('이 기기에서 보관한 답변을 찾았어요. 재생 후 저장하거나 내려받을 수 있어요.');
+            instance.restoreRecording(restored,current,generation);setLocalStatus('이 기기에서 보관한 답변을 찾았어요. 저장하고 계속하거나 새 답변을 시작할 수 있어요.');
           }
         }
       }catch{if(mounted)setLocalStatus('기기 임시 저장을 확인하지 못했어요. 글로 답하기를 사용할 수 있어요.');}
@@ -246,7 +257,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     };
     const navigation=(window as unknown as {navigation?:EventTarget}).navigation;
     const navigate=(event:Event)=>{const nav=event as Event&{navigationType?:string;destination?:{url:string}};if(nav.navigationType==='traverse'&&nav.cancelable&&nav.destination&&askLeave(nav.destination.url))nav.preventDefault();};
-    const openAssistant=(event:Event)=>{if(instance.state.info.question&&instance.state.phase!=='complete'){event.preventDefault();setAssistantRequest(value=>({turnId:instance.state.info.question.turnId,token:value.token+1}));}};
+    const openAssistant=(event:Event)=>{if(instance.state.info.session.data.sessionMode==='real'){event.preventDefault();return;}if(instance.state.info.question&&instance.state.phase!=='complete'){event.preventDefault();setAssistantRequest(value=>({turnId:instance.state.info.question.turnId,token:value.token+1}));}};
     const heartbeat=setInterval(()=>{if(!['idle','paused','error','complete'].includes(instance.state.phase))void post('/api/interviews',{action:'heartbeat',sessionId:id}).catch(()=>pause());},8000);
     document.addEventListener('visibilitychange',visibility);document.addEventListener('click',click,true);window.addEventListener('beforeunload',beforeUnload);window.addEventListener('pagehide',suspendOnUnload);window.addEventListener('gakja:open-on',openAssistant,true);navigation?.addEventListener('navigate',navigate);
     return()=>{mounted=false;clearInterval(heartbeat);document.removeEventListener('visibilitychange',visibility);document.removeEventListener('click',click,true);window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('pagehide',suspendOnUnload);window.removeEventListener('gakja:open-on',openAssistant,true);navigation?.removeEventListener('navigate',navigate);suspendOnUnload();instance.dispose();controller.current=null;audioOutput.current?.dispose();audioOutput.current=null;audio.current=null;};
@@ -260,6 +271,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     const current=room.state.info.question;
     const generation=Number(room.state.info.session.data.generation||0);
     if(realtime.current)closingForStudent().add(realtime.current);
+    if(transcription.current)closingForStudent().add(transcription.current);
     const recording=await room.preserveAnswer();
     await writer.current?.flush();
     if(recording?.blob.size){
@@ -270,7 +282,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
       // A confirmed upload already acknowledges/removes this exact device copy, even while transcription is pending.
       if(!onDevice&&!onServer)throw new Error('녹음 초안 보관을 확인하지 못했어요.');
     }
-    if(current){
+    if(current&&room.state.info.session.data.sessionMode!=='real'){
       const draft=loadedTextTurn.current===current.turnId?textRef.current:String(current.draft||'');
       const key=`gakja-live-text:${studentId}:${id}:${current.turnId}`;
       setDeviceItem(localStorage,key,draft);
@@ -326,7 +338,7 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
   async function switchToText(){let switched=false;setTextBusy(true);try{await controller.current?.preserveAnswer();setTextMode(true);switched=true;}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}finally{setTextBusy(false);if(switched)revealTypedAnswer();}}
   async function prepareHelp(){
     const room=controller.current,current=room?.state.info.question;
-    if(!room||!current||textBusy||exiting||['saving','recovering','complete'].includes(room.state.phase))return false;
+    if(!policy.helpAllowed||!room||!current||textBusy||exiting||['saving','recovering','complete'].includes(room.state.phase))return false;
     // pause() retains an in-progress recorder; help must never submit or discard its bytes.
     room.pause();
     const draft=textMode?textRef.current:String(current.draft||'');
@@ -335,14 +347,17 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     if(room.state.info.question?.turnId!==current.turnId)throw new Error('질문이 바뀌었어요. 현재 질문에서 다시 도움받아 주세요.');
     return true;
   }
+  async function openHelper(characterId:string){try{if(await prepareHelp())setHelperId(characterId);}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}}
+  useEffect(()=>{if(assistantRequest.token&&assistantRequest.turnId===question?.turnId&&!textMode)void openHelper('A');},[assistantRequest.token]);
+  useEffect(()=>{setHelperId(null);},[question?.turnId]);
   async function refreshHelp(){
     const current=question?.turnId,fresh=await api(`/api/interviews?id=${id}`);
     if(current&&fresh.question?.turnId!==current)throw new Error('현재 질문의 도움 기록을 다시 확인해 주세요.');
     setState(previous=>({...previous,info:fresh}));
   }
   async function replaceRecording(){
-    if(!consent||preferenceBusy||!question||!window.confirm('이 기기에 보관한 미제출 녹음을 지우고 같은 질문에 다시 답할까요? 필요한 녹음은 먼저 내려받아 주세요. 서버에 저장한 원본은 유지돼요.'))return;
-    try{if(state.recording?.recoveryKey)await removeRecordingRecovery(state.recording.recoveryKey);setLocalStatus('새 녹음을 준비해요.');prepareAudio();await controller.current?.rerecord();}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}
+    if(!policy.retryAllowed||!consent||preferenceBusy||!question)return;
+    try{setLocalStatus('이전 녹음을 보관하고 새 답변을 준비해요.');prepareAudio();await controller.current?.rerecord();}catch(cause){setState(previous=>({...previous,error:(cause as Error).message}));}
   }
   async function submitTyped(){
     if(phase==='complete'||!question||!textAnswer.trim()||textBusy)return;
@@ -362,20 +377,24 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
     }catch(cause){setTextStatus('기기에 보관됨 · 같은 요청으로 다시 저장할 수 있어요.');setState(previous=>({...previous,error:(cause as Error).message}));}
     finally{setTextBusy(false);if(nextQuestion)revealTypedAnswer();}
   }
-  const hint=phase==='listening'?progress?.endingSoon?'답변을 마치셨다면 곧 다음 질문으로 넘어가요. 계속 말하면 녹음이 이어져요.':progress&&!progress.measurementAvailable?'자동 음성 감지를 사용할 수 없어요. 말한 뒤 답변 마침을 눌러 주세요.':'말을 마친 뒤 5초 동안 조용하면 자동으로 저장하고 다음 질문으로 넘어가요.':undefined;
-  return <div className={ownedClassName(styles.page,true)} data-answer-mode={textMode?'text':'voice'}>
-    {!onTrainingUpdate&&<Breadcrumb items={settings.trainingPlanId?[{label:'오늘 훈련',href:'/my'},{label:'답변 훈련'}]:[{label:'연습',href:'/learn'},{label:'Live 면접'}]}/>}
+  const hint=phase==='listening'?'생각할 시간은 충분해요. 말을 마치면 답변 완료를 눌러 주세요.':undefined;
+  return <div className={ownedClassName(styles.page,true)} data-answer-mode={textMode?'text':'voice'} data-phase={phase}>
+    {!onTrainingUpdate&&<Breadcrumb items={settings.trainingPlanId?[{label:'오늘 훈련',href:'/training'},{label:'답변 훈련'}]:[{label:'연습',href:'/learn'},{label:'Live 면접'}]}/>}
     <header className={ownedClassName(styles.heading,true)}><div className={ownedClassName(undefined,true)}>{!onTrainingUpdate&&<h1 className={ownedClassName(undefined,true)}>{trainingLabel}</h1>}<div className={ownedClassName(styles.meta,true)}><span className={ownedClassName(undefined,true)}>{targetName(info.session.supportTarget)} {info.session.supportTarget?.department}</span><span className={ownedClassName(undefined,true)}>답변 {turns.length}개 저장</span>{info.session.practiceLabel&&<span className={ownedClassName(undefined,true)}>{info.session.practiceLabel}</span>}</div>{settings.practiceScope==='personal_record'&&settings.practiceNotice&&<p className={ownedClassName(styles.note,true)}>{settings.practiceNotice}</p>}</div>{(started||textMode)&&phase!=='complete'&&<button className={ownedClassName("button secondary",true)} disabled={exiting} onClick={()=>{controller.current?.pause();setExitOpen(true);}}><Square size={15}/>{settings.trainingPlanId?'훈련 종료':'면접 종료'}</button>}</header>
-    {error&&<div className={ownedClassName(styles.error,true)} role="alert">{error}{camera&&!stream.current&&<button className={ownedClassName("button secondary",true)} disabled={!consent||preferenceBusy} onClick={()=>{void (async()=>{if(await saveRecordingSettings({liveCameraEnabled:false}))begin();})();}}>카메라 없이 계속</button>}{download&&<div className={ownedClassName(undefined,true)}><a className={ownedClassName("text-link",true)} href={download} download={`live-answer.${state.recording?.blob.type.includes('mp4')?'mp4':'webm'}`}><Download size={15}/>보관한 녹음 내려받기</a></div>}</div>}
+    {error&&<div className={ownedClassName(styles.error,true)} role="alert">{error}{camera&&!stream.current&&<button className={ownedClassName("button secondary",true)} disabled={!consent||preferenceBusy} onClick={()=>{void (async()=>{if(await saveRecordingSettings({liveCameraEnabled:false}))begin();})();}}>카메라 없이 계속</button>}</div>}
     {localStatus&&<p className={ownedClassName(styles.note,true)} role="status">{localStatus}</p>}
     {realtimeNotice&&<p className={ownedClassName(styles.note,true)} role="status">{realtimeNotice}</p>}
-    {realtimePreview&&phase!=='complete'&&<aside className={ownedClassName(styles.liveCaption,true)} aria-label="음성 자막 미리보기"><div className={ownedClassName(undefined,true)}><span className={ownedClassName(undefined,true)}>자막 미리보기</span><InfoTip label="실시간 자막과 저장 답변 안내">이 자막은 미리보기예요. 녹음 원본을 저장하고 기존 전사·문장 정리를 확인한 뒤에만 답변과 준비 현황에 반영돼요.</InfoTip></div><p className={ownedClassName(undefined,true)}>{realtimePreview}</p></aside>}
-    {download&&<div className={ownedClassName(styles.recovery,true)}><strong className={ownedClassName(undefined,true)}>보관한 답변 · {Math.round((state.recording?.durationMs||0)/1000)}초</strong>{state.recording?.blob.type.startsWith('video')?<video src={download} controls playsInline className={ownedClassName(undefined,true)}/>:<audio src={download} controls className={ownedClassName(undefined,true)}/>}<a className={ownedClassName("text-link",true)} href={download} download="live-answer.webm">보관한 녹음 내려받기</a><p className={ownedClassName(styles.note,true)}>이 기기의 미제출 녹음은 7일 동안 보관해요. 서버 저장이 확인되면 기기 사본을 지워요.</p></div>}
-    {countdown>0&&<div className={ownedClassName(styles.ready,true)} role="status">마이크 연결됨 · {countdown}초 뒤 답변 녹음을 시작해요.<button className={ownedClassName("button secondary",true)} onClick={()=>skipReady.current?.()}>준비 시간 건너뛰기</button><button className={ownedClassName("text-link",true)} onClick={()=>controller.current?.pause()}>잠깐 대기</button></div>}
-    {exiting&&<p role="status" className={ownedClassName(styles.note,true)}>저장을 확인하는 중이에요. AI 피드백은 저장 후 정리해요.</p>}{phase==='complete'?<section className={ownedClassName(styles.complete,true)}><Check size={32}/><h2 className={ownedClassName(undefined,true)}>{diagnostic?'진단 답변을 저장했어요':'여기까지 저장했어요'}</h2><p className={ownedClassName(undefined,true)}>답변 {turns.length}개를 기록했어요. {settings.trainingProgress?.allRootsAnswered===false?'답하지 않은 질문은 미확인으로 남아요.':'저장한 답변에서 보완할 내용을 확인해 보세요.'}</p><div className={ownedClassName(styles.actions,true)}>{info.report?.id&&<Link className={ownedClassName("button primary")} href={`/records/reports/${info.report.id}`}>면접 리포트 보기</Link>}<Link className={ownedClassName("button secondary")} href={settings.trainingPlanId?"/my":"/learn"}>{settings.trainingPlanId?"오늘 훈련으로":"연습으로 돌아가기"}</Link></div></section>:<div className={ownedClassName(styles.workspace,true)}>
-      <LiveInterviewerStage diagnostic={diagnostic} answerMode={textMode?'text':'voice'} avatarSignal={avatarSignal.current} people={people} speakerId={question?.speakerId} phase={phase} question={question?.prompt} questionNumber={Number(question?.rootIndex??settings.index??0)+1} questionCount={settings.questionCount} questionKind={question?.questionKind} statusText={diagnostic&&textMode?'생각나는 내용부터 적어 주세요. 답변하지 않은 질문은 미확인으로 남아요.':hint} answerSeconds={progress?progress.durationMs/1000:undefined}/>
+
+    {download&&phase==='complete'&&<div className={ownedClassName(styles.recovery,true)}><strong className={ownedClassName(undefined,true)}>보관한 답변 · {Math.round((state.recording?.durationMs||0)/1000)}초</strong>{state.recording?.blob.type.startsWith('video')?<video src={download} controls playsInline className={ownedClassName(undefined,true)}/>:<audio src={download} controls className={ownedClassName(undefined,true)}/>}<a className={ownedClassName("text-link",true)} href={download} download="live-answer.webm">보관한 녹음 내려받기</a><p className={ownedClassName(styles.note,true)}>이 기기의 미제출 녹음은 7일 동안 보관해요. 서버 저장이 확인되면 기기 사본을 지워요.</p></div>}
+    {exiting&&<p role="status" className={ownedClassName(styles.note,true)}>저장을 확인하는 중이에요. AI 피드백은 저장 후 정리해요.</p>}{phase==='complete'?<section className={ownedClassName(styles.complete,true)}><Check size={32}/><h2 className={ownedClassName(undefined,true)}>{diagnostic?'연습 답변을 저장했어요':'여기까지 저장했어요'}</h2><p className={ownedClassName(undefined,true)}>답변 {turns.length}개를 기록했어요. {settings.trainingProgress?.allRootsAnswered===false?'답하지 않은 질문은 미확인으로 남아요.':'저장한 답변에서 보완할 내용을 확인해 보세요.'}</p><div className={ownedClassName(styles.actions,true)}>{info.report?.id&&<Link className={ownedClassName("button primary")} href={`/reports/reports/${info.report.id}`}>면접 리포트 보기</Link>}<Link className={ownedClassName("button secondary")} href={settings.trainingPlanId?"/training":"/learn"}>{settings.trainingPlanId?"오늘 훈련으로":"연습으로 돌아가기"}</Link></div></section>:<div className={ownedClassName(styles.workspace,true)}>
+      <LiveInterviewerStage onHelp={policy.helpAllowed&&!textMode&&!helperId&&['idle','listening','paused','error'].includes(phase)?characterId=>void openHelper(characterId):undefined} onReplay={phase==='listening'?()=>void controller.current?.replayQuestion():undefined} diagnostic={diagnostic} answerMode={textMode?'text':'voice'} avatarSignal={avatarSignal.current} people={people} speakerId={helperId||question?.speakerId} phase={phase} question={question?.prompt} questionNumber={Number(question?.rootIndex??settings.index??0)+1} questionCount={settings.questionCount} questionKind={question?.questionKind} statusText={diagnostic&&textMode?'생각나는 내용부터 적어 주세요. 답변하지 않은 질문은 미확인으로 남아요.':hint} answerSeconds={progress?progress.durationMs/1000:undefined}/>
+      {policy.helpAllowed&&turns.at(-1)?.feedback?.content&&<aside className={styles.turnFeedback} aria-label="방금 답변 피드백"><strong>방금 답변 피드백</strong><p>{String(turns.at(-1)?.feedback.content).split('\n')[0]}</p>{turns.at(-1)?.evaluation?.rubric&&<dl className={styles.rubric} aria-label="학습용 답변 요소 충족도">{turns.at(-1)?.evaluation.rubric.criteria.map((item:Item)=><div key={item.id}><dt>{item.label}</dt><dd>{item.score===null?'확인 전':`${item.score} / 2`}</dd></div>)}</dl>}<details><summary>근거와 보완점 보기</summary><p>{turns.at(-1)?.feedback.content}</p></details>{turns.at(-1)?.evaluation?.compositionExample&&<details><summary>{turns.at(-1)?.evaluation.compositionExample.title}</summary><ol>{turns.at(-1)?.evaluation.compositionExample.parts.map((part:Item,index:number)=><li key={index}><strong>{part.label}</strong><p>{part.text}</p></li>)}</ol><p>{turns.at(-1)?.evaluation.compositionExample.note}</p></details>}</aside>}
+      {helperId&&question&&<InterviewCoach key={`${question.turnId}:${helperId}`} sessionId={id} turnId={question.turnId} characterId={helperId} consent={consent} onSaved={refreshHelp} onClose={()=>setHelperId(null)} onResume={()=>{setHelperId(null);begin();}} onRetry={()=>{setHelperId(null);void replaceRecording();}}/>}
       {textMode&&question&&<section className={ownedClassName(styles.typedAnswer,true)} data-live-typed-answer aria-label="같은 질문에 글로 답하기"><h2 className={ownedClassName(undefined,true)}>나의 답변</h2><ChatComposer enterToSend={appData?.preferences?.enterToSend!==false} inputId="live-text-answer" label="글 답변" value={textAnswer} onChange={value=>{textRef.current=value;setTextAnswer(value);}} onSend={()=>void submitTyped()} maxLength={12000} busy={textBusy} disabled={textBusy} sendLabel="글 답변 보내기" placeholder="나의 행동을 한 문장으로 시작해 보세요." showCount/><p className={ownedClassName(styles.note,true)} role="status">{textStatus}</p></section>}
-      <aside className={ownedClassName(styles.cameraPanel,true)} aria-label="내 면접 상태">{!textMode&&<><h2 className={ownedClassName(undefined,true)}>내 면접 화면</h2>{camera&&started&&stream.current?<video ref={video} className={ownedClassName(styles.cameraVideo,true)} autoPlay playsInline muted aria-label="내 카메라 미리보기"/>:<div className={ownedClassName(styles.cameraPlaceholder,true)}>{camera?<Camera size={24}/>:<Mic size={24}/>}<span className={ownedClassName(undefined,true)}>{camera?'시작하면 내 모습을 확인할 수 있어요.':'카메라 없이 목소리로 면접해요.'}</span></div>}</>}
+      <aside className={ownedClassName(styles.cameraPanel,true)} aria-label="내 답변">
+        {!textMode&&<><h2>내 답변</h2><div className={ownedClassName(styles.liveCaption,true)} aria-label="내 답변 전사"><p>{realtimePreview||question?.draft||(phase==='listening'?'지금 말하는 내용이 여기에 쌓여요.':'질문이 끝나면 답변 녹음이 시작돼요.')}</p><small>전사 미리보기 · 평가는 원전사를 기준으로 해요.</small></div>
+        {calledHelper&&phase==='listening'&&<button type="button" className="button secondary" onClick={()=>void openHelper(calledHelper.id)}>{calledHelper.name}에게 도움받기</button>}
+        <details className={ownedClassName(styles.previewDisclosure,true)} open={cameraPreview} onToggle={event=>setCameraPreview(event.currentTarget.open)}><summary>내 카메라 미리보기</summary>{camera&&started&&stream.current?<video ref={video} className={ownedClassName(styles.cameraVideo,true)} autoPlay playsInline muted aria-label="내 카메라 미리보기"/>:<p>{camera?'면접을 시작하면 확인할 수 있어요.':'카메라 없이 목소리로 면접해요.'}</p>}</details></>}
         <div className={ownedClassName(styles.controls,true)}>
           <details className={ownedClassName(styles.recordingSettings,true)} open={!consent||recordingSettingsOpen} onToggle={event=>setRecordingSettingsOpen(event.currentTarget.open)}><summary className={ownedClassName(undefined,true)}><span className={ownedClassName(undefined,true)}>녹음 설정</span><span className={ownedClassName(undefined,true)}>{preferenceBusy?'저장 중':consent?'설정됨':'처음 한 번 설정'}</span></summary><div className={ownedClassName(styles.recordingSettingsBody,true)}>
             <label className={ownedClassName(styles.consent,true)}><span className={ownedClassName(undefined,true)}>음성·영상 저장과 답변 전사에 동의해요.</span><span className={ownedClassName("motion-toggle-field",true)}><input className={ownedClassName("motion-toggle-input",true)} type="checkbox" checked={consent} disabled={preferenceBusy||active} onChange={event=>void saveRecordingSettings({liveRecordingConsent:event.target.checked})}/><span className={ownedClassName("motion-toggle-track",true)} aria-hidden="true"><span className={ownedClassName("motion-toggle-thumb",true)}/></span></span></label>
@@ -384,18 +403,19 @@ export function LiveInterviewSession({id,initialInfo,onTrainingUpdate}:{id:strin
           </div></details>
           {preferenceError&&<p className={ownedClassName(styles.error,true)} role="alert">{preferenceError}</p>}
           {phase==='idle'&&!textMode&&<button className={ownedClassName("button primary",true)} disabled={!consent||!recoveryChecked||preferenceBusy} onClick={begin}><Play size={16}/>{state.recording?'보관한 답변 저장하고 계속':'면접 시작'}</button>}
-          {(phase==='paused'||phase==='error')&&!textMode&&<button className={ownedClassName("button primary",true)} disabled={!consent||!recoveryChecked||preferenceBusy} onClick={begin}><Play size={16}/>{state.recording?state.recording.measurementAvailable&&!state.recording.speechStarted&&state.recording.reason!=='manual'?'같은 질문에 다시 답하기':'보관한 답변 저장하고 계속':'계속하기'}</button>}
-          {(phase==='error'||phase==='idle'&&state.recording)&&question&&<button className={ownedClassName("button secondary",true)} disabled={!consent||preferenceBusy} onClick={()=>{if(preferenceBusy)return;if(state.recording)void replaceRecording();else if(consent){prepareAudio();void controller.current?.rerecord();}}}>같은 질문 다시 녹음</button>}
+          {(phase==='paused'||phase==='error')&&!textMode&&!helperId&&<button className={ownedClassName("button primary",true)} disabled={!consent||!recoveryChecked||preferenceBusy} onClick={begin}><Play size={16}/>{state.recording?state.recording.measurementAvailable&&!state.recording.speechStarted&&state.recording.reason!=='manual'?'같은 질문에 다시 답하기':'보관한 답변 저장하고 계속':'계속하기'}</button>}
+          {policy.retryAllowed&&question&&!textMode&&(['listening','paused','error'].includes(phase)||phase==='idle'&&Boolean(state.recording))&&<button className={ownedClassName("button secondary",true)} disabled={!consent||preferenceBusy} onClick={()=>void replaceRecording()}>처음부터 다시 답하기</button>}
           {active&&<button className={ownedClassName("button secondary",true)} onClick={()=>controller.current?.pause()}><Pause size={16}/>일시정지</button>}
-          {phase==='listening'&&<><button className={ownedClassName("text-link",true)} onClick={()=>controller.current?.finishAnswer()}>답변 마침</button><button className={ownedClassName("text-link",true)} onClick={()=>{thinkingUntil.current=Date.now()+30000;setLocalStatus('30초 동안 자동 마침을 기다려요. 준비되면 말하거나 답변 마침을 눌러 주세요.');}}>잠깐 생각할게요</button></>}
-          {question&&!textMode&&<button className={ownedClassName("button secondary",true)} disabled={textBusy||phase==='saving'||phase==='recovering'} onClick={()=>void switchToText()}>이번 질문은 글로 답하기</button>}
-          {question&&<LearningHelp key={question.turnId} interviewSessionId={id} interviewTurnId={question.turnId} targetId={settings.context?.targetId||info.session.target_id} sourceVersion={settings.context?.contentVersion} questionPrompt={question.prompt} answerDraft={textMode?textAnswer:question.draft} openRequest={assistantRequest.turnId===question.turnId?assistantRequest.token:0} beforeOpen={prepareHelp} onAssisted={refreshHelp} onClose={()=>{if(textMode)revealTypedAnswer();}} showEvidence={false} disabled={textBusy||exiting||phase==='saving'||phase==='recovering'}/>}
+          {phase==='listening'&&<button className={ownedClassName('button primary '+styles.answerAction,true)} onClick={()=>controller.current?.finishAnswer()}><Check size={19} aria-hidden="true"/>답변 완료</button>}
+          {policy.textAllowed&&question&&!textMode&&<button className={ownedClassName("button secondary",true)} disabled={textBusy||phase==='saving'||phase==='recovering'} onClick={()=>void switchToText()}>이번 질문은 글로 답하기</button>}
+          {policy.helpAllowed&&textMode&&question&&<LearningHelp key={question.turnId} interviewSessionId={id} interviewTurnId={question.turnId} targetId={settings.context?.targetId||info.session.target_id} sourceVersion={settings.context?.contentVersion} questionPrompt={question.prompt} answerDraft={textMode?textAnswer:question.draft} onApplyDraft={(value:string)=>{textRef.current=value;setTextAnswer(value);}} openRequest={assistantRequest.turnId===question.turnId?assistantRequest.token:0} beforeOpen={prepareHelp} onAssisted={refreshHelp} onClose={()=>{if(textMode)revealTypedAnswer();}} showEvidence={false} disabled={textBusy||exiting||phase==='saving'||phase==='recovering'}/>}
           {textMode&&<><button className={ownedClassName("text-link",true)} disabled={textBusy||Boolean(textAnswer.trim())||!consent||preferenceBusy} onClick={begin}>{diagnostic?'음성으로 답하기':'음성 면접으로 돌아가기'}</button>{!consent&&<p className={ownedClassName(styles.note,true)}>음성으로 바꾸려면 위에서 저장·전사 동의를 선택해 주세요.</p>}</>}
-          {!textMode&&<div className={ownedClassName(styles.voiceHelp,true)}><InfoTip label="음성 답변 사용 안내">한 답변은 최대 3분이에요. 말을 마친 뒤 5초 동안 조용하면 자동 저장돼요. 이어폰을 사용하면 질문 소리가 녹음에 섞이는 것을 줄일 수 있어요. 면접 종료로 언제든 마칠 수 있어요.</InfoTip></div>}
+          {!textMode&&<div className={ownedClassName(styles.voiceHelp,true)}><InfoTip label="음성 답변 사용 안내">말을 마치면 답변 완료를 눌러 주세요. 침묵만으로 제출하지 않아요. 녹음은 최대 3분이며 한도에 도달하면 보관 후 확인을 요청해요. 이어폰을 사용하면 질문 소리가 녹음에 섞이는 것을 줄일 수 있어요. 면접 종료로 언제든 마칠 수 있어요.</InfoTip></div>}
         </div>
       </aside>
     </div>}
-    {turns.length>0&&!(phase==='complete'&&onTrainingUpdate)&&<details className={ownedClassName(styles.history,true)}><summary className={ownedClassName(undefined,true)}>저장한 답변 {turns.length}개 보기</summary>{turns.map(turn=><article key={turn.id} className={ownedClassName(styles.historyItem,true)}><h3 className={ownedClassName(undefined,true)}>{turn.question}</h3><p className={ownedClassName(undefined,true)}>{turn.answer}</p><small className={ownedClassName(undefined,true)}>{turn.submissionSource==='recording'||turn.speechSource?'음성 답변 · 자동 전사':'글 답변'}</small></article>)}</details>}
+    {phase==='complete'&&turns.length>0&&<section className={ownedClassName(styles.history,true)} aria-label="질문별 답변 복기"><h2>질문별 답변 {turns.length}개</h2>{turns.map((turn,index)=><details key={turn.id} className={ownedClassName(styles.historyItem,true)}><summary>질문 {index+1} · {turn.question}</summary><h3>내 원답변</h3><p>{interviewEvaluationEvidence(turn).answer}</p><h3>평가 요약</h3><p>{turn.feedback?.content?String(turn.feedback.content).split('\n')[0]:'이 답변의 AI 평가는 아직 확인되지 않았어요.'}</p>{turn.evaluation?.rubric&&<dl className={styles.rubric} aria-label="학습용 답변 요소 충족도">{turn.evaluation.rubric.criteria.map((item:Item)=><div key={item.id}><dt>{item.label}</dt><dd>{item.score===null?'확인 전':`${item.score} / 2`}</dd></div>)}</dl>}{info.report?.id&&<Link className={ownedClassName('text-link')} href={`/reports/reports/${encodeURIComponent(info.report.id)}?turnId=${encodeURIComponent(turn.id)}#turn-${encodeURIComponent(turn.id)}`}>이 질문의 피드백·영상 보기</Link>}</details>)}</section>}
+    {turns.length>0&&policy.helpAllowed&&phase!=='complete'&&<details className={ownedClassName(styles.history,true)}><summary className={ownedClassName(undefined,true)}>저장한 답변 {turns.length}개 보기</summary>{turns.map(turn=><article key={turn.id} className={ownedClassName(styles.historyItem,true)}><h3 className={ownedClassName(undefined,true)}>{turn.question}</h3><p className={ownedClassName(undefined,true)}>{turn.answer}</p>{turn.feedback?.content&&<details><summary>이 답변 피드백</summary><p>{turn.feedback.content}</p></details>}<small className={ownedClassName(undefined,true)}>{turn.submissionSource==='recording'||turn.speechSource?'음성 답변 · 자동 전사':'글 답변'}</small></article>)}</details>}
     {(exitOpen||leaveHref)&&<Modal title="면접을 마칠까요?" onClose={()=>{if(!exiting){setExitOpen(false);setLeaveHref(null);if(!textMode)begin();}}}><p className={ownedClassName(undefined,true)}>{error&&!textMode?'녹음 원본은 보관하고 제출한 답변까지 저장해요. 전사를 마치지 못한 녹음은 답변 수에 포함하지 않아요.':'보낸 답변은 남아요. 작성 중인 답변과 녹음은 저장하거나 버릴 수 있어요.'}</p>{error&&<p role="alert">{error}</p>}<div className={ownedClassName('inline-actions '+styles.actions,true)}><button className={ownedClassName("button secondary",true)} disabled={exiting} onClick={()=>{setExitOpen(false);setLeaveHref(null);if(!textMode)begin();}}>면접 계속하기</button><button className={ownedClassName("button secondary",true)} disabled={exiting} onClick={()=>void discardAndFinish()}>저장하지 않고 종료</button><button className={ownedClassName('button primary '+styles.finishButton,true)} disabled={exiting} data-single-line onClick={finish}>저장 후 종료</button></div></Modal>}
   </div>;
 }

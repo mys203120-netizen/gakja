@@ -11,7 +11,7 @@ import {scheduleDateLabel} from '@/lib/schedule';
 import type {SchoolCalendarPreview} from '@/lib/school-onboarding-calendar-model';
 import {visibleCalendarSourceUrl,visibleCalendarSourceLabel,visibleCalendarSourceText} from '@/lib/calendar-source-presentation';
 import styles from './school-registration.module.css';
-import {TrainingAvailability} from './training-availability';
+import {StudentDocument} from './student-document';
 
 type Props={catalog:Item[];loading:boolean;error:string;onSaved:(target:Item)=>Promise<void>;onboarding:boolean;initialTarget?:Item;registeredTargets?:Item[]};
 type SchoolDraft={referenceId:string;other:boolean;university:string;campus:string;track:string;major:string;departmentId:string;manualMajor:boolean;interestDepartment:string;calendar:SchoolCalendarPreview|null;acknowledged:boolean;payload:Item};
@@ -160,7 +160,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
     finally{submission.current=false;setBusy(false);}
   }
 
-  if(registered&&onboarding&&!editing)return <TrainingAvailability onboarding schoolLabel={sessionTargets.length>1?`${sessionTargets.length}개 지원 학교`: `${registered.university} · ${registered.department||registered.major}`} interviewLabel={sessionTargets.length>1?'학교별 공개 면접 일정을 저장했어요.':currentCalendar?.matched.length?`공개 면접 일정 ${currentCalendar.matched.map(dateRange).join(' · ')} · 개인 배정 별도 확인`:currentCalendar?.statusLabel}/>;
+  if(registered&&onboarding&&!editing)return <StudentDocument onboarding/>;
 
   if(registered)return <div className={ownedClassName(`${styles.page} ${styles.complete}`,true)}>
     <span className={ownedClassName(styles.completeMark,true)}><Check size={30}/></span><p className={ownedClassName(styles.eyebrow,true)}>나의 면접 준비</p>
@@ -172,7 +172,7 @@ export function SchoolRegistration({catalog,loading,error,onSaved,onboarding,ini
       <small className={ownedClassName(undefined,true)}>{admissionYear}학년도{currentCalendar?.matched.length?' · 개인 응시 시간은 별도 발표':''}</small></div></div>
     <p className={ownedClassName(styles.completeNote,true)}>{editing?'변경한 지원 정보와 일정 확인 상태를 저장했어요.':'이제 공통 질문 한 개에 답해봐요. 다른 학교와 개인 자료는 나중에 연결해도 돼요.'}</p>
     <div className={ownedClassName(styles.completeActions,true)}><Link className={ownedClassName("button primary")} href={editing?'/schools':'/start?targetId='+encodeURIComponent(registered.id)}>{editing?'지원 학교 관리':'첫 질문 1개 답해보기'}<ArrowRight size={17}/></Link>{editing?<Link className={ownedClassName("button")} href="/schools/new"><Plus size={17}/>학교 추가</Link>:<button type="button" className={ownedClassName("text-link",true)} onClick={addAnotherSchool}><Plus size={17}/>학교 추가 (선택)</button>}</div>
-    <div className={ownedClassName(styles.completeLinks,true)}><Link href="/my#dashboard-planner"><CalendarDays size={15}/>캘린더 확인<ArrowUpRight size={15}/></Link><Link href={`/schools/${encodeURIComponent(registered.id)}`}>학교 면접 안내<ArrowUpRight size={15}/></Link>{!editing&&<Link href="/schools">지원 학교 관리<ArrowUpRight size={15}/></Link>}</div>
+    <div className={ownedClassName(styles.completeLinks,true)}><Link href="/preparation#training-calendar"><CalendarDays size={15}/>캘린더 확인<ArrowUpRight size={15}/></Link><Link href={`/schools/${encodeURIComponent(registered.id)}`}>학교 면접 안내<ArrowUpRight size={15}/></Link>{!editing&&<Link href="/schools">지원 학교 관리<ArrowUpRight size={15}/></Link>}</div>
   </div>;
 
   return <div className={ownedClassName(styles.page,true)} data-registration-step={step}>

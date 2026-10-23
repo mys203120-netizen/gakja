@@ -32,6 +32,7 @@ const actionButton = ({pending=false,pendingLabel,disabled,children,type='button
 vm.runInNewContext(output, {
   module, exports: module.exports, URLSearchParams,
   require(name) {if(name==='@/lib/privacy-policy')return {PRIVACY_POLICY_VERSION:'2026-10-22'};if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
+    if(name==='@/lib/client/device-storage')return {setDeviceItem:()=>{}};
     if(name==='@/lib/client/draft-save')return {registerDraftSaver:()=>()=>{}};
     if(name==='@/lib/client/enter-send')return {sendOnEnter};
     if (name === 'react') return {
@@ -73,6 +74,7 @@ function nodes(tree) {
   return [tree, ...nodes(tree.props?.children)];
 }
 function render(component, values = []) {
+  if(component==='QuizHome'&&values[0]&&!values[0].scope){render(component);values=[{scope:state.refs[0].current.scope,value:values[0]},...values.slice(1)];}
   state.values = values; state.hook = 0; state.refs=[];
   return module.exports[component](component === 'QuizSession' ? { id: 'synthetic-session' } : {});
 }
@@ -112,7 +114,7 @@ check(nodes(tree).some(node => node.type === 'Link' && node.props.href.includes(
 const concept = dto({ state: 'completed', current_index: 1, items: [{ id: 'concept-memory', question_id: 'concept-question', linked_question_id: 'personal-question', prompt: '표면에 붙는 개념은?', practice_prompt: '표면에 붙는 개념을 설명해 주세요.', practice_kind: 'concept', kind: 'choice', activity_ids: ['activity'], options: [{ id: 'option-a', text: '흡착' }] }] });
 concept.responses = [{ id: 'concept-response', item_index: 0, selected_option_id: 'option-a', response: '', outcome: true, data: { correct_answer: '흡착' } }];
 tree = render('QuizSession', [concept]);
-check(nodes(tree).some(node => node.type === 'Link' && node.props.href.includes('questionId=concept-question')), 'completed concept answer preserves concept identity with a mixed question library');
+nodes(tree).find(node=>node.type==='button'&&text(node)==='질문과 원문').props.onClick();check(state.resources.at(-1).id==='concept-question','completed concept answer keeps its archived concept resource');
 
 const review = dto({ state: 'completed', current_index: 2 });
 review.session.items = [personal.session.items[0], concept.session.items[0]];
@@ -121,187 +123,74 @@ review.responses = [
   { id: 'saved-last', item_index: 1, response: '내 말로 설명한 답변입니다.', outcome: null, rating: 'good', data: {} },
 ];
 tree = render('QuizSession', [review]);
-check(nodes(tree).find(node => node.props?.id === 'quiz-result-next-title')?.props.children === personal.session.items[0].prompt, 'next practice prioritizes a self-marked review answer ahead of the last saved answer');
+check(nodes(tree).filter(node=>node.type==='article'&&node.props.className==='quiz-result-answer')[0].props['aria-labelledby']==='quiz-result-review-first','collapsed results place review answers before saved answers');
 check(nodes(tree).some(node => node.type === 'dt' && node.props.children === '미채점 저장'), 'ungraded written answers are not presented as scored correctness');
 
 tree = render('QuizHome');
-check(nodes(tree).some(node => node.type === 'Spinner'), 'quiz home initially renders a spinner before its library arrives');
-tree = render('QuizHome', [{ library: { choice: [], answer: [], oral: [] }, sessions: [], recommendation: { count: 0 } }]);
-check(!nodes(tree).some(node=>node.type==='button'&&node.props.className==='quiz-mode-row'),'today review does not compete with three free-practice modes');
-state.query='focus=free';
-tree = render('QuizHome', [{ library: { choice: [], answer: [], oral: [] }, sessions: [], recommendation: { count: 0 } }]);
-const modes = nodes(tree).filter(node => node.type === 'button' && node.props.className === 'quiz-mode-row');
-check(modes.length === 3 && modes.every(node => node.props.disabled), 'empty published library renders disabled modes without choosing an absent item');
-check(state.calls === 0, 'all render scenarios make zero API, save or refresh calls');
-
-const home = {
-  contentVersion: 4,
-  library: {
-    choice: [{id:'choice-one',question_id:'question-one'}, {id:'choice-two',question_id:'question-two'}],
-    answer: [{id:'answer-one',question_id:'question-one'}],
-    oral: [{id:'oral-one',question_id:'question-one'}, {id:'oral-two',question_id:'question-one'}, {id:'oral-three',question_id:'question-two'}],
-  },
-  sessions: [], recommendation: {count:2,reason:'오늘 다시 떠올릴 질문'},
-};
-state.query = 'mode=oral';
-tree = render('QuizHome', [home]);
-check(text(primary(tree)) === '녹음 답변 시작', 'report oral CTA presents the recording action despite an available choice library');
-check(nodes(tree).some(node => node.type === 'h2' && text(node) === '내 말하기 기록 시작'), 'oral request has a speaking headline');
-check(nodes(tree).some(node => node.type === 'p' && text(node).includes('3문항')), 'oral recommendation count uses available oral items rather than choice recommendation count');
-const paths = nodes(tree).filter(node => node.type === 'Link' && node.props.href.startsWith('/quiz?'));
-check(paths.length === 2 && paths.every(node => new URLSearchParams(node.props.href.split('?')[1]).get('mode') === 'oral'), 'today/free navigation retains the requested mode');
-check(state.calls === 0 && state.navigations.length === 0, 'rendering a requested oral mode neither starts a session nor opens microphone capture');
-state.allowStart = true;
-await primary(tree).props.onClick();
-check(state.starts.at(-1).mode === 'oral' && state.starts.at(-1).focus === 'today', 'actual recommended-action handler creates oral practice');
-check(!state.starts.at(-1).itemIds, 'an unscoped oral start preserves server adaptive selection');
-check(state.navigations.at(-1) === '/quiz/session/synthetic-selected-mode', 'only explicit start navigates to the created session');
-
-state.query = 'mode=oral&focus=free&questionId=question-one';
-tree = render('QuizHome', [home]);
-check(text(primary(tree)) === '녹음 답변 시작', 'explicit oral intent remains actionable after switching to free practice');
-check(nodes(tree).some(node => node.type === 'h2' && text(node) === '이 질문 소리 내어 답하기'), 'question-specific oral request keeps a contextual speaking headline');
-check(nodes(tree).filter(node => node.type === 'Link' && node.props.href.startsWith('/quiz?')).every(node => {
-  const query = new URLSearchParams(node.props.href.split('?')[1]); return query.get('mode') === 'oral' && query.get('questionId') === 'question-one';
-}), 'switching today/free retains question identity with oral mode');
-await primary(tree).props.onClick();
-check(state.starts.at(-1).mode === 'oral' && state.starts.at(-1).focus === 'free', 'free oral handler preserves focus');
-check(JSON.stringify(state.starts.at(-1).itemIds) === JSON.stringify(['oral-one','oral-two']), 'question-specific oral handler restricts items to the matching question');
-
-state.query = 'mode=oral';
-tree = render('QuizHome', [{...home,library:{...home.library,oral:[]}}]);
-check(text(primary(tree)) === '복습 시작', 'unavailable requested oral mode falls back to the available default practice');
-await primary(tree).props.onClick();
-check(state.starts.at(-1).mode === 'choice', 'unavailable oral request never submits an invalid oral session');
-
-state.query = 'mode=unexpected';
-tree = render('QuizHome', [home]);
-check(text(primary(tree)) === '복습 시작', 'unknown requested modes keep the default review action');
-check(nodes(tree).filter(node => node.type === 'Link' && node.props.href.startsWith('/quiz?')).every(node => !new URLSearchParams(node.props.href.split('?')[1]).has('mode')), 'unknown modes are not propagated to navigation');
-await primary(tree).props.onClick();
-check(state.starts.at(-1).mode === 'choice', 'unknown requested modes cannot become create payloads');
-
-state.query = 'mode=answer';
-tree = render('QuizHome', [home]);
-check(text(primary(tree)) === 'Q&A 시작', 'available written mode request has its own primary action');
-await primary(tree).props.onClick();
-check(state.starts.at(-1).mode === 'answer', 'written request starts written practice');
-
-state.query = '';
-tree = render('QuizHome', [home]);
-check(text(primary(tree)) === '복습 시작', 'ordinary quiz home keeps its review action');
-await primary(tree).props.onClick();
-check(state.starts.at(-1).mode === 'choice', 'ordinary home still prefers eligible choice practice');
-state.query = 'focus=free';
-tree = render('QuizHome', [home]);
-check(!primary(tree), 'unrequested free practice keeps the existing mode-picker flow');
-
-// Apply the actual radio setter writes before rerendering, rather than injecting
-// an assumed hook index/value. This catches settings that render but never reach create.
-const timingFieldset=tree=>nodes(tree).find(node=>node.type==='fieldset'&&nodes(node).some(child=>child.type==='legend'&&text(child)==='선택형 퀴즈 시간'));
-const timingRadio=(tree,label)=>nodes(nodes(timingFieldset(tree)).find(node=>node.type==='label'&&text(node)===label)).find(node=>node.type==='input'&&node.props.type==='radio');
-const modeRow=(tree,title)=>nodes(tree).find(node=>node.type==='button'&&node.props.className==='quiz-mode-row'&&nodes(node).some(child=>child.type==='h2'&&text(child)===title));
-function applyHomeWrites() {
-  const values=[...state.values];
-  for(const {index,value} of state.writes.splice(0))values[index]=typeof value==='function'?value(values[index]):value;
-  return render('QuizHome',values);
+check(nodes(tree).some(node => node.type === 'Spinner'), 'quiz home initially shows loading');
+const home={contentVersion:4,library:{choice:[{id:'choice-one',question_id:'question-one'},{id:'choice-two',question_id:'question-two',linked_question_id:'question-one'}],answer:[],oral:[]},sessions:[],recommendation:{count:2,reason:'오늘 다시 떠올릴 질문'}};
+tree=render('QuizHome',[{...home,library:{choice:[]}}]);
+check(text(tree).includes('정답과 근거가 확인된 객관식 문항을 준비하고 있어요.')&&!primary(tree),'an empty verified library never offers a fabricated quiz start');
+check(state.calls===0,'render makes no API, save or refresh requests');
+state.allowStart=true;
+for(const query of ['', 'mode=oral','mode=answer','mode=unexpected','focus=free']) {
+ state.query=query;tree=render('QuizHome',[home]);
+ check(text(primary(tree))==='퀴즈 시작'&&text(tree).includes('문제마다 10초, 정답은 네 보기 중 하나예요.'),'all new quiz entry paths explain the four-choice ten-second format');
+ check(!nodes(tree).some(node=>node.type==='fieldset'||node.props?.className==='quiz-mode-row'),'removed mode and unlimited-timer controls are absent');
+ primary(tree).props.onClick();await new Promise(resolve=>setImmediate(resolve));
+ check(state.starts.at(-1).mode==='choice'&&state.starts.at(-1).timed===true,'new sessions are always timed choice quizzes');
+ check(state.navigations.at(-1)==='/quiz/session/synthetic-selected-mode','explicit start navigates to its created session');
 }
-for(const focus of ['today','free']) {
-  state.query='focus='+focus;
-  tree=render('QuizHome',[home]);
-  const timing=timingFieldset(tree);
-  check(!!timing&&!!timingRadio(tree,'10초')&&!!timingRadio(tree,'제한 없음'),`${focus} choice setup offers a labelled fieldset with both time limits`);
-  check(!nodes(tree).some(node=>node.type==='input'&&node.props.type==='checkbox'),`${focus} does not leave a detached old timing checkbox`);
-  if(focus==='today') {
-    const recommendation=nodes(tree).find(node=>node.type==='section'&&node.props.className==='quiz-today');
-    check(nodes(recommendation).includes(timing),'today timing settings live beside the recommended choice start');
-  } else {
-    const choice=modeRow(tree,'선택형 퀴즈');
-    const wrapper=nodes(tree).find(node=>node.type==='div'&&Array.isArray(node.props.children)&&node.props.children.includes(choice));
-    check(!!wrapper&&wrapper.props.children.includes(timing),'free timing settings are direct siblings of the choice row in the same wrapper');
-    for(const title of ['Q&A','답변 녹음']) {
-      const row=modeRow(tree,title),entry=nodes(tree).find(node=>node.type==='div'&&Array.isArray(node.props.children)&&node.props.children.includes(row));
-      check(!!entry&&!nodes(entry).some(node=>node.type==='fieldset'),'written and oral entries do not inherit the choice timing controls');
-    }
-  }
-  for(const [label,timed] of [['제한 없음',false],['10초',true]]) {
-    // Start each case from default state, then drive the visible radio handler.
-    tree=render('QuizHome',[home]);state.writes=[];
-    timingRadio(tree,label).props.onChange();tree=applyHomeWrites();
-    check(timingRadio(tree,label).props.checked&&!timingRadio(tree,timed?'제한 없음':'10초').props.checked,`${focus} ${label} handler updates the mutually exclusive radio state`);
-    await (focus==='today'?primary(tree):modeRow(tree,'선택형 퀴즈')).props.onClick();
-    check(state.starts.at(-1).mode==='choice'&&state.starts.at(-1).timed===timed,`${focus} ${label} actual create request uses the selected timing`);
-  }
-}
-state.query='focus=free';
-for(const label of ['10초','제한 없음'])for(const [title,mode] of [['Q&A','answer'],['답변 녹음','oral']]) {
-  tree=render('QuizHome',[home]);state.writes=[];
-  timingRadio(tree,label).props.onChange();tree=applyHomeWrites();
-  await modeRow(tree,title).props.onClick();
-  check(state.starts.at(-1).mode===mode&&state.starts.at(-1).timed===false,`${mode} is always untimed even when the choice setting is ${label}`);
-}
+state.query='questionId=question-one';tree=render('QuizHome',[home]);primary(tree).props.onClick();await new Promise(resolve=>setImmediate(resolve));
+check(JSON.stringify(state.starts.at(-1).itemIds)===JSON.stringify(['choice-one','choice-two']),'question-scoped starts retain both direct and source-linked quiz items');
+state.query='questionId=removed';tree=render('QuizHome',[home]);check(!primary(tree),'removed question does not launch unrelated quiz items');
 
 // Publication can change the same logical question/activity IDs. A stored quiz
 // must still use its own published resources and never borrow the latest rubric.
 data.learning.questions[0].prompt='새 발행본의 다른 질문';
 data.learning.activities[0].title='새 발행본의 다른 활동';
 tree=render('QuizSession',[personal]);
-const oldInterview=nodes(tree).find(node=>node.type==='Link'&&text(node).includes('면접에서 말하기'));
+const oldInterview=nodes(tree).find(node=>node.type==='Link'&&text(node).includes('다시 연습'));
 check(new URLSearchParams(oldInterview.props.href.split('?')[1]).get('sourceType')==='personal'&&new URLSearchParams(oldInterview.props.href.split('?')[1]).get('sourceVersion')==='2','old personal interview keeps explicit personal namespace and original version after republication');
 const originalResource=nodes(tree).find(node=>node.type==='button'&&text(node)==='질문과 원문');
 originalResource.props.onClick();
 check(state.resources.at(-1).snapshot.learning.questions[0].prompt==='내 역할을 설명해 주세요.'&&state.resources.at(-1).snapshot.learning.activities[0].title==='승인 당시 활동','original evidence control opens fixed approved question/activity rather than the newer same IDs');
 const legacy={...personal,learning:null,originalSourceUnavailable:true};
 tree=render('QuizSession',[legacy]);
-check(!nodes(tree).some(node=>node.type==='Link'&&text(node).includes('면접에서 말하기')),'missing historical sources cannot be silently replaced with current question metadata');
+check(!nodes(tree).some(node=>node.type==='Link'&&text(node).includes('다시 연습')),'missing historical sources cannot be silently replaced with current question metadata');
 check(nodes(tree).some(node=>node.type==='p'&&text(node).includes('저장 당시 근거를 불러올 수 없어요')),'missing original sources leave the saved answer readable with an explicit source status');
 
-state.query='mode=answer&sourceType=personal&sourceVersion=2';
-tree=render('QuizHome',[{...home,contentVersion:2}]);
-await primary(tree).props.onClick();
-check(state.starts.at(-1).sourceType==='personal'&&state.starts.at(-1).sourceVersion===2,'guidebook selected version is preserved in actual quiz create handler');
-check(nodes(tree).filter(node=>node.type==='Link'&&node.props.href.startsWith('/quiz/memory')).every(node=>{const p=new URLSearchParams(node.props.href.split('?')[1]);return p.get('sourceType')==='personal'&&p.get('sourceVersion')==='2';}),'full-review links preserve the personal source version');
-check(nodes(tree).filter(node=>node.type==='Link'&&node.props.href.startsWith('/quiz?')).every(node=>{const p=new URLSearchParams(node.props.href.split('?')[1]);return p.get('sourceType')==='personal'&&p.get('sourceVersion')==='2';}),'today/free navigation keeps selected personal guidebook version');
-state.query='mode=answer&sourceType=common&sourceVersion=1';
-tree=render('QuizHome',[home]);
-await primary(tree).props.onClick();
-check(state.starts.at(-1).sourceType==='common'&&state.starts.at(-1).sourceVersion===1,'common source revision is not replaced by the personal package content version');
-state.query='mode=answer';
-tree=render('QuizHome',[home]);
-await primary(tree).props.onClick();
-check(state.starts.at(-1).sourceType==='personal'&&state.starts.at(-1).sourceVersion===4,'ordinary quiz start pins the library version seen by the student');
+state.query='sourceType=personal&sourceVersion=2';
+tree=render('QuizHome',[{...home,contentVersion:2}]);primary(tree).props.onClick();await new Promise(resolve=>setImmediate(resolve));
+check(state.starts.at(-1).sourceType==='personal'&&state.starts.at(-1).sourceVersion===2,'quiz create pins the historical library version actually displayed');
+state.query='';tree=render('QuizHome',[home]);primary(tree).props.onClick();await new Promise(resolve=>setImmediate(resolve));
+check(state.starts.at(-1).sourceType==='personal'&&state.starts.at(-1).sourceVersion===4,'ordinary create pins the displayed publication');
 
 const historicTarget={id:'synthetic-target',university:'원래 학교',department:'환경공학과',campus:'본교',admission_year:2027,admission_type:'학생부종합'};
 const targetChanged={...personal,session:{...personal.session,metadata:{targetId:historicTarget.id,targetSnapshot:historicTarget}},learning:{...personal.learning,support_targets:[historicTarget]}};
 data.targets=[{...historicTarget,department:'다른 학과'}];
 tree=render('QuizSession',[targetChanged]);
-check(nodes(tree).some(node=>node.type==='Link'&&text(node).includes('면접에서 말하기')&&new URLSearchParams(node.props.href.split('?')[1]).get('targetId')===historicTarget.id),'historical personal practice retains the original target snapshot through its published version even after registration changes');
+check(nodes(tree).some(node=>node.type==='Link'&&text(node).includes('다시 연습')&&new URLSearchParams(node.props.href.split('?')[1]).get('targetId')===historicTarget.id),'historical personal practice retains the original target snapshot through its published version even after registration changes');
 const wrongTarget={...targetChanged,learning:{...targetChanged.learning,support_targets:[data.targets[0]]}};
 tree=render('QuizSession',[wrongTarget]);
-check(!nodes(tree).some(node=>node.type==='Link'&&text(node).includes('면접에서 말하기')),'a missing original school snapshot cannot be reinterpreted as the current school');
+check(!nodes(tree).some(node=>node.type==='Link'&&text(node).includes('다시 연습')),'a missing original school snapshot cannot be reinterpreted as the current school');
 
 const currentSchool={id:'scope-current',university:'서울시립대학교',department:'환경공학부',admission_year:2027,admission_type:'학생부종합',campus:'서울'};
 const differentSchool={...currentSchool,id:'scope-other',university:'다른 대학교'};
 data.targets=[currentSchool,differentSchool];
 state.query='targetId=scope-current';
-const openSession=(id,metadata)=>({id,metadata,state:'paused',mode:'choice',timed:false,topicLabel:'현재 질문',current_index:1,total:3,created_at:'2026-10-15T00:00:00Z'});
-tree=render('QuizHome',[{...home,target:currentSchool,sessions:[openSession('current',{targetId:currentSchool.id,targetSnapshot:currentSchool}),openSession('other',{targetId:differentSchool.id,targetSnapshot:differentSchool}),openSession('unspecified',{}),openSession('changed',{targetId:currentSchool.id,targetSnapshot:{...currentSchool,department:'이전 학과'}})]}]);
-const currentResume=nodes(tree).find(node=>node.type==='section'&&node.props.className==='quiz-resume-list');
-check(nodes(currentResume).filter(node=>node.type==='Link'&&node.props.href.startsWith('/quiz/session/')).map(node=>node.props.href).join(',')==='/quiz/session/current','default resume excludes other, unknown and changed school identities');
-check(nodes(currentResume).some(node=>node.type==='Link'&&text(node)==='이어서 풀기'&&node.props.className.includes('primary')),'current-school resume has an explicit primary action');
-const others=nodes(tree).find(node=>node.type==='details'&&node.props.className==='otherSessions');
-check(others&&!others.props.open&&nodes(others).filter(node=>node.type==='Link'&&node.props.href.startsWith('/quiz/session/')).length===3,'all other or unknown school sessions are preserved inside a closed disclosure');
-check(text(others).includes('다른 대학교')&&text(others).includes('시작 당시 지원처 정보 없음')&&text(others).includes('이전 학과'),'past sessions retain their saved school and department labels');
-check(primary(tree).props.className==='button secondary','new review remains available without competing with a current-school resume');
-tree=render('QuizHome',[{...home,target:currentSchool,sessions:[openSession('id-only',{targetId:currentSchool.id})]}]);
-check(!nodes(tree).some(node=>node.type==='section'&&node.props.className==='quiz-resume-list'),'legacy target ID without a frozen snapshot cannot certify a current-school resume');
-const idOnlyHistory=nodes(tree).find(node=>node.type==='details'&&node.props.className==='otherSessions');
-check(nodes(idOnlyHistory).some(node=>node.type==='Link'&&node.props.href==='/quiz/session/id-only'),'legacy ID-only session stays reachable in previous-context history');
-check(text(idOnlyHistory).includes('시작 당시 지원처 정보 없음')&&!text(idOnlyHistory).includes(currentSchool.university),'unknown historical school is not relabelled using the current registered target');
-state.query='targetId=scope-other';
-tree=render('QuizHome',[{...home,target:differentSchool,sessions:[openSession('current',{targetId:currentSchool.id,targetSnapshot:currentSchool}),openSession('other',{targetId:differentSchool.id,targetSnapshot:differentSchool})]}]);
-check(nodes(nodes(tree).find(node=>node.type==='section'&&node.props.className==='quiz-resume-list')).some(node=>node.type==='Link'&&node.props.href==='/quiz/session/other'),'changing current school changes the default resume without deleting history');
-check(nodes(tree).find(node=>node.type==='Link'&&text(node)==='전체 복습 항목').props.href==='/quiz/memory?targetId=scope-other','full-review library opens the explicit target even when the global context differs');
+const openSession=(id,metadata)=>({id,metadata,state:'paused',mode:'choice',timed:true,topicLabel:'현재 질문',current_index:1,total:3,created_at:'2026-10-15T00:00:00Z'});
+const sessions=[openSession('changed',{targetId:currentSchool.id,targetSnapshot:{...currentSchool,department:'이전 학과'}}),openSession('current',{targetId:currentSchool.id,targetSnapshot:currentSchool}),openSession('other',{targetId:differentSchool.id,targetSnapshot:differentSchool}),openSession('unspecified',{})];
+tree=render('QuizHome',[{...home,target:currentSchool,sessions}]);
+check(nodes(tree).filter(node=>node.type==='Link'&&node.props.href.startsWith('/quiz/session/')).map(node=>node.props.href).join(',')==='/quiz/session/current','primary resume excludes other, unknown and changed school identities');
+check(nodes(tree).some(node=>node.type==='details'&&!node.props.open&&text(node).includes('새 퀴즈 시작')),'new quiz action stays in a disclosure when current work can resume');
+check(nodes(tree).some(node=>node.type==='Link'&&node.props.href==='/records/history'),'all past and other-context sessions remain reachable through history');
+for(const legacy of [openSession('id-only',{targetId:currentSchool.id}),{...sessions[1],timed:false}]){
+ tree=render('QuizHome',[{...home,target:currentSchool,sessions:[legacy]}]);
+ check(!nodes(tree).some(node=>node.type==='Link'&&node.props.href.startsWith('/quiz/session/')),'unverified identity and historical untimed sessions do not masquerade as current timed quiz');
+}
+state.query='targetId=scope-other';tree=render('QuizHome',[{...home,target:differentSchool,sessions}]);
+check(nodes(tree).some(node=>node.type==='Link'&&node.props.href==='/quiz/session/other'),'changing selected school changes primary resume');
 // A completed cleanup can outlive a dropped response or an intentionally blank
 // local draft. Recovery must be explicit and must never copy another item/audio.
 const cleanedAudio={id:'saved-audio',session_id:'synthetic-session',item_index:0,display_transcript:'정리된 답변입니다.',transcript_cleanup:{status:'completed'},url:'/private/audio'};

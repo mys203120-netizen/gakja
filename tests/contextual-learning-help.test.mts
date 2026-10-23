@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import vm from 'node:vm';
 import ts from 'typescript';
+import {draftProposalError} from '../apps/web/src/lib/draft-proposal';
 
 function nodes(tree:any):any[]{return Array.isArray(tree)?tree.flatMap(nodes):tree&&typeof tree==='object'?[tree,...nodes(tree.props?.children)]:[];}
 function text(tree:any):string{return Array.isArray(tree)?tree.map(text).join(''):tree&&typeof tree==='object'?text(tree.props?.children):tree==null?'':String(tree);}
@@ -19,6 +20,7 @@ function harness(component='Assistant',extra:any={},stored=new Map<string,string
     sessionStorage:{getItem:(key:string)=>stored.get(key)||null,setItem:(key:string,value:string)=>stored.set(key,value)},
     document:{activeElement:null,body:{style:{overflow:''}},addEventListener(){},removeEventListener(){}},
     require(name:string){if(name==='@/lib/client/device-storage'||name==='./client/device-storage')return {setDeviceItem:(storage:any,key:string,value:string)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:Promise.resolve(),close(){}})};
+      if(name==='@/lib/draft-proposal')return {draftProposalError};
       if(name==='react')return react;
       if(name==='react/jsx-runtime')return {jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props}),Fragment:'Fragment'};
       if(name==='./owned-class-name')return {ownedClassName:(value:any)=>value};
@@ -117,4 +119,22 @@ test('a late send from the previous visit is ignored even after returning to the
   const h=harness();try{h.render();nodes(h.render()).find(node=>node.type==='ChatComposer').props.onChange('이전 방문의 지연 요청');let release!:()=>void;h.faults.pending=new Promise(resolve=>release=resolve);const sending=nodes(h.render()).find(node=>node.type==='ChatComposer').props.onSend();const scope=h.props.scope;
     h.props.scope='new-account-and-attempt';h.render();h.render();h.props.scope=scope;h.render();h.render();release();await sending;assert.equal(h.parent.assisted,0,'the same string scope still has a fresh visit identity');
   }finally{h.cleanup();}
+});
+
+
+test('AI proposal stays separate until the student confirms and explicitly applies it',async()=>{
+ const applied:string[]=[];const h=harness('Assistant',{onApplyDraft:(value:string)=>applied.push(value)});try{
+  h.render();let tree=h.render();nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('초안을 제안해 주세요.');tree=h.render();await nodes(tree).find(node=>node.type==='ChatComposer').props.onSend();tree=h.render();
+  assert.deepEqual(applied,[]);nodes(tree).find(node=>node.type==='button'&&text(node)==='이 제안을 초안으로 검토').props.onClick();tree=h.render();
+  assert.equal(nodes(tree).find(node=>node.type==='button'&&text(node)==='내 초안에 적용').props.disabled,true);
+  nodes(tree).find(node=>node.type==='input'&&node.props.type==='checkbox').props.onChange({target:{checked:true}});tree=h.render();nodes(tree).find(node=>node.type==='button'&&text(node)==='내 초안에 적용').props.onClick();await h.flush();
+  assert.deepEqual(applied,['활동의 실제 역할을 먼저 말해 보세요.']);assert.equal(h.parent.closed,1);assert.ok(!h.calls.some(call=>call.body?.action==='answer'),'apply never submits or completes the answer');
+ }finally{h.cleanup();}
+});
+
+test('a concurrent answer edit prevents stale AI proposal replacement',async()=>{
+ const applied:string[]=[];const h=harness('Assistant',{onApplyDraft:(value:string)=>applied.push(value)});try{
+  h.render();let tree=h.render();nodes(tree).find(node=>node.type==='ChatComposer').props.onChange('다듬어 주세요.');tree=h.render();await nodes(tree).find(node=>node.type==='ChatComposer').props.onSend();tree=h.render();nodes(tree).find(node=>node.type==='button'&&text(node)==='이 제안을 초안으로 검토').props.onClick();tree=h.render();nodes(tree).find(node=>node.type==='input'&&node.props.type==='checkbox').props.onChange({target:{checked:true}});
+  h.props.answerDraft='학생이 그 사이 직접 고친 초안';tree=h.render();nodes(tree).find(node=>node.type==='button'&&text(node)==='내 초안에 적용').props.onClick();await h.flush();assert.deepEqual(applied,[]);assert.match(text(h.render()),/최신 초안/);
+ }finally{h.cleanup();}
 });

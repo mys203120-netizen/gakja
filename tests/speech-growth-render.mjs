@@ -20,6 +20,7 @@ vm.runInNewContext(output,{module,exports:module.exports,URLSearchParams,AbortCo
     if(name==='react/jsx-runtime')return {jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props}),Fragment:'Fragment'};
     if(name==='next/link')return {__esModule:true,default:'Link'};
     if(name==='lucide-react')return new Proxy({},{get:(_,key)=>String(key)});
+    if(name==='./learning-charts')return {SpeechHistoryChart:'SpeechHistoryChart'};
     if(name==='./school-picker')return {SchoolPicker:'SchoolPicker'};
     if(name==='@/lib/client/speech-recorder')return {decodeRecordingTelemetry:()=>{throw new Error('No private file decoding in a render test.');}};
     if(name==='@/lib/study-record-links')return studyLinks;
@@ -32,11 +33,11 @@ function render(props={},state){if(state){hooks.states=state;hooks.refs=[];}hook
 function nodes(value){if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=='object')return [];return [value,...nodes(value.props?.children)];}
 function text(value){if(Array.isArray(value))return value.map(text).join(' ');if(value&&typeof value==='object')return text(value.props?.children);return value==null?'':String(value);}
 const scope=JSON.stringify(['','','']);
-const base={speech:{recordings:[],trend:null},content:{comparisons:[],newsComparisons:[]},next:{prompt:'녹음으로 첫 발화 남기기',reason:'같은 질문을 다시 녹음해요.',href:'/quiz?mode=oral'}};
+const base={speech:{recordings:[],trend:null},content:{comparisons:[],newsComparisons:[]},next:{prompt:'녹음으로 첫 발화 남기기',reason:'같은 질문을 다시 녹음해요.',href:'/interview/new?kind=video'}};
 let checks=0;const check=(value,message)=>{assert.ok(value,message);checks++;};
 let tree=render({},[base,scope,'','',false]);
 check(text(tree).includes('녹음 기록이 없어요. 쉼·습관어는 녹음 후 확인할 수 있어요.'),'missing audio has an honest compact empty state');
-check(nodes(tree).some(node=>node.type==='Link'&&node.props.href==='/quiz?mode=oral'),'empty report leads to recording');
+check(nodes(tree).some(node=>node.type==='Link'&&node.props.href==='/interview/new?kind=video'),'empty report leads to recording');
 check(!nodes(tree).some(node=>node.props?.className==='speech-metrics'),'empty report never invents acoustic numbers');
 check(!text(tree).includes('도움 없이 정답 확인'),'mastery totals are not the report hero');
 check(!nodes(tree).some(node=>node.props?.className==='speech-growth-section content-growth'),'no empty comparison section repeats the next-practice action');
@@ -52,7 +53,13 @@ check(nodes(tree).some(node=>typeof node.type==='function'&&node.props.label==='
 check(nodes(tree).some(node=>typeof node.type==='function'&&node.props.label==='말하기 속도'&&node.props.value==='—'),'missing raw STT does not invent a speaking rate');
 check(nodes(tree).some(node=>node.type==='audio'&&node.props.src.includes('own-audio')),'playback refers to the selected owned recording');
 check(nodes(tree).some(node=>node.type==='audio'&&node.props.preload==='metadata'&&!node.props.autoPlay),'playback requests duration metadata before play without starting private audio automatically');
-check(nodes(tree).some(node=>node.type==='svg'&&node.props.role==='img'),'timeline has an accessible image description');
+check(!nodes(tree).some(node=>node.type==='svg'),'detailed timeline is hidden until its metric is selected');
+const pauseMetric=nodes(tree).find(node=>typeof node.type==='function'&&node.props.label==='긴 쉼');
+pauseMetric.props.onClick();tree=render({});
+check(nodes(tree).some(node=>node.type==='svg'&&node.props.role==='img'),'selected pause metric reveals an accessible timeline');
+check(nodes(tree).some(node=>node.type==='button'&&/2\.0\s*초 쉼/.test(text(node))),'selected pause metric preserves playback shortcuts');
+const silenceMetric=nodes(tree).find(node=>typeof node.type==='function'&&node.props.label==='음성 공백');silenceMetric.props.onClick();tree=render({});
+check(!nodes(tree).some(node=>node.type==='button'&&/2\.0\s*초 쉼/.test(text(node))),'switching metrics hides the previous detail shortcuts');
 const transcribe=nodes(tree).find(node=>node.type==='button'&&text(node)==='전사 생성');
 const transcribing=transcribe.props.onClick();await new Promise(resolve=>setImmediate(resolve));
 check(posts[0].url==='/api/reports'&&posts[0].body.action==='transcribe'&&posts[0].body.recordingId==='own-audio','quiz STT action uses its recording ID, not a typed answer');
@@ -128,6 +135,9 @@ tree=render({},[cleaned,scope,'','',false]);
 check(text(tree).includes('정리된 전사')&&text(tree).includes('원전사 보기'),'cleaned speech display and explicit raw inspection are distinct');
 check(nodes(tree).some(node=>typeof node.type==='function'&&node.props.label==='확인한 습관어'&&node.props.value==='1회'),'raw filler observation survives display cleanup');
 check(!nodes(tree).some(node=>node.type==='button'&&text(node)==='문장 정리 다시 시도'),'completed formatting does not offer a redundant paid retry');
+check(!nodes(tree).some(node=>node.props?.className==='speech-language-observations'),'habit words start collapsed');
+nodes(tree).find(node=>typeof node.type==='function'&&node.props.label==='확인한 습관어').props.onClick();tree=render({});
+check(nodes(tree).some(node=>node.props?.className==='speech-language-observations'),'habit word selection opens its actual observations');
 const silentDiagnostic={...recorded.speech.recordings[0],id:'silent-diagnostic',growthEligible:false,transcriptionStatus:'failed',createdAt:'2026-10-16',analysis:{timing:{...recorded.speech.recordings[0].analysis.timing,silenceRatio:1,longPauseCount:0},transcript:null,limitations:[]}};
 const diagnostics={...recorded,speech:{...recorded.speech,defaultRecordingId:'own-audio',recordings:[silentDiagnostic,...recorded.speech.recordings],trend:null}};
 tree=render({},[diagnostics,scope,'','',false]);
@@ -138,4 +148,35 @@ tree=render({},[diagnostics,scope,'','silent-diagnostic',false]);
 check(text(tree).includes('말하기 변화 비교에는 포함하지 않아요.')&&text(tree).includes('다시 녹음'),'explicit diagnostic selection explains its exclusion and a recording recovery');
 check(!nodes(tree).some(node=>node.props?.className==='speech-metrics'||node.type==='svg'),'silence diagnosis never displays misleading 100% silence metrics as growth');
 check(nodes(tree).some(node=>node.type==='audio'),'diagnosed file remains available for owned playback');
+
+// Embedded interview reports keep metrics above their own question/media disclosure.
+const reportScope=JSON.stringify(['saved-report','','']);
+const embedded={...cleaned,content:{comparisons:reviewed.content.comparisons,newsComparisons:newsOnly.content.newsComparisons},next:base.next};
+tree=render({reportId:'saved-report'},[embedded,reportScope,'','',false]);
+check(nodes(tree).filter(node=>typeof node.type==='function'&&node.type.name==='SpeechMetric').length===4,'embedded reports retain all four measured summary metrics');
+check(!text(tree).includes('답변 내용의 변화')&&!text(tree).includes('기사에서 면접 답변으로')&&!text(tree).includes('다음 연습'),'embedded reports omit duplicate comparison and practice sections');
+check(!nodes(tree).some(node=>node.type==='audio')&&!text(tree).includes('녹음 관리')&&!text(tree).includes('정리된 전사')&&!text(tree).includes('원전사 보기'),'embedded report playback and transcripts stay in the question record');
+check(!nodes(tree).some(node=>node.type==='svg')&&!text(tree).includes('측정 기준'),'embedded metric details begin collapsed');
+nodes(tree).find(node=>typeof node.type==='function'&&node.props.label==='긴 쉼').props.onClick();tree=render({reportId:'saved-report'});
+check(nodes(tree).some(node=>node.type==='svg')&&text(tree).includes('2.0 초 쉼'),'selected report metric retains its timeline and pause observations');
+check(!nodes(tree).some(node=>node.type==='button'&&/2\.0\s*초 쉼/.test(text(node))),'report pause observations never offer a playback control without a player');
+tree=render({reportId:'saved-report'},[{...embedded,next:sameNext.next},reportScope,'','',false]);
+check(!nodes(tree).some(node=>node.type==='Link'&&text(node).includes('다시 말하기')),'report summary does not add a duplicate retry action for the selected question');
+
+// Identical prompts in other schools or content versions are separate histories.
+const audio=recorded.speech.recordings[0];
+const history={...recorded,speech:{recordings:[
+ {...audio,id:'history-current',questionId:'q-a',contextKey:'school-a/version-1'},
+ {...audio,id:'history-matching',questionId:'q-a',contextKey:'school-a/version-1',createdAt:'2025-12-30'},
+ {...audio,id:'history-other-school',questionId:'q-a',contextKey:'school-b/version-1'},
+ {...audio,id:'history-other-question',questionId:'q-b',contextKey:'school-a/version-1'},
+ {...audio,id:'history-unreliable',questionId:'q-a',contextKey:'school-a/version-1',analysis:{...audio.analysis,timing:{...audio.analysis.timing,reliable:false}}},
+ {...audio,id:'history-excluded',questionId:'q-a',contextKey:'school-a/version-1',growthEligible:false},
+],trend:null}};
+tree=render({},[history,scope,'','history-current',false]);
+nodes(tree).find(node=>typeof node.type==='function'&&node.props.label==='음성 공백').props.onClick();tree=render({});
+const historyChart=nodes(tree).find(node=>node.type==='SpeechHistoryChart');
+check(historyChart.props.rows.length===2,'speech history requires matching owned question/context and reliable eligible recordings');
+check(historyChart.props.rows[0].label==='2025-12-30','matching recordings remain in chronological order');
+
 console.log(`Speech growth render and scope: ${checks} checks passed; external API and device calls: 0.`);

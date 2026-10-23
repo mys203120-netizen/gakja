@@ -1,4 +1,6 @@
 import {getStudentRecords} from '@/lib/student-records';
+import {INTERVIEW_CHARACTERS,INTERVIEW_POLICY_VERSION,interviewPolicy,interviewPressureForStart,interviewEvaluationEvidence,generatedInterviewQuestion} from '@/lib/interview-policy';
+import {parseInterviewFeedback,INTERVIEW_RUBRIC_PROMPT,interviewGuidelineInstruction} from '@/lib/interview-feedback';
 import {after} from 'next/server';
 import {interviewCompletion} from '@/lib/interview-completion';
 import { stoppedInterviewTimer, settledInterviewTimer, renewInterviewTimer, INTERVIEW_LEASE_MS } from '@/lib/interview-timer';
@@ -22,7 +24,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 const inputSchema = z.object({
-  action: z.enum(['start', 'answer', 'answer_recording', 'finish', 'report_feedback', 'cancel', 'transcript', 'use_transcript', 'pause', 'resume', 'draft', 'settings', 'help', 'heartbeat', 'suspend']), sessionId: z.string().uuid().optional(),
+  action: z.enum(['start', 'answer', 'answer_recording', 'finish', 'report_feedback', 'cancel', 'transcript', 'use_transcript', 'pause', 'resume', 'draft', 'settings', 'help', 'heartbeat', 'suspend','retry']), sessionId: z.string().uuid().optional(),
+  sessionMode:z.enum(['practice','real']).default('practice'),
   kind: z.enum(['chat', 'video']).default('chat'), mode: z.string().max(40).default('basic'), targetId: z.string().max(160).nullish(), questionId: z.string().max(160).nullish(),
   briefingId: z.string().uuid().nullish(), briefingQuestionIndex: z.number().int().min(0).max(10).optional(),
   experienceCardId:z.string().uuid().optional(), experienceRevision:z.coerce.number().int().positive().optional(),
@@ -39,6 +42,7 @@ const inputSchema = z.object({
 });
 function json(value: unknown, status = 200) { return Response.json(value, { status, headers: { 'Cache-Control': 'private, no-store' } }); }
 function turnView(turn: Record<string, any>) { return { ...turn, ...turn.data, question_id: turn.question_id }; }
+function publicTurnView(turn:Record<string,any>,session:Record<string,any>){const value=turnView(turn);if(session.state==='active'&&interviewPolicy(session.data).feedbackTiming==='end'){value.feedback=null;value.evaluation=null;value.data={...value.data,feedback:null,evaluation:null};}return value;}
 function sessionView(session: Record<string, any>) {
   const { context, questionQueue: _queue, ...rawData } = session.data || {};
   const data = {...rawData,questionCount:Array.isArray(_queue)?_queue.length:0,...settledInterviewTimer(rawData)};
@@ -46,16 +50,17 @@ function sessionView(session: Record<string, any>) {
   // identity, selection history, and AI processing context stay on the server.
   const resources=context ? {sourceKind:context.sourceKind||'personal',contentVersion:context.contentVersion,targetSnapshotStale:Boolean(context.targetSnapshotStale),targetId:context.targetId,activityId:context.activityId,questionId:context.questionId,briefingId:context.briefingId||null,
     questions:context.questions||[],activities:context.activities||[],sources:context.sources||[],answerScripts:context.answerScripts||[],briefing:context.briefing||null} : null;
+  if(resources&&session.state==='active'&&interviewPolicy(data).mode==='real'){resources.questions=[];resources.activities=[];resources.sources=[];resources.answerScripts=[];resources.briefing=null;}
   return { ...session, supportTarget: context?.target || null, sourceKind:context?.sourceKind || 'personal', practiceLabel:data.practiceScope==='personal_record'?'일반 경험 면접':context?.sourceKind === 'common' ? '일반 연습' : data.schoolPracticeOnly ? '연습 설정' : null, data:{...data,context:resources} };
 }
 function reportView(report: Record<string, any>) { return report ? { ...report, ...report.data } : null; }
 const stoppedTimer = stoppedInterviewTimer;
 function questionView(turn: Record<string, any> | undefined) { return turn ? { id: turn.question_id, rootQuestionId: turn.data.rootQuestionId || turn.question_id, prompt: turn.data.question, turnId: turn.id, speakerId: turn.data.speakerId || 'A', questionKind: turn.data.questionKind, draft: turn.data.draft || '' } : null; }
-function panelists(count: number) { return Array.from({ length: count }, (_, i) => ({ id: String.fromCharCode(65 + i), name: `면접관 ${String.fromCharCode(65 + i)}`, gender: i % 2 ? 'male' : 'female', voice: i % 2 ? process.env.GOOGLE_TTS_VOICE_MALE || 'ko-KR-Chirp3-HD-Charon' : process.env.GOOGLE_TTS_VOICE_FEMALE || 'ko-KR-Chirp3-HD-Aoede' })); }
+function panelists(_count: number) { return INTERVIEW_CHARACTERS.map(person=>({...person})); }
 function rootTurn(question: Record<string, any>, index: number, settings: Record<string, any>) {
   const activity = settings.context.activities.find((item: Record<string, any>) => (question.activity_ids || []).includes(item.id));
   const carriedHelp=Boolean(settings.assisted&&index===0||settings.experienceCard?.data?.writingAssistance?.length);
-  const prompt = settings.pressure ? `${activity?.title ? `${activity.title} 활동에서 ` : ''}답변에서 제시할 결론의 근거와 성립하지 않을 수 있는 조건을 설명해 주세요.\n${entityText(question as any, 'prompt')}` : entityText(question as any, 'prompt');
+  const prompt=entityText(question as any,'prompt');
   return { question: prompt, rootQuestionId: question.id, questionKind: settings.pressure ? 'verification' : question.common_revision ? 'common_practice' : 'published', answer: null, feedback: null, contentVersion: settings.context.contentVersion, sourceType:question.source_type || 'personal', sourceSnapshot:question.source_snapshot || null, commonRevision:question.common_revision || null, practiceLabel:question.practice_label || null, answerElements: question.answer_elements || [], sourceIds: question.source_ref_ids || [], rootIndex: index, followupDepth: 0, speakerId: settings.panelists[index % settings.panelists.length].id, assisted:carriedHelp, assistance_recorded:true, helpKinds:carriedHelp?['carried_help']:[], draft: '' };
 }
 async function schoolProfile(studentId: string, targetId: string | null) {
@@ -114,7 +119,7 @@ export async function GET(request: Request) {
     ]);
     const current = [...turns].reverse().find((turn) => !turn.data.answer && !turn.data.invalidated);
     session.data={...session.data,trainingProgress:interviewCompletion(session.data,turns)};
-    return json({ session: sessionView(session), turns: turns.map(turnView), question: session.data.processing ? null : questionView(current), report: reportView(reports[0]), media: media.map((item) => ({ ...item, url: `/api/media?id=${item.id}` })), aiAvailable: aiEnabled() });
+    return json({ session: sessionView(session), turns: turns.map(turn=>publicTurnView(turn,session)), question: session.data.processing ? null : questionView(current), report: reportView(reports[0]), media: media.map((item) => ({ ...item, url: `/api/media?id=${item.id}` })), aiAvailable: aiEnabled() });
   } catch (error) { const result = featureError(error); return json({ error: result.error, code: result.code }, result.status); }
 }
 
@@ -123,6 +128,7 @@ export async function POST(request: Request) {
     checkOrigin(request); const user = await requireUser(); requireStudent(user);
     const input = inputSchema.parse(await request.json());
     if (input.action === 'start') {
+      if(input.sessionMode==='real'&&(input.kind!=='video'||input.assisted))throw new FeatureError(400,'실전은 도움 없이 화상 면접으로 시작해 주세요.','REAL_INTERVIEW_POLICY');
       let trainingPlan:Record<string,any>|undefined;
       if(input.trainingPlanId){
         if(input.requestId){const [previous]=await query("select * from interview_sessions where student_id=$1 and request_id=$2 and data->>'trainingPlanId'=$3",[user.id,input.requestId,input.trainingPlanId]);if(previous){const previousTurns=await query('select * from interview_turns where session_id=$1 and student_id=$2 order by created_at,id',[previous.id,user.id]);const current=[...previousTurns].reverse().find(turn=>!turn.data.answer&&!turn.data.invalidated);return json({session:sessionView(previous),turn:current?turnView(current):null,question:questionView(current),aiAvailable:aiEnabled()});}}
@@ -164,7 +170,8 @@ export async function POST(request: Request) {
       const range = formalRange?.min <= 5 ? { min: formalRange.min, max: Math.min(formalRange.max, 5) } : null;
       const requestedCount = input.panelistCount || range?.min || profile?.data?.training_panelist_count || 2;
       const count = range ? Math.max(range.min, Math.min(range.max, requestedCount)) : requestedCount;
-      const sessionData = { context, experienceCard, trainingImprovement:input.trainingImprovement||null, trainingPlanId:input.trainingPlanId||null, trainingPurpose:trainingPlan?.target?.automaticPractice?.hybrid?.kind||input.trainingPurpose||null, practiceScope:practice.scope, practiceNotice:practice.notice, assisted:input.assisted ?? false, briefingId: context.briefingId || null, activityId: context.activityId, questionQueue: questions, questionPlan: selection.plan, followups: input.followups ?? mode === 'followup', pressure: input.pressure ?? mode === 'pressure', interviewerReactions: false, maxFollowups: 2, panelists: panelists(Math.max(1, Math.min(5, count))), schoolProfile: profile, schoolPracticeOnly: !verified || !supported || Boolean(formalRange && !range) || profile?.data?.interview_conducted === false, difficulty: input.difficulty || 'standard', feedbackTiming: input.feedbackTiming === 'each' ? 'turn' : input.feedbackTiming, promptVersion: PROMPT_VERSION, aiAvailable: aiEnabled(), index: 0, generation: 0, paused: input.kind==='video', elapsedMs: 0, activeSince: input.kind==='video'?null:Date.now(), timerLeaseUntil: input.kind==='video'?null:Date.now()+INTERVIEW_LEASE_MS, settingsHistory: [] };
+      const sessionData = { context, experienceCard, trainingImprovement:input.trainingImprovement||null, trainingPlanId:input.trainingPlanId||null, trainingPurpose:trainingPlan?.target?.automaticPractice?.hybrid?.kind||input.trainingPurpose||null, practiceScope:practice.scope, practiceNotice:practice.notice, assisted:input.assisted ?? false, briefingId: context.briefingId || null, activityId: context.activityId, questionQueue: questions, questionPlan: selection.plan, followups: input.followups ?? mode === 'followup', pressure: interviewPressureForStart({...input,mode},trainingPlan), interviewerReactions: false, maxFollowups: 2, panelists: panelists(Math.max(1, Math.min(5, count))), schoolProfile: profile, schoolPracticeOnly: !verified || !supported || Boolean(formalRange && !range) || profile?.data?.interview_conducted === false, difficulty: input.difficulty || 'standard', feedbackTiming: input.feedbackTiming === 'each' ? 'turn' : input.feedbackTiming, promptVersion: PROMPT_VERSION, aiAvailable: aiEnabled(), index: 0, generation: 0, paused: input.kind==='video', elapsedMs: 0, activeSince: input.kind==='video'?null:Date.now(), timerLeaseUntil: input.kind==='video'?null:Date.now()+INTERVIEW_LEASE_MS, settingsHistory: [] };
+      Object.assign(sessionData,{sessionMode:input.sessionMode,policyVersion:INTERVIEW_POLICY_VERSION,maxFollowups:sessionData.pressure?2:1,feedbackTiming:input.sessionMode==='real'?'end':'turn'});
       const started = await transaction(async (client) => {
         const requestId = input.requestId || randomUUID();
         await client.query('select pg_advisory_xact_lock(hashtext($1))', [`start:${user.id}:${requestId}`]);
@@ -181,6 +188,27 @@ export async function POST(request: Request) {
       return json({ session: sessionView(started.session), turn: turnView(started.turn), question: questionView(started.turn), aiAvailable: aiEnabled() });
     }
     let session = await sessionFor(user.id, input.sessionId);
+    const policy=interviewPolicy(session.data);
+    if(policy.mode==='real'&&['help','retry','settings','answer','draft','use_transcript'].includes(input.action))throw new FeatureError(403,'실전 면접에서는 도움·다시 답변·글 답변을 사용할 수 없어요.','REAL_INTERVIEW_POLICY');
+    if(policy.mode==='real'&&session.state==='active'&&input.action==='transcript')throw new FeatureError(403,'실전 전사는 면접을 마친 뒤 확인해 주세요.','REAL_INTERVIEW_POLICY');
+    if(policy.mode==='real'&&input.draft?.trim())throw new FeatureError(403,'실전 답변은 녹음으로 제출해 주세요.','REAL_INTERVIEW_POLICY');
+    if(input.action==='retry'){
+      return json(await transaction(async client=>{
+        const locked=(await client.query('select * from interview_sessions where id=$1 and student_id=$2 for update',[session.id,user.id])).rows[0];
+        if(!interviewPolicy(locked.data).retryAllowed)throw new FeatureError(403,'실전 면접에서는 다시 답변할 수 없어요.','REAL_INTERVIEW_POLICY');
+        if(locked.state!=='active'||locked.data.processing)throw new FeatureError(409,'답변 저장이 끝난 뒤 다시 시도해 주세요.','INTERVIEW_PENDING');
+        const turns=(await client.query('select * from interview_turns where session_id=$1 and student_id=$2 order by created_at,id',[session.id,user.id])).rows;
+        const current=[...turns].reverse().find(turn=>!turn.data.answer&&!turn.data.invalidated);
+        if(!current||current.id!==input.turnId)throw new FeatureError(409,'현재 질문에서 다시 답해 주세요.','STALE_TURN');
+        if(input.generation!==undefined&&input.generation!==Number(locked.data.generation||0))throw new FeatureError(409,'질문 상태가 바뀌었어요.','STALE_GENERATION');
+        const generation=Number(locked.data.generation||0)+1;
+        const {draft,rawTranscript,rawTranscriptMediaId,displayTranscript,transcript,transcriptCleanup,mediaId,autoTranscriptApplied,speechSource,...rest}=current.data;
+        const attempts=[...(rest.attempts||[]),{generation:generation-1,draft:draft||'',rawTranscript:rawTranscript||null,mediaId:mediaId||rawTranscriptMediaId||null,at:new Date().toISOString()}];
+        await client.query('update interview_turns set data=$2 where id=$1 and student_id=$3',[current.id,JSON.stringify({...rest,attempts,draft:''}),user.id]);
+        const saved=(await client.query('update interview_sessions set data=$2,updated_at=now() where id=$1 and student_id=$3 returning *',[session.id,JSON.stringify({...locked.data,...stoppedTimer(locked.data),generation,paused:true}),user.id])).rows[0];
+        return {session:sessionView(saved)};
+      }));
+    }
     if (input.action === 'heartbeat' || input.action === 'suspend') {
       return json(await transaction(async client => {
         const selected = await client.query('select * from interview_sessions where id=$1 and student_id=$2 for update', [session.id,user.id]);
@@ -221,7 +249,8 @@ export async function POST(request: Request) {
         }
         if (input.action === 'settings') {
           data.followups = input.followups ?? data.followups;
-          data.pressure = input.pressure ?? data.pressure;
+          if(!data.trainingPlanId)data.pressure = input.pressure ?? data.pressure;
+          data.maxFollowups = data.pressure?2:1;
           data.interviewerReactions = false;
           data.settingsHistory = [...(data.settingsHistory || []), { followups: data.followups, pressure: data.pressure, interviewerReactions: !!data.interviewerReactions, feedbackTiming: data.feedbackTiming, at: new Date().toISOString() }];
           if (!data.followups && current?.data.questionKind === 'generated') {
@@ -352,28 +381,32 @@ export async function POST(request: Request) {
       return { duplicate: false, session: result.rows[0], previous: answered.rows[0], next };
     });
     session = submitted.session;
-    if (submitted.duplicate) return json({ session: sessionView(session), turn: turnView(submitted.previous), nextQuestion: session.state==='active'&&!session.data.processing?questionView(submitted.next):null, feedback: submitted.previous?.data.feedback || null });
-    const submittedAnswer=String(submitted.previous.data.answer);
-    let feedback = null;
+    if (submitted.duplicate) return json({ session: sessionView(session), turn: publicTurnView(submitted.previous,session), nextQuestion: session.state==='active'&&!session.data.processing?questionView(submitted.next):null, feedback:interviewPolicy(session.data).feedbackTiming==='turn'?submitted.previous?.data.feedback||null:null });
+    const evaluation=interviewEvaluationEvidence(submitted.previous.data);
+    const submittedAnswer=JSON.stringify(evaluation);
+    let feedback:(Awaited<ReturnType<typeof coach>>&{evaluation?:ReturnType<typeof parseInterviewFeedback>['evaluation']})|null=null;
     let aiError: string | null = null;
     let next = submitted.next;
     try {
-      if (aiEnabled() && session.data.feedbackTiming === 'turn') {
-        feedback = await coach(user.id, { ...context, questionId: submitted.previous.question_id }, `면접 모드 ${session.mode}, 질문 깊이 ${session.data.difficulty}. 학생 답변의 질문 대응·실제 역할·근거를 짧게 피드백한다. 강점과 확인할 부분을 학생의 실제 문장 인용으로 구분하고 점수는 만들지 않는다. 학생 진술과 승인 원문을 구분하며, 미확인 경험을 넣은 완성형 답변을 대신 쓰지 않는다. 다음 확인 질문은 직전 질문에서 명시한 요구를 우선한다.`, [{ role: 'user', content: `질문: ${submitted.previous.data.question}\n학생 답변: ${submittedAnswer}` }], 'interview', session.id);
+      if (aiEnabled()) {
+        feedback = await coach(user.id, { ...context, questionId: submitted.previous.question_id }, `면접 모드 ${session.mode}, 질문 깊이 ${session.data.difficulty}. 평가는 입력 객체의 answer 원발화만 사용한다. submittedAnswer는 학생의 작성·수정본이므로 발화 점수의 근거로 쓰지 않는다. 학생 답변의 질문 대응·실제 역할·근거를 짧게 피드백한다. 강점과 확인할 부분을 학생의 실제 문장 인용으로 구분한다. 합격률이나 종합 능력 점수는 만들지 않고 아래의 명시된 학습용 척도만 사용한다. 학생 진술과 승인 원문을 구분하며, 미확인 경험을 넣은 완성형 답변을 대신 쓰지 않는다. 다음 확인 질문은 직전 질문에서 명시한 요구를 우선한다. content는 JSON 문자열로 {summary:string,needsReview:boolean|null,reason:string,evidence:string[]} 형식으로 반환한다. summary는 질문 대응 요약과 보완점 하나, needsReview는 반복 연습 필요 여부이며 판단 근거 부족은 null, reason은 그 이유, evidence는 학생 원발화의 정확한 인용 1~3개이다. 말하지 않은 사실로 평가하지 않는다. ${INTERVIEW_RUBRIC_PROMPT} ${interviewGuidelineInstruction(context.studentContext?.operating_guidelines,['evaluation','feedback'])}`, [{ role: 'user', content: `질문: ${submitted.previous.data.question}\n학생 답변: ${submittedAnswer}` }], 'interview', session.id);
+        const parsed=parseInterviewFeedback(feedback.content,interviewEvaluationEvidence(submitted.previous.data).answer,context.sources,context.studentContext?.operating_guidelines);
+        feedback={...feedback,content:parsed.summary,evaluation:parsed.evaluation};
       }
       // Each dynamic follow-up is based on the just-recorded answer; static fallbacks remain recoverable.
-      if (aiEnabled() && session.data.followups && Number(submitted.previous.data.followupDepth || 0) < Number(session.data.maxFollowups || 2)) {
+      if (aiEnabled() && session.data.followups && Number(submitted.previous.data.followupDepth || 0) < interviewPolicy(session.data).maxFollowups) {
         const rootIndex = Number(submitted.previous.data.rootIndex ?? Math.max(0, session.data.index - 1));
         const root = session.data.questionQueue[rootIndex];
-        const dynamic = await coach(user.id, { ...context, questionId: root?.id || submitted.previous.question_id }, `질문 깊이 ${session.data.difficulty}. 직전 학생 답변의 구체적 행동·이유·근거·한계를 확인하는 면접 꼬리질문 한 문장만 content에 출력한다. ${session.data.pressure ? '근거·모순·반대 사례·한계 검증을 우선한다.' : ''} 공격적 호칭·모욕·인격 평가는 금지한다.`, [{ role: 'user', content: `직전 질문: ${submitted.previous.data.question}\n학생 답변: ${submittedAnswer}` }], 'interview', session.id);
-        next = { ...(next || { id: randomUUID(), session_id: session.id, student_id: user.id }), question_id: `followup_${randomUUID()}`, data: { question: dynamic.content, rootQuestionId: root?.id, answer: null, feedback: null, draft: '', questionKind: 'generated', rootIndex, followupDepth: Number(submitted.previous.data.followupDepth || 0) + 1, speakerId: submitted.previous.data.speakerId || 'A', parentTurnId: submitted.previous.id, parentQuestionId: submitted.previous.question_id, sources: dynamic.sources, model: dynamic.model, promptVersion: dynamic.promptVersion, assisted: false, assistance_recorded:true, helpKinds:[] } };
+        const dynamic = await coach(user.id, { ...context, questionId: root?.id || submitted.previous.question_id }, `먼저 직전 질문의 요구에 충분하고 명확하게 답했는지 판단한다. 충분하면 content에 정확히 [NEXT]만 출력한다. 불명확하거나 빠진 핵심이 있을 때만 확인 질문 하나를 120자 이내 한 문장으로 출력한다. 학교 인재상 이름을 직접 요구하지 않는다. ${session.data.pressure ? '근거·모순·반대 사례·한계 중 가장 필요한 하나만 확인한다.' : '구체적 행동 또는 이유 중 가장 필요한 하나만 확인한다.'} 이미 확인한 내용을 반복하지 않는다. 공격적 호칭·모욕·인격 평가는 금지한다. ${interviewGuidelineInstruction(context.studentContext?.operating_guidelines,['questions'])}`, [{ role: 'user', content: `직전 질문: ${submitted.previous.data.question}\n학생의 원발화 근거: ${submittedAnswer}` }], 'interview', session.id);
+        const followup=generatedInterviewQuestion(dynamic.content,(context.questions||[]).map((item:Record<string,any>)=>item.talent_profile?.point?.label).filter((label:unknown):label is string=>typeof label==='string'));
+        if(followup)next = { ...(next || { id: randomUUID(), session_id: session.id, student_id: user.id }), question_id: `followup_${randomUUID()}`, data: { question: followup, rootQuestionId: root?.id, answer: null, feedback: null, draft: '', questionKind: 'generated', rootIndex, followupDepth: Number(submitted.previous.data.followupDepth || 0) + 1, speakerId: submitted.previous.data.speakerId || 'A', parentTurnId: submitted.previous.id, parentQuestionId: submitted.previous.question_id, sources: dynamic.sources, model: dynamic.model, promptVersion: dynamic.promptVersion, assisted: false, assistance_recorded:true, helpKinds:[] } };
       }
     } catch (error) { aiError = featureError(error).error; }
     const finalized = await transaction(async (client) => {
       const selected = await client.query('select * from interview_sessions where id=$1 and student_id=$2 for update', [session.id, user.id]);
       const latest = selected.rows[0];
       if (latest.state !== 'active' || latest.data.processing !== processId || Number(latest.data.generation || 0) !== Number(session.data.generation || 0)) return { session: latest, turn: submitted.previous, next: submitted.next };
-      const answered = await client.query('update interview_turns set data=$2 where id=$1 and student_id=$3 returning *', [submitted.previous.id, JSON.stringify({ ...submitted.previous.data, feedback, aiError }), user.id]);
+      const answered = await client.query('update interview_turns set data=$2 where id=$1 and student_id=$3 returning *', [submitted.previous.id, JSON.stringify({ ...submitted.previous.data, feedback, evaluation:feedback?.evaluation||{needsReview:null,reason:'평가를 아직 확인하지 못했어요.',evidence:[]}, aiError }), user.id]);
       if (next && submitted.next) await client.query('update interview_turns set question_id=$2,data=$3 where id=$1 and student_id=$4', [next.id, next.question_id, JSON.stringify(next.data), user.id]);
       else if (next) await client.query('insert into interview_turns(id,session_id,student_id,question_id,data) values($1,$2,$3,$4,$5)', [next.id, session.id, user.id, next.question_id, JSON.stringify(next.data)]);
       const cleaned = { ...latest.data, ...settledInterviewTimer(latest.data) }; delete cleaned.processing; delete cleaned.processingAt;
@@ -383,7 +416,7 @@ export async function POST(request: Request) {
       const saved = await client.query('update interview_sessions set data=$2,updated_at=now() where id=$1 and student_id=$3 returning *', [session.id, JSON.stringify(cleaned), user.id]);
       return { session: saved.rows[0], turn: answered.rows[0], next };
     });
-    return json({ session: sessionView(finalized.session), turn: turnView(finalized.turn), nextQuestion: finalized.session.state === 'active' ? questionView(finalized.next) : null, feedback, aiError, aiAvailable: aiEnabled() });
+    return json({ session: sessionView(finalized.session), turn: publicTurnView(finalized.turn,finalized.session), nextQuestion: finalized.session.state === 'active' ? questionView(finalized.next) : null, feedback:interviewPolicy(finalized.session.data).feedbackTiming==='turn'?feedback:null, aiError, aiAvailable: aiEnabled() });
   } catch (error) { const result = featureError(error); return json({ error: result.error, code: result.code }, result.status); }
 }
 
@@ -414,7 +447,7 @@ async function finishSession(studentId:string,session:Record<string,any>,retryFe
     const previousSnapshot = previous ? { ...previous, revisions: undefined } : null;
     const timer = stoppedTimer(locked.data);
     const trainingProgress=interviewCompletion(locked.data,turns.rows);
-    const reportPayload = { ...reportData,trainingProgress,aiStatus:aiEnabled()&&reportData.sections.length?'pending':'unavailable',aiAttemptedAt:Date.now(), experienceCard:locked.data.experienceCard?{id:locked.data.experienceCard.id,revision:locked.data.experienceCard.revision}:null, feedbackKind: 'self_check', practiceScope:locked.data.practiceScope||'school', practiceLabel:locked.data.practiceScope==='personal_record'?'일반 경험 면접':null, practiceNotice:locked.data.practiceNotice||null, mode: locked.mode, kind: locked.kind, targetId: locked.target_id, durationSeconds: Math.floor(timer.elapsedMs / 1000), schoolProfile: locked.data.schoolProfile, questionPlan: locked.data.questionPlan, settings: { followups: locked.data.followups, pressure: locked.data.pressure, feedbackTiming: locked.data.feedbackTiming, interviewerReactions: !!locked.data.interviewerReactions, panelists: locked.data.panelists }, settingsHistory: locked.data.settingsHistory || [], assisted: turns.rows.some(turn => turn.data.answer&&!turn.data.invalidated&&assistanceEvidence(turn.data).assisted), assistance_recorded: turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).every(turn=>assistanceEvidence(turn.data).assistance_recorded), helpKinds:[...new Set(turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).flatMap(turn=>assistanceEvidence(turn.data).helpKinds))], actualRootQuestions: turns.rows.filter(turn => turn.data.answer && !turn.data.followupDepth).length, actualFollowups: turns.rows.filter(turn => turn.data.answer && turn.data.followupDepth > 0).length, promptVersion: PROMPT_VERSION, transcriptRevision: turns.rows.reduce((sum, turn) => sum + (turn.data.transcriptRevisions?.length || 0), 0), reportRevision: previous ? Number(previous.reportRevision || 1) + 1 : 1, revisions: previous ? [...(previous.revisions || []), previousSnapshot] : [] };
+    const reportPayload = { ...reportData,guidelineVersions:Array.isArray(locked.data.context?.studentContext?.operating_guidelines)?locked.data.context.studentContext.operating_guidelines.map((value:Record<string,any>)=>({kind:value.kind,version:value.version,id:value.id||null})):[],sessionMode:interviewPolicy(locked.data).mode,trainingProgress,aiStatus:aiEnabled()&&reportData.sections.length?'pending':'unavailable',aiAttemptedAt:Date.now(), experienceCard:locked.data.experienceCard?{id:locked.data.experienceCard.id,revision:locked.data.experienceCard.revision}:null, feedbackKind: 'self_check', practiceScope:locked.data.practiceScope||'school', practiceLabel:locked.data.practiceScope==='personal_record'?'일반 경험 면접':null, practiceNotice:locked.data.practiceNotice||null, mode: locked.mode, kind: locked.kind, targetId: locked.target_id, durationSeconds: Math.floor(timer.elapsedMs / 1000), schoolProfile: locked.data.schoolProfile, questionPlan: locked.data.questionPlan, settings: { followups: locked.data.followups, pressure: locked.data.pressure, feedbackTiming: locked.data.feedbackTiming, interviewerReactions: !!locked.data.interviewerReactions, panelists: locked.data.panelists }, settingsHistory: locked.data.settingsHistory || [], assisted: turns.rows.some(turn => turn.data.answer&&!turn.data.invalidated&&assistanceEvidence(turn.data).assisted), assistance_recorded: turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).every(turn=>assistanceEvidence(turn.data).assistance_recorded), helpKinds:[...new Set(turns.rows.filter(turn=>turn.data.answer&&!turn.data.invalidated).flatMap(turn=>assistanceEvidence(turn.data).helpKinds))], actualRootQuestions: turns.rows.filter(turn => turn.data.answer && !turn.data.followupDepth).length, actualFollowups: turns.rows.filter(turn => turn.data.answer && turn.data.followupDepth > 0).length, promptVersion: PROMPT_VERSION, transcriptRevision: turns.rows.reduce((sum, turn) => sum + (turn.data.transcriptRevisions?.length || 0), 0), reportRevision: previous ? Number(previous.reportRevision || 1) + 1 : 1, revisions: previous ? [...(previous.revisions || []), previousSnapshot] : [] };
     const inserted = existing.rows.length
       ? await client.query('update interview_reports set data=$3 where session_id=$1 and student_id=$2 returning *', [session.id, studentId, JSON.stringify(reportPayload)])
       : await client.query('insert into interview_reports(student_id,session_id,data) values($1,$2,$3) returning *', [studentId, session.id, JSON.stringify(reportPayload)]);
@@ -425,7 +458,7 @@ async function finishSession(studentId:string,session:Record<string,any>,retryFe
   if(completed.created&&completed.report.data.aiStatus==='pending')after(async()=>{
     try {
       const context = completed.session.data.context as LearningContext;
-      const reply = await coach(studentId, context, '면접 리포트 내용 피드백을 작성한다. 아래 실제 기록에서 학생이 말한 문장을 그대로 인용해 질문 대응·근거·자기 표현을 관찰한다. 승인 원문과 학생 진술은 별도로 표시한다. 다음 연습은 각 질문에서 명시한 요구를 먼저 확인한다. 학생에게 없던 실험 절차·행동을 넣은 다듬은 답변이나 1인칭 모범답안은 작성하지 않는다. 미확인 내용은 짧은 확인 질문으로 남긴다. 발화 측정값이나 종합 점수는 생성하지 않는다.', [{ role: 'user', content: JSON.stringify(completed.report.data.sections) }], 'interview', session.id);
+      const reply = await coach(studentId, context, '면접 리포트 내용 피드백을 작성한다. 아래 각 섹션의 evaluationEvidence.answer만 원발화 평가에 사용한다. answer와 submittedAnswer 표시·수정본으로 원발화를 덮어쓰지 않는다. 원발화 문장을 그대로 인용해 질문 대응·근거·자기 표현을 관찰한다. 승인 원문과 학생 진술은 별도로 표시한다. 다음 연습은 각 질문에서 명시한 요구를 먼저 확인한다. 학생에게 없던 실험 절차·행동을 넣은 다듬은 답변이나 1인칭 모범답안은 작성하지 않는다. 미확인 내용은 짧은 확인 질문으로 남긴다. 발화 측정값이나 종합 점수는 생성하지 않는다.'+interviewGuidelineInstruction(context.studentContext?.operating_guidelines,['evaluation','feedback']), [{ role: 'user', content: JSON.stringify(completed.report.data.sections) }], 'interview', session.id);
       await query("update interview_reports set data=data || $3::jsonb where session_id=$1 and student_id=$2 and data->>'reportRevision'=$4 and data->>'aiStatus'='pending' and data->>'aiAttemptedAt'=$5", [session.id, studentId, JSON.stringify({ aiStatus: 'completed', aiFeedback: reply, model: reply.model, promptVersion: reply.promptVersion, feedbackKind: 'ai_content_and_self_check' }),feedbackRevision,feedbackAttempt]);
     } catch (error) {
       await query("update interview_reports set data=data || $3::jsonb where session_id=$1 and student_id=$2 and data->>'reportRevision'=$4 and data->>'aiStatus'='pending' and data->>'aiAttemptedAt'=$5", [session.id, studentId, JSON.stringify({ aiStatus: 'failed', aiError: featureError(error).error }),feedbackRevision,feedbackAttempt]);

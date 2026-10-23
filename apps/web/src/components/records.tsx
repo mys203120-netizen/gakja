@@ -3,11 +3,14 @@ import {ownedClassName} from './owned-class-name';
 
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {useRecordPages,useRecordDetail} from './use-record-pages';
 import { useApp } from './app-shell';
 import { RecordMedia } from './record-media';
+import {ReportDownload} from './report-download';
+import {InterviewEvaluationSummary} from './interview-evaluation-summary';
+import {CompletedExampleAnswer} from './completed-example-answer';
 import { SpeechGrowth } from './speech-growth';
 import { growthContextResolver } from '@/lib/learning-growth';
 import { materialComparisonVersions } from '@/lib/material-learning-flow';
@@ -20,11 +23,13 @@ import { learningRetryHref } from '@/lib/learning-navigation';
 import { studyAnswerComparisonHref, studyWeakPointHref } from '@/lib/study-record-links';
 import { koreaToday } from '@/lib/planner-model';
 import { action, api, post, PageTitle, Breadcrumb, Badge, Empty, LinkedRow, Alert, Spinner, dateLabel, type Item } from './shared';
-import { Mic, MessagesSquare, Sparkles, ArrowUpRight, RotateCcw, ListChecks, Download, LoaderCircle } from 'lucide-react';
+import { Mic, MessagesSquare, Sparkles, ArrowUpRight, Download, LoaderCircle } from 'lucide-react';
 import styles from './learning-surfaces.module.css';
 import toolbarStyles from './records-toolbar.module.css';
 import comparisonStyles from './answer-comparisons.module.css';
 import { SettingsSelect } from './settings-select';
+import {RecordsCalendar,recordDate,type CalendarRecord} from './records-calendar';
+import recordStyles from './records-calendar.module.css';
 
 function useStudyReports(id?:string) {
   const {data}=useApp(),identity=data.user.id+':'+(id||'all');
@@ -45,9 +50,9 @@ function useStudyReports(id?:string) {
 }
 
 function ReportNav({active='reports'}:{active?:string}) {
-  return <nav className={ownedClassName(`subnav ${toolbarStyles.mobileReportNavigation}`,true)} data-mobile-child={active!=='reports'||undefined} aria-label="리포트 보기">{[['reports','/records','발화와 답변'],['history','/records/history','연습 이력'],['comparisons','/records/comparisons','답변 비교']].map(([key,href,label])=><Link key={key} href={href} className={ownedClassName(active===key?'active':'')} aria-current={active===key?'page':undefined}>{label}</Link>)}</nav>;
+  return <nav className={ownedClassName(`subnav ${toolbarStyles.mobileReportNavigation}`,true)} data-mobile-child={active!=='reports'||undefined} aria-label="리포트 보기">{[['reports','/records','학습 캘린더'],['history','/records/history','연습 이력'],['comparisons','/records/comparisons','답변 비교']].map(([key,href,label])=><Link key={key} href={href} className={ownedClassName(active===key?'active':'')} aria-current={active===key?'page':undefined}>{label}</Link>)}</nav>;
 }
-function interviewLabel(session?:Item){const kind=session?.data?.trainingPurpose;return ({diagnostic:'첫 진단',recall:'누적 복습',focus:'집중 보완',mixed:'연결 면접'} as Record<string,string>)[kind]||(session?.kind==='video'?'화상 모의면접':'채팅 모의면접');}
+function interviewLabel(session?:Item){const kind=session?.data?.trainingPurpose;return ({diagnostic:'답변 연습',recall:'누적 복습',focus:'화상 답변 연습',mixed:'실전 화상 면접'} as Record<string,string>)[kind]||(session?.kind==='video'?'화상 모의면접':'채팅 모의면접');}
 
 function useLearningHistory(scope:string,owner:string){
  const identity=owner+'|'+scope;
@@ -73,6 +78,8 @@ export function RecordsPages({slug=[]}:{slug?:string[]}){
 }
 function RecordsOverview({ slug = [] }: { slug?: string[] }) {
   const { data,targetId } = useApp();
+  const calendarParams=useSearchParams();
+  const requestedDate=calendarParams.get('date')||'';
   const {reports,error,reload,more,loadingMore}=useStudyReports();
   const history=slug[0]==='history';
   const feedback=useRecordPages('reports','',!history,data.user.id),interviews=useRecordPages('interviews','',history,data.user.id),memories=useRecordPages('memory','',history,data.user.id);
@@ -122,20 +129,13 @@ function RecordsOverview({ slug = [] }: { slug?: string[] }) {
       {!reports&&!error?<Spinner/>:!interviews.loading&&!memories.loading&&!data.summary?.interviews&&!data.summary?.memory&& <Empty title="아직 훈련 기록이 없어요" href="/practice" label="훈련 시작" />}
       </>
     </> : <>
-      <SpeechGrowth currentContext={{targetId,contentVersion:Number(data.package?.active_version||0),questions:data.learning?.questions||[],targets:data.targets||[]}}/>
-      {!!reports?.totals?.eventCount&&<>
-        <details className={ownedClassName("speech-activity-details",true)}><summary className={ownedClassName(undefined,true)}>함께 쌓인 학습 기록</summary><section className={ownedClassName("study-total",true)}><StudyReportNumbers report={reports!.totals} showReview={false}/><div className={ownedClassName("study-facts",true)}>{[{label:'암기 복습',value:reports.totals.memory?.reviewed},{label:'과제 답변',value:reports.totals.assignments?.submitted},{label:'시청 체크',value:reports.totals.knowledge?.completed},{label:'영상 메모',value:reports.totals.knowledge?.reflections}].filter(item=>item.value>0).map(item=><span key={item.label} className={ownedClassName(undefined,true)}>{item.label} {item.value}개</span>)}</div></section></details>
-      </>}
-      {!!reports?.current?.report?.eventCount&&<section className={ownedClassName("study-current",true)}><div className={ownedClassName("section-heading",true)}><h2 className={ownedClassName(undefined,true)}>이번 학습</h2><Badge tone="green">자동 저장 중</Badge></div><div className={ownedClassName("study-report-actions",true)}><Link className={ownedClassName("text-link")} href={'/reports/sessions/'+reports.current.id}>진행 기록 보기<ArrowUpRight size={17}/></Link><button className={ownedClassName("button secondary",true)} onClick={finish} disabled={finishing}>{finishing?'저장하는 중':'학습 마치기'}</button></div></section>}
-      {!!reports?.sessions?.length&&<section className={ownedClassName("records-history-section",true)}><h2 className={ownedClassName(undefined,true)}>학습 리포트</h2><div className={ownedClassName('records-report-list '+toolbarStyles.reportRows,true)}>{reports.sessions.map((session:Item)=><Link className={ownedClassName('records-report-row '+toolbarStyles.reportRow)} key={session.id} href={'/reports/sessions/'+session.id}><span className={ownedClassName("records-row-icon",true)}><ListChecks size={25}/></span><div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>{dateLabel(session.started_at)} 학습</h2><p className={ownedClassName(undefined,true)}>그날 남긴 답변과 연습 기록</p></div><ArrowUpRight size={22} strokeWidth={1.5}/></Link>)}</div>{reports.sessionsPage?.hasMore&&<button className={ownedClassName("button ghost",true)} disabled={Boolean(loadingMore)} onClick={()=>void more('sessions')}>이전 리포트 더 보기</button>}</section>}
-      {!!feedback.items.length&&<section className={ownedClassName("records-history-section",true)}><h2 className={ownedClassName(undefined,true)}>훈련·면접 피드백</h2><div className={ownedClassName('records-report-list '+toolbarStyles.reportRows,true)}>
-      {feedback.items.map(r => <Link className={ownedClassName('records-report-row '+toolbarStyles.reportRow)} key={r.id} href={'/reports/reports/' + r.id}>
-        <span className={ownedClassName("records-row-icon",true)}>{r.data?.kind === 'video' ? <Mic size={26} strokeWidth={1.5} /> : <MessagesSquare size={26} strokeWidth={1.5} />}</span>
-        <div className={ownedClassName(undefined,true)}><h2 className={ownedClassName(undefined,true)}>{interviewLabel({kind:r.data?.kind,data:r.data})}</h2><p className={ownedClassName(undefined,true)}>{dateLabel(r.created_at)}</p></div>
-        <ArrowUpRight size={22} strokeWidth={1.5} />
-      </Link>)}
-    </div>{feedback.page?.hasMore&&<button className={ownedClassName("button ghost",true)} disabled={feedback.loading} onClick={()=>void feedback.more()}>이전 면접 피드백 더 보기</button>}</section>}
-    {!reports&&!error&&<div className={ownedClassName(toolbarStyles.reportSkeleton,true)} aria-hidden="true"><span/><span/></div>}
+      {reports&&<RecordsCalendar initialDate={/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)?requestedDate:undefined} records={[
+        ...[...(reports.sessions||[]),...(reports.current?.report?.eventCount&&!reports.sessions?.some((session:Item)=>session.id===reports.current.id)?[reports.current]:[])].map((session:Item)=>({id:'study-'+session.id,date:recordDate(session.started_at),title:'학습 리포트',href:'/reports/sessions/'+session.id,kind:'study',completed:session.state!=='active'})),
+        ...feedback.items.map((report:Item)=>({id:'report-'+report.id,date:recordDate(report.created_at),title:interviewLabel({kind:report.data?.kind,data:report.data}),href:'/reports/reports/'+report.id,kind:'interview',completed:true})),
+      ] as CalendarRecord[]} currentAction={reports.current?.report?.eventCount?{date:recordDate(reports.current.started_at),finishing,onFinish:()=>void finish()}:undefined} hasMore={Boolean(reports.sessionsPage?.hasMore||feedback.page?.hasMore)} loadingMore={Boolean(loadingMore||feedback.loading)} onMore={()=>{if(reports.sessionsPage?.hasMore)void more('sessions');if(feedback.page?.hasMore)void feedback.more();}}/>}
+
+      <details className={recordStyles.optional}><summary>전체 말하기 변화</summary><SpeechGrowth currentContext={{targetId,contentVersion:Number(data.package?.active_version||0),questions:data.learning?.questions||[],targets:data.targets||[]}}/></details>
+      {!reports&&!error&&<div className={ownedClassName(toolbarStyles.reportSkeleton,true)} role="status" aria-label="학습 기록 불러오는 중"><span/><span/></div>}
     </>}
   </div>;
 }
@@ -143,39 +143,42 @@ function RecordsOverview({ slug = [] }: { slug?: string[] }) {
 function StudyReport({id}:{id:string}) {
   const {reports,error}=useStudyReports(id),session=reports?.session,report=session?.report;
   const events:Item[]=reports?.sourceFacts||report?.events||[];
-  return <div className={ownedClassName("records-view study-report-view "+styles.report,true)}><Breadcrumb items={[{label:'내 리포트',href:'/reports'},{label:'학습 상세'}]}/><PageTitle title={session?dateLabel(session.started_at)+' 학습 리포트':'학습 리포트'} aside={session&&<Badge tone={session.state==='active'?'green':'neutral'}>{session.state==='active'?'자동 저장 중':'학습 완료'}</Badge>}/>
+  return <div className={ownedClassName("records-view study-report-view "+styles.report,true)}><Breadcrumb items={[{label:'학습 캘린더',href:session?'/records?date='+recordDate(session.started_at):'/records'},{label:'학습 상세'}]}/><PageTitle title={session?dateLabel(session.started_at)+' 학습 리포트':'학습 리포트'} aside={session&&<Badge tone={session.state==='active'?'green':'neutral'}>{session.state==='active'?'자동 저장 중':'학습 완료'}</Badge>}/>
     {error&&<Alert>{error}</Alert>}
     {!reports&&!error?<Spinner/>:session&&<>
-      <p className={ownedClassName("study-period",true)}>{sessionTime(session.started_at)}{session.ended_at&&' — '+sessionTime(session.ended_at)}</p><SpeechGrowth studySessionId={id}/><details className={ownedClassName("speech-activity-details",true)}><summary className={ownedClassName(undefined,true)}>학습 활동 수</summary><StudyReportNumbers report={report}/></details>
+      <p className={ownedClassName("study-period",true)}>{sessionTime(session.started_at)}{session.ended_at&&' — '+sessionTime(session.ended_at)}</p><ReportDownload studyId={id}/><StudyReportNumbers report={report}/><details className={recordStyles.optional}><summary>활동별 상세</summary>
       {!!report.quiz?.answered&&<section className={ownedClassName("report-feedback-section",true)}><h2 className={ownedClassName(undefined,true)}>퀴즈</h2><div className={ownedClassName("study-facts",true)}><span className={ownedClassName(undefined,true)}>선택형 {report.quiz.choice}개</span><span className={ownedClassName(undefined,true)}>주관식 {report.quiz.written}개</span><span className={ownedClassName(undefined,true)}>녹음 답변 {report.quiz.oral}개</span><span className={ownedClassName(undefined,true)}>정답 {report.quiz.correct}개</span><span className={ownedClassName(undefined,true)}>오답 {report.quiz.wrong}개</span><span className={ownedClassName(undefined,true)}>채점하지 않은 답변 {report.quiz.ungraded}개</span><span className={ownedClassName(undefined,true)}>시간 초과 {report.quiz.timedOut}개</span></div></section>}
       {!!report.interviews?.answered&&<section className={ownedClassName("report-feedback-section",true)}><h2 className={ownedClassName(undefined,true)}>모의면접</h2><div className={ownedClassName("study-facts",true)}><span className={ownedClassName(undefined,true)}>Chat 답변 {report.interviews.chat}개</span><span className={ownedClassName(undefined,true)}>Live 답변 {report.interviews.live}개</span>{report.interviews.assisted>0&&<span className={ownedClassName(undefined,true)}>도움을 받은 답변 {report.interviews.assisted}개</span>}</div></section>}
       {!!(report.memory?.reviewed||report.assignments?.submitted||report.knowledge?.updates)&&<section className={ownedClassName("report-feedback-section",true)}><h2 className={ownedClassName(undefined,true)}>함께 한 학습</h2><div className={ownedClassName("study-facts",true)}><span className={ownedClassName(undefined,true)}>암기 복습 {report.memory?.reviewed||0}개</span><span className={ownedClassName(undefined,true)}>과제 답변 {report.assignments?.submitted||0}개</span><span className={ownedClassName(undefined,true)}>영상 기록 {report.knowledge?.updates||0}개</span></div></section>}
       {!!report.weakPoints?.length&&<section className={ownedClassName("records-history-section",true)}><h2 className={ownedClassName(undefined,true)}>다시 볼 질문</h2>{report.weakPoints.map((point:Item,index:number)=><LinkedRow key={point.memoryItemId||point.questionId||index} href={studyWeakPointHref(point)} title={point.prompt||'퀴즈 질문'} end={<span className={ownedClassName("muted",true)}>{[point.wrong>0?'오답 '+point.wrong+'회':'',point.timedOut>0?'시간 초과 '+point.timedOut+'회':''].filter(Boolean).join(' · ')}</span>}/>)}</section>}
-      <section className={ownedClassName("records-history-section",true)}><h2 className={ownedClassName(undefined,true)}>저장한 답변</h2>{events.map((event:Item)=><StudyAnswer key={event.id} event={event}/>)}{!events.length&&<Empty title="아직 저장한 답변이 없어요" href="/quiz" label="퀴즈 시작"/>}</section>
+      </details><section className={ownedClassName("records-history-section",true)}><h2 className={ownedClassName(undefined,true)}>질문과 답변</h2>{events.map((event:Item)=><StudyAnswer key={event.id} event={event}/>)}{!events.length&&<Empty title="아직 저장한 답변이 없어요" href="/quiz" label="퀴즈 시작"/>}</section><details className={recordStyles.optional}><summary>말하기 분석</summary><SpeechGrowth studySessionId={id}/></details>
     </>}
   </div>;
 }
 function sessionTime(value:string) {return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(value));}
+function QuestionDetails({title,number,children,id,initialOpen=false}:{title:string;number?:number;children:ReactNode;id?:string;initialOpen?:boolean}) {
+  const [opened,setOpened]=useState(initialOpen),element=useRef<HTMLDetailsElement>(null);
+  useEffect(()=>{if(initialOpen&&element.current){setOpened(true);element.current.open=true;element.current.scrollIntoView({block:'start'});}},[initialOpen]);
+  return <details ref={element} id={id} className={recordStyles.question} name="saved-question" onToggle={event=>{if(event.currentTarget.open)setOpened(true);}}><summary>{number&&<span>질문 {number}</span>}<strong>{title}</strong></summary>{opened&&<div className={recordStyles.questionBody}>{children}</div>}</details>;
+}
+
 function StudyAnswer({event}:{event:Item}) {
   const value=event.data||{},quiz=event.kind==='quiz_response';
   const knowledge=event.kind==='knowledge_progress',memory=event.kind==='memory_review',assignment=event.kind==='assignment_submission';
   const state=quiz||memory||assignment?(value.timedOut===true?'시간 초과':value.outcome===true?'검수 정답':value.outcome===false?'오답':value.mode==='oral'?'녹음 답변':'미채점 답변'):knowledge?'직접 남긴 기록':value.kind==='video'||value.kind==='live'?'Live':'Chat';
   const text=typeof(value.response||value.answer)==='string'?value.response||value.answer:Array.isArray(value.response)?value.response.join(' · '):'';
   const audioId=typeof value.audioId==='string'&&/^[0-9a-f-]{36}$/i.test(value.audioId)?value.audioId:'';
-  return <article className={ownedClassName("study-answer",true)}><div className={ownedClassName("section-heading",true)}><span className={ownedClassName("muted",true)}>{quiz?'Quiz':memory?'암기 복습':assignment?'과제':knowledge?'지식한입':'모의면접'} · {sessionTime(event.created_at)}{event.historical&&' · 이전 기록'}</span><Badge tone={value.outcome===true?'green':'neutral'}>{state}</Badge></div><h3 className={ownedClassName(undefined,true)}>{value.prompt||value.question||value.title||'저장한 학습'}</h3>{text&&<p className={ownedClassName(undefined,true)}>{text}</p>}{value.reflection&&<p className={ownedClassName(undefined,true)}>{value.reflection}</p>}{value.explanation&&<p className={ownedClassName(undefined,true)}>{value.explanation}</p>}{knowledge&&value.completed===true&&<p className={ownedClassName("muted",true)}>시청했다고 직접 체크했어요.</p>}{quiz&&audioId&&<audio controls preload="none" src={'/api/quiz?recordingId='+encodeURIComponent(audioId)} aria-label="내 녹음 답변" className={ownedClassName(undefined,true)}/>}{(value.hintUsed||value.assisted)&&<p className={ownedClassName("muted",true)}>도움을 사용한 답변</p>}{value.timedOut===true&&<span className={ownedClassName("muted",true)}>시간 초과</span>}{value.sessionId&&<Link className={ownedClassName("text-link")} href={'/interview/'+value.sessionId}>면접 기록<ArrowUpRight size={16}/></Link>}{value.questionId&&<Link className={ownedClassName("text-link")} href={studyAnswerComparisonHref(value.questionId,value,event.kind==='interview_answer'?event.source_id:undefined)}>이 질문의 답변 비교<ArrowUpRight size={16}/></Link>}</article>;
+  return <QuestionDetails title={value.prompt||value.question||value.title||'저장한 학습'}><article className={ownedClassName("study-answer",true)}><div className={ownedClassName("section-heading",true)}><span className={ownedClassName("muted",true)}>{quiz?'Quiz':memory?'암기 복습':assignment?'과제':knowledge?'지식한입':'모의면접'} · {sessionTime(event.created_at)}{event.historical&&' · 이전 기록'}</span><Badge tone={value.outcome===true?'green':'neutral'}>{state}</Badge></div>{text&&<p className={ownedClassName(undefined,true)}>{text}</p>}{value.reflection&&<p className={ownedClassName(undefined,true)}>{value.reflection}</p>}{value.explanation&&<p className={ownedClassName(undefined,true)}>{value.explanation}</p>}{knowledge&&value.completed===true&&<p className={ownedClassName("muted",true)}>시청했다고 직접 체크했어요.</p>}{quiz&&audioId&&<audio controls preload="none" src={'/api/quiz?recordingId='+encodeURIComponent(audioId)} aria-label="내 녹음 답변" className={ownedClassName(undefined,true)}/>}{(value.hintUsed||value.assisted)&&<p className={ownedClassName("muted",true)}>도움을 사용한 답변</p>}{value.timedOut===true&&<span className={ownedClassName("muted",true)}>시간 초과</span>}{value.sessionId&&<Link className={ownedClassName("text-link")} href={'/interview/'+value.sessionId}>면접 기록<ArrowUpRight size={16}/></Link>}{value.questionId&&<Link className={ownedClassName("text-link")} href={studyAnswerComparisonHref(value.questionId,value,event.kind==='interview_answer'?event.source_id:undefined)}>이 질문의 답변 비교<ArrowUpRight size={16}/></Link>}</article></QuestionDetails>;
 }
 
 function Report({ id }: { id: string }) {
-  const { data, toast } = useApp();
-  const router = useRouter();
+  const { data } = useApp();
+  const requestedTurn=useSearchParams().get('turnId');
   const {workflows,reload}=useLearningWorkflows();
   const detail=useRecordDetail('reports','id='+encodeURIComponent(id),true,data.user.id);
   const report=detail.item?{...detail.item,...detail.item.data}:null;
   const [error, setError] = useState('');
-  const [retraining, setRetraining] = useState('');
   const [feedbackBusy,setFeedbackBusy]=useState(false);
-  const sending = useRef(false);
-  const requestIds = useRef<Item>({});
   useEffect(()=>{if(report?.aiStatus!=='pending')return;let remaining=40;const timer=setInterval(()=>{if(--remaining<=0)clearInterval(timer);void detail.reload();},3000);return()=>clearInterval(timer);},[report?.aiStatus,detail.reload]);
   if(detail.loading)return <Spinner/>;
   if(detail.error)return <Alert>{detail.error}</Alert>;
@@ -183,38 +186,29 @@ function Report({ id }: { id: string }) {
   const sections: Item[] = report.sections || [];
   const experienceCard=report.experienceCard||detail.session?.data?.experienceCard;
   async function retryFeedback(){if(feedbackBusy)return;setFeedbackBusy(true);setError('');try{await post('/api/interviews',{action:'report_feedback',sessionId:report.session_id});await detail.reload();}catch(cause){setError((cause as Error).message);}finally{setFeedbackBusy(false);}}
-  async function retrain(questionId: string) {
-    if (sending.current) return;
-    sending.current = true; setRetraining(questionId); setError('');
-    requestIds.current[questionId] ||= crypto.randomUUID();
-    try {
-      const result = await post('/api/learning', { action: 'assignment_create', questionId, reportId: id, title: '면접 후 다시 말하기', requestId: requestIds.current[questionId] });
-      if (result.assignment?.id) router.push('/practice/assignments/' + result.assignment.id);
-      else { toast('재훈련 과제를 만들었어요.'); router.push('/practice/assignments'); }
-      requestIds.current[questionId] = '';
-    } catch (err) { setError((err as Error).message); }
-    finally { sending.current = false; setRetraining(''); }
-  }
   return <div className={ownedClassName("records-view report-view "+styles.report,true)}>
-    <Breadcrumb items={[{ label: '내 리포트', href: '/reports' }, { label: '면접 피드백' }]} />
+    <Breadcrumb items={[{ label: '학습 캘린더', href: '/records?date='+recordDate(report.created_at) }, { label: '면접 피드백' }]} />
     <PageTitle title={(report.kind === 'video' ? '화상' : '채팅') + ' 면접 리포트'} />
     {error && <Alert>{error}</Alert>}
     <div className={ownedClassName("report-summary",true)}><span className={ownedClassName(undefined,true)}>{dateLabel(report.created_at)}</span></div>
+    <ReportDownload reportId={id}/>
     {detail.session?.data?.experienceCard && <section className={ownedClassName("detail-section",true)}><h2 className={ownedClassName(undefined,true)}>이 경험을 더 다듬어볼까?</h2><p className={ownedClassName(undefined,true)}>이번 답변과 피드백을 보고, 내 행동과 배운 점을 보완해 보세요.</p><Link className={ownedClassName("button ghost")} href={'/armory?card='+detail.session!.data.experienceCard.id}>내 경험에서 보완하기</Link></section>}
     <SpeechGrowth reportId={id}/>
-    {report.session_id && <RecordMedia sessionId={report.session_id} />}
-    {report.aiFeedback && <section className={ownedClassName("report-feedback-section",true)}><h2 className={ownedClassName(undefined,true)}>AI 피드백</h2><p className={ownedClassName("muted small",true)}>표현 제안은 내 답변·원문과 확인해 사용해 주세요. 내가 하지 않은 행동은 답변에 넣지 않아요.</p><MarkdownMessage content={report.aiFeedback.content}/></section>}
+    {report.aiFeedback && <details className={recordStyles.optional}><summary>면접 전체 피드백</summary><section className={ownedClassName("report-feedback-section",true)}><p className={ownedClassName("muted small",true)}>표현 제안은 내 답변·원문과 확인해 사용해 주세요. 내가 하지 않은 행동은 답변에 넣지 않아요.</p><MarkdownMessage content={report.aiFeedback.content}/></section></details>}
     {report.aiStatus !== 'completed' && <div className={ownedClassName("inline-notice",true)}>내용 피드백 {report.aiStatus === 'failed' ? '처리 실패' : '대기'} · 아래 기록으로 직접 점검할 수 있어요.{sections.length>0&&report.session_id&&<button className={ownedClassName("text-link",true)} disabled={feedbackBusy||report.aiStatus==='pending'&&Date.now()-Number(report.aiAttemptedAt||0)<60000} onClick={()=>void retryFeedback()}>{feedbackBusy?'다시 요청하는 중':'피드백 다시 요청'}</button>}</div>}
-    {sections.map((s, i) => <section className={ownedClassName("report-section",true)} key={s.turnId || i}>
-      <span className={ownedClassName("question-index",true)}>질문 {i + 1}</span>
-      <h2 className={ownedClassName(undefined,true)}>{s.question}</h2>
+    <section aria-label="질문별 답변"><h2 className={ownedClassName(undefined,true)}>질문 {sections.length}개</h2>
+    {sections.map((s, i) => <QuestionDetails key={s.turnId || i} title={s.question} number={i+1} id={s.turnId?'turn-'+s.turnId:undefined} initialOpen={Boolean(s.turnId&&s.turnId===requestedTurn)}>
       <div className={ownedClassName("report-answer",true)}><h3 className={ownedClassName(undefined,true)}>내 답변</h3><p className={ownedClassName(undefined,true)}>{s.answer || s.response}</p></div>
+      {s.evaluation?.rubric&&<InterviewEvaluationSummary evaluation={s.evaluation}/>}
+      {s.turnId&&<CompletedExampleAnswer reportId={id} turnId={s.turnId}/>}
+      {s.feedback&&<section className={recordStyles.questionFeedback} aria-label="이 질문의 피드백"><h3>답변 피드백</h3><MarkdownMessage content={typeof s.feedback==='string'?s.feedback:s.feedback.content||''}/>{s.evaluation?.reason&&<p className={recordStyles.evaluation}><strong>{s.evaluation.needsReview===true?'다음 연습에서 보완':s.evaluation.needsReview===false?'근거 확인':'판단 보류'}</strong>{s.evaluation.reason}</p>}{Array.isArray(s.evaluation?.evidence)&&s.evaluation.evidence.length>0&&<details><summary>평가에 사용한 내 표현</summary>{s.evaluation.evidence.map((evidence:string,index:number)=><blockquote key={index}>{evidence}</blockquote>)}</details>}</section>}
       {(s.answerElements || s.answer_elements || s.expectedElements || []).length>0&&<div className={ownedClassName("report-elements",true)}><h3 className={ownedClassName(undefined,true)}>답변 요소</h3><div className={ownedClassName("tag-list",true)}>{(s.answerElements || s.answer_elements || s.expectedElements || []).map((k: string) => <span key={k} className={ownedClassName(undefined,true)}>{k}</span>)}</div></div>}
       {s.turnId&&<AnswerMeaningChecks version={workflows?.versions?.find((version:Item)=>version.turn_id===s.turnId&&version.script===(s.answer||s.response))} onSaved={reload}/>}
-      {s.questionId&&!s.questionId.startsWith('briefing_')&&<div className={ownedClassName("learning-inline-links report-retry-actions",true)}><Link className={ownedClassName("button primary")} href={learningTodayHref(s.questionId,{experienceCard,content_version:report.contentVersion,source_type:s.sourceType,target_id:report.targetId,common_revision:s.commonRevision})}>다음 학습 이어서<ArrowUpRight size={17}/></Link><Link className={ownedClassName("text-link report-retry")} href={interviewRetryHref(s.questionId,{experienceCard,content_version:report.contentVersion,source_type:s.sourceType,target_id:report.targetId,common_revision:s.commonRevision})}>이 질문 다시 말하기<ArrowUpRight size={17}/></Link><Link className={ownedClassName("text-link")} href={'/records/comparisons/' + encodeURIComponent(s.questionId)+(report.targetId?'?targetId='+encodeURIComponent(report.targetId)+(s.turnId?'&turnId='+encodeURIComponent(s.turnId):''):s.turnId?'?turnId='+encodeURIComponent(s.turnId):'')}>답변 비교<ArrowUpRight size={17}/></Link><button className={ownedClassName("button ghost",true)} disabled={!!retraining} onClick={()=>retrain(s.questionId)}><RotateCcw size={16}/>{retraining===s.questionId?'과제 만드는 중':'재훈련 과제로 담기'}</button></div>}
-    </section>)}
-    {report.observations && report.observations.status !== 'not_measured' && <section className={ownedClassName("report-feedback-section",true)}><h2 className={ownedClassName(undefined,true)}>발화 관찰</h2><p className={ownedClassName("muted",true)}>{JSON.stringify(report.observations)}</p></section>}
-    <Link className={ownedClassName("button primary report-new-session")} href="/interview/new">새 면접 연습<ArrowUpRight size={17} /></Link>
+      {report.session_id&&s.turnId&&<RecordMedia sessionId={report.session_id} turnId={s.turnId}/>}
+      {s.questionId&&!s.questionId.startsWith('briefing_')&&<div className={ownedClassName("learning-inline-links report-retry-actions",true)}><Link className={ownedClassName("button primary")} href={interviewRetryHref(s.questionId,{experienceCard,content_version:report.contentVersion,source_type:s.sourceType,target_id:report.targetId,common_revision:s.commonRevision})}>다시 연습하기<ArrowUpRight size={17}/></Link><Link className={ownedClassName("text-link")} href={'/records/comparisons/' + encodeURIComponent(s.questionId)+(report.targetId?'?targetId='+encodeURIComponent(report.targetId)+(s.turnId?'&turnId='+encodeURIComponent(s.turnId):''):s.turnId?'?turnId='+encodeURIComponent(s.turnId):'')}>답변 비교<ArrowUpRight size={17}/></Link></div>}
+    </QuestionDetails>)}</section>
+    {report.session_id&&<details className={recordStyles.optional}><summary>전체 녹화·전사</summary><RecordMedia sessionId={report.session_id}/></details>}
+    <Link className={ownedClassName("text-link report-new-session")} href="/interview/new">새 면접 연습<ArrowUpRight size={17} /></Link>
   </div>;
 }
 
@@ -294,7 +288,7 @@ function AnswerComparisons({ questionId }: { questionId?: string }) {
     {loading && !workflows ? <Spinner /> : !versions.length ? !error && <Empty title={comparisonTarget||comparisonSource||comparisonVersion?'선택한 학습 맥락에 저장한 답변이 없어요':'저장한 답변이 없어요'} href="/materials/answers" label="답변 초안 작성" /> : <>
       <div className={ownedClassName(comparisonStyles.questionPicker,true)} data-question-key={selected}><span className={ownedClassName(comparisonStyles.fieldLabel,true)}>비교할 질문</span><SettingsSelect label="비교할 질문" value={selected} onChange={setSelectedQuestion} fullWidth options={[...(requested&&!questionIds.includes(requested)?[{value:requested,label:question?.prompt||'선택한 질문'}]:[]),...questionIds.map(id=>({value:id,label:id===selected?questionPrompt:versions.find(v=>v.question_id===id)?.question||data.learning.questions?.find((q:Item)=>q.id===id)?.prompt||'저장된 질문'}))]}/></div>
       {contexts.length>1&&<div className={ownedClassName(comparisonStyles.contextPicker,true)}><span className={ownedClassName(comparisonStyles.fieldLabel,true)}>연습한 지원처</span><SettingsSelect label="비교할 연습 맥락" value={comparisonContext} onChange={setSelectedContext} fullWidth options={contexts.map(key=>{const group=matching.filter(v=>versionContext(v)===key),latest=group[0];return {value:key,label:([latest.target_snapshot?.university,latest.target_snapshot?.department||latest.target_snapshot?.major,latest.target_snapshot?.admission_year&&latest.target_snapshot.admission_year+'학년도'].filter(Boolean).join(' · ')||'지원처 정보 없는 기록')+' · '+comparisonDate(latest.created_at)};})}/></div>}
-      {!current.length ? <Empty title="이 질문에 저장한 답변이 없어요" href={question ? '/materials/answers/' + selected : '/records'} label={question ? '답변 작성' : '면접 리포트'} /> : current.length < 2 ? <><section className={ownedClassName(comparisonStyles.answerCard+' '+comparisonStyles.single,true)} aria-label="저장한 답변"><h2 className={ownedClassName(comparisonStyles.answerHeading,true)}>{answerVersionLabel(right)}</h2><ComparisonAnswer value={right}/></section><div className={ownedClassName(comparisonStyles.singleFooter,true)}><p className={ownedClassName(undefined,true)}>{workflows?.versionsPage?.hasMore||workflows?.page?.hasMore?'이전 답변을 불러오면 비교할 수 있어요.':'답변을 한 번 더 남기면 비교할 수 있어요.'}</p>{right.source_status==='saved'?<Link className={ownedClassName("button primary")} href={interviewRetryHref(selected,right)}>이 질문 다시 말하기<ArrowUpRight size={17}/></Link>:right.session_id&&<Link className={ownedClassName("button primary")} href={'/interview/'+right.session_id}>면접 기록 보기<ArrowUpRight size={17}/></Link>}</div></> : <>
+      {!current.length ? <Empty title="이 질문에 저장한 답변이 없어요" href={question ? '/materials/answers/' + selected : '/records'} label={question ? '답변 작성' : '면접 리포트'} /> : current.length < 2 ? <><section className={ownedClassName(comparisonStyles.answerCard+' '+comparisonStyles.single,true)} aria-label="저장한 답변"><h2 className={ownedClassName(comparisonStyles.answerHeading,true)}>{answerVersionLabel(right)}</h2><ComparisonAnswer value={right}/></section><div className={ownedClassName(comparisonStyles.singleFooter,true)}><p className={ownedClassName(undefined,true)}>{workflows?.versionsPage?.hasMore||workflows?.page?.hasMore?'이전 답변을 불러오면 비교할 수 있어요.':'답변을 한 번 더 남기면 비교할 수 있어요.'}</p>{right.source_status==='saved'?<Link className={ownedClassName("button primary")} href={interviewRetryHref(selected,right)}>다시 연습하기<ArrowUpRight size={17}/></Link>:right.session_id&&<Link className={ownedClassName("button primary")} href={'/interview/'+right.session_id}>면접 기록 보기<ArrowUpRight size={17}/></Link>}</div></> : <>
         <div className={ownedClassName(comparisonStyles.compareToolbar,true)}><span className={ownedClassName(comparisonStyles.fieldLabel,true)}>답변 {current.length}개</span><div className={ownedClassName(comparisonStyles.viewSwitch,true)} role="group" aria-label="답변 비교 보기 방식"><button type="button" aria-pressed={!wipeMode} onClick={()=>setViewMode('columns')} className={ownedClassName(undefined,true)}>나란히 보기</button><button type="button" aria-pressed={wipeMode} disabled={!canWipe} title={!canWipe?'두 답변에 텍스트가 필요해요.':undefined} onClick={()=>setViewMode('wipe')} className={ownedClassName(undefined,true)}>겹쳐 보기</button></div></div>
         <div className={ownedClassName(comparisonStyles.columns,true)}>{[{ label: '먼저 볼 답변', value: left, set: setLeftId }, { label: '함께 볼 답변', value: right, set: setRightId }].map((column,index) => <section key={column.label} className={ownedClassName(comparisonStyles.answerCard,true)} aria-label={column.label}>
           <div className={ownedClassName(comparisonStyles.cardHeading,true)}><h2 className={ownedClassName(comparisonStyles.answerHeading,true)}>답변 {index+1}</h2><SettingsSelect label={column.label+' 저장 시점'} value={column.value.id} onChange={column.set} fullWidth options={current.map(v=>({value:v.id,label:answerVersionLabel(v)+' · '+comparisonDate(v.created_at)}))}/></div>
@@ -303,7 +297,7 @@ function AnswerComparisons({ questionId }: { questionId?: string }) {
         {wipeMode&&<ComparisonWipe key={left.id+'|'+right.id} previous={left.script} current={right.script} previousLabel={answerVersionLabel(left)+' · '+comparisonDate(left.created_at)} currentLabel={answerVersionLabel(right)+' · '+comparisonDate(right.created_at)}/>}
         <ComparisonObservation before={left as any} after={right as any}/>
         <AnswerMeaningChecks version={right} onSaved={()=>history.refreshVersion(right.id)}/>
-        <div className={ownedClassName("learning-inline-links "+comparisonStyles.actions,true)}><Link className={ownedClassName("button primary")} href={learningTodayHref(selected,{...right,target_id:right.target_id||comparisonTarget})}>다음 학습 이어서<ArrowUpRight size={17}/></Link>{right.source_status==='saved'&&<Link className={ownedClassName("text-link")} href={interviewRetryHref(selected,right)}>이 질문 다시 말하기<ArrowUpRight size={17}/></Link>}{question?<><Link className={ownedClassName("text-link")} href={'/materials/answers/' + selected}>답변 수정<ArrowUpRight size={16}/></Link><Link className={ownedClassName("text-link")} href={'/materials/questions/' + selected}>질문과 근거<ArrowUpRight size={16}/></Link></>:right.session_id&&<Link className={ownedClassName("text-link")} href={'/interview/'+right.session_id}>면접 기록 보기<ArrowUpRight size={17}/></Link>}</div>
+        <div className={ownedClassName("learning-inline-links "+comparisonStyles.actions,true)}>{right.source_status==='saved'?<Link className={ownedClassName("button primary")} href={interviewRetryHref(selected,right)}>다시 연습하기<ArrowUpRight size={17}/></Link>:right.session_id&&<Link className={ownedClassName("button primary")} href={'/interview/'+right.session_id}>면접 기록 보기<ArrowUpRight size={17}/></Link>}<details className={comparisonStyles.moreActions}><summary>질문·자료 더 보기</summary><div><Link href={learningTodayHref(selected,{...right,target_id:right.target_id||comparisonTarget})}>다음 학습 이어서</Link>{question&&<><Link href={'/materials/answers/' + selected}>답변 수정</Link><Link href={'/materials/questions/' + selected}>질문과 근거</Link></>}</div></details></div>
       </>}
     </>}
   </div>;

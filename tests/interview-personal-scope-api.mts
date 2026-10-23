@@ -1,3 +1,5 @@
+import * as interviewPolicyModule from '../apps/web/src/lib/interview-policy';
+import * as interviewFeedbackModule from '../apps/web/src/lib/interview-feedback';
 import assert from 'node:assert/strict';
 import {randomUUID,randomBytes,createHash} from 'node:crypto';
 import pg from 'pg';

@@ -12,11 +12,11 @@ const nodes=(value:any):any[]=>Array.isArray(value)?value.flatMap(nodes):value&&
 const text=(value:any):string=>typeof value==='string'||typeof value==='number'?String(value):Array.isArray(value)?value.map(text).join(''):value?.props?text(value.props.children):'';
 function deferred(){let resolve!:(value:any)=>void,reject!:(error:Error)=>void;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};}
 
-function harness({diagnostic=false,existing=false,pendingAction='start',kind='focus',dayTasks=[] as any[],deferNext=false,failNext=false,diagnostics=undefined as any}={}){
+function harness({diagnostic=false,existing=false,pendingAction='start',kind='focus',pressure=false,dayTasks=[] as any[],deferNext=false,failNext=false,diagnostics=undefined as any}={}){
   const hooks:any[]=[],effects:any[]=[],pending:Function[]=[],requests:any[]=[],pushes:string[]=[];
   let cursor=0,dirty=true,tree:any,target='school-a',student='student-a',plan='plan-a',refreshes=0,department='환경공학과',version=1;
   const deferreds:ReturnType<typeof deferred>[]=[],nextReads:ReturnType<typeof deferred>[]=[],planReads:string[]=[];let reads=0,planReadOverride:((url:string)=>Promise<any>)|null=null;
-  const task=()=>({id:plan,minutes:25,kind,targetId:target,questionId:'question-'+target,sourceType:'fixture',sourceVersion:1,title:'집중 보완 · 나의 활동',practice:kind==='quiz'?{kind:'quiz',mode:'answer',itemIds:['item-a']}:{kind:'assignment',assignmentId:'assignment-a'},href:'/quiz/assignments/assignment-a?trainingPlanId='+plan,...(existing?{sessionId:'session-'+target}:{})});
+  const task=()=>({id:plan,minutes:25,kind,pressure,targetId:target,questionId:'question-'+target,sourceType:'fixture',sourceVersion:1,title:'집중 보완 · 나의 활동',practice:kind==='quiz'?{kind:'quiz',mode:'answer',itemIds:['item-a']}:{kind:'assignment',assignmentId:'assignment-a'},href:'/quiz/assignments/assignment-a?trainingPlanId='+plan,...(existing?{sessionId:'session-'+target}:{})});
   const react={Suspense:'Suspense',useCallback:(fn:Function)=>fn,useState(initial:any){const index=cursor++;if(!(index in hooks))hooks[index]=initial;return [hooks[index],(value:any)=>{const next=typeof value==='function'?value(hooks[index]):value;if(!Object.is(next,hooks[index])){hooks[index]=next;dirty=true;}}];},useRef(initial:any){return hooks[cursor++]??={current:initial};},useEffect(fn:Function,deps:any[]){const index=cursor++,previous=effects[index];if(!previous||deps.some((value,i)=>!Object.is(value,previous.deps[i]))){effects[index]={deps};pending.push(()=>{previous?.cleanup?.();effects[index].cleanup=fn();});}}};
   const jsx={jsx:(type:any,props:any)=>({type,props}),jsxs:(type:any,props:any)=>({type,props})};
   const module={exports:{} as any};
@@ -161,11 +161,11 @@ test('ending after one diagnostic response preserves the record but does not ski
  const info=h.completion();info.session.data.trainingProgress={allRootsAnswered:false};h.interview().props.onTrainingUpdate(info);await h.flush();
  assert.match(text(h.tree),/차시는 완료로 표시하지 않고/);assert.ok(nodes(h.tree).some(node=>node.type==='a'&&node.props.href==='/my/train?planId=plan-a'));
  assert.equal(text(h.tree).includes('오늘 계획을 모두 마쳤어요.'),false);assert.equal(text(h.tree).includes('훈련 완료'),false);
- const restart=nodes(h.tree).find(node=>node.type==='button'&&text(node)==='진단 다시 답하기');assert.ok(restart);restart.props.onClick();await h.flush();assert.ok(h.action('진단 질문에 답하기'));assert.equal(h.interview(),undefined,'retry returns to a fresh start instead of reopening the ended room');
+ const restart=nodes(h.tree).find(node=>node.type==='button'&&text(node)==='답변 연습 다시 시작');assert.ok(restart);restart.props.onClick();await h.flush();assert.ok(h.action('답변 연습 시작'));assert.equal(h.interview(),undefined,'retry returns to a fresh start instead of reopening the ended room');
 });
 
 test('a partial diagnostic from a previous visit opens a fresh start instead of looping its ended room',async()=>{
- const h=harness({diagnostic:true,existing:true,diagnostics:{state:'partial',sessionId:'session-school-a'}});await h.flush();assert.equal(h.interview(),undefined);assert.ok(h.action('진단 질문에 답하기'));
+ const h=harness({diagnostic:true,existing:true,diagnostics:{state:'partial',sessionId:'session-school-a'}});await h.flush();assert.equal(h.interview(),undefined);assert.ok(h.action('답변 연습 시작'));
 });
 
 test('the final lesson leads to daily reflection and reflection confirmation ends the day without a blank interview',async()=>{
@@ -200,8 +200,8 @@ test('changing only planId after completion unmounts the old interview and opens
 
 test('connected interviews enable the existing capped follow-up chain while diagnosis stays unaided',async()=>{
  for(const [kind,diagnostic,followups] of [['mixed',false,true],['focus',false,true],['diagnostic',true,false]] as const){
-  const h=harness({kind,diagnostic});await h.flush();h.action(diagnostic?'진단 질문에 답하기':'훈련 시작').props.onClick();await h.flush();
-  const started=h.requests.find(request=>request.url==='/api/interviews'&&request.input.action==='start');assert.equal(started.input.followups,followups);assert.equal(started.input.questionCount,kind==='mixed'?4:1);
+  const h=harness({kind,diagnostic});await h.flush();h.action(diagnostic?'답변 연습 시작':'훈련 시작').props.onClick();await h.flush();
+  const started=h.requests.find(request=>request.url==='/api/interviews'&&request.input.action==='start');assert.equal(started.input.followups,followups);assert.equal(started.input.questionCount,kind==='mixed'?4:1);assert.equal(started.input.sessionMode,kind==='mixed'?'real':'practice');assert.equal(started.input.feedbackTiming,kind==='mixed'||diagnostic?'end':'turn');
   h.deferreds[0].resolve({session:{id:'session'}});await h.flush();
  }
 });
@@ -251,4 +251,14 @@ test('a late daily-review projection cannot replace the new account or school af
  h.action('오늘 정리 저장').props.onClick();await h.flush();h.deferreds[0].resolve({completed:true});await h.flush();oldRead=false;h.changeScope('school-b','student-b');await h.flush();
  gate.resolve({selectedTask:{id:'plan-a',kind:'review',completed:true},dayReview:{targetId:null,answers:987,remainingReview:654,questions:[]}});await h.flush();
  assert.equal(text(h.tree).includes('987'),false);assert.equal(text(h.tree).includes('654'),false);assert.equal(text(h.tree).includes('오늘 정리 완료'),false);assert.equal(h.refreshes,0);assert.equal(h.action('오늘 정리 저장').props.pending,false);
+});
+
+
+test('real training lets the student choose pressure while practice follows the saved quest',async()=>{
+ const real=harness({kind:'mixed'});await real.flush();
+ let radios=nodes(real.tree).filter(node=>node.type==='input'&&node.props.name==='training-pressure');assert.equal(radios.length,2);assert.equal(radios[0].props.checked,true);
+ radios[1].props.onChange();await real.flush();real.action('훈련 시작').props.onClick();await real.flush();
+ assert.equal(real.requests.find(request=>request.url==='/api/interviews').input.pressure,true);
+ real.changeScope('school-b');await real.flush();radios=nodes(real.tree).filter(node=>node.type==='input'&&node.props.name==='training-pressure');assert.equal(radios[0].props.checked,true,'new school starts with ordinary interview mode');
+ for(const pressure of [false,true]){const practice=harness({kind:'focus',pressure});await practice.flush();assert.equal(nodes(practice.tree).filter(node=>node.type==='input'&&node.props.name==='training-pressure').length,0);practice.action('훈련 시작').props.onClick();await practice.flush();assert.equal(practice.requests.find(request=>request.url==='/api/interviews').input.pressure,pressure);}
 });

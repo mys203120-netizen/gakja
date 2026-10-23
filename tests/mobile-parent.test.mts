@@ -9,11 +9,11 @@ test('mobile details keep a useful in-app parent when opened directly',()=>{
   ['/schools/new','/schools'],['/schools/target','/schools'],
   ['/materials/questions/question','/materials/questions'],['/materials/briefings/article','/materials/briefings'],
   ['/knowledge/article','/knowledge'],['/reports/report','/records'],
-  ['/records/comparisons','/records'],['/my/train','/my'],
-  ['/on/thread','/my'],['/quiz/session/session','/learn'],['/interview/session','/learn'],
+  ['/records','/preparation'],['/records/comparisons','/records'],['/my/train','/training'],
+  ['/on/thread','/training'],['/quiz/session/session','/learn'],['/interview/session','/learn'],
  ])assert.equal(mobileParent(path)?.href,href,path);
 });
 
 test('primary destinations and unknown paths never create a looping back link',()=>{
- for(const path of ['/my','/preparation','/records','/admin','/external','//elsewhere.example'])assert.equal(mobileParent(path),null,path);
+ for(const path of ['/my','/training','/preparation','/admin','/external','//elsewhere.example'])assert.equal(mobileParent(path),null,path);
 });

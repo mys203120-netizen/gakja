@@ -9,6 +9,7 @@ import { analyzeSpeech, validateSpeechTelemetry } from '@/lib/speech-analysis';
 import { transcribeOwnedInterviewRecording } from '@/lib/interview-transcription';
 import { transcriptionResponse,withRecordingTranscriptionLock } from '@/lib/recording-transcription';
 import {PRIVACY_POLICY_VERSION} from '@/lib/privacy-policy';
+import {clovaSpeechConfigured,synthesizeInterviewSpeech} from '@/lib/interview-speech';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,7 +47,8 @@ export async function GET(request: Request) {
     const id = z.string().uuid().parse(new URL(request.url).searchParams.get('id'));
     const [asset] = await query('select * from media_assets where id=$1 and student_id=$2', [id, user.id]);
     if (!asset) throw new FeatureError(404, '녹화를 찾을 수 없어요.', 'MEDIA_NOT_FOUND');
-    await ownedSession(user.id, asset.session_id, asset.metadata.questionId, asset.metadata.turnId);
+    const {session}=await ownedSession(user.id, asset.session_id, asset.metadata.questionId, asset.metadata.turnId);
+    if(session.state!=='completed'&&['answer_recording','analysis_audio','help_recording'].includes(asset.metadata.kind))throw new FeatureError(403,'답변 영상과 녹음은 면접을 마친 뒤 확인할 수 있어요.','INTERVIEW_MEDIA_NOT_RELEASED');
     let bytes = asset.data as Buffer;
     if (asset.metadata.provider === 'supabase') {
       return recordingRedirect(asset.metadata.bucket, asset.metadata.path);
@@ -131,6 +133,7 @@ export async function POST(request: Request) {
     await transaction(async db => {
       const [current] = (await db.query('select s.state,s.data as session_data,t.data as turn_data from interview_sessions s join interview_turns t on t.session_id=s.id where s.id=$1 and s.student_id=$2 and t.id=$3 and t.student_id=$2 for update of s,t', [sessionId,user.id,turn.id])).rows;
       if (!current || current.state !== 'active' || current.turn_data.answer || current.turn_data.invalidated || Number(current.session_data.generation || 0) !== generation) throw new FeatureError(409, '현재 답변의 녹화를 저장해 주세요.', 'STALE_TURN');
+      if(current.session_data.sessionMode==='real'){const previous=await db.query("select id from media_assets where student_id=$1 and session_id=$2 and metadata->>'turnId'=$3 and metadata->>'kind'='answer_recording' limit 1",[user.id,sessionId,turn.id]);if(previous.rows.length)throw new FeatureError(403,'실전에서는 같은 질문에 새 녹음을 제출할 수 없어요.','REAL_INTERVIEW_POLICY');}
       const insert = async (sql: string, params: unknown[]) => { await db.query(sql, params); };
       await persistAsset(user.id, sessionId, id, bytes, mime, metadata, uploadedFiles.find(file => file.field === 'recording'), insert);
       if (analysisMediaId && audioBytes) await persistAsset(user.id, sessionId, analysisMediaId, audioBytes, audioMime, { ...metadata, kind: 'analysis_audio', size: audioBytes.length, analysisMediaId: null, analysisFor: id }, uploadedFiles.find(file => file.field === 'analysisAudio'), insert);
@@ -162,9 +165,15 @@ async function persistAsset(studentId: string, sessionId: string, id: string, by
 }
 
 async function questionSpeech(studentId: string, session: Record<string, any>, turn: Record<string, any>) {
+  if(clovaSpeechConfigured()){
+    const bytes=await synthesizeInterviewSpeech(studentId,session.id,String(turn.data.question),turn.data.speakerId||'A');
+    const [latest]=await query('select state,data from interview_sessions where id=$1 and student_id=$2',[session.id,studentId]);
+    if(!latest||latest.state!=='active'||latest.data.paused||Number(latest.data.generation||0)!==Number(session.data.generation||0))throw new FeatureError(409,'질문 상태가 바뀌었어요.','STALE_GENERATION');
+    return bytes;
+  }
   const selected = speechProvider();
   const speaker = (session.data.panelists || []).find((person: Record<string, any>) => person.id === turn.data.speakerId);
-  const voice = selected === 'google' ? speaker?.voice || process.env.GOOGLE_TTS_VOICE_FEMALE || 'ko-KR-Chirp3-HD-Aoede' : speaker?.gender === 'male' ? 'onyx' : 'nova';
+  const voice = selected === 'google' ? speaker?.voice || process.env.GOOGLE_TTS_VOICE_FEMALE || 'ko-KR-Chirp3-HD-Aoede' : ({A:'nova',B:'onyx',C:'shimmer',D:'echo',E:'alloy'} as Record<string,'nova'|'onyx'|'shimmer'|'echo'|'alloy'>)[speaker?.id||'A']||'nova';
   const model = selected === 'google' ? 'chirp3-hd' : process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts';
   const locale = process.env.GOOGLE_TTS_LANGUAGE_CODE || 'ko-KR';
   const input = String(turn.data.question).slice(0, 2500);

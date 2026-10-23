@@ -25,15 +25,15 @@
 .changes li>div { display:flex; align-items:center; gap:9px; font-size:var(--font-size-caption); color:var(--clarity-muted); }
 .changes time:last-child { color:var(--clarity-green); font-weight:600; }
 .preview .note { font-size:var(--font-size-caption); color:var(--clarity-muted); line-height:1.7; }
-:global(.calendar-days)>button[data-dragging] { opacity:.5; }
-:global(.calendar-days)>button[data-drop-target] { outline:2px dashed var(--clarity-green); outline-offset:-3px; background:var(--clarity-soft); }
-:global(.calendar-days)>button[draggable=true] { cursor:grab; }
-:global(.calendar-days)>button[draggable=true]:active { cursor:grabbing; }
-:global(.calendar-event)[draggable=true] { cursor:grab; }
-:global(.calendar-event)[data-dragging] { opacity:.5; }
-:global(.plan-form)>:global(.plan-select-field),:global(.plan-date-kind)>:global(.plan-select-field) { display:flex; flex-direction:column; min-width:0; gap:8px; margin-bottom:20px; font-size:var(--font-size-caption); }
-:global(.plan-form)>:global(.plan-date-kind) { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; }
-:global(.plan-date-kind)>:global(.plan-select-field) { margin:0; }
+.calendarRoot :global(.calendar-days)>button[data-dragging] { opacity:.5; }
+.calendarRoot :global(.calendar-days)>button[data-drop-target] { outline:2px dashed var(--clarity-green); outline-offset:-3px; background:var(--clarity-soft); }
+.calendarRoot :global(.calendar-days)>button[draggable=true] { cursor:grab; }
+.calendarRoot :global(.calendar-days)>button[draggable=true]:active { cursor:grabbing; }
+.calendarRoot :global(.calendar-event)[draggable=true] { cursor:grab; }
+.calendarRoot :global(.calendar-event)[data-dragging] { opacity:.5; }
+.planForm>:global(.plan-select-field),.planForm :global(.plan-date-kind)>:global(.plan-select-field) { display:flex; flex-direction:column; min-width:0; gap:8px; margin-bottom:20px; font-size:var(--font-size-caption); }
+.planForm>:global(.plan-date-kind) { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; }
+.planForm :global(.plan-date-kind)>:global(.plan-select-field) { margin:0; }
 @media(max-width:700px) {
  .editor { gap:7px; margin-bottom:14px; }
  .editor summary span,.undo span { display:none; }

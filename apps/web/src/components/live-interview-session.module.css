@@ -177,3 +177,66 @@
  .page[data-answer-mode=text] .otherPanelists li { gap:4px; }
  .page[data-answer-mode=text] .otherPanelists :global(.interviewer-avatar.compact) { width:25px; flex-basis:25px; }
 }
+
+/* A stable five-person stage keeps the answer and its transcript together. */
+.page { max-width:960px; }
+.workspace,.page[data-answer-mode=text] .workspace { grid-template-columns:minmax(0,1fr); grid-template-areas:none; gap:24px; }
+.page[data-answer-mode=text] .workspace>.stage,.page[data-answer-mode=text] .typedAnswer,.page[data-answer-mode=text] .cameraPanel { grid-area:auto; }
+.stageScene,.page[data-answer-mode=text] .stageScene { display:flex; flex-direction:column; min-height:260px; padding:20px 24px; border:1px solid #dcebe1; border-radius:20px; background:linear-gradient(150deg,#fff,#effbf4); box-shadow:none; }
+.portraitStack,.page[data-answer-mode=text] .portraitStack { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-items:end; width:100%; max-width:680px; gap:16px; margin:22px auto 0; aspect-ratio:auto; }
+.portrait,.portrait[data-current=true] { position:relative; grid-area:auto; align-self:end; min-width:0; opacity:1; transform:none; pointer-events:auto; text-align:center; border:0; background:transparent; }
+.portrait :global(.interviewer-avatar.compact) { width:100%; max-width:120px; aspect-ratio:1; margin:auto; border:3px solid transparent; border-radius:50%; overflow:hidden; background:#e5f3e9; transition:border-color .2s ease; }
+.portrait[data-current=true] :global(.interviewer-avatar.compact) { border-color:#00bb63; box-shadow:0 0 0 5px #00ed7718; }
+.portrait>button,.portrait>span { display:flex; justify-content:center; align-items:center; min-height:44px; width:100%; margin-top:4px; border:0; border-radius:8px; background:transparent; color:#18372b; font-size:var(--font-size-caption); font-weight:600; }
+.portrait>button { cursor:pointer; }
+.portrait>button:hover { background:#dff8e9; }
+.speakerIdentity,.page[data-answer-mode=text] .speakerIdentity { align-items:center; margin-top:8px; min-height:24px; }
+.speakerIdentity strong { display:none; }
+.speakerIdentity>span,.page[data-answer-mode=text] .speakerIdentity>span { display:block; color:#607168; }
+.questionArea { padding-top:18px; }
+.questionDisclosure { border:1px solid var(--clarity-line); border-radius:12px; background:#fff; }
+.questionDisclosure>summary { display:flex; align-items:center; gap:9px; min-height:48px; padding:12px 15px; color:var(--clarity-action); font-size:var(--font-size-caption); cursor:pointer; list-style:none; }
+.questionDisclosure>summary::-webkit-details-marker { display:none; }
+.questionDisclosure>summary>svg:last-child { margin-left:auto; }
+.page .questionDisclosure>.question { padding:0 16px 18px; font-size:var(--font-size-section); }
+.replayQuestion { display:inline-flex; align-items:center; gap:8px; min-height:44px; margin:0 0 10px; padding:8px 12px; border:1px solid #dfe8e3; border-radius:12px; background:#fff; color:#30533e; cursor:pointer; }
+.cameraPanel { border:1px solid #dfe8e3; border-radius:20px; padding:22px; background:#fff; }
+.liveCaption { min-height:104px; max-height:240px; overflow:auto; margin:0 0 16px; padding:16px; border-radius:12px; background:#f5faf7; }
+.liveCaption>p { margin:0; font-size:var(--font-size-body); line-height:1.7; }
+.liveCaption>small { display:block; margin-top:12px; color:#607168; font-size:var(--font-size-caption); }
+.previewDisclosure>summary { min-height:44px; display:flex; align-items:center; color:#607168; cursor:pointer; font-size:var(--font-size-caption); }
+.previewDisclosure>video { max-width:260px; }
+.controls { display:flex; flex-wrap:wrap; flex-direction:row; margin-top:12px; padding-top:0; gap:10px; }
+.controls>.recordingSettings { flex-basis:100%; }
+.controls .answerAction { order:-1; flex-basis:100%; min-height:52px; background:#00ed77; color:#18372b; border-color:#00ed77; font-weight:600; box-shadow:none; }
+.controls .answerAction:hover { background:#00db6e; }
+.recordingSettings>summary { padding:10px 12px; border:1px solid var(--clarity-line); border-radius:12px; background:var(--clarity-soft); }
+.recordingSettingsBody { padding-inline:3px; }
+@media(max-width:700px) {
+ .stageScene,.page[data-answer-mode=text] .stageScene { min-height:210px; padding:16px 12px; border-radius:20px; }
+ .portraitStack,.page[data-answer-mode=text] .portraitStack { gap:5px; margin-top:22px; }
+ .portrait :global(.interviewer-avatar.compact) { border-width:2px; }
+ .portrait>button,.portrait>span { font-size:var(--font-size-caption); }
+ .cameraPanel { padding:16px; }
+ .page[data-answer-mode=voice][data-phase=listening] { padding-bottom:78px; }
+ .controls .answerAction { position:fixed; z-index:45; right:20px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); left:20px; width:calc(100% - 40px); max-width:460px; min-height:56px; margin-inline:auto; border-radius:16px; box-shadow:0 5px 22px #0b281d20; }
+ .stageTopline { font-size:var(--font-size-caption); }
+}
+@media(prefers-reduced-motion:reduce) {
+ .portrait :global(.interviewer-avatar.compact) { transition:none; }
+}
+
+.coachPanel { padding:22px; border:1px solid #b6e8cb; border-radius:20px; background:#f0fcf5; display:flex; flex-direction:column; gap:16px; }
+.coachHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.coachPanel label { display:flex; flex-direction:column; gap:8px; font-size:var(--font-size-caption); }
+.coachPanel textarea { min-height:100px; resize:vertical; width:100%; border:1px solid #cdded4; border-radius:12px; padding:12px; font:inherit; font-size:var(--font-size-body); line-height:1.7; background:#fff; }
+.coachReply { padding:16px; border-radius:12px; background:#fff; display:flex; flex-direction:column; gap:12px; }
+
+.turnFeedback { padding:18px 20px; border-left:3px solid #00c967; background:#f4faf6; border-radius:12px; display:flex; flex-direction:column; gap:8px; }
+.turnFeedback summary { cursor:pointer; min-height:44px; display:flex; align-items:center; color:#426b51; font-size:var(--font-size-caption); }
+.turnFeedback details p { white-space:pre-wrap; }
+
+.rubric { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:10px 0 0; }
+.rubric>div { padding:10px; border-radius:10px; background:#fff; }
+.rubric dt { color:#607168; font-size:var(--font-size-caption); }.rubric dd { margin:4px 0 0; font-size:var(--font-size-body); font-weight:600; }
+@media(max-width:600px){.rubric{grid-template-columns:repeat(2,minmax(0,1fr));}}

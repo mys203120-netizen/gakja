@@ -88,3 +88,9 @@
 }
 
 .context .contextTitle { margin:0; font-size:var(--font-size-caption); font-weight:600; line-height:1.5; }
+.answerSettings { margin-block:24px; color:var(--clarity-muted); font-size:var(--font-size-caption); }
+.answerSettings>summary { min-height:44px; display:flex; align-items:center; cursor:pointer; }
+.answerSettings label { display:grid; gap:8px; max-width:320px; }
+.answerSettings select { min-height:48px; padding:12px; border:0; border-radius:12px; background:var(--clarity-soft); color:var(--clarity-ink); font:inherit; }
+
+.questionMode{border:0;padding:0;margin:24px 0}.questionMode legend{font-size:var(--font-size-body);font-weight:600;margin-bottom:12px}.questionMode label{display:inline-flex;align-items:center;gap:9px;min-height:44px;margin-right:16px;padding:10px 14px;background:var(--soft-accent-gradient);border-radius:var(--soft-control-radius,16px);box-shadow:var(--soft-shadow-small)}.questionMode input{accent-color:var(--soft-accent-ink)}.questionMode p{font-size:var(--font-size-caption);color:var(--muted);margin:12px 0 0}

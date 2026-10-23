@@ -32,8 +32,9 @@ test('keyboard focus, forced colors and motion remain explicit component states'
  assert.match(controls,/outline:2px solid var\(--clarity-green\) !important/);
  assert.match(controls,/\.motion-toggle-track,\.motion-toggle-thumb \{ transition:none/);
  const rail=readFileSync('apps/web/src/components/navigation-rail.module.css','utf8');
- assert.match(rail,/transition:opacity 800ms/);
- assert.match(rail,/transition:opacity 500ms ease!important/);
+ assert.match(rail,/nav\.mobile-nav\) \{ opacity:1; translate:0 0; pointer-events:auto; transition:none/);
+ assert.match(rail,/nav\.mobile-nav:has\(:focus-visible\)/);
+ assert.match(rail,/@media\(prefers-reduced-motion:reduce\)[^\n]*nav\.mobile-nav[^\n]*transition:none!important/);
  assert.match(rail,/nav\.mobile-nav\[data-scroll-active=true\]/);
 });
 

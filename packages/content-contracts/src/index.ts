@@ -27,6 +27,8 @@ export type Priority = 'S' | 'A' | 'B' | 'C' | 'F';
 export type DocumentKind = keyof typeof FINAL_TOC;
 export type ContentVerificationStatus = 'verified' | 'approved' | 'confirmed' | 'synthetic_reviewed' | FactConfirmationStatus;
 export interface SourceRef {
+  /** Extraction provenance is separate from student fact confirmation. */
+  verification_status?: string;
   id: string; type: string; revision: number; page?: number; area?: string;
   quote?: string; url?: string; location?: string; synthetic?: boolean;
 }

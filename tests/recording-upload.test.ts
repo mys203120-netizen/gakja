@@ -202,6 +202,7 @@ test('media preservation-only upload stores the original without requiring trans
       '@/lib/ai':{FeatureError,requireStudent(){},assertPublishedAccess:async()=>{},featureError:(error:any)=>({error:error.message,status:error.status||500})},
       '@/lib/speech-analysis':{analyzeSpeech:()=>({status:'unmeasured'})},
       '@/lib/interview-transcription':{transcribeOwnedInterviewRecording:async()=>{transcriptions++;return {transcriptionStatus:'completed'};}},
+      '@/lib/interview-speech':{clovaSpeechConfigured:()=>false,synthesizeInterviewSpeech:async()=>{throw Error('No speech synthesis expected while uploading');}},
       '@/lib/recording-transcription':{withRecordingTranscriptionLock:async(_key:string,work:Function)=>work(),transcriptionResponse:(metadata:any)=>({transcriptionStatus:metadata.transcriptionStatus})},
     });
     const response=await route.POST(new Request('http://local/api/media',{method:'POST',body:form})),value=await response.json();

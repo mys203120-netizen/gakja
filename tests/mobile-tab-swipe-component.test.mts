@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
+import {STUDENT_NAVIGATION} from '../apps/web/src/lib/app-navigation';
 import {swipeDestination} from '../apps/web/src/lib/mobile-tab-swipe';
 
 const source=ts.transpileModule(readFileSync('apps/web/src/components/mobile-tab-swipe.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -46,6 +47,7 @@ function harness({initialPath='/my',enabled=true,reduced=false,width=390}={}){
       if(!old||deps.some((value,i)=>!Object.is(value,old.deps[i]))){effects[index]={deps};pending.push(()=>{old?.cleanup?.();effects[index].cleanup=fn();});}
     }};
     if(name==='next/navigation')return {usePathname:()=>path,useRouter:()=>router};
+    if(name==='@/lib/app-navigation')return {STUDENT_NAVIGATION};
     if(name==='@/lib/mobile-tab-swipe')return {swipeDestination};
     throw Error(name);
   }});
@@ -68,12 +70,12 @@ function harness({initialPath='/my',enabled=true,reduced=false,width=390}={}){
 // helper. They do not claim to simulate an operating system's native panning.
 test('actual touch gesture handlers route through the three overview screens in both directions',()=>{
   const h=harness();assert.equal(h.main.dataset.tabSwipe,'true');
-  h.swipe();assert.deepEqual(h.pushes,['/preparation']);assert.equal(h.main.dataset.tabDragging,undefined);assert.equal(h.main.values.has('--tab-drag'),false);
-  h.render('/preparation');assert.equal(h.main.dataset.tabTransition,'left');
-  h.swipe(120);assert.deepEqual(h.pushes,['/preparation','/my']);h.render('/my');assert.equal(h.main.dataset.tabTransition,'right');
-  h.render('/preparation');h.swipe();assert.equal(h.pushes.at(-1),'/records');
-  h.render('/records');h.swipe();assert.equal(h.pushes.length,3,'last tab has no next destination');
-  h.swipe(120);assert.equal(h.pushes.at(-1),'/preparation');assert.ok(h.options.filter(option=>option.name!=='touchmove').every(option=>option.passive===true));assert.ok(h.options.filter(option=>option.name==='touchmove').every(option=>option.passive===false));h.unmount();
+  h.swipe();assert.deepEqual(h.pushes,['/training']);assert.equal(h.main.dataset.tabDragging,undefined);assert.equal(h.main.values.has('--tab-drag'),false);
+  h.render('/training');assert.equal(h.main.dataset.tabTransition,'left');
+  h.swipe(120);assert.deepEqual(h.pushes,['/training','/my']);h.render('/my');assert.equal(h.main.dataset.tabTransition,'right');
+  h.render('/training');h.swipe();assert.equal(h.pushes.at(-1),'/preparation');
+  h.render('/preparation');h.swipe();assert.equal(h.pushes.length,3,'last tab has no next destination');
+  h.swipe(120);assert.equal(h.pushes.at(-1),'/training');assert.ok(h.options.filter(option=>option.name!=='touchmove').every(option=>option.passive===true));assert.ok(h.options.filter(option=>option.name==='touchmove').every(option=>option.passive===false));h.unmount();
 });
 
 test('mouse, pen, secondary pointers and desktop-width touches do not navigate',()=>{
@@ -100,7 +102,7 @@ test('horizontally scrollable ancestors retain their own gestures',()=>{
   }
   assert.deepEqual(h.pushes,[]);assert.equal(h.main.dataset.tabDragging,undefined);
   const vertical=new ElementFixture('div',{},h.main);vertical.overflowX='auto';h.swipe(-120,0,150,{target:vertical});
-  assert.deepEqual(h.pushes,['/preparation'],'a container without horizontal overflow does not suppress tab gestures');h.unmount();
+  assert.deepEqual(h.pushes,['/training'],'a container without horizontal overflow does not suppress tab gestures');h.unmount();
 });
 
 test('vertical intent, diagonal or short movement and a long hold never become tab navigation',()=>{
@@ -117,7 +119,7 @@ test('pointer identity and cancellation clear visual feedback without routing',(
 });
 
 test('answer workspaces and onboarding never install gestures; route cleanup removes timers, listeners and styles',()=>{
-  const h=harness();h.swipe();h.render('/preparation');assert.equal(h.timers.size,1);
+  const h=harness();h.swipe();h.render('/training');assert.equal(h.timers.size,1);
   h.emit('pointerdown');h.emit('pointermove',{clientX:120});assert.equal(h.main.dataset.tabDragging,'true');
   h.render('/my/train/plan-a');assert.equal(h.main.dataset.tabSwipe,undefined);assert.equal(h.main.dataset.tabDragging,undefined);assert.equal(h.main.dataset.tabTransition,undefined);assert.equal(h.main.values.size,0);assert.equal(h.timers.size,0);
   assert.equal([...h.listeners.values()].reduce((count,set)=>count+set.size,0),0);
@@ -127,14 +129,14 @@ test('answer workspaces and onboarding never install gestures; route cleanup rem
 
 test('reduced-motion preference retains navigation without drag or entry animation',()=>{
   const h=harness({reduced:true});h.emit('pointerdown');h.emit('pointermove',{clientX:100});assert.equal(h.main.dataset.tabDragging,undefined);
-  h.advance(150);h.emit('pointerup',{clientX:80});assert.deepEqual(h.pushes,['/preparation']);h.render('/preparation');assert.equal(h.main.dataset.tabTransition,undefined);assert.equal(h.timers.size,0);h.unmount();
+  h.advance(150);h.emit('pointerup',{clientX:80});assert.deepEqual(h.pushes,['/training']);h.render('/training');assert.equal(h.main.dataset.tabTransition,undefined);assert.equal(h.timers.size,0);h.unmount();
 });
 
 
 test('only a recognized single-finger horizontal tab touchmove prevents native panning',()=>{
   const h=harness();h.emit('pointerdown');assert.equal(h.touchMove([{clientX:214,clientY:302}]),false,'tiny movements stay native');
   assert.equal(h.touchMove([{clientX:120,clientY:305}]),true);assert.equal(h.main.dataset.tabDragging,'true');assert.equal(h.main.values.get('--tab-drag'),'-12px');
-  h.advance(180);h.emit('pointerup',{clientX:100,clientY:305});assert.deepEqual(h.pushes,['/preparation']);h.unmount();
+  h.advance(180);h.emit('pointerup',{clientX:100,clientY:305});assert.deepEqual(h.pushes,['/training']);h.unmount();
 });
 
 test('native vertical and horizontal-strip touchmove remain available, including controls and browser edges',()=>{
@@ -157,6 +159,6 @@ test('pinch, mid-gesture text selection, cancellation and non-cancelable samples
 
 test('reduced-motion touch gestures still suppress only accepted horizontal native pan and clean the touch listener on disable',()=>{
   const h=harness({reduced:true});h.emit('pointerdown');assert.equal(h.touchMove([{clientX:100,clientY:300}]),true);assert.equal(h.main.dataset.tabDragging,undefined);
-  h.advance(150);h.emit('pointerup',{clientX:100,clientY:300});assert.deepEqual(h.pushes,['/preparation']);h.render('/preparation',false);
+  h.advance(150);h.emit('pointerup',{clientX:100,clientY:300});assert.deepEqual(h.pushes,['/training']);h.render('/training',false);
   assert.equal(h.listeners.get('touchmove')?.size,0);assert.equal(h.touchMove([{clientX:80,clientY:300}]),false);h.unmount();
 });

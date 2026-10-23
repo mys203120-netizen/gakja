@@ -68,8 +68,8 @@ test('text fallback rejects an audio attachment and voice retries still check re
   const foreign=harness();assert.equal((await foreign.answer({recordingId:'10000000-0000-4000-8000-000000000099'})).status,404);assert.equal(foreign.responses.length,0);
   const voice=harness();assert.equal((await voice.answer({recordingId})).status,200);assert.equal(voice.responses[0].data.response_mode,'voice');assert.equal(voice.events[0].data.mode,'oral');assert.equal(voice.speechSnapshots,1);
 });
-test('explicit general common trial bypasses a selected unsupported target without changing normal school scoping',async()=>{
-  const general=harness(),response=await general.get('sourceType=common&general=1');assert.equal(response.status,200);const body=await response.json();assert.equal(body.target,null);assert.equal(body.library.answer.length,1);assert.equal(body.library.choice.length,0);assert.deepEqual(general.scopeReads,[]);
+test('legacy general catalog bypasses the selected target but does not add written practice to choice-only quiz',async()=>{
+  const general=harness(),response=await general.get('sourceType=common&general=1');assert.equal(response.status,200);const body=await response.json();assert.equal(body.target,null);assert.equal(body.library.answer.length,0);assert.equal(body.library.oral.length,0);assert.equal(body.library.choice.length,0);assert.deepEqual(general.scopeReads,[]);
   const normal=harness(),scoped=await normal.get('sourceType=common');assert.equal(scoped.status,200);assert.equal((await scoped.json()).library.answer.length,0);assert.deepEqual(normal.scopeReads,['preferences','target']);
   for(const query of ['sourceType=personal&general=1','general=1','sourceType=common&general=1&targetId=unsupported-target','sourceType=common&general=1&mode=choice','sourceType=common&general=1&activityId=activity']){const invalid=harness();assert.equal((await invalid.get(query)).status,400);assert.deepEqual(invalid.scopeReads,[]);}
 });

@@ -22,6 +22,7 @@ function harness(initialTarget?:any,catalog=[school]){
    if(name==='lucide-react')return new Proxy({},{get:(_,key)=>String(key)});
    if(name==='./school-picker')return {SchoolPicker:'SchoolPicker'};
    if(name==='./school-logo')return {SchoolLogo:'SchoolLogo'};
+   if(name==='./student-document')return {StudentDocument:'StudentDocument'};
    if(name==='./training-availability')return {TrainingAvailability:'TrainingAvailability'};
    if(name==='@/lib/schedule')return {scheduleDateLabel:(value:any)=>value};
    if(name==='@/lib/calendar-source-presentation')return {visibleCalendarSourceText:(value:any)=>value||'',visibleCalendarSourceUrl:(value:any)=>value||'',visibleCalendarSourceLabel:()=> '입학처'};
@@ -94,7 +95,7 @@ test('multiple-school selection preserves each university draft and commits only
  assert.equal(h.writes.length,1,'rapid final confirmation has one in-flight mutation');
  assert.deepEqual(JSON.parse(JSON.stringify(h.writes[0].body.registrations.map((input:any)=>input.referenceId))),[school.id,second.id]);
  assert.ok(h.writes[0].body.registrations.every((input:any)=>input.calendarReview.acknowledged&&input.departmentId==='department'));
- assert.equal(nodes(tree).find(node=>node.type==='TrainingAvailability').props.schoolLabel,'2개 지원 학교');
+ assert.equal(nodes(tree).find(node=>node.type==='StudentDocument').props.onboarding,true,'reviewed schools continue to document upload before learning-time setup');
 });
 
 test('a failed batch retains all reviewed schools and retry sends the same complete batch',async()=>{

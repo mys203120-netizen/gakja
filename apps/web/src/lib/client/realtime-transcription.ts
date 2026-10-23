@@ -6,9 +6,10 @@ export type LiveTranscription = {
   ready: Promise<void>;
   start(): void;
   finish(): void;
-  close(): void;
+  close(): Promise<boolean>;
+  mute(muted:boolean):void;
 };
-type Scope = { sessionId: string; itemIndex: number; attemptId: string };
+type Scope = { sessionId: string; itemIndex: number; attemptId: string } | { sessionId:string;turnId:string;generation:number;attemptId:string };
 
 /** Reconciles provisional deltas and completed turns, including out-of-order completions. */
 export class TranscriptTurns {
@@ -46,30 +47,28 @@ export class TranscriptTurns {
 
 /** Owns a disabled clone, never the original track used by the durable recorder. */
 export function connectLiveTranscription(
-  stream: MediaStream, scope: Scope, update: (snapshot: LiveTranscript) => void,
+  stream: MediaStream, scope: Scope, update: (snapshot: LiveTranscript) => void, endpoint='/api/quiz/realtime',
 ): LiveTranscription {
   const abort = new AbortController(), turns = new TranscriptTurns(), seen = new Set<string>();
   let peer: RTCPeerConnection | undefined, channel: RTCDataChannel | undefined, track: MediaStreamTrack | undefined;
   let closed = false, started = false, finishing = false, callId = '', text = '', phase: LiveTranscript['phase'] = 'connecting';
   let finishTimer: ReturnType<typeof setTimeout> | undefined;
   const emit = (next: LiveTranscript['phase']) => { phase = next; update({ phase, text }); };
-  const cleanupCall = (id: string) => {
-    void (async () => {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const result = await fetch('/api/quiz/realtime', { method: 'DELETE', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...scope, callId: id }), keepalive: true });
-          if (result.ok || result.status === 404 || result.status === 401 || result.status === 403) return;
-        } catch { /* The peer is already closed; retry the owned remote hangup once. */ }
-      }
-    })();
+  let shutdown:Promise<boolean>|undefined;
+  const cleanups=new Map<string,Promise<boolean>>();
+  const cleanupCall=(id:string)=>{
+    const known=cleanups.get(id);if(known)return known;
+    const work=(async()=>{for(let attempt=0;attempt<2;attempt++)try{
+      const result=await fetch(endpoint,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({...scope,callId:id}),keepalive:true});
+      if(result.ok||result.status===404)return true;if(result.status===401||result.status===403)return false;
+    }catch{/* The local track is already stopped; retry the owned hangup once. */}return false;})();
+    cleanups.set(id,work);void work.then(confirmed=>{if(!confirmed)cleanups.delete(id);});return work;
   };
-  const close = () => {
-    if (closed) return;
-    closed = true; abort.abort(); clearTimeout(finishTimer);
-    if (track) { track.enabled = false; track.stop(); }
-    channel?.close(); peer?.close();
-    if (callId) cleanupCall(callId);
+  const close=():Promise<boolean>=>{
+    if(shutdown)return shutdown;
+    if(!closed){closed=true;abort.abort();clearTimeout(finishTimer);if(track){track.enabled=false;track.stop();}channel?.close();peer?.close();}
+    const pending=callId?cleanupCall(callId):Promise.resolve().then(()=>ready).catch(()=>{}).then(()=>callId?cleanupCall(callId):true);
+    shutdown=pending;void pending.then(confirmed=>{if(!confirmed&&shutdown===pending)shutdown=undefined;});return pending;
   };
   const unavailable = () => { if (!closed) { emit('unavailable'); close(); } };
   const ready = (async () => {
@@ -97,11 +96,11 @@ export function connectLiveTranscription(
       if (closed) return;
       await peer.setLocalDescription(offer);
       if (closed) return;
-      const response = await fetch('/api/quiz/realtime', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...scope, consent: true, sdp: offer.sdp }), signal: abort.signal });
       const value = await response.json();
       // A cancellation may happen after our server has already issued the call.
-      if (closed) { if (typeof value.callId === 'string') cleanupCall(value.callId); return; }
+      if (closed) { if (typeof value.callId === 'string'){callId=value.callId;void cleanupCall(callId);} return; }
       if (!response.ok || typeof value.sdp !== 'string' || typeof value.callId !== 'string') throw new Error('connect failed');
       callId = value.callId;
       await peer.setRemoteDescription({ type: 'answer', sdp: value.sdp });
@@ -116,7 +115,7 @@ export function connectLiveTranscription(
       if (!closed) emit('ready');
     } catch { unavailable(); }
   })();
-  return { ready, close,
+  return { ready, close, mute(muted){if(track&&started&&!finishing&&!closed)track.enabled=!muted;},
     start() {
       if (closed || phase !== 'ready' || !track) return;
       started = true; track.enabled = true; emit('listening');

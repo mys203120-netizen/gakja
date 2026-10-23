@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-23",
+  "typecheck": "passed",
+  "productionBuild": "passed",
+  "unitAndRegressionTests": {"passed":1246,"failed":0},
+  "bootstrapChecks": {"passed":31},
+  "isolatedDocumentDatabaseChecks": {"passed":22},
+  "cssChecksAfterTabletFix": {"passed":6},
+  "paidProviderCalls": false,
+  "realMicrophoneOrCameraPermissionGranted": false,
+  "gptLive1": "deferred",
+  "preview": "http://localhost:3103/preparation",
+  "coverage": {"implemented":23,"partial":4}
+}

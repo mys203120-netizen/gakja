@@ -31,26 +31,26 @@ function load(name,context,environment={}){
   throw Error(name);
  }});return module.exports;
 }
-equal(nav.STUDENT_NAVIGATION.map(item=>item.label),['오늘 훈련','준비 현황','내 기록']);
-equal(nav.PRACTICE_SECTIONS.map(item=>[item.href,item.label]),[['/my','오늘 계획'],['/learn','자유 연습'],['/on','AI 비서']]);
+equal(nav.STUDENT_NAVIGATION.map(item=>item.label),['홈','훈련하기','마이 대시보드']);
+equal(nav.PRACTICE_SECTIONS.map(item=>[item.href,item.label]),[['/training','오늘 훈련'],['/learn','자유 연습'],['/on','AI 비서']]);
 equal(nav.MOBILE_STUDENT_NAVIGATION.map(item=>[item.href,item.label]),[
- ['/my','오늘 훈련'],['/preparation','준비 현황'],['/records','내 기록'],
+ ['/my','홈'],['/training','훈련하기'],['/preparation','마이 대시보드'],
 ]);
 equal(nav.MOBILE_STUDENT_NAVIGATION.map(item=>[item.href,item.label]),nav.STUDENT_NAVIGATION.map(item=>[item.href,item.label]));
 for(const [href,routes] of Object.entries({
- '/my':['/my','/my/today','/my/train','/my/diagnosis','/availability','/learn','/quiz/session/answer','/quiz/assignments/task','/interview/new','/interview/session','/chat/interviews/session','/practice/video/session','/on/interviews','/on/interviews/new','/on/interviews/session','/on/interviews/session/turn','/on','/on/conversation','/on/interviews-extra'],
- '/preparation':['/preparation','/armory','/armory/answer/edit','/knowledge','/knowledge/article','/materials/questions/question','/materials/briefings/article','/schools/school','/account/confirmations'],
- '/records':['/records','/records/comparisons','/reports/report'],
+ '/my':['/my'],
+ '/training':['/training','/my/today','/my/train','/my/diagnosis','/learn','/quiz/session/answer','/quiz/assignments/task','/interview/new','/interview/session','/chat/interviews/session','/practice/video/session','/on/interviews','/on/interviews/new','/on/interviews/session','/on/interviews/session/turn','/on','/on/conversation','/on/interviews-extra'],
+ '/preparation':['/preparation','/armory','/armory/answer/edit','/knowledge','/knowledge/article','/materials/questions/question','/materials/briefings/article','/schools/school','/account/confirmations','/account/settings','/availability','/records','/records/comparisons','/reports/report'],
 })){
  for(const route of routes)equal(nav.MOBILE_STUDENT_NAVIGATION.filter(item=>nav.mobileStudentActive(route,item.href)).map(item=>item.href),[href]);
 }
-for(const route of ['/online','/armory-extra','/myth','/records-old','/account/settings']){
+for(const route of ['/online','/armory-extra','/myth','/records-old','/training-extra']){
  equal(nav.MOBILE_STUDENT_NAVIGATION.filter(item=>nav.mobileStudentActive(route,item.href)).map(item=>item.href),[]);
 }
-for(const [section,paths] of Object.entries({today:['/my','/my/today','/my/diagnosis','/my/train','/availability','/learn','/quiz','/quiz/memory','/quiz/assignments','/quiz/session/example','/interview','/interview/new','/interview/example','/chat/interviews/example','/practice/video/example'],preparation:['/preparation','/armory','/armory/example','/knowledge','/knowledge/example','/materials','/materials/questions/example','/materials/briefings','/schools','/schools/example','/account/confirmations'],records:['/records','/records/comparisons','/reports/example']})){
+for(const [section,paths] of Object.entries({home:['/my'],today:['/training','/my/today','/my/diagnosis','/my/train','/learn','/quiz','/quiz/memory','/quiz/assignments','/quiz/session/example','/interview','/interview/new','/interview/example','/chat/interviews/example','/practice/video/example'],preparation:['/preparation','/armory','/armory/example','/knowledge','/knowledge/example','/materials','/materials/questions/example','/materials/briefings','/schools','/schools/example','/account/confirmations','/account/settings','/availability','/records','/records/comparisons','/reports/example']})){
  for(const route of paths){equal(nav.studentSection(route),section);equal(nav.STUDENT_NAVIGATION.filter(item=>nav.studentSection(item.href)===nav.studentSection(route)).map(item=>item.id),[section]);}
 }
-for(const route of ['/on','/on/conversation','/on/interviews-extra'])equal(nav.studentSection(route),'today');equal(nav.studentSection('/account/settings'),null);
+for(const route of ['/on','/on/conversation','/on/interviews-extra'])equal(nav.studentSection(route),'today');equal(nav.studentSection('/account/settings'),'preparation');
 for(const route of ['/on/interviews','/on/interviews/new','/on/interviews/session','/on/interviews/session/turn']){
  equal(nav.studentSection(route),'today');
  equal(nav.practiceSectionHref(route),'/learn');
@@ -60,7 +60,7 @@ for(const route of ['/on/interviews/session','/on/interviews/session/turn','/on/
 equal(nav.isAnswerWorkspace('/quiz/assignments/task'),true);
 equal(nav.isAnswerWorkspace('/quiz/assignments'),false);
 const {SectionNavigation}=load('section-navigation.tsx');
-for(const route of ['/knowledge','/materials/briefings','/materials','/schools','/account/confirmations','/my','/learn','/quiz','/quiz/assignments','/interview','/interview/new']){
+for(const route of ['/knowledge','/materials/briefings','/materials','/schools','/learn','/quiz','/quiz/assignments','/interview','/interview/new']){
  path=route;const markup=renderToStaticMarkup(React.createElement(SectionNavigation));
  equal((markup.match(/aria-current="page"/g)||[]).length,1);
 }
@@ -71,21 +71,21 @@ for(const route of ['/knowledge','/materials/briefings/article','/schools/school
  const active=markup.match(/<a[^>]*href="([^"]+)"[^>]*aria-current="page"/);
  equal(active?.[1],route.startsWith('/schools')?'/schools':route.startsWith('/materials/briefings')?'/materials/briefings':'/knowledge');
 }
-for(const route of ['/my/diagnosis','/my/train','/preparation','/availability']){
+for(const route of ['/my','/training','/my/diagnosis','/my/train','/preparation','/availability','/records','/records/reports/report','/reports/report','/account/confirmations','/account/settings']){
  path=route;equal(renderToStaticMarkup(React.createElement(SectionNavigation)),'');
 }
 for(const route of ['/on','/on/conversation','/armory','/armory/answer/edit']){
  path=route;const markup=renderToStaticMarkup(React.createElement(SectionNavigation));
  equal((markup.match(/aria-current="page"/g)||[]).length,1);
- equal(markup.includes('href="/my"')||markup.includes('href="/preparation"'),true);
+ equal(markup.includes('href="/training"')||markup.includes('href="/preparation"'),true);
 }
 for(const route of ['/on/interviews','/on/interviews/new']){
  path=route;const markup=renderToStaticMarkup(React.createElement(SectionNavigation));
- equal(markup.includes('aria-label="오늘 훈련과 연습"'),true);
+ equal(markup.includes('aria-label="훈련과 연습"'),true);
  equal(markup.match(/<a[^>]*href="([^"]+)"[^>]*aria-current="page"/)?.[1],'/learn');
 }
 // Every entry shares the same three destinations, with interview and assignment browsers under free practice.
-for(const [route,current] of [['/my','/my'],['/quiz','/learn'],['/quiz/assignments','/learn'],['/interview','/learn'],['/interview/chat','/learn'],['/interview/live','/learn'],['/on','/on']]){
+for(const [route,current] of [['/my/today','/training'],['/quiz','/learn'],['/quiz/assignments','/learn'],['/interview','/learn'],['/interview/chat','/learn'],['/interview/live','/learn'],['/on','/on']]){
  path=route;const markup=renderToStaticMarkup(React.createElement(SectionNavigation));
  equal((markup.match(/<a /g)||[]).length,3);
  equal(markup.match(/<a[^>]*href="([^"]+)"[^>]*aria-current="page"/)?.[1],current);
@@ -119,7 +119,7 @@ let markup=renderToStaticMarkup(React.createElement(PracticeHome));
 equal(markup.includes('/interview/current?kind=chat'),true);equal(markup.includes('/interview/old?'),false);
 equal(markup.includes('/quiz?targetId=target'),true);equal(markup.includes('/interview/chat?targetId=target'),true);equal(markup.includes('/interview/live?targetId=target'),true);
 for(const label of ['퀴즈','Chat 면접','Live 면접'])equal((markup.match(new RegExp(`<h2>${label}</h2>`,'g'))||[]).length,1);
-equal(markup.includes('href="/on"'),false);equal(markup.includes('href="/quiz/assignments"'),true);
+equal(markup.includes('href="/on"'),true);equal(markup.includes('href="/quiz/assignments"'),true);
 equal(markup.includes('aria-label="약점 집중 훈련" data-target-id="target"'),true);
 equal(markup.includes('href="/knowledge?targetId=target"'),true);equal(markup.includes('href="/materials/briefings"'),true);equal(markup.includes('href="/armory"'),true);equal(markup.includes('href="/records/comparisons"'),true);
 equal(markup.includes('지식한입'),true);equal(markup.includes('시사 브리핑'),true);

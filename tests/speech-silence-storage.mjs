@@ -9,6 +9,7 @@ class FeatureError extends Error {constructor(status,message,code){super(message
 class ApiError extends Error {constructor(status,message){super(message);this.status=status;}}
 let state;
 const user={id:'student',role:'student'};
+process.env.TRANSCRIPT_CLEANUP_ENABLED='true';
 function wav(silent=true){const rate=16000,frames=32000,bytes=Buffer.alloc(44+frames*2);bytes.write('RIFF');bytes.writeUInt32LE(bytes.length-8,4);bytes.write('WAVEfmt ',8);bytes.writeUInt32LE(16,16);bytes.writeUInt16LE(1,20);bytes.writeUInt16LE(1,22);bytes.writeUInt32LE(rate,24);bytes.writeUInt32LE(rate*2,28);bytes.writeUInt16LE(2,32);bytes.writeUInt16LE(16,34);bytes.write('data',36);bytes.writeUInt32LE(frames*2,40);if(!silent)for(let i=0;i<frames;i++)bytes.writeInt16LE(Math.round(3000*Math.sin(i*.2)),44+i*2);return bytes;}
 const raw={text:'음, 제가 관찰했습니다.',provider:'openai',modelId:'gpt-4o-mini-transcribe',words:[],alignmentStatus:'answer_only'};
 const formatted=value=>({...value,rawText:value.text,displayText:'제가 관찰했습니다.',cleanup:{status:'completed'}});

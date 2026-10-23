@@ -3,13 +3,14 @@
 import {useEffect,useRef} from 'react';
 import {usePathname,useRouter} from 'next/navigation';
 import {swipeDestination} from '@/lib/mobile-tab-swipe';
+import {STUDENT_NAVIGATION} from '@/lib/app-navigation';
 
 /** Touch gestures stay outside controls, horizontal lists, and browser back edges. */
 export function MobileTabSwipe({enabled}:{enabled:boolean}) {
   const path=usePathname(),router=useRouter(),enter=useRef<'left'|'right'|null>(null);
   useEffect(()=>{
     const main=document.getElementById('main-content');
-    if(!main||!enabled||!['/my','/preparation','/records'].includes(path))return;
+    if(!main||!enabled||!STUDENT_NAVIGATION.some(item=>item.href===path))return;
     let gesture:{id:number;x:number;y:number;time:number;axis:'x'|'y'|null}|null=null,timer:number|undefined;
     const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
     const entering=enter.current;enter.current=null;

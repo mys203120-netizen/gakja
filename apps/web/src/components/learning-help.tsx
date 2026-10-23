@@ -1,4 +1,5 @@
 'use client';
+import {draftProposalError} from '@/lib/draft-proposal';
 import {setDeviceItem} from '@/lib/client/device-storage';
 import {ownedClassName} from './owned-class-name';
 
@@ -15,6 +16,7 @@ export type LearningHelpProps={
   assignmentId?:string;itemId?:string;interviewSessionId?:string;interviewTurnId?:string;
   sourceType?:'personal'|'common';sourceVersion?:number|string;snapshot?:{learning:Item;documents:Item[]};
   questionPrompt?:string;answerDraft?:string;openRequest?:number;disabled?:boolean;showEvidence?:boolean;
+  onApplyDraft?:(text:string)=>void|Promise<void>;draftMaxLength?:number;
   beforeOpen?:()=>boolean|void|Promise<boolean|void>;onClose?:()=>void|Promise<void>;onAssisted?:()=>void|Promise<void>;
 };
 
@@ -24,6 +26,9 @@ export function LearningHelp(props:LearningHelpProps){
   const scope=[data.user.id,props.targetId||targetId,props.interviewSessionId||props.quizSessionId||props.assignmentId||'',props.interviewTurnId??props.itemIndex??props.itemId??'',props.questionId||props.activityId,props.sourceType||'auto',props.sourceVersion||'current'].join(':');
   const scopeRef=useRef({key:scope});if(scopeRef.current.key!==scope)scopeRef.current={key:scope};const scopeToken=scopeRef.current;
   const [openedScope,setOpenedScope]=useState<object|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(false);
+  const [undo,setUndo]=useState<{scope:string;before:string;after:string}|null>(null);
+  useEffect(()=>{try{const saved=JSON.parse(sessionStorage.getItem('gakja-help-undo:'+scope)||'null');setUndo(saved?.scope===scope&&typeof saved.before==='string'&&typeof saved.after==='string'?saved:null);}catch{setUndo(null);}},[scope]);
+  async function applyDraft(text:string){const snapshot={scope,before:latest.current.answerDraft||'',after:text};setDeviceItem(sessionStorage,'gakja-help-undo:'+scope,JSON.stringify(snapshot));await latest.current.onApplyDraft?.(text);setUndo(snapshot);}
   const opening=useRef<object|null>(null),requested=useRef(0),latest=useRef(props);latest.current=props;
   useEffect(()=>{setError('');setLoading(false);},[scopeToken]);
   async function prepare(){
@@ -67,7 +72,8 @@ export function LearningHelp(props:LearningHelpProps){
       <button type="button" className={ownedClassName('text-link',true)} disabled={loading||props.disabled} onClick={()=>void openHelp()}><Sparkles size={15}/>AI 비서 도움받기</button>
     </div>
     {error&&<Alert>{error}</Alert>}
-    {openedScope===scopeToken&&<Assistant key={scope} {...props} scope={scope} onClose={close}/>}
+    {undo?.scope===scope&&props.onApplyDraft&&props.answerDraft===undo.after&&<button type="button" className="text-link" disabled={props.disabled} onClick={()=>{void Promise.resolve(props.onApplyDraft?.(undo.before)).then(()=>{sessionStorage.removeItem('gakja-help-undo:'+scope);setUndo(null);}).catch(cause=>setError(cause.message));}}>AI 제안 적용 전 초안으로 되돌리기</button>}
+    {openedScope===scopeToken&&<Assistant key={scope} {...props} onApplyDraft={props.onApplyDraft?applyDraft:undefined} scope={scope} onClose={close}/>}
   </div>;
 }
 
@@ -77,6 +83,8 @@ function Assistant({onClose,scope,...props}:LearningHelpProps&{scope:string;onCl
   const visitRef=useRef({key,active:false});if(visitRef.current.key!==key)visitRef.current={key,active:false};const visit=visitRef.current;
   useEffect(()=>{visit.active=true;return()=>{visit.active=false;};},[visit]);
   const [message,setMessage]=useState(''),[messages,setMessages]=useState<Item[]>([]),[threadId,setThreadId]=useState<string>(),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loadedKey,setLoadedKey]=useState('');
+  const [proposal,setProposal]=useState<{before:string;text:string}|null>(null),[proposalConfirmed,setProposalConfirmed]=useState(false);
+  async function applyProposal(){if(!proposal||!props.onApplyDraft)return;const issue=draftProposalError({baseline:proposal.before,current:props.answerDraft||'',proposal:proposal.text,confirmed:proposalConfirmed,maxLength:props.draftMaxLength||12000});if(issue){setError(issue);return;}setBusy(true);setError('');try{await props.onApplyDraft(proposal.text);setProposal(null);onClose();}catch(cause){setError((cause as Error).message||'원문을 보관하지 못해 적용하지 않았어요.');}finally{setBusy(false);}}
   const dialog=useRef<HTMLElement>(null),lock=useRef(false),requestId=useRef(''),requestText=useRef(''),requestDraft=useRef('');
   useEffect(()=>{
     lock.current=false;setBusy(false);requestId.current='';requestText.current='';requestDraft.current='';
@@ -135,7 +143,8 @@ function Assistant({onClose,scope,...props}:LearningHelpProps&{scope:string;onCl
       {props.questionPrompt&&<details className={styles.question}><summary>지금 연습하는 질문</summary><p>{props.questionPrompt}</p>{props.answerDraft?.trim()&&<><strong>작성 중인 내 답변</strong><p>{props.answerDraft}</p></>}</details>}
       <div className={ownedClassName('learning-help-messages',true)} aria-live="polite" aria-busy={busy}>
         {!messages.length&&<p className={ownedClassName('muted',true)}>어디서 막혔는지 물어보세요. 도움은 현재 질문의 기록에 연결해요.</p>}
-        {messages.map(item=><article key={item.id} className={ownedClassName(item.role,true)}><strong className={ownedClassName(undefined,true)}>{item.role==='assistant'?'각자ON':'나'}</strong>{item.role==='assistant'&&item.content?<MarkdownMessage content={item.content}/>:<p className={ownedClassName(undefined,true)}>{item.content||(item.status==='pending'?'응답을 작성 중이에요.':item.status==='failed'?'응답이 중단됐어요.':'')}</p>}{(item.sources||item.data?.sources||[]).map((source:Item,index:number)=><details key={`${source.id}:${index}`} className={ownedClassName(undefined,true)}><summary className={ownedClassName(undefined,true)}>{source.title||'답변 근거'}</summary><p className={ownedClassName(undefined,true)}>{source.quote||'연결한 자료의 근거입니다.'}</p></details>)}</article>)}
+        {messages.map(item=><article key={item.id} className={ownedClassName(item.role,true)}><strong className={ownedClassName(undefined,true)}>{item.role==='assistant'?'각자ON':'나'}</strong>{item.role==='assistant'&&item.content?<MarkdownMessage content={item.content}/>:<p className={ownedClassName(undefined,true)}>{item.content||(item.status==='pending'?'응답을 작성 중이에요.':item.status==='failed'?'응답이 중단됐어요.':'')}</p>}{(item.sources||item.data?.sources||[]).map((source:Item,index:number)=><details key={`${source.id}:${index}`} className={ownedClassName(undefined,true)}><summary className={ownedClassName(undefined,true)}>{source.title||'답변 근거'}</summary><p className={ownedClassName(undefined,true)}>{source.quote||'연결한 자료의 근거입니다.'}</p></details>)}{props.onApplyDraft&&item.role==='assistant'&&item.content&&!['pending','failed'].includes(item.status)&&<button type="button" className="text-link" disabled={busy} onClick={()=>{setProposal({before:props.answerDraft||'',text:item.content});setProposalConfirmed(false);setError('');}}>이 제안을 초안으로 검토</button>}</article>)}
+        {proposal&&<section className={styles.proposal} aria-label="AI 제안 적용 전 비교"><h3>내 답변에 적용할 내용</h3><details><summary>현재 초안</summary><p>{proposal.before||'아직 작성한 내용이 없어요.'}</p></details><label>적용할 문장<textarea value={proposal.text} maxLength={props.draftMaxLength||12000} onChange={event=>{setProposal({...proposal,text:event.target.value});setProposalConfirmed(false);}}/></label><label className={styles.confirm}><input type="checkbox" checked={proposalConfirmed} onChange={event=>setProposalConfirmed(event.target.checked)}/>내가 한 일·수치·의미가 맞는지 확인했어요.</label><div><button type="button" className="button ghost" disabled={busy} onClick={()=>setProposal(null)}>취소</button><button type="button" className="button primary" disabled={busy||!proposalConfirmed||!proposal.text.trim()} onClick={()=>void applyProposal()}>내 초안에 적용</button></div><p>기존 초안을 보관해 되돌릴 수 있어요. 적용 후 답변을 직접 제출해 주세요.</p></section>}
         {busy&&<p role="status" className={ownedClassName(undefined,true)}>답을 정리하고 있어요.</p>}
       </div>
       {error&&<Alert>{error}{threadId&&<button className={ownedClassName('text-link',true)} disabled={busy} onClick={()=>void reload()}>대화 다시 불러오기</button>}</Alert>}

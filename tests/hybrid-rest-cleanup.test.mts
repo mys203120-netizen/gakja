@@ -5,6 +5,8 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import * as availability from '../apps/web/src/lib/training-availability.ts';
 import * as hybrid from '../apps/web/src/lib/hybrid-training.ts';
+import * as cycle from '../apps/web/src/lib/training-cycle.ts';
+import * as policy from '../apps/web/src/lib/curriculum-policy.ts';
 import * as review from '../apps/web/src/lib/training-review.ts';
 import {shiftPlanDay} from '../apps/web/src/lib/planner-model.ts';
 
@@ -15,6 +17,7 @@ test('read-through replanning retires only owned untouched current/future automa
  const foreign=row('foreign',today,{student_id:'other-student'}),before=structuredClone({plans,foreign}),writes:any[]=[];
  const context={schoolTargets:[{id:'school',data:school}],selectedTargetId:'school',events:[]};
  const query=async(sql:string,args:any[]=[])=>{
+  if(sql.includes('from student_document_guidelines'))return {rows:[]};
   if(sql.includes('pg_advisory_xact_lock'))return {rows:[]};
   if(sql.includes('from student_preferences'))return {rows:[{data:{trainingAvailability:{version:2,startDate:'2026-10-01',savedAt:'2026-10-20T00:00:00Z',revision:1,weekdayMinutes:120,weekendMinutes:120,blockedDates:[],overrides:{}}}}]};
   if(sql.startsWith('select id,data from support_targets'))return {rows:[{id:'school',data:school}]};
@@ -38,6 +41,8 @@ test('read-through replanning retires only owned untouched current/future automa
   if(name==='./training-read-model')return {getTrainingReadModel:async()=>({completedSessionIds:[],targets:[],questions:[],review:{version:1,questions:[]},activeRequests:[],sourceRevision:'1'}),trainingReadContext:()=>context};
   if(name==='./student-read-model')return {studentModelRevision:async()=> '1'};
   if(name==='./training-availability')return availability;
+  if(name==='./training-cycle')return cycle;
+  if(name==='./curriculum-policy')return policy;
   if(name==='./hybrid-training')return hybrid;
   if(name==='./training-practice-store')return {trainingQuizQuestions:(questions:any[])=>questions,pendingTrainingAssignments:async()=>[],trainingPracticeCompletions:async()=>new Map()};
   if(name==='./training-review')return review;

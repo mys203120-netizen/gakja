@@ -2114,8 +2114,8 @@ body .button {
   box-shadow: var(--soft-shadow-small);
   transition: background-color var(--clarity-motion) ease, border-color var(--clarity-motion) ease, color var(--clarity-motion) ease, transform var(--clarity-motion) ease;
 }
-body .button:global(.primary) { color: var(--clarity-on-brand); background: var(--soft-gradient); border-color: transparent; font-weight:600; }
-body .button:global(.primary):hover:not(:disabled) { color: var(--clarity-on-brand); background: var(--clarity-brand); border-color: transparent; box-shadow: 0 4px 12px rgb(34 13 42 / 10%); }
+body .button:global(.primary) { color: var(--clarity-on-action); background: var(--clarity-action); border-color: transparent; font-weight:600; }
+body .button:global(.primary):hover:not(:disabled) { color: var(--clarity-on-action); background: var(--clarity-action-hover); border-color: transparent; box-shadow: 0 4px 12px rgb(34 13 42 / 10%); }
 body .button:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--soft-shadow-inset); }
 body .button:is(:global(.secondary), :global(.ghost)) { color: var(--clarity-ink); background: var(--clarity-surface); border-color: transparent; }
 body .button:is(:global(.secondary), :global(.ghost)):hover:not(:disabled) { background: var(--clarity-mint); border-color: transparent; }
@@ -2439,8 +2439,8 @@ body :global(.app-shell) :global(.main-content) .button:global(.primary),
 body :global(.native-modal) .button:global(.primary),
 body :global(.auth-page):global(.auth-centered) .auth-submit {
   border:0;
-  background:var(--clarity-brand);
-  color:#220D2A;
+  background:var(--clarity-action);
+  color:var(--clarity-on-action);
   font-weight:600;
 }
 body .button:global(.primary):not(:disabled):hover,
@@ -2448,8 +2448,8 @@ body :global(.app-shell) .button:global(.primary):not(:disabled):hover,
 body :global(.app-shell) :global(.main-content) .button:global(.primary):not(:disabled):hover,
 body :global(.native-modal) .button:global(.primary):not(:disabled):hover,
 body :global(.auth-page):global(.auth-centered) .auth-submit:not(:disabled):hover {
-  background:var(--clarity-brand);
-  color:#220D2A;
+  background:var(--clarity-action);
+  color:var(--clarity-on-action);
   box-shadow:0 4px 12px rgb(34 13 42 / 10%);
 }
 body :global(.app-shell) .button:global(.primary):not(:disabled):active,
@@ -2461,8 +2461,8 @@ body :global(.app-shell) .button:global(.primary):is(:disabled,[aria-disabled=tr
 body :global(.app-shell) :global(.main-content) .button:global(.primary):is(:disabled,[aria-disabled=true]),
 body :global(.native-modal) .button:global(.primary):is(:disabled,[aria-disabled=true]),
 body :global(.auth-page):global(.auth-centered) .auth-submit:is(:disabled,[aria-disabled=true]) {
-  background:var(--clarity-brand);
-  color:#220D2A;
+  background:var(--clarity-action);
+  color:var(--clarity-on-action);
   font-weight:600;
   opacity:1;
   filter:none;
@@ -2566,6 +2566,64 @@ body [data-chat-composer] form:where(.element) {
 }
 body :is(.button, .text-link) > :is(:global(.lucide-arrow-right), :global(.lucide-arrow-up-right)) {
   transition: transform var(--clarity-motion) ease;
+}
+
+/* Shared clay surfaces keep the school picker spacing and the original logo green. */
+body .button:global(.primary),
+body :global(.app-shell) .button:global(.primary),
+body :global(.app-shell) :global(.main-content) .button:global(.primary),
+body :global(.native-modal) .button:global(.primary),
+body :global(.auth-page):global(.auth-centered) .auth-submit {
+  min-height:48px;
+  border-radius:var(--soft-control-radius);
+  background:var(--soft-gradient);
+  color:var(--clarity-on-brand);
+  box-shadow:var(--clay-button-shadow);
+}
+body .button:global(.primary):not(:disabled):hover,
+body :global(.app-shell) .button:global(.primary):not(:disabled):hover,
+body :global(.app-shell) :global(.main-content) .button:global(.primary):not(:disabled):hover,
+body :global(.native-modal) .button:global(.primary):not(:disabled):hover {
+  background:var(--soft-gradient);
+  color:var(--clarity-on-brand);
+  box-shadow:var(--clay-button-shadow);
+  translate:0 -1px;
+}
+body .button:global(.primary):is(:disabled,[aria-disabled=true]),
+body :global(.app-shell) .button:global(.primary):is(:disabled,[aria-disabled=true]),
+body :global(.app-shell) :global(.main-content) .button:global(.primary):is(:disabled,[aria-disabled=true]) {
+  background:var(--clarity-soft);
+  color:var(--clarity-muted);
+  opacity:.7;
+  box-shadow:none;
+}
+body :is(:global(.app-shell),:global(.native-modal)) .button:global(.secondary) {
+  min-height:44px;
+  border-radius:var(--soft-control-radius);
+  background:var(--clarity-surface);
+  border-color:var(--clarity-line);
+  box-shadow:var(--soft-shadow-small);
+}
+body :is(:global(.app-shell),:global(.native-modal))
+:is(input:where(.element):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),textarea:where(.element),select:where(.element)) {
+  border-radius:var(--soft-control-radius);
+  background-color:var(--clarity-soft);
+  box-shadow:var(--soft-shadow-inset) !important;
+}
+body :is(:global(.app-shell),:global(.native-modal))
+:is(input:where(.element),textarea:where(.element),select:where(.element)):focus-visible {
+  outline:2px solid var(--clarity-green) !important;
+  outline-offset:3px;
+}
+@media(hover:hover) and (pointer:fine) {
+  body :is(button:where(.element),.button,a.icon-button):not(:disabled):not([aria-disabled=true]):hover { scale:1; }
+  body .button:not(:disabled):active { scale:.98; translate:0 1px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  body .button { translate:none !important; scale:1 !important; }
+}
+@media(forced-colors:active) {
+  body .button:global(.primary),body :global(.app-shell) .button:global(.primary),body :global(.app-shell) :global(.main-content) .button:global(.primary) { background:Highlight; color:HighlightText; box-shadow:none; }
 }
 @media (hover: hover) and (pointer: fine) {
   body :is(.button, .text-link):not(:disabled):not([aria-disabled="true"]):hover > :global(.lucide-arrow-right) { transform: translateX(2px); }

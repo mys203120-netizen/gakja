@@ -2,7 +2,7 @@
 export type ReviewCategory = 'personal' | 'major' | 'talent';
 export type ReviewAttempt = {
   id: string; at: string; assistanceKnown?: boolean; assisted?: boolean; timedOut?: boolean;
-  outcome?: boolean; valid?: boolean; inputMode?: string;
+  outcome?: boolean; needsReview?: boolean; evaluationReason?: string; valid?: boolean; inputMode?: string;
   kind?: 'interview_answer' | 'quiz_response' | 'memory_review' | 'assignment_submission';
 };
 export type ReviewQuestion = {
@@ -89,6 +89,7 @@ function indexEvidence(question: ReviewQuestion): QuestionEvidence {
     saved.attempt.assisted = saved.attempt.assisted === true || source.assisted === true ? true : saved.allUnassisted ? false : undefined;
     saved.attempt.assistanceKnown = saved.attempt.assistanceKnown === true && source.assistanceKnown === true;
     saved.attempt.timedOut = saved.attempt.timedOut === true || source.timedOut === true;
+    if(source.needsReview===true){saved.attempt.needsReview=true;saved.attempt.evaluationReason=source.evaluationReason;}
     saved.attempt.outcome = saved.attempt.outcome === false || source.outcome === false ? false : saved.allCorrect ? true : undefined;
   }
   const sorted = [...byId.values()].sort((a, b) => a.at - b.at || a.attempt.id.localeCompare(b.attempt.id));
@@ -154,7 +155,7 @@ function studentRequest(input: {episodes: Map<string, number>; evidence: (questi
 }
 
 function qualifies(attempt: ReviewAttempt): boolean {
-  if (attempt.valid === false || attempt.assistanceKnown !== true || attempt.assisted !== false || attempt.timedOut === true || attempt.outcome === false) return false;
+  if (attempt.valid === false || attempt.assistanceKnown !== true || attempt.assisted !== false || attempt.timedOut === true || attempt.outcome === false || attempt.needsReview === true) return false;
   return attempt.kind === 'quiz_response' || attempt.kind === 'memory_review' || attempt.kind === 'assignment_submission' ? attempt.outcome === true : true;
 }
 
@@ -169,7 +170,7 @@ function assess(request: ReviewRequest, questions: Map<string, QuestionEvidence>
   })) return {...request, ...noResolution, status: 'out_of_scope'};
   if (request.origin === 'automatic') {
     const trigger = questions.get(request.questionKeys[0])!.byId.get(request.triggerEvidenceId!);
-    if (!trigger || trigger.valid === false || !(trigger.assisted === true || trigger.timedOut === true || trigger.outcome === false)) return {...request, ...noResolution, status: 'withdrawn'};
+    if (!trigger || trigger.valid === false || !(trigger.assisted === true || trigger.timedOut === true || trigger.outcome === false || trigger.needsReview === true)) return {...request, ...noResolution, status: 'withdrawn'};
   }
   const after = time(request.requestedAt ?? request.migratedAt), baseline = new Set(request.baselineEvidenceIds);
   const selected = new Map<string, ReviewAttempt>();
@@ -216,13 +217,13 @@ export function reconcileTrainingReviews(input: ReconcileInput): {state: ReviewS
   for (const question of input.questions) {
     const questionKey = reviewQuestionKey(question);
     for (const attempt of evidence(question).attempts) {
-      if (attempt.valid === false || !(attempt.assisted === true || attempt.timedOut === true || attempt.outcome === false)) continue;
+      if (attempt.valid === false || !(attempt.assisted === true || attempt.timedOut === true || attempt.outcome === false || attempt.needsReview === true)) continue;
       const id = JSON.stringify(['automatic-review', questionKey, attempt.id]);
       if (requestIds.has(id)) continue;
       const {attempts: _, category: __, ...scope} = question;
       state.requests.push({id, origin: 'automatic', selectionKey: 'receipt:' + attempt.id, questionKeys: [questionKey], scopes: [{...scope, activityIds: [...scope.activityIds]}],
         requestedAt: attempt.at, baselineEvidenceIds: [attempt.id], status: 'active', resolvedEvidenceIds: [], resolvedAt: null, triggerEvidenceId: attempt.id,
-        reason: attempt.assisted ? '도움 없이 다시 답할 과제예요.' : attempt.timedOut ? '시간 안에 다시 답할 과제예요.' : '개념을 다시 확인할 과제예요.'});
+        reason: attempt.needsReview ? `AI 피드백에서 다시 확인할 부분이 있어요. ${attempt.evaluationReason||''}` : attempt.assisted ? '도움 없이 다시 답할 과제예요.' : attempt.timedOut ? '시간 안에 다시 답할 과제예요.' : '개념을 다시 확인할 과제예요.'});
       requestIds.add(id);
     }
   }

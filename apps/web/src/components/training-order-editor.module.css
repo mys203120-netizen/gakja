@@ -1,0 +1,9 @@
+.editor{margin-top:20px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:var(--font-size-body)}
+.editor summary{display:flex;align-items:center;justify-content:space-between;min-height:44px;cursor:pointer;list-style:none;color:var(--ink);font-weight:600}
+.editor p{line-height:1.65;margin:12px 0}
+.editor ol{padding:0;list-style:none;display:grid;gap:8px;margin:16px 0}
+.editor li{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--soft);border-radius:var(--soft-control-radius,16px)}
+.editor li span{flex:1;min-width:0;line-height:1.5;overflow-wrap:anywhere}
+.editor li button{width:44px;height:44px;flex:none;border:0;border-radius:12px;background:var(--surface);color:var(--ink);display:grid;place-items:center;box-shadow:var(--soft-shadow-small);cursor:pointer}
+.editor li button:disabled{opacity:.35;cursor:default}
+.editor li button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}

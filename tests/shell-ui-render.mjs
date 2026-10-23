@@ -16,7 +16,7 @@ const bootstrap = { user: { id: 'student', name: '하린',role:'student' }, targ
 const link = ({ href, children, ...props }) => React.createElement('a', { href, ...props }, children);
 const wrapper = ({ children }) => React.createElement(React.Fragment, null, children);
 function render({ admin = false, path = '/my', query = '', searchOpen = false, moreOpen = false, sidebarCollapsed = false, schoolSwitchOpen = false,account=bootstrap } = {}) {
-  const state = [account, '', account.targets[0]?.id||'', false, searchOpen, query, '', 0, false, null, 0, moreOpen, sidebarCollapsed, schoolSwitchOpen]; let index = 0;
+  const state = [account, '', account.targets[0]?.id||'', false, searchOpen, query, '', 0, false, null, 0, moreOpen, sidebarCollapsed, schoolSwitchOpen, account.user.id]; let index = 0;
   const hooks = { ...React, useEffect() {}, useState(initial) { return [index < state.length ? state[index++] : initial, () => {}]; } };
   const module = { exports: {} };
   vm.runInNewContext(source, { module, exports: module.exports, console, Date, Event, require(name) {if(name==='./owned-class-name'||name==='@/components/owned-class-name')return {ownedClassName:(value)=>value};
@@ -28,6 +28,8 @@ function render({ admin = false, path = '/my', query = '', searchOpen = false, m
     if (name === 'gsap') return { default: {} };
     if (name.endsWith('.module.css')) return { default: new Proxy({}, { get: (_, key) => String(key) }) };
     if (name === '@/lib/app-navigation') return navigation;
+    if (name === '@/lib/client/device-storage') return {setDeviceItem:(storage,key,value)=>storage.setItem(key,value),openDeviceDocumentScope:()=>({ready:Promise.resolve(),close(){}})};
+    if (name === '@/lib/client/device-data') return {isDeviceCleanupOnLogout:()=>false,clearDeviceData:async()=>{}};
     if (name === '@/lib/client/draft-save') return {flushPendingDrafts:async()=>{}};
     if (name === './section-navigation') return { SectionNavigation: () => null };
     if (name === '@/lib/material-search') return search;
@@ -36,6 +38,7 @@ function render({ admin = false, path = '/my', query = '', searchOpen = false, m
     if (name === './help-preferences') return { HelpPreferencesProvider: wrapper };
     if (name === './mobile-tab-swipe') return { MobileTabSwipe: () => null };
     if (name === './mobile-scroll-navigation') return {MobileScrollNavigation:()=>null};
+    if (name === './mobile-back') return {MobileBack:()=>React.createElement('span',{'data-mobile-back':'true'})};
     if (name === './study-session-provider') return { StudySessionProvider: wrapper, finishStudySession() {} };
     if (name === './account-menu') return { AccountMenu: () => React.createElement('span', null, '계정 메뉴') };
     if(name==='./use-record-pages')return {useRecordPages:()=>({items:[],page:null,loading:false,error:'',more:async()=>{}})};
@@ -62,32 +65,32 @@ assert.equal((mobile.match(/<a /g) || []).length, 4);
 assert.ok(mobile.includes('href="/admin/schedules"') && mobile.includes('운영 메뉴 더보기'));
 assert.ok(mobile.includes('aria-expanded="true"') && mobile.includes('data-active="true"'));
 const additional = admin.match(/<nav class="moreLinks"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || '';
-assert.equal((additional.match(/<a /g) || []).length, 6);
+assert.equal((additional.match(/<a /g) || []).length, 7);
 assert.ok(additional.includes('href="/admin/reviews" aria-current="page"'));
 const desktop = admin.match(/<nav class="main-nav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || '';
-assert.equal((desktop.match(/<a /g) || []).length, 10);
+assert.equal((desktop.match(/<a /g) || []).length, 11);
 const student = render({path:'/materials/questions/q1'});
 const studentRail = student.match(/<nav class="main-nav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || '';
 assert.equal((studentRail.match(/<a /g)||[]).length,3);
-assert.ok(studentRail.includes('href="/preparation"')&&studentRail.includes('aria-label="준비 현황"'));
-assert.ok(studentRail.includes('href="/my"')&&studentRail.includes('title="오늘 훈련"'));
-assert.ok(studentRail.includes('href="/records"')&&studentRail.includes('title="내 기록"'));
+assert.ok(studentRail.includes('href="/preparation"')&&studentRail.includes('aria-label="마이 대시보드"'));
+assert.ok(studentRail.includes('href="/my"')&&studentRail.includes('title="홈"'));
+assert.ok(studentRail.includes('href="/training"')&&studentRail.includes('title="훈련하기"'));
 const resourceLink=studentRail.match(/<a[^>]*href="\/preparation"[^>]*>/)?.[0]||'';
-assert.ok(resourceLink.includes('aria-label="준비 현황"')&&resourceLink.includes('aria-current="page"'));
+assert.ok(resourceLink.includes('aria-label="마이 대시보드"')&&resourceLink.includes('aria-current="page"'));
 assert.ok(student.includes('aria-label="각자ON 홈"')&&!student.includes('class="sidebar-tools"'));
-assert.ok(student.includes('aria-label="오늘 훈련"')&&student.includes('href="/my"'));
+assert.ok(student.includes('aria-label="홈"')&&student.includes('href="/my"'));
 const dockOf=markup=>markup.match(/<nav class="mobile-nav [^"]*"[^>]*aria-label="주 메뉴"[^>]*>([\s\S]*?)<\/nav>/)?.[1]||'';
 const dockLinks=dock=>[...dock.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(match=>({attributes:match[1],body:match[2],href:match[1].match(/href="([^"]+)"/)?.[1]}));
 const dock=dockOf(student),links=dockLinks(dock);
-assert.deepEqual(links.map(item=>item.href),['/my','/preparation','/records']);
-for(const [index,label] of ['오늘 훈련','준비 현황','내 기록'].entries())assert.ok(links[index].attributes.includes(`aria-label="${label}"`) && links[index].body.includes(`<span class="sr-only">${label}</span>`));
+assert.deepEqual(links.map(item=>item.href),['/my','/training','/preparation']);
+for(const [index,label] of ['홈','훈련하기','마이 대시보드'].entries())assert.ok(links[index].attributes.includes(`aria-label="${label}"`) && links[index].body.includes(`<span class="mobileNavigationLabel">${label}</span>`));
 assert.ok(links[0].body.includes('data-logo-size="25"')&&links[0].body.includes('data-wordmark="false"'),'mobile home receives the compact brand mark');
 assert.ok(!dock.includes('href="/armory"'),'experience editing remains a preparation subroute with three primary destinations');
 assert.ok(student.includes('<sup class="brand-on-sup">')&&student.includes('src="/brand-on.png"')&&student.includes('alt="" width="26" height="15"'),'wordmark uses a compact superscript ON without a separating space');
 const topbar=student.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1]||'';
 assert.ok(topbar.includes('<div class="mobileAccount">'),'header account is limited to mobile, where the sidebar is unavailable');
 assert.ok(student.includes('class="sidebar-account"'),'desktop keeps the sidebar account entry');
-assert.ok(!topbar.includes('href="/on"'),'desktop AI primary link replaces the duplicate header shortcut');
+assert.ok(!topbar.includes('href="/on"'),'AI assistance is available within training rather than repeated in the header');
 assert.ok(!topbar.includes('locationLabel'),'school context does not repeat the current navigation title');
 assert.ok(!topbar.includes('class="mobile-brand"')&&!topbar.includes('data-logo-size='),'student topbar leaves space for the school context');
 assert.ok(topbar.includes('<span class="target-copy" aria-hidden="true"><strong>서울시립대학교</strong><small>환경공학부</small></span>'),'school and major have separate visible text elements');
@@ -109,11 +112,11 @@ for(const path of ['/schools/new','/account','/account/settings']){
 assert.equal(studentOnboardingDestinationForHome(),'/schools/new?onboarding=1');
 function studentOnboardingDestinationForHome(){return onboarding.studentOnboardingDestination(unregisteredAccount,'/my');}
 for(const [path,href] of [
- ['/my/today','/my'],['/quiz/session/answer','/my'],['/chat/interviews/session','/my'],
- ['/my/diagnosis','/my'],['/my/train','/my'],['/availability','/my'],
- ['/on/interviews','/my'],['/on/interviews/new','/my'],['/on/interviews/session','/my'],['/on/interviews/session/turn','/my'],
- ['/on','/my'],['/on/conversation','/my'],['/armory/answer/edit','/preparation'],
- ['/preparation','/preparation'],['/materials/questions/question','/preparation'],['/reports/report','/records'],
+ ['/my','/my'],['/training','/training'],['/my/today','/training'],['/quiz/session/answer','/training'],['/chat/interviews/session','/training'],
+ ['/my/diagnosis','/training'],['/my/train','/training'],['/availability','/preparation'],
+ ['/on/interviews','/training'],['/on/interviews/new','/training'],['/on/interviews/session','/training'],['/on/interviews/session/turn','/training'],
+ ['/on','/training'],['/on/conversation','/training'],['/armory/answer/edit','/preparation'],
+ ['/preparation','/preparation'],['/materials/questions/question','/preparation'],['/records','/preparation'],['/records/reports/report','/preparation'],['/reports/report','/preparation'],['/account/settings','/preparation'],
 ]){
  const rendered=render({path});
  assert.deepEqual(dockLinks(dockOf(rendered)).filter(item=>item.attributes.includes('aria-current="page"')).map(item=>item.href),[href],`exactly one mobile area is active for ${path}`);
@@ -121,7 +124,8 @@ for(const [path,href] of [
 for(const path of ['/on','/on/conversation','/on/interviews-extra']){
  const assistant=render({path});
  assert.match(assistant,/class="app-shell [^"]*\bassistant-shell\b/);
- assert.match(assistant,/<a href="\/my" class="assistant-back icon-button" aria-label="오늘로 돌아가기"/);
+ assert.ok(assistant.includes('data-mobile-back="true"'),'assistant uses the shared mobile back control');
+ assert.deepEqual(dockLinks(dockOf(assistant)).filter(item=>item.attributes.includes('aria-current="page"')).map(item=>item.href),['/training'],'AI conversations belong to training');
  assert.ok(assistant.includes('id="main-content"')&&assistant.includes('본문'),'chat shell keeps the page content and keyboard target');
 }
 for(const options of [{path:'/my'},{path:'/online'},{path:'/on/interviews'},{path:'/on/interviews/new'},{path:'/on/interviews/session'},{path:'/on/interviews/session/turn'},{admin:true,path:'/on'}]){
@@ -161,11 +165,13 @@ function interactiveShell({persisted='true',blocked=false,onboarding=false,admin
    if(name==='lucide-react')return icons;if(name==='gsap')return {default:{}};
    if(name.endsWith('.module.css'))return {default:new Proxy({},{get:(_,key)=>String(key)})};
    if(name==='@/lib/app-navigation')return navigation;if(name==='@/lib/material-search')return search;
+   if(name==='@/lib/client/device-data')return {isDeviceCleanupOnLogout:()=>false,clearDeviceData:async()=>{}};
    if(name==='@/lib/client/draft-save')return {flushPendingDrafts:async()=>{}};
    if(name==='@/lib/student-onboarding')return {studentOnboardingDestination:()=>onboarding?'/schools/register':null};
    if(name==='./section-navigation')return {SectionNavigation:()=>null};if(name==='./motion')return {PageMotion:wrapper};
    if(name==='./help-preferences')return {HelpPreferencesProvider:wrapper};if(name==='./mobile-tab-swipe')return {MobileTabSwipe:()=>null};
    if(name==='./mobile-scroll-navigation')return {MobileScrollNavigation:()=>null};
+   if(name==='./mobile-back')return {MobileBack:()=>null};
    if(name==='./study-session-provider')return {StudySessionProvider:wrapper,finishStudySession(){}};
    if(name==='./use-record-pages')return {useRecordPages:()=>({items:[],page:null,loading:false,error:'',more:async()=>{}})};
    if(name==='./account-menu')return {AccountMenu:account};if(name==='./resource-panel')return {ResourcePanel:wrapper};
@@ -210,7 +216,7 @@ const onboardingShell=interactiveShell({onboarding:true}),onboardingTree=onboard
 assert.equal(descendants(onboardingTree).filter(node=>node.type==='a'&&node.props.href==='/on').length,0,'initial school setup does not expose the AI navigation early');
 const locked=descendants(onboardingTree).filter(node=>node.type==='a'&&node.props['aria-disabled']==='true'&&String(node.props['aria-label']).includes('학교 등록 후 이용'));
 assert.equal(locked.length,3,'unregistered rail reuses exactly the three primary navigation entries');
-assert.deepEqual(locked.map(node=>node.props.href),['/my','/preparation','/records']);
+assert.deepEqual(locked.map(node=>node.props.href),['/my','/training','/preparation']);
 assert.ok(locked.every(node=>descendants(node).some(child=>child.props?.className==='navigationLock')),'every locked menu includes a visible lock mark');
 for(const node of locked){let prevented=false;node.props.onClick({preventDefault(){prevented=true;}});assert.equal(prevented,true);}
-console.log('Shell UI passed: desktop/mobile routes, accessible sidebar toggling, preference restoration, blocked storage, onboarding and interview pause guard.');
+console.log('Shell UI passed: home/training/dashboard routes, visible mobile labels, accessible sidebar toggling, preference restoration, blocked storage and onboarding.');

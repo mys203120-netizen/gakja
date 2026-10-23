@@ -4,6 +4,7 @@ import { completeUsage, FeatureError, openai, reserveUsage } from './ai';
 import { MAX_TRANSCRIPT_CLEANUP_CHARACTERS, validateTranscriptCleanup } from './transcript-cleanup-rules';
 
 export const TRANSCRIPT_CLEANUP_PROMPT_VERSION = 'gakja-transcript-verbatim-2';
+export const TRANSCRIPT_VERBATIM_PROMPT_VERSION = 'gakja-transcript-original-1';
 export type TranscriptCleanupResult = { status: 'completed' | 'failed' | 'disabled'; modelId: string; promptVersion: string; rawHash: string; latencyMs: number; error?: string; editCount?: number };
 export const transcriptRawHash = (text: string) => createHash('sha256').update(text).digest('hex');
 export function transcriptCleanupModel() {
@@ -22,7 +23,7 @@ const schema = { type: 'object', additionalProperties: false, required: ['displa
 /** Failure retains the raw recording transcript and does not expose partial model text. */
 export async function cleanupTranscript(studentId: string, contextId: string, rawText: string): Promise<{ displayText: string | null; cleanup: TranscriptCleanupResult }> {
   const started = Date.now(), base = { modelId: process.env.OPENAI_TRANSCRIPT_CLEANUP_MODEL || 'gpt-6-luna', promptVersion: TRANSCRIPT_CLEANUP_PROMPT_VERSION, rawHash: transcriptRawHash(rawText) };
-  if (process.env.TRANSCRIPT_CLEANUP_ENABLED === 'false') return { displayText: null, cleanup: { ...base, status: 'disabled', latencyMs: 0 } };
+  if (process.env.TRANSCRIPT_CLEANUP_ENABLED !== 'true') return { displayText: null, cleanup: { ...base, status: 'disabled', latencyMs: 0 } };
   let usageId: string | undefined;
   try {
     const model = transcriptCleanupModel();

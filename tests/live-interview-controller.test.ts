@@ -14,6 +14,7 @@ function harness(count=1){
   const services:LiveInterviewServices={
     async load(){log('load');return state.overrides.load?state.overrides.load():structuredClone(info);},
     async prepare(){log('prepare');await state.overrides.prepare?.();},
+    inputMuted(muted){log('inputMuted',muted);state.overrides.inputMuted?.(muted);},
     mute(paused){log('mute',paused);state.overrides.mute?.(paused);},
     async suspend(){log('suspend');await state.overrides.suspend?.();info.session.data.paused=true;},
     async resume(){log('resume');await state.overrides.resume?.();info.session.data.paused=false;},
@@ -32,7 +33,7 @@ function harness(count=1){
   const controller=new LiveInterviewController(structuredClone(info),services,snapshot=>state.snapshots.push(snapshot));
   const calls=(name:string)=>state.calls.filter(call=>call.name===name);
   const until=async(predicate:()=>boolean)=>{for(let i=0;i<30&&!predicate();i++)await tick();assert.ok(predicate(),`phase=${controller.state.phase}, calls=${state.calls.map(c=>c.name).join(',')}`);};
-  return{state,controller,calls,until,commit};
+  return{state,controller,calls,until,commit,services};
 }
 
 test('one start runs spoken questions, silence capture, saved-media answers and finish in order',async()=>{
@@ -44,10 +45,10 @@ test('one start runs spoken questions, silence capture, saved-media answers and 
   assert.equal(h.calls('finish').length,1);assert.equal(h.calls('release').length,1);h.controller.dispose();
 });
 
-test('barge-in starts durable recording before RTC question and saves its exact attempt once',async()=>{
+test('even a legacy early-capture provider keeps the microphone blocked until question playback ends',async()=>{
   const h=harness();h.state.overrides.captureDuringQuestion=()=>true;const playback=deferred<void>();h.state.overrides.speak=()=>playback.promise;
   await h.controller.start();await h.until(()=>h.calls('speak').length===1);
-  assert.equal(h.state.captures.length,1);assert.ok(h.state.calls.findIndex(c=>c.name==='capture')<h.state.calls.findIndex(c=>c.name==='speak'));
+  assert.equal(h.state.captures.length,0);assert.deepEqual(h.calls('inputMuted').map(call=>call.args[0]),[true]);
   assert.equal(h.calls('answer').length,0);playback.resolve();await h.until(()=>h.controller.state.phase==='listening');
   h.state.captures[0].resolve(recording());await h.until(()=>h.controller.state.phase==='complete');
   assert.equal(h.calls('capture').length,1);assert.equal(h.calls('upload').length,1);assert.equal(h.calls('answer').length,1);h.controller.dispose();
@@ -262,4 +263,22 @@ test('dispose during rerecord validation cannot restart devices or discard the p
 test('explicit manual completion can reach real transcription when amplitude detection missed quiet speech',async()=>{
   const h=harness();await h.controller.start();await h.until(()=>h.state.captures.length===1);h.state.captures[0].resolve(recording({reason:'manual',speechStarted:false}));await h.until(()=>h.controller.state.phase==='complete');
   assert.equal(h.calls('upload').length,1);assert.equal(h.calls('transcribe').length,1);assert.equal(h.calls('answer').length,1);h.controller.dispose();
+});
+
+
+test('question replay pauses the exact capture and blocks input until playback finishes',async()=>{
+ const h=harness();await h.controller.start();await h.until(()=>h.state.captures.length===1);const capture=h.state.captures[0],play=deferred<void>();h.state.overrides.speak=()=>play.promise;
+ const replay=h.controller.replayQuestion();assert.equal(h.controller.state.phase,'speaking');assert.equal(capture.pauseCalls,1);h.controller.finishAnswer();assert.deepEqual(capture.stopCalls,[]);
+ play.resolve();await replay;assert.equal(capture.resumeCalls,1);assert.equal(h.controller.state.phase,'listening');assert.deepEqual(h.calls('inputMuted').map(call=>call.args[0]),[true,false,true,false]);assert.equal(h.state.captures.length,1);h.controller.dispose();
+});
+test('practice retry uploads immutable previous audio before reserving the next generation',async()=>{
+ const h=harness();h.services.retry=async(_question,generation)=>{assert.equal(generation,7);assert.equal(h.calls('upload').length,1);assert.equal(h.calls('upload')[0].args[3].deferTranscription,true);h.state.info.session.data.generation=8;};
+ await h.controller.start();await h.until(()=>h.state.captures.length===1);await h.controller.rerecord();await h.until(()=>h.state.captures.length===2);
+ assert.equal(h.calls('answer').length,0);assert.equal(h.state.captures[0].disposeCalls,0);assert.equal(h.calls('speak')[1].args[1],8);h.controller.dispose();
+});
+test('real sessions reject retry before pausing or changing the recording',async()=>{
+ const h=harness();h.state.info.session.data.sessionMode='real';await h.controller.start();await h.until(()=>h.state.captures.length===1);await assert.rejects(()=>h.controller.rerecord(),/실전/);assert.equal(h.state.captures[0].pauseCalls,0);assert.equal(h.calls('upload').length,0);h.controller.dispose();
+});
+test('recording duration limit asks for confirmation instead of automatically submitting',async()=>{
+ const h=harness();await h.controller.start();await h.until(()=>h.state.captures.length===1);h.state.captures[0].resolve(recording({reason:'limit',partial:true}));await h.until(()=>h.controller.state.phase==='error');assert.equal(h.calls('upload').length,0);assert.match(h.controller.state.error,/3분 녹음/);h.controller.dispose();
 });

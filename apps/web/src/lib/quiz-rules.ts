@@ -1,12 +1,13 @@
 import type { LearningData, QuizSnapshotItem } from '@gakja/content-contracts';
 import { quizSnapshotItem, reviewedShortAnswerMatches } from '@gakja/content-contracts';
+import {groundedChoiceItems,studentReviewedTranscription} from './grounded-choice-quiz';
 export type QuizMode = 'choice' | 'answer' | 'oral';
-export type SessionItem = QuizSnapshotItem & { modelAnswer: string; practice_kind?: 'concept'|'personal'; practice_prompt?: string; practice_question_id?: string; linked_question_id?: string | null; sourceQuotes?: { id: string; text: string; area?: string; page?: number }[] };
+export type SessionItem = QuizSnapshotItem & { modelAnswer: string; practice_kind?: 'concept'|'personal'; practice_prompt?: string; practice_question_id?: string; linked_question_id?: string | null; sourceQuotes?: { id: string; text: string; area?: string; page?: number;quoteBasis?:string;textRevision?:number }[] };
 const blocked = new Set(['needs_confirmation','student_says_different','cannot_confirm']);
 const verified = new Set(['verified','approved','confirmed','synthetic_reviewed','confirmed_from_record','confirmed_by_student']);
 function verifiedChoices(item:LearningData['memory_items'][number]) {
   return item.kind === 'choice' && item.options?.length === 4 && new Set(item.options.map(o=>o.id)).size===4
-    && item.options.every(o=>typeof o.text==='string'&&o.text.trim()) && item.options.some(o=>o.id===item.correct_option_id)
+    && item.options.every(o=>typeof o.text==='string'&&o.text.trim()) && new Set(item.options.map(o=>o.text.normalize('NFKC').replace(/\s+/g,'').toLowerCase())).size===4 && item.options.some(o=>o.id===item.correct_option_id)
     && item.evaluation_method==='reviewed_correct_answer' && item.category!=='experiential' && !blocked.has(item.verification_status);
 }
 export function choiceExplanationPrompt(prompt:string) {
@@ -19,8 +20,9 @@ export function quizPracticeIdentity(item:SessionItem) {
   return {questionId,practiceKind:'concept' as const,practicePrompt:item.practice_prompt||choiceExplanationPrompt(item.prompt),linkedQuestionId:item.linked_question_id || (item.question_id!==questionId?item.question_id:null)};
 }
 export function eligibleQuizItems(learning: LearningData, mode: QuizMode): SessionItem[] {
-  return (learning.memory_items || []).filter(item => {
-    if (!verified.has(item.verification_status)) return false;
+  const generated=mode==='choice'?groundedChoiceItems(learning):[],generatedItems=new Set(generated);
+  return [...(learning.memory_items || []),...generated].filter(item => {
+    if (!verified.has(item.verification_status)&&!(generatedItems.has(item)&&item.verification_status==='student_reviewed_transcription')) return false;
     if (mode !== 'choice') return item.kind==='choice'?verifiedChoices(item):item.kind !== 'order';
     return verifiedChoices(item);
   }).map(item => {
@@ -32,7 +34,7 @@ export function eligibleQuizItems(learning: LearningData, mode: QuizMode): Sessi
     const modelAnswer = item.answer_script_id ? approved ? script.text : '' : item.kind==='choice' ? item.options?.find(option=>option.id===item.correct_option_id)?.text||'' : item.back || item.accepted_answers?.[0] || '';
     const sourceQuotes = (item.source_ref_ids || []).flatMap(id => {
       const source = learning.source_refs?.find(source => source.id === id);
-      return source?.quote ? [{ id, text: source.quote, area: source.area, page: source.page }] : [];
+      return source?.quote ? [{ id, text: source.quote, area: source.area, page: source.page,...(studentReviewedTranscription(source)?{quoteBasis:'student_reviewed_transcription',textRevision:Number((source as unknown as Record<string,unknown>).text_revision)}:{}) }] : [];
     });
     const explanationPrompt=choiceExplanationPrompt(item.prompt);
     const conceptQuestion=item.kind==='choice'&&question&&verified.has(question.verification_status)&&question.question_types?.includes('concept')&&question.prompt.trim()===explanationPrompt.trim()&&question.source_ref_ids?.some(id=>item.source_ref_ids.includes(id))?question:null;

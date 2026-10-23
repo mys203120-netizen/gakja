@@ -1,7 +1,7 @@
 import 'server-only';
 import { toFile } from 'openai';
 import { completeUsage,FeatureError,googleSpeechToken,openai,reserveUsage,transcriptionConfigured,transcriptionProvider } from './ai';
-import { cleanupTranscript, type TranscriptCleanupResult } from './transcript-cleanup';
+import { cleanupTranscript, transcriptRawHash, TRANSCRIPT_VERBATIM_PROMPT_VERSION, type TranscriptCleanupResult } from './transcript-cleanup';
 import { NO_SPEECH_MESSAGE, observedSilence } from './speech-silence';
 
 export type RawTranscription={text:string;provider:string;modelId:string;alignmentStatus:'word'|'answer_only';words:Array<{word:string;start:number;end:number}>};
@@ -9,10 +9,11 @@ export type StoredTranscription=RawTranscription & {rawText:string;displayText:s
 export type TranscriptionOptions={onRawTranscription?:(result:RawTranscription)=>Promise<void>;speechTelemetry?:unknown};
 /** Cleanup-only retry: the original transcript and measured timing remain immutable. */
 export async function formatStoredTranscription(studentId:string,contextId:string,raw:RawTranscription):Promise<StoredTranscription>{
+  if(process.env.TRANSCRIPT_CLEANUP_ENABLED!=='true')return {...raw,rawText:raw.text,displayText:raw.text,cleanup:{status:'completed',modelId:'verbatim',promptVersion:TRANSCRIPT_VERBATIM_PROMPT_VERSION,rawHash:transcriptRawHash(raw.text),latencyMs:0,editCount:0}};
   const formatted=await cleanupTranscript(studentId,contextId,raw.text);
   return {...raw,rawText:raw.text,...formatted};
 }
-/** Both quiz and interview persist raw speech before the second paid formatting request. */
+/** Both quiz and interview persist raw speech before any explicitly enabled formatting request. */
 export async function transcribeStoredAudio(studentId:string,contextId:string,bytes:Buffer,mime:string,durationSeconds=0,options:TranscriptionOptions={}):Promise<StoredTranscription> {
   const selected=transcriptionProvider();
   if(!transcriptionConfigured())throw new FeatureError(503,'음성 연결을 준비 중이에요. 녹음을 듣고 이어서 연습할 수 있어요.','SPEECH_NOT_CONFIGURED');

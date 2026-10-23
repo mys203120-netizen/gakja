@@ -12,12 +12,14 @@ import {after} from 'next/server';
 import {refreshAdmissionCalendar} from '@/lib/admission-calendar-store';
 import {loadReviewQuestionFacts} from '@/lib/training-review-evidence-store';
 import {reviewDiagnostics} from '@/lib/training-review-store';
-import {applyReviewReflection,reconcileTrainingReviews} from '@/lib/training-review';
+import {applyReviewReflection,reconcileTrainingReviews,reviewQuestionKey} from '@/lib/training-review';
 import {diagnosticReviewScope} from '@/lib/training-diagnostic-scope';
 import {getTrainingReadModel,trainingReadContext} from '@/lib/training-read-model';
 import {allInterviewRootsAnsweredSql} from '@/lib/interview-completion';
 import {applyTrainingDayReflection} from '@/lib/training-day-review';
 import {studentModelRevision} from '@/lib/student-read-model';
+import {trainingOrderError} from '@/lib/training-order';
+import {questionDomain} from '@/lib/training-domain';
 
 export const dynamic='force-dynamic';
 const headers={'Cache-Control':'private, no-store'};
@@ -26,6 +28,8 @@ const inputSchema=z.discriminatedUnion('action',[
  z.object({action:z.literal('task_start'),planId:z.string().uuid()}).strict(),
  z.object({action:z.literal('link_session'),planId:z.string().uuid().optional(),sessionId:z.string().uuid(),diagnostic:z.boolean().default(false)}).strict(),
  z.object({action:z.literal('task_complete'),planId:z.string().uuid()}).strict(),
+ z.object({action:z.literal('task_reorder'),ids:z.array(z.string().uuid()).min(2).max(30)}).strict(),
+ z.object({action:z.literal('repetition'),planId:z.string().uuid(),enabled:z.boolean(),intervalDays:z.union([z.literal(1),z.literal(3),z.literal(7),z.literal(14)])}).strict(),
  z.object({action:z.literal('day_reflection'),planId:z.string().uuid(),requestId:z.string().uuid(),improvement:z.string().trim().max(500),revisitQuestionKeys:z.array(z.string().min(1).max(2500)).max(30)}).strict(),
  z.object({action:z.literal('diagnostic_reflection'),sessionId:z.string().uuid(),needsReviewQuestionIds:z.array(z.string().max(200)).max(20),focusCategories:z.array(z.enum(['personal','major','talent'])).max(3)}).strict(),
  z.object({action:z.literal('activity_note'),turnId:z.string().uuid(),activityId:z.string().min(1).max(220),body:z.string().trim().min(1).max(1500),requestId:z.string().uuid()}).strict(),
@@ -34,7 +38,7 @@ async function ownedPlan(studentId:string,id:string,db:{query:Function}={query:a
  const [plan]=(await db.query("select *,to_char(planned_date,'YYYY-MM-DD') as date from student_plans where id=$1 and student_id=$2",[id,studentId])).rows;
  if(!plan||!plan.target?.automaticPractice?.hybrid)throw new ApiError(404,'오늘 훈련에서 계획을 다시 선택해 주세요.');return plan;
 }
-function taskView(plan:Value){const ap=plan.target.automaticPractice,hybrid=ap.hybrid;return {id:plan.id,date:plan.date,title:plan.title,kind:hybrid.kind,minutes:ap.minutes,reason:ap.reason,targetId:plan.target.targetId,questionId:plan.target.id,sourceType:plan.target.sourceType,sourceVersion:plan.target.sourceVersion,activityIds:plan.target.activityIds||[],href:hybrid.kind==='assignment'?'/quiz/assignments/'+encodeURIComponent(hybrid.practice?.assignmentId||'')+'?trainingPlanId='+plan.id:'/my/train?planId='+plan.id,sessionId:hybrid.sessionId||null,practice:hybrid.practice||null,dayReflection:hybrid.dayReflection||null,completed:plan.completed,startedAt:ap.startedAt||hybrid.startedAt,requestId:hybrid.requestId};}
+function taskView(plan:Value){const ap=plan.target.automaticPractice,hybrid=ap.hybrid;return {id:plan.id,date:plan.date,title:plan.title,kind:hybrid.kind,stage:hybrid.stage,pressure:hybrid.pressure===true,area:hybrid.area,activityTitles:hybrid.activityTitles,minutes:ap.minutes,reason:ap.reason,targetId:plan.target.targetId,questionId:plan.target.id,sourceType:plan.target.sourceType,sourceVersion:plan.target.sourceVersion,activityIds:plan.target.activityIds||[],href:hybrid.kind==='assignment'?'/quiz/assignments/'+encodeURIComponent(hybrid.practice?.assignmentId||'')+'?trainingPlanId='+plan.id:'/my/train?planId='+plan.id,sessionId:hybrid.sessionId||null,practice:hybrid.practice||null,dayReflection:hybrid.dayReflection||null,completed:plan.completed,startedAt:ap.startedAt||hybrid.startedAt,requestId:hybrid.requestId};}
 
 export async function GET(request:Request){
  try{
@@ -49,7 +53,7 @@ export async function GET(request:Request){
   const hybrid=await getHybridTraining(user.id,selectedTargetId,koreaToday(),snapshot);
   if(hybrid.refreshDue)after(()=>refreshAdmissionCalendar());
   const readiness=snapshot.readiness[selectedTargetId||'']||{items:[],summary:{total:0,practiced:0,unconfirmed:0},observationOnly:true};
-  const [profile,preferences]=await Promise.all([query('select created_at from profiles where id=$1',[user.id]),query("select jsonb_build_object('trainingActivityNotes',coalesce(data->'trainingActivityNotes','[]'::jsonb)) as data from student_preferences where student_id=$1",[user.id])]);
+  const [profile,preferences]=await Promise.all([query('select created_at from profiles where id=$1',[user.id]),query("select jsonb_build_object('trainingActivityNotes',coalesce(data->'trainingActivityNotes','[]'::jsonb),'trainingRepetition',data->'trainingRepetition') as data from student_preferences where student_id=$1",[user.id])]);
   const targets=selectedTargetId?automaticQuestionTargets(context,selectedTargetId):new Map();
   const candidates=[...targets.values()];
   // Keep a diagnosis within one source/version; the server validates the fixed question list again at session start.
@@ -59,7 +63,14 @@ export async function GET(request:Request){
   for(const q of pool)if(diagnosticQuestions.length<3&&!diagnosticQuestions.some(chosen=>chosen.id===q.id))diagnosticQuestions.push(q);
   const diagnosticInput=diagnosticQuestions.length?{targetId:selectedTargetId,sourceType:diagnosticQuestions[0].sourceType,sourceVersion:diagnosticQuestions[0].sourceVersion,questionIds:diagnosticQuestions.map(q=>q.id),questionCount:diagnosticQuestions.length}:null;
   const selectedTask=selectedPlan?taskView(selectedPlan):null;
-  return Response.json({...hybrid,...(selectedTask?.kind==='review'?{dayReview:snapshot.dayReview?.all}:{}),readiness,registeredAt:profile[0]?.created_at,diagnostics:hybrid.diagnostics[selectedTargetId||'']||null,diagnosticQuestions:diagnosticQuestions.map(q=>({id:q.id,title:q.title,activityIds:q.activityIds})),diagnosticInput,selectedTask,activityNotes:preferences[0]?.data?.trainingActivityNotes||[]},{headers});
+  const selectedQuestion=snapshot.questions.find(question=>question.id===selectedTask?.questionId&&question.targetId===selectedTask?.targetId&&question.sourceType===selectedTask?.sourceType&&question.sourceVersion===selectedTask?.sourceVersion);
+  const repetition=selectedQuestion?preferences[0]?.data?.trainingRepetition?.[reviewQuestionKey(selectedQuestion)]||{enabled:true,intervalDays:1}:null;
+  const selectedLearning=context.sources.find(source=>source.sourceType==='personal'&&source.sourceVersion===selectedTask?.sourceVersion&&source.learning)?.learning||context.learning;
+  const scopedQuestions=selectedTask?.area?snapshot.questions.filter(question=>question.targetId===selectedTask.targetId&&question.sourceType===selectedTask.sourceType&&question.sourceVersion===selectedTask.sourceVersion&&questionDomain(question,selectedLearning).area===selectedTask.area):[];
+  const scopeQuestions=scopedQuestions.map(question=>({id:question.id,title:question.title}));
+  const activityIds=new Set(selectedTask?.kind==='reading'&&scopedQuestions.length?scopedQuestions.flatMap(question=>question.activityIds):selectedTask?.activityIds||[]);
+  const scopeActivities=(selectedLearning.activities||[]).filter((activity:Value)=>activityIds.has(activity.id)).map((activity:Value)=>({id:activity.id,title:activity.title,area:activity.area,summary:activity.activity_summary,sources:(selectedLearning.source_refs||[]).filter((source:Value)=>activity.source_ref_ids.includes(source.id)).map((source:Value)=>({quote:source.quote,page:source.page}))}));
+  return Response.json({...hybrid,...(selectedTask?.kind==='review'?{dayReview:snapshot.dayReview?.all}:{}),readiness,registeredAt:profile[0]?.created_at,diagnostics:hybrid.diagnostics[selectedTargetId||'']||null,diagnosticQuestions:diagnosticQuestions.map(q=>({id:q.id,title:q.title,activityIds:q.activityIds})),diagnosticInput,selectedTask,scopeActivities,scopeQuestions,repetition,activityNotes:preferences[0]?.data?.trainingActivityNotes||[]},{headers});
  }catch(error){return errorResponse(error);}
 }
 
@@ -69,6 +80,33 @@ export async function POST(request:Request){
   const raw=await request.text();if(raw.length>12000)throw new ApiError(413,'입력 내용을 짧게 남겨 주세요.');
   let value;try{value=JSON.parse(raw);}catch{throw new ApiError(400,'입력 내용을 확인해 주세요.');}
   const parsed=inputSchema.safeParse(value);if(!parsed.success)throw new ApiError(400,'훈련과 입력 내용을 확인해 주세요.');const input=parsed.data;
+  if(input.action==='task_reorder'){
+   if(new Set(input.ids).size!==input.ids.length)throw new ApiError(400,'중복 없는 훈련 순서를 선택해 주세요.');
+   await transaction(async db=>{
+    await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+user.id]);
+    const rows=(await db.query("select * from student_plans where student_id=$1 and planned_date=$2 and target->'automaticPractice'->>'status'<>'superseded' and target->'automaticPractice'->'hybrid' is not null order by created_at,id for update",[user.id,koreaToday()])).rows.filter(row=>row.target.automaticPractice.hybrid.kind!=='break');
+    if(rows.length!==input.ids.length||rows.some(row=>!input.ids.includes(row.id)))throw new ApiError(409,'오늘 계획이 바뀌었어요. 새 계획에서 순서를 바꿔 주세요.');
+    const displayed=[...rows].sort((a,b)=>Number(a.target.automaticPractice.hybrid.sequence||0)-Number(b.target.automaticPractice.hybrid.sequence||0));
+    const orderError=trainingOrderError(displayed.map(row=>({id:row.id,kind:row.target.automaticPractice.hybrid.kind,completed:row.completed,startedAt:row.target.automaticPractice.startedAt||row.target.automaticPractice.hybrid.startedAt})),input.ids);
+    if(orderError)throw new ApiError(409,orderError);
+    const ordered=input.ids.map(id=>rows.find(row=>row.id===id)!);
+    if(ordered.some((row,index)=>row.target.automaticPractice.hybrid.kind==='review'&&index!==ordered.length-1))throw new ApiError(400,'오늘 정리는 마지막에 두어 주세요.');
+    for(const [sequence,row] of ordered.entries())await db.query("update student_plans set target=jsonb_set(target,'{automaticPractice,hybrid}',(target->'automaticPractice'->'hybrid')||$3::jsonb),revision=revision+1,updated_at=now() where id=$1 and student_id=$2",[row.id,user.id,JSON.stringify({sequence,studentOrderedAt:new Date().toISOString()})]);
+   });return Response.json({ok:true},{headers});
+  }
+  if(input.action==='repetition'){
+   const snapshot=await getTrainingReadModel(user.id);
+   await transaction(async db=>{
+    await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+user.id]);
+    const plan=await ownedPlan(user.id,input.planId,db),target=plan.target;
+    const question=snapshot.questions.find(question=>question.id===target.id&&question.targetId===target.targetId&&question.sourceType===target.sourceType&&question.sourceVersion===target.sourceVersion);
+    if(!question)throw new ApiError(409,'현재 자료의 질문에서 반복 설정을 바꿔 주세요.');
+    if(await studentModelRevision(db,user.id)!==snapshot.sourceRevision)throw new ApiError(409,'새 기록을 반영 중이에요. 반복 설정을 다시 불러와 주세요.');
+    const key=reviewQuestionKey(question),setting={enabled:input.enabled,intervalDays:input.intervalDays};
+    await db.query("insert into student_preferences(student_id,data) values($1,jsonb_build_object('trainingRepetition',jsonb_build_object($2::text,$3::jsonb))) on conflict(student_id) do update set data=jsonb_set(student_preferences.data,'{trainingRepetition}',coalesce(student_preferences.data->'trainingRepetition','{}'::jsonb)||jsonb_build_object($2::text,$3::jsonb)),updated_at=now()",[user.id,key,JSON.stringify(setting)]);
+    await db.query('insert into student_learning_revisions(student_id,revision) values($1,1) on conflict(student_id) do update set revision=student_learning_revisions.revision+1',[user.id]);
+   });return Response.json({ok:true},{headers});
+  }
   if(input.action==='task_start'){
    const plan=await transaction(async db=>{
     await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+user.id]);
@@ -93,7 +131,7 @@ export async function POST(request:Request){
     await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+user.id]);
     const row=await ownedPlan(user.id,input.planId,db),kind=row.target.automaticPractice.hybrid.kind;
     if(kind==='review'&&!row.target.automaticPractice.hybrid.dayReflection)throw new ApiError(409,'오늘 답변을 돌아보고 정리를 저장해 주세요.');
-    if(!['review','break'].includes(kind))throw new ApiError(409,'답변을 제출한 실제 훈련 기록으로 완료를 확인해요.');
+    if(!['reading','review','break'].includes(kind))throw new ApiError(409,'답변을 제출한 실제 훈련 기록으로 완료를 확인해요.');
     if(row.date!==koreaToday()||row.target.automaticPractice.status==='superseded')throw new ApiError(409,'오늘 계획을 다시 확인해 주세요.');
     await db.query('update student_plans set completed=true,revision=revision+1,updated_at=now() where id=$1 and student_id=$2',[row.id,user.id]);return row;
    });return Response.json({completed:true,selfChecked:true,planId:plan.id},{headers});

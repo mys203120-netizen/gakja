@@ -15,16 +15,16 @@ type Value = Record<string, any>;
 type Source = { kind:'question'|'activity'; id:string; title:string; sourceType:'personal'|'common'; sourceVersion:number; entity:Value; learning?:Value; targetId?:string };
 const sameTarget = (a:Value,b:Value) => learningTargetIdentityMatches({...learningScopeIdentity(a),interview_stage:growthStage(a.interview_stage||a.stage)},{...learningScopeIdentity(b),interview_stage:growthStage(b.interview_stage||b.stage)});
 
-export async function buildPlanContext(studentId: string, savedTargets: PlanTarget[] = []) {
+export async function buildPlanContext(studentId: string, savedTargets: PlanTarget[] = [], options?:{readOnly?:boolean}) {
   const [content, assignments, progress, events, common, schoolTargets, archives, preferences] = await Promise.all([
     getLearning(studentId), query("select id,title from quiz_assignments where student_id=$1 and (id=any($2::uuid[]) or id in(select id from quiz_assignments where student_id=$1 order by case when state in('assigned','in_progress','retry_due') then 0 else 1 end,created_at desc,id desc limit 30)) order by created_at desc", [studentId,savedTargets.filter(target=>target?.kind==='assignment'&&/^[0-9a-f-]{36}$/i.test(target.id)).map(target=>target.id)]),
     query('select video_id from knowledge_bite_progress where student_id=$1', [studentId]),
     query('select id,source_id,kind,data,created_at from study_session_events where student_id=$1 union all select id,source_id,kind,data,occurred_at as created_at from study_imported_events where student_id=$1 order by created_at desc', [studentId]),
-    commonInterviewQuestions(studentId), query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null", [studentId]),
+    commonInterviewQuestions(studentId,null,undefined,options), query("select id,data from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null", [studentId]),
     query("select v.version,v.data from content_versions v join content_packages p on p.id=v.package_id where p.student_id=$1 and v.status='published'", [studentId]),
     query("select jsonb_build_object('selectedTargetId',data->'selectedTargetId') as data from student_preferences where student_id=$1", [studentId]),
   ]);
-  const schoolQuestions = (await Promise.all(schoolTargets.map(async target => (await commonInterviewQuestions(studentId,target.id)).map(question => ({...question,targetId:target.id}))))).flat();
+  const schoolQuestions = (await Promise.all(schoolTargets.map(async target => (await commonInterviewQuestions(studentId,target.id,undefined,options)).map(question => ({...question,targetId:target.id}))))).flat();
   const currentCommon = [...common.map(question => ({...question,targetId:undefined as string|undefined})),...schoolQuestions];
   const sources:Source[] = archives.flatMap(archive => [
     ...(archive.data.questions || []).map((entity:Value) => ({kind:'question' as const,id:entity.id,title:entity.prompt,sourceType:'personal' as const,sourceVersion:Number(archive.version),entity,learning:archive.data})),
@@ -34,7 +34,7 @@ export async function buildPlanContext(studentId: string, savedTargets: PlanTarg
   const requested = [...new Map(savedTargets.filter(target => target?.kind === 'question' && (target.sourceType === 'common' || target.common) && target.sourceVersion).map(target => [`${target.targetId||''}:${target.sourceVersion}`,target])).values()];
   for (const target of requested) {
     if (target.targetId && !schoolTargets.some(row => row.id === target.targetId)) continue;
-    const questions = await commonInterviewQuestions(studentId,target.targetId || null,target.sourceVersion);
+    const questions = await commonInterviewQuestions(studentId,target.targetId || null,target.sourceVersion,options);
     sources.push(...questions.map(entity => ({kind:'question' as const,id:entity.id,title:entity.prompt,sourceType:'common' as const,sourceVersion:Number(entity.common_revision),entity,targetId:target.targetId})));
   }
   const commonQuestions = [...new Map(currentCommon.map(question => [question.id,question])).values()];

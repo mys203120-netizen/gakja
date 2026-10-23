@@ -1,0 +1,130 @@
+[
+  {
+    "label": "records-narrow",
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "label": "home-narrow",
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "label": "dashboard-narrow",
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "label": "training-narrow",
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "label": "training-tablet",
+    "height": 1024,
+    "overflow": false,
+    "scrollWidth": 758,
+    "width": 768
+  },
+  {
+    "label": "dashboard-tablet",
+    "height": 1024,
+    "overflow": false,
+    "scrollWidth": 758,
+    "width": 768
+  },
+  {
+    "label": "dashboard-mobile-final",
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 390,
+    "width": 390
+  },
+  {
+    "label": "records-mobile",
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 390,
+    "width": 390
+  },
+  {
+    "label": "home-narrow",
+    "production": true,
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "label": "training-narrow",
+    "production": true,
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "label": "records-narrow",
+    "production": true,
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "label": "dashboard-narrow",
+    "production": true,
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "label": "training-mobile-final",
+    "production": true,
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 390,
+    "width": 390
+  },
+  {
+    "label": "records-mobile",
+    "production": true,
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 390,
+    "width": 390
+  },
+  {
+    "label": "dashboard-mobile-final",
+    "production": true,
+    "height": 844,
+    "overflow": false,
+    "scrollWidth": 390,
+    "width": 390
+  },
+  {
+    "label": "training-tablet",
+    "production": true,
+    "height": 1024,
+    "overflow": false,
+    "scrollWidth": 758,
+    "width": 768
+  },
+  {
+    "label": "dashboard-tablet",
+    "production": true,
+    "height": 1024,
+    "overflow": false,
+    "scrollWidth": 758,
+    "width": 768
+  }
+]

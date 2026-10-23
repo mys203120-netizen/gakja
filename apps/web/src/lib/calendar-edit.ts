@@ -3,7 +3,7 @@ import {planWeek,shiftPlanDay,validPlanDay} from './planner-model';
 export type CalendarPlan={id:string;title:string;date:string;revision:number;completed?:boolean;performedAt?:unknown;locked?:boolean;target?:Record<string,any>|null};
 export type CalendarEditRequest={ids?:string[];fromDate?:string;toDate:string;endDate?:string;mode:'move'|'merge'|'shift'|'spread'};
 export type CalendarDateChange={id:string;title:string;from:string;to:string;revision:number};
-export type CalendarEditPreview={changes:CalendarDateChange[];excluded:number;sourceDates:string[];label:string;mode:CalendarEditRequest['mode']};
+export type CalendarEditPreview={changes:CalendarDateChange[];excluded:number;sourceDates:string[];label:string;mode:CalendarEditRequest['mode'];replacement?:{date:string;before:string[];after:string[]}};
 export function calendarPlanMovable(plan:CalendarPlan){
  const automatic=plan.target?.automaticPractice;
  return !plan.completed&&!plan.performedAt&&!plan.locked&&automatic?.status!=='superseded'&&automatic?.hybrid?.kind!=='break'&&!automatic?.startedAt&&!automatic?.hybrid?.startedAt;

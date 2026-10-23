@@ -14,7 +14,7 @@ import {buildTrainingDayReview} from './training-day-review';
 export async function getTrainingReadModel(studentId:string,today=koreaToday()){
  return transaction(async db=>{
   await db.query('select pg_advisory_xact_lock(hashtext($1))',['automatic-practice:'+studentId]);
-  return readStudentModel(studentId,'training',`v2:${today}`,async()=>{
+  return readStudentModel(studentId,'training',`v3:${today}`,async()=>{
    const context=await buildPlanContext(studentId);
    await db.query("select id from support_targets where student_id=$1 and nullif(data->>'archived_at','') is null for share",[studentId]);
    const preference=(await db.query('select data from student_preferences where student_id=$1 for update',[studentId])).rows[0]?.data||{};

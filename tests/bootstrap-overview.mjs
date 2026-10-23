@@ -33,6 +33,7 @@ vm.runInNewContext(compile(fs.readFileSync(new URL('../apps/web/src/lib/data.ts'
   if (name === 'server-only') return {};
   if (name === './school-directory') return { enrichSchoolTarget: value => value };
   if (name === './admin-training') return {adminTrainingSummary(){throw new Error('Student bootstrap must not read administrative training summaries.');}};
+  if (name === './student-document-service') return {studentDocumentSummary:async()=>null};
   if (name === './student-read-model') return {readStudentModel:async(_student,_kind,_scope,build)=>build()};
   if (name === './planner-model') return {koreaToday:()=> '2026-10-15'};
   if (name === './db') return { ApiError: Error, async query(sql, parameters) {
@@ -97,7 +98,7 @@ function loadComponent(name) {
     if (id === '@/lib/material-learning-flow') return { materialComparisonVersions() {} };
     if (id === '@/lib/learning-navigation') return { learningRetryHref() {} };
     if (id === '@/lib/study-record-links') return studyLinks;
-    if (['./record-media', './speech-growth', './comparison-observation', './markdown-message', './comparison-wipe', './practice', './study-session-provider','./settings-select'].includes(id)) return new Proxy({}, { get: (_, key) => String(key) });
+    if (['./completed-example-answer','./interview-evaluation-summary','./report-download','./records-calendar','./record-media', './speech-growth', './comparison-observation', './markdown-message', './comparison-wipe', './practice', './study-session-provider','./settings-select'].includes(id)) return new Proxy({}, { get: (_, key) => String(key) });
     throw new Error('Unexpected component import: ' + id);
   } });
   return module.exports;
@@ -157,5 +158,5 @@ tree=render(()=>{const route=records.RecordsPages({slug:['history']});return typ
 const retainedRows = nodes(tree).filter(node => node.type === 'LinkedRow' && node.props.href.startsWith('/interview/'));
 check(retainedRows.length === 4, 'actual records history retains all completed, cancelled, previous and active interview links');
 check(retainedRows.some(node => text(node.props.end) === '완료') && retainedRows.some(node => text(node.props.end) === '취소'), 'history completion and cancellation states survive overview compaction');
-check(retainedRows.some(node=>node.props.title==='첫 진단')&&retainedRows.some(node=>node.props.title==='집중 보완'), 'records use the saved training purpose instead of falling back to separate input-mode titles');
+check(retainedRows.some(node=>node.props.title==='답변 연습')&&retainedRows.some(node=>node.props.title==='화상 답변 연습'), 'records use the saved training purpose instead of falling back to separate input-mode titles');
 console.log(`${checks} bootstrap overview/query and actual component checks passed.`);

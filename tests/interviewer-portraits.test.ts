@@ -75,7 +75,7 @@ test('the Live stage gives every visible participant the shared measured-output 
     if(name.endsWith('.module.css'))return {__esModule:true,default:new Proxy({},{get:(_target,key)=>String(key)})};
     throw Error(name);
   }});
-  const tree=module.exports.LiveInterviewerStage({people:[{id:'A',name:'A'},{id:'B',name:'B'},{id:'C',name:'C'}],speakerId:'A',phase:'speaking',avatarSignal:signal});
+  const tree=module.exports.LiveInterviewerStage({people:[{id:'A',name:'유나'},{id:'B',name:'도윤'},{id:'C',name:'하람'},{id:'D',name:'태오'},{id:'E',name:'서진'}],speakerId:'A',phase:'speaking',avatarSignal:signal});
   const participants=nodes(tree).filter(node=>node.type==='Interviewer');assert.equal(participants.length,5);assert.ok(participants.every(node=>node.props.avatarSignal===signal),'inactive thumbnails need the same output to dim and restore');
   for(const phase of ['idle','paused']){
     const typed=module.exports.LiveInterviewerStage({people:[],phase,answerMode:'text',question:'같은 질문'});

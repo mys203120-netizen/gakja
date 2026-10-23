@@ -6,6 +6,7 @@ import { addHelpReceipt, interviewHelpContextMatches, type HelpReceipt, type Int
 
 function scopeFor(session: Record<string, any> | undefined, turn: Record<string, any> | undefined, requirePaused: boolean): InterviewHelpScope {
   if (!session || !turn) throw new FeatureError(404, '면접 질문을 찾을 수 없어요.', 'TURN_NOT_FOUND');
+  if (session.data.sessionMode==='real') throw new FeatureError(403,'실전 면접에서는 도움을 사용할 수 없어요.','REAL_INTERVIEW_POLICY');
   if (session.state !== 'active' || turn.data.answer || turn.data.invalidated) throw new FeatureError(409, '현재 질문에서 도움을 확인해 주세요.', 'STALE_TURN');
   if (session.data.processing) throw new FeatureError(409, '답변 저장이 끝난 뒤 확인해 주세요.', 'INTERVIEW_PENDING');
   if (requirePaused && !session.data.paused) throw new FeatureError(409, '면접을 잠시 멈춘 뒤 확인해 주세요.', 'SESSION_NOT_PAUSED');

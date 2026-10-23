@@ -12,22 +12,26 @@ test('a selected question, activity or briefing begins as one-question practice'
 });
 test('Chat to Live to Chat keeps selected context and every adjusted setting', () => {
   const original = new URLSearchParams('questionId=q_previous&activityId=a_previous&sourceVersion=2&sourceType=personal&targetId=t_selected');
-  const live = new URL(interviewSetupHref('video', original, { mode: 'major', count: 3, panelistCount: 5, difficulty: 'deep', followups: true, pressure: true, timing: 'turn', advanced: true }), 'http://localhost');
+  const live = new URL(interviewSetupHref('video', original, { sessionMode:'practice',mode: 'major', count: 3, panelistCount: 5, difficulty: 'deep', followups: true, pressure: true, timing: 'turn', advanced: true }), 'http://localhost');
   const chat = new URL(interviewSetupHref('chat', live.searchParams), 'http://localhost');
   for (const name of ['questionId', 'activityId', 'sourceVersion', 'sourceType', 'targetId']) assert.equal(chat.searchParams.get(name), original.get(name));
   assert.equal(chat.searchParams.get('kind'), 'chat');
-  assert.deepEqual(interviewSetupState(chat.searchParams), { mode: 'major', count: 3, panelistCount: 5, difficulty: 'deep', followups: true, pressure: true, timing: 'turn', advanced: true });
+  assert.deepEqual(interviewSetupState(chat.searchParams), { sessionMode:'practice',mode: 'major', count: 3, panelistCount: 5, difficulty: 'deep', followups: true, pressure: true, timing: 'turn', advanced: true });
 });
-test('legacy reactions no longer change feedback timing and are removed from updated URLs', () => {
+test('feedback timing follows practice or real policy instead of legacy preferences', () => {
   const start = new URLSearchParams('feedback=end&reactions=1');
-  assert.equal(interviewSetupState(start).timing, 'end');
+  assert.equal(interviewSetupState(start).timing, 'turn');
   const updated = new URL(interviewSetupHref('chat', start, { timing: 'turn' }), 'http://localhost').searchParams;
   assert.equal(updated.has('reactions'), false);
   assert.equal(interviewSetupState(updated).timing, 'turn');
+  const real = new URL(interviewSetupHref('chat', start, {sessionMode:'real',timing:'turn'}), 'http://localhost').searchParams;
+  assert.equal(real.get('kind'), 'video');
+  assert.equal(real.get('feedback'), 'end');
+  assert.equal(interviewSetupState(real).timing, 'end');
 });
 test('invalid restored settings cannot become oversized requests or arbitrary modes', () => {
   const state = interviewSetupState(new URLSearchParams('count=0&panelists=900&mode=other&difficulty=anything&reactions=true&feedback=other'));
-  assert.deepEqual(state, { mode: 'basic', count: 4, panelistCount: 2, difficulty: 'standard', followups: false, pressure: false, timing: 'end', advanced: false });
+  assert.deepEqual(state, { sessionMode:'practice',mode: 'basic', count: 4, panelistCount: 5, difficulty: 'standard', followups: false, pressure: false, timing: 'turn', advanced: false });
 });
 test('preview requests include the selected source but no changing UI settings', () => {
   const params = new URLSearchParams('questionId=q1&sourceVersion=2&activityId=a1&briefingId=b1&briefingQuestionIndex=2&count=8&reactions=1&feedback=turn');

@@ -1,0 +1,6 @@
+.download { margin:16px 0; }
+.download>button { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:11px 16px; border:1px solid var(--clarity-line); border-radius:16px; background:var(--clarity-surface); color:var(--clarity-green); box-shadow:var(--soft-shadow-small); font:inherit; font-size:var(--font-size-caption); cursor:pointer; }
+.download>button:disabled { opacity:.6; cursor:progress; }
+.download>button:focus-visible { outline:2px solid var(--clarity-green); outline-offset:3px; }
+.download>p { color:var(--clarity-danger); font-size:var(--font-size-caption); margin-top:8px; }
+.loading { animation:var(--gakja-keyframe-spin) 1s linear infinite; }

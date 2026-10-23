@@ -8,7 +8,7 @@ class FeatureError extends Error {constructor(status,message,code){super(message
 let state;
 const envKeys=['OPENAI_TRANSCRIPTION_MODEL','OPENAI_TRANSCRIPT_CLEANUP_MODEL','TRANSCRIPT_CLEANUP_ENABLED','OPENAI_TRANSCRIPT_CLEANUP_TIMEOUT_MS'];
 const priorEnv=Object.fromEntries(envKeys.map(key=>[key,process.env[key]]));
-function reset(){for(const key of envKeys)delete process.env[key];state={provider:'openai',configured:true,events:[],usage:[],sttCalls:[],cleanupCalls:[],raw:'음, 저는 관찰했습니다. 이유가 궁금했습니다.',output:{display_text:'음, 저는 관찰했습니다.\n이유가 궁금했습니다.',edits:[]},status:'completed',sttFailure:false,cleanupFailure:false,limitCleanup:false};}
+function reset(){for(const key of envKeys)delete process.env[key];process.env.TRANSCRIPT_CLEANUP_ENABLED='true';state={provider:'openai',configured:true,events:[],usage:[],sttCalls:[],cleanupCalls:[],raw:'음, 저는 관찰했습니다. 이유가 궁금했습니다.',output:{display_text:'음, 저는 관찰했습니다.\n이유가 궁금했습니다.',edits:[]},status:'completed',sttFailure:false,cleanupFailure:false,limitCleanup:false};}
 const ai={FeatureError,transcriptionProvider:()=>state.provider,transcriptionConfigured:()=>state.configured,googleSpeechToken:async()=>{throw new Error('No Google request expected');},
  reserveUsage:async(student,feature,context,model)=>{state.events.push(`reserve:${feature}`);if(state.limitCleanup&&feature==='transcription_cleanup')throw new FeatureError(429,'daily limit','AI_DAILY_LIMIT');const id=`usage${state.usage.length+1}`;state.usage.push({id,feature,model});return id;},
  completeUsage:async(id,status,usage)=>{state.events.push(`settle:${id}:${status}`);const row=state.usage.find(row=>row.id===id);if(state.failAllSettlements||state.failRawSettlement&&row.feature==='transcription'||state.failCleanupSettlement&&row.feature==='transcription_cleanup')throw new Error('Usage settlement unavailable');Object.assign(row,{status,tokens:usage});},
@@ -71,7 +71,12 @@ try {
  reset();state.status='incomplete';result=await transcribe();
  check(result.displayText===null&&result.cleanup.error==='TRANSCRIPT_CLEANUP_INCOMPLETE','incomplete response never produces a polished answer');
  reset();process.env.TRANSCRIPT_CLEANUP_ENABLED='false';result=await transcribe();
- check(result.cleanup.status==='disabled'&&result.displayText===null&&state.cleanupCalls.length===0&&state.savedRaw.text===state.raw,'explicitly disabled cleanup retains raw for separate review');
+ check(result.cleanup.status==='completed'&&result.cleanup.modelId==='verbatim'&&result.displayText===state.raw&&state.cleanupCalls.length===0&&state.savedRaw.text===state.raw,'disabled paid cleanup submits the unchanged original without another model');
+ reset();delete process.env.TRANSCRIPT_CLEANUP_ENABLED;result=await transcribe();
+ check(result.cleanup.status==='completed'&&result.cleanup.modelId==='verbatim'&&result.displayText===state.raw&&state.cleanupCalls.length===0&&state.usage.length===1,'cleanup is opt-in by default and raw speech remains normally submittable');
+ const disabled=await load('transcript-cleanup').cleanupTranscript('student','attempt',state.raw);check(disabled.cleanup.status==='disabled'&&disabled.displayText===null,'direct cleanup keeps its disabled contract');
+ const cache=load('recording-transcription');const cached=cache.cachedFormattedTranscription(state.savedRaw,{displayTranscript:result.displayText,transcriptCleanup:result.cleanup});check(cached?.displayText===state.raw,'verbatim display cache validates its original hash');
+ check(cache.cachedFormattedTranscription(state.savedRaw,{displayTranscript:'invented answer',transcriptCleanup:result.cleanup})===null,'verbatim cache never accepts changed display text');
  reset();process.env.OPENAI_TRANSCRIPT_CLEANUP_MODEL='other-model';result=await transcribe();
  check(result.cleanup.status==='failed'&&result.cleanup.error==='TRANSCRIPT_CLEANUP_MODEL_INVALID'&&state.cleanupCalls.length===0,'unavailable or mistyped configured model never falls back');
  reset();state.limitCleanup=true;result=await transcribe();

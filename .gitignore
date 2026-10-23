@@ -12,6 +12,8 @@ test-results/
 playwright-report/
 *.tsbuildinfo
 *.log
+/apps/web/public/nonverbal/vendor/
+/apps/web/public/nonverbal/models/
 
 # Private source materials and local review artifacts
 /기존 자료/

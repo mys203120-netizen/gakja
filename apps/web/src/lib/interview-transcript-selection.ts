@@ -16,6 +16,6 @@ export async function ownedInterviewTranscriptSelection(db:PoolClient,studentId:
   }
   const cleanup=asset.metadata?.transcriptCleanup,display=asset.metadata?.displayTranscript;
   if(typeof asset.text!=='string'||!asset.text.trim()||cleanup?.status!=='completed'||typeof display!=='string'||!display.trim()||cleanup.rawHash!==createHash('sha256').update(asset.text).digest('hex'))throw new FeatureError(409,'문장 정리가 끝난 전사를 선택해 주세요.','TRANSCRIPT_NOT_READY');
-  return {mediaId:asset.id,rawTranscriptMediaId:asset.id,rawTranscript:asset.text,displayTranscript:display,transcriptCleanup:cleanup,
+  return {mediaId:asset.id,rawTranscriptMediaId:asset.id,rawTranscript:asset.text,displayTranscript:display,transcriptCleanup:cleanup,speechAnalysis:asset.metadata?.speechAnalysis||null,
     transcript:display,draft:display,autoTranscriptApplied:true,transcriptSelection:automatic?'automatic':'student',transcriptSelectedAt:new Date().toISOString()};
 }

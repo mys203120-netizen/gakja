@@ -1,5 +1,6 @@
 /** The URL is the source of truth for preparation, including Chat/Live navigation. */
 export type InterviewSetupState = {
+  sessionMode:'practice'|'real';
   mode: 'basic' | 'document' | 'major' | 'university';
   followups: boolean; pressure: boolean;
   difficulty: 'standard' | 'deep'; timing: 'end' | 'turn';
@@ -15,24 +16,26 @@ export function hasInterviewSelection(params: Search) {
 }
 export function interviewSetupState(params: Search): InterviewSetupState {
   return {
+    sessionMode:params.get('sessionMode')==='real'?'real':'practice',
     mode: (modes.includes(params.get('mode') || '') ? params.get('mode') : 'basic') as InterviewSetupState['mode'],
     followups: params.get('followups') === '1', pressure: params.get('pressure') === '1',
     difficulty: params.get('difficulty') === 'deep' ? 'deep' : 'standard',
-    timing: params.get('feedback') === 'turn' ? 'turn' : 'end',
+    timing: params.get('sessionMode') === 'real' ? 'end' : 'turn',
     count: integer(params.get('count'), hasInterviewSelection(params) ? 1 : 4, 8),
-    panelistCount: integer(params.get('panelists'), 2, 5), advanced: params.get('details') === '1',
+    panelistCount: 5, advanced: params.get('details') === '1',
   };
 }
 export function interviewSetupHref(kind: 'chat' | 'video', params: Search, updates: Partial<InterviewSetupState> & { targetId?: string } = {}) {
   const query = new URLSearchParams(params.toString());
   const state = { ...interviewSetupState(params), ...updates };
-  query.set('kind', kind);
+  query.set('kind', state.sessionMode==='real'?'video':kind);
+  query.set('sessionMode',state.sessionMode);
   query.set('mode', state.mode);
   query.set('followups', state.followups ? '1' : '0');
   query.set('pressure', state.pressure ? '1' : '0');
   query.delete('reactions');
   query.set('difficulty', state.difficulty);
-  query.set('feedback', state.timing);
+  query.set('feedback', state.sessionMode === 'real' ? 'end' : 'turn');
   query.set('count', String(state.count));
   query.set('panelists', String(state.panelistCount));
   query.set('details', state.advanced ? '1' : '0');

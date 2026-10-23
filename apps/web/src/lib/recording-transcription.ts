@@ -1,6 +1,6 @@
 import 'server-only';
 import { Pool } from 'pg';
-import { transcriptCleanupModel, TRANSCRIPT_CLEANUP_PROMPT_VERSION, transcriptRawHash } from './transcript-cleanup';
+import { transcriptCleanupModel, TRANSCRIPT_CLEANUP_PROMPT_VERSION, TRANSCRIPT_VERBATIM_PROMPT_VERSION, transcriptRawHash } from './transcript-cleanup';
 import type { RawTranscription, StoredTranscription } from './speech-transcription';
 const shared=globalThis as unknown as {gakjaTranscriptionLockPool?:Pool};
 const lockPool=shared.gakjaTranscriptionLockPool??new Pool({connectionString:process.env.DATABASE_URL,max:10,idleTimeoutMillis:30000,connectionTimeoutMillis:10000,ssl:process.env.DATABASE_SSL==='true'?{rejectUnauthorized:true}:false});
@@ -26,8 +26,10 @@ export function storedRawTranscription(text:unknown,metadata:Record<string,any>)
 
 export function cachedFormattedTranscription(raw:RawTranscription,metadata:Record<string,any>):StoredTranscription|null {
   const cleanup=metadata?.transcriptCleanup;
-  if(process.env.TRANSCRIPT_CLEANUP_ENABLED==='false')return null;
-  if(cleanup?.status!=='completed'||typeof metadata.displayTranscript!=='string'||!metadata.displayTranscript.trim()||cleanup.rawHash!==transcriptRawHash(raw.text)||cleanup.modelId!==transcriptCleanupModel()||cleanup.promptVersion!==TRANSCRIPT_CLEANUP_PROMPT_VERSION)return null;
+  if(cleanup?.status!=='completed'||typeof metadata.displayTranscript!=='string'||!metadata.displayTranscript.trim()||cleanup.rawHash!==transcriptRawHash(raw.text))return null;
+  if(process.env.TRANSCRIPT_CLEANUP_ENABLED!=='true'){
+    if(cleanup.modelId!=='verbatim'||cleanup.promptVersion!==TRANSCRIPT_VERBATIM_PROMPT_VERSION||metadata.displayTranscript!==raw.text)return null;
+  }else if(cleanup.modelId!==transcriptCleanupModel()||cleanup.promptVersion!==TRANSCRIPT_CLEANUP_PROMPT_VERSION)return null;
   return {...raw,rawText:raw.text,displayText:metadata.displayTranscript,cleanup};
 }
 

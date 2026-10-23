@@ -8,8 +8,8 @@ export type ConversionReceipt = { name: ConversionName; method?: 'google' | 'kak
 
 const screens: Record<string, string> = {
   '/': '서비스 소개', '/faq': '자주 묻는 질문', '/contact': '문의', '/privacy': '개인정보 처리방침',
-  '/my': '오늘 훈련', '/my/today': '오늘 훈련', '/my/train': '훈련', '/my/diagnosis': '진단',
-  '/preparation': '준비 현황', '/records': '내 기록', '/account': '내 계정', '/armory': '내 경험',
+  '/my': '홈', '/training': '훈련하기', '/my/today': '오늘 훈련', '/my/train': '훈련', '/my/diagnosis': '진단',
+  '/preparation': '마이 대시보드', '/records': '내 기록', '/account': '내 계정', '/armory': '내 경험',
   '/availability': '훈련 일정', '/chat': '대화', '/interview': '모의면접', '/knowledge': '면접 자료',
   '/learn': '학습', '/materials': '내 자료', '/on': '각자ON', '/practice': '답변 연습',
   '/quiz': '다시 떠올리기', '/reports': '면접 리포트', '/schools': '지원 학교', '/start': '훈련 시작',

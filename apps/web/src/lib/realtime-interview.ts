@@ -32,6 +32,7 @@ export async function readRealtimeInterviewBody(request:Request):Promise<unknown
 async function currentTurn(studentId:string,input:Scope){
   const [row]=await query("select s.id,s.state,s.kind,s.data as session_data,t.id as turn_id,t.data as turn_data from interview_sessions s join profiles p on p.id=s.student_id and p.active=true and p.role='student' left join lateral(select id,data from interview_turns where session_id=s.id and student_id=s.student_id and data->>'answer' is null and coalesce(data->>'invalidated','false')!='true' order by created_at desc,id desc limit 1)t on true where s.id=$1 and s.student_id=$2",[input.sessionId,studentId]);
   if(!row)throw new FeatureError(404,'면접 기록을 찾을 수 없어요.','REALTIME_INTERVIEW_NOT_FOUND');
+  if(row.session_data.sessionMode==='real')throw new FeatureError(403,'실전은 고정 질문 음성과 전사 연결로 진행해 주세요.','REAL_INTERVIEW_POLICY');
   if(row.state!=='active'||row.kind!=='video'||row.session_data.paused||row.session_data.processing||row.session_data.activeSince==null||Number(row.session_data.timerLeaseUntil||0)<=Date.now()||row.turn_id!==input.turnId||Number(row.session_data.generation||0)!==input.generation||!row.turn_data?.question)throw new FeatureError(409,'현재 질문에서 다시 연결해 주세요.','REALTIME_INTERVIEW_CHANGED');
   await assertPublishedAccess(studentId,row.session_data.context);return row;
 }

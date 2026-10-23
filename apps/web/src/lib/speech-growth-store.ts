@@ -100,7 +100,7 @@ export async function getGrowthPayload(user:Profile,scope:GrowthScope={}) {
   const nextVersion=contentNext?.after||content.unpaired[0]?.version;
   const newsNext=newsComparisons.find(comparison=>comparison.sourceQuestionId===nextVersion?.question_id)||(!nextVersion?newsComparisons[0]:null);
   const next=newsNext?{questionId:newsNext.sourceQuestionId,prompt:newsNext.prompt,reason:'같은 기사에 대한 생각을 면접 답변으로 다시 말해 보세요.',href:newsNext.retryHref}:nextVersion?{questionId:nextVersion.question_id,prompt:nextVersion.question||'이 질문 다시 말하기',reason:growthNextReason(nextVersion,contentNext),href:learningRetryHref(nextVersion.question_id,nextVersion as any)}:
-    {questionId:null,prompt:'녹음으로 첫 발화 남기기',reason:'녹음이 쌓이면 쉼과 반복의 변화를 비교할 수 있어요.',href:'/quiz?mode=oral'+(scope.targetId?'&targetId='+encodeURIComponent(scope.targetId):'')};
+    {questionId:null,prompt:'녹음으로 첫 발화 남기기',reason:'녹음이 쌓이면 쉼과 반복의 변화를 비교할 수 있어요.',href:'/interview/new?kind=video'+(scope.targetId?'&targetId='+encodeURIComponent(scope.targetId):'')};
   return {speech:{status:measured.length?'measured':eligibleRecordings.some(row=>row.analysis.timing)?'partial':'not_measured',defaultRecordingId:eligibleRecordings[0]?.id||null,recordings,trend},content:{...content,newsComparisons},next,
     scope:{cutoff,reportId:scope.reportId||null,studySessionId:scope.studySessionId||null},method:{timing:'microphone-rms',content:'quoted-sentence-cues',frozenReportsUnchanged:true}};
 }

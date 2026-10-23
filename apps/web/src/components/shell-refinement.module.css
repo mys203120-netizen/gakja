@@ -44,3 +44,20 @@
  .shell nav.mobilePrimary > a,.shell nav.mobilePrimary > button { min-height:56px; border-radius:18px; }
  .shell nav.mobilePrimary > [aria-current='page'],.shell nav.mobilePrimary > button[data-active='true'] { color:var(--soft-accent-ink); background:var(--clarity-soft); box-shadow:var(--soft-shadow-inset); }
 }
+
+/* The navigation stays quiet while the workspace carries the soft clay surfaces. */
+.shell :global(.sidebar) { background:#fbfdfb; }
+.shell :global(.main-content) { padding-top:28px; }
+.shell :global(.topbar) { background:rgb(255 255 255 / 88%); backdrop-filter:blur(14px); }
+.shell :global(.main-nav)>a { border-radius:16px; }
+.shell :global(.sidebar-selection) { border-radius:16px; }
+:global(body[data-interview-active=true]) .shell :global(.mobile-nav),
+:global(body[data-interview-active=true]) .shell :global(.mobile-scroll-navigation),
+:global(body[data-interview-active=true]) .shell :global(.section-navigation) { display:none!important; }
+:global(body[data-interview-active=true]) .shell :global(.main-content) { padding-bottom:20px!important; }
+@media(max-width:700px) {
+  .shell :global(.main-content) { padding-top:16px; }
+  .shell :global(.mobile-nav) { border-top:1px solid var(--clarity-line); background:rgb(251 253 251 / 96%); backdrop-filter:blur(18px); }
+  .shell :global(.mobile-nav)>a { border-radius:18px; }
+  .shell :global(.mobile-nav)>a[aria-current=page] { color:var(--clarity-green); }
+}

@@ -34,6 +34,8 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
   if(name==='@/lib/training-day-refresh')return dayRefreshLibrary;
   if(name==='@/lib/training-plan-summary')return planSummaryLibrary;
   if(name==='@/lib/training-flow')return trainingFlowLibrary;
+  if(name==='./training-order-editor')return {TrainingOrderEditor:()=>null};
+  if(name==='./training-review-placement')return {TrainingReviewPlacement:()=>null};
   if(name==='./training-calendar')return {TrainingCalendar:()=>React.createElement('section',{'aria-label':'훈련과 학교 면접 캘린더',id:'training-calendar'},'계획과 면접 일정')};
   if(name==='./learning-discovery'){
    const entry={exports:{}},code=ts.transpileModule(fs.readFileSync(new URL('../apps/web/src/components/learning-discovery.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -45,20 +47,23 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
  }});
  return {context,posts,pushes,render(){index=0;refIndex=0;return module.exports[page]();},markup(){return renderToStaticMarkup(this.render());}};
 }
-// Public periods stay visibly distinct from a personal interview date.
+// Training keeps the next action prominent; schedules live in the dashboard.
 {
  const h=harness(),markup=h.markup();
- assert.ok(markup.includes('준비 목표까지 11일')&&markup.replace(/<[^>]*>/g,'').replace(/\s+/g,'').includes('준비목표D-11'));
- assert.ok(markup.includes('10월 31일–11월 1일')&&markup.includes('개인 배정 대기'));
- assert.ok(markup.includes('오늘 가능 2시간')&&markup.includes('준비 목표 전'));
+ const dashboard=harness(payload(),'PreparationOverview').markup();
+ assert.ok(dashboard.replace(/<[^>]*>/g,'').replace(/\s+/g,'').includes('준비목표D-11'));
+ assert.ok(dashboard.includes('10월 31일–11월 1일')&&dashboard.includes('개인 배정 대기'));
+ assert.ok(dashboard.includes('준비 목표 전'));
  assert.equal(h.posts.length,0);
- assert.ok(markup.includes('href="#training-calendar"')&&markup.includes('계획과 면접 일정'),'today exposes the actual combined calendar');
- assert.ok(markup.includes('권장 25분')&&markup.includes('내 역할 설명하기'),'the compact plan preserves its concrete task and recommended time');
+ assert.ok(!markup.includes('계획과 면접 일정')&&dashboard.includes('계획과 면접 일정'),'the combined calendar is available in the dashboard');
+ assert.ok(dashboard.includes('href="/records"')&&dashboard.includes('href="/account"'),'records and personal settings are reachable from the dashboard');
+ assert.ok(!markup.replace(/<[^>]*>/g,'').includes('권장 25분')&&markup.includes('내 역할 설명하기'),'the compact plan shows the concrete task without repeating time labels');
  assert.ok(!markup.includes('오늘 가능한 시간에 맞춰 순서대로 준비해요.')&&!markup.includes('새 답변과 가능한 시간이 바뀌면 우선순위를 다시 맞춰요.'),'repeated introductory explanations are omitted');
  assert.ok(!markup.includes('본질문 → 꼬리질문 → 보완 → 재답변')&&!markup.includes(task.reason),'the overview omits repeated workflow and selection explanations');
  assert.ok(!markup.includes('aria-label="필요한 연습 직접 선택"')&&!markup.includes('직접 연습 선택'),'tools are no longer buried in a second navigation at the bottom');
  assert.ok(markup.includes('href="/knowledge?targetId=a"')&&markup.includes('href="/materials/briefings"'),'concepts and news have direct entries on today');
- assert.ok(markup.indexOf('aria-label="개념과 시사"')<markup.indexOf('id="today-plan-title"'),'resource entries are visible before the full plan and calendar');
+ assert.ok(markup.indexOf('aria-label="개념과 시사"')>markup.indexOf('id="today-plan-title"'),'supplementary resources follow the training plan');
+ assert.ok(markup.includes('<details class="supplementary">'),'supplementary resources begin collapsed');
 }
 // Missing availability and missing questions cannot masquerade as a completed day.
 {
@@ -70,11 +75,11 @@ function harness(value=payload(),page='TodayTraining',mutate=async()=>({href:'/m
 }
 // Manual work uses its original resource and never starts an automatic session.
 {
- const diagnostic={...task,id:'diagnostic',kind:'diagnostic',title:'첫 진단 · 활동·개념·지원 동기 확인'};
+ const diagnostic={...task,id:'diagnostic',kind:'diagnostic',title:'답변 연습 · 활동·개념·지원 동기 확인'};
  const focus={...task,title:'활동·개념 확인하고 내 말로 답하기 · 긴 탐구 질문 전체'};
  const first=nodes(harness(payload([diagnostic,focus])).render());
- assert.equal(first.find(node=>node.type==='h2'&&node.props.id==='today-focus-title').props.children,'첫 진단','the hero describes the same diagnostic task as its primary action');
- assert.ok(React.Children.toArray(first.find(node=>node.props?.className==='button primary').props.children).includes('첫 진단 시작'));
+ assert.equal(first.find(node=>node.type==='h2'&&node.props.id==='today-focus-title').props.children,'답변 연습','the hero describes the same diagnostic task as its primary action');
+ assert.ok(React.Children.toArray(first.find(node=>node.props?.className==='button primary').props.children).includes('답변 연습 시작'));
  const after=nodes(harness(payload([{...diagnostic,completed:true,status:'completed'},focus])).render());
  assert.equal(after.find(node=>node.type==='h2'&&node.props.id==='today-focus-title').props.children,'활동·개념 확인하고 내 말로 답하기','after diagnosis the hero follows the next focus task and keeps its title short');
  assert.ok(after.some(node=>node.type==='strong'&&node.props.children===focus.title),'the full question remains visible in the ordered plan');
@@ -116,8 +121,8 @@ for(const kind of ['focus','review','quiz','assignment']){
 {
  const quiz={...task,id:'quiz',kind:'quiz',title:'질문 속 개념 확인하기',minutes:12},assignment={...task,id:'assignment',kind:'assignment',title:'받은 과제 마치기',minutes:15};
  const markup=harness(payload([quiz,assignment])).markup();
- assert.ok(markup.includes('퀴즈 · 권장 12분')&&markup.includes(quiz.title));
- assert.ok(markup.includes('받은 과제 · 권장 15분')&&markup.includes(assignment.title));
+ assert.ok(markup.includes(`aria-label="퀴즈 · ${quiz.title} · 권장 12분`)&&markup.includes(quiz.title));
+ assert.ok(markup.includes(`aria-label="받은 과제 · ${assignment.title} · 권장 15분`)&&markup.includes(assignment.title));
 }
 // A response to the old school cannot navigate after the student switches their target.
 {
@@ -135,8 +140,9 @@ for(const kind of ['focus','review','quiz','assignment']){
  assert.ok(markup.includes('같은 시간에 다시 측정')&&!markup.includes('아직 확인하지 않은 제안'));
  assert.ok(markup.includes('/records/comparisons?activityId=activity&amp;targetId=a'));
  assert.ok(markup.includes('/materials/activities/activity'));
- assert.ok(markup.includes('준비 행동')&&markup.includes('활동 확인·보완'),'activity actions are visible without opening a disclosure');
- assert.ok(markup.includes('오늘 훈련')&&markup.includes('내 역할 설명하기'),'preparation opens on its actual next scheduled task');
+ assert.ok(markup.includes('준비 행동')&&markup.includes('활동 확인·보완'),'activity actions remain available in the detailed preparation view');
+ assert.ok(markup.includes('오늘의 훈련')&&markup.includes('href="/training"'),'the dashboard summarizes progress and links to the training plan');
+ assert.ok(markup.includes('<details class="readinessDisclosure">'),'activity details begin collapsed beneath the calendar');
 }
 // Summary controls select real observations and never turn practice counts into a readiness score.
 {
@@ -155,7 +161,7 @@ for(const kind of ['focus','review','quiz','assignment']){
 }
 console.log('Training hub passed: real period labels, capacity, missing data, manual tasks, server start/complete, stale school guards and unified activity evidence.');
 
-// Today and readiness display the same canonical review state; historical help does not reopen it in the UI.
+// The dashboard retains canonical review state; historical help does not reopen it in the UI.
 {
  const value=payload(),base={questionCount:1,mainAnswers:1,followupAnswers:1,textAttempts:1,audioAttempts:1,assistedAttempts:3,needsReview:[],unconfirmed:false};
  const question=(questionId,status,extra={})=>({questionKey:`a:personal:2:${questionId}`,targetId:'a',questionId,sourceType:'personal',sourceVersion:2,activityIds:[questionId],status,needsReview:status==='active',requestIds:['request-'+questionId],resolvedEvidenceIds:status==='resolved'?['answer-'+questionId]:[],reason:status==='active'?'같은 질문에 도움 없이 다시 답하기':'후속 답변으로 재확인했어요.',requestedAtUnknown:false,...extra});
@@ -164,10 +170,10 @@ console.log('Training hub passed: real period labels, capacity, missing data, ma
  value.readiness={items:[{...base,id:'active',kind:'activity',title:'확인할 탐구',reviewStatus:'active',reviewQuestionKeys:[active.questionKey,secondActive.questionKey],reviewReasons:[active.reason]},{...base,id:'resolved',kind:'activity',title:'재확인한 탐구',reviewStatus:'resolved',reviewQuestionKeys:[resolved.questionKey],reviewReasons:[]}],summary:{total:2,practiced:2,unconfirmed:0}};
  const today=harness(value).markup(),prep=harness(value,'PreparationOverview'),markup=prep.markup();
  const reviewSummary=html=>html.match(/<aside[^>]*aria-label="현재 지원처 보완 상태"[^>]*><span>([^<]*)<\/span>/)?.[1];
- assert.equal(reviewSummary(today),'보완 중 2개 질문 · 재확인 완료 1개 질문');
- assert.equal(reviewSummary(markup),reviewSummary(today),'both screens count the same selected-target questions, not activities or missing observations');
- assert.ok(!today.includes('보완 중 3개 질문'),'another support target cannot change this summary');
- for(const label of ['보완 중','재확인 완료'])assert.ok(today.includes(label)&&markup.includes(label),`${label} has the same meaning on both screens`);
+ assert.equal(reviewSummary(today),undefined,'review details do not compete with the training action');
+ assert.equal(reviewSummary(markup),'보완 중 2개 질문 · 재확인 완료 1개 질문','the dashboard counts the selected-target questions, not activities or missing observations');
+ assert.ok(!markup.includes('보완 중 3개 질문'),'another support target cannot change this summary');
+ for(const label of ['보완 중','재확인 완료'])assert.ok(markup.includes(label),`${label} remains available in the dashboard`);
  assert.equal((markup.match(/data-review-status="active"/g)||[]).length,1);
  assert.equal((markup.match(/data-review-status="resolved"/g)||[]).length,1);
  assert.equal((markup.match(/요청 시점 미확인/g)||[]).length,1,'only the linked active item receives the legacy-date note');
@@ -180,8 +186,8 @@ console.log('Training hub passed: real period labels, capacity, missing data, ma
  value.review.questions=[resolved,{...active,status:'resolved',needsReview:false,requestedAtUnknown:false},{...secondActive,status:'resolved',needsReview:false}];
  value.readiness.items[0]={...value.readiness.items[0],reviewStatus:'resolved',reviewReasons:[],needsReview:['말하기 미확인']};
  const refreshedToday=harness(value).markup(),refreshedPrep=harness(value,'PreparationOverview').markup();
- assert.equal(reviewSummary(refreshedToday),'보완 중 0개 질문 · 재확인 완료 3개 질문');
- assert.equal(reviewSummary(refreshedPrep),reviewSummary(refreshedToday));
+ assert.equal(reviewSummary(refreshedToday),undefined);
+ assert.equal(reviewSummary(refreshedPrep),'보완 중 0개 질문 · 재확인 완료 3개 질문');
  assert.ok(!refreshedPrep.includes('data-review-status="active"')&&refreshedPrep.includes('말하기 미확인'),'remaining observation work is separate from the resolved review state');
  assert.ok(!refreshedPrep.includes('요청 시점 미확인'));
 }
@@ -204,4 +210,9 @@ console.log('Training hub passed: real period labels, capacity, missing data, ma
  row().props.onClick();h.context.targetId='b';h.context.target={...target,id:'b'};h.render();h.context.targetId='a';h.context.target=target;h.render();row().props.onClick();
  assert.equal(h.posts.length,2);finishes[0]({href:'/my/train?planId=old'});await flush();assert.deepEqual(h.pushes,[]);assert.equal(row().props.disabled,true);
  finishes[1]({href:'/my/train?planId=current'});await flush();assert.deepEqual(h.pushes,['/my/train?planId=current']);
+}
+
+{
+ const value=payload();value.today.allocation={stage:'final_review',reportId:'saved-report',reason:'실전의 남은 보완 질문부터 연습해요.'};
+ const markup=harness(value).markup();assert.ok(markup.includes('aria-label="면접 준비 단계"'));assert.ok(markup.includes('aria-current="step">최종 보완'));assert.ok(markup.includes('href="/reports/reports/saved-report"'));assert.ok(markup.includes('답변 연습')&&markup.includes('실전 면접')&&markup.includes('종합 리포트'));
 }

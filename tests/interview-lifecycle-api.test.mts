@@ -1,3 +1,5 @@
+import * as interviewPolicyModule from '../apps/web/src/lib/interview-policy';
+import * as interviewFeedbackModule from '../apps/web/src/lib/interview-feedback';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -34,7 +36,7 @@ async function query(sql:string,args:any[]){
 const mod={exports:{} as any};
 vm.runInNewContext(ts.transpileModule(readFileSync('apps/web/src/app/api/interviews/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
   module:mod,exports:mod.exports,Response,Request,URL,Date,console,
-  require(name:string){
+  require(name:string){if(name==='@/lib/interview-policy')return interviewPolicyModule;if(name==='@/lib/interview-feedback')return interviewFeedbackModule;
     if(name==='@/lib/interview-timer')return timers;
     if(name==='@/lib/interview-completion')return completion;
     if(name==='@/lib/assistance-records')return assistance;

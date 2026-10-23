@@ -2,24 +2,23 @@ import 'server-only';
 import type {PoolClient} from 'pg';
 import {query,ApiError} from './db';
 import {eligibleQuizItems} from './quiz-rules';
-import {schoolQuizItems} from './school-quiz';
 import {recordMatchesCurrentTarget} from './learning-target-scope';
 import {koreaToday} from './planner-model';
+import {questionDomain} from './training-domain';
 import type {HybridQuestion,HybridAssignment,TrainingPractice} from './hybrid-training';
 import type {getPlanContext} from './planner-context';
 
 type Value=Record<string,any>;
 type Context=Awaited<ReturnType<typeof getPlanContext>>;
 
-/** Reuse the quiz API's reviewed pools; no generated question is presented as a verified quiz. */
+/** Use reviewed MCQs and uniquely attributed source excerpts with factual answer keys. */
 export function trainingQuizQuestions(questions:HybridQuestion[],context:Context):HybridQuestion[]{
- const choice=eligibleQuizItems(context.learning,'choice'),answer=eligibleQuizItems(context.learning,'answer');
+ const choice=eligibleQuizItems(context.learning,'choice');
  return questions.map(question=>{
   const school=context.schoolTargets.find(row=>row.id===question.targetId);if(!school)return question;
-  const choices=question.sourceType==='personal'?choice.filter(item=>item.question_id===question.id):[];
-  const answers=question.sourceType==='personal'?answer.filter(item=>item.question_id===question.id):schoolQuizItems(context.sources.filter(source=>source.kind==='question'&&source.sourceType==='common'&&source.targetId===question.targetId&&source.sourceVersion===question.sourceVersion&&source.id===question.id).map(source=>source.entity),{...school.data,id:school.id});
-  const items=choices.length?choices:answers;
-  return items.length?{...question,quiz:{kind:'quiz',mode:choices.length?'choice':'answer',itemIds:items.slice(0,3).map(item=>item.id)}}:question;
+  const choices=question.sourceType==='personal'?choice.filter(item=>item.question_id===question.id||item.linked_question_id===question.id):[];
+  const domain=questionDomain(question,context.learning);
+  return {...question,...domain,quiz:choices.length?{kind:'quiz',mode:'choice',itemIds:choices.slice(0,6).map(item=>item.id)}:undefined};
  });
 }
 
@@ -48,7 +47,7 @@ export async function trainingPracticeCompletions(studentId:string,plans:Value[]
   quizIds.length?read(`select s.id,s.metadata,s.finished_at from quiz_sessions s where s.student_id=$1 and s.metadata->>'trainingPlanId'=any($2::text[])
    and s.state='completed' and jsonb_array_length(s.items)>0 and not exists(select 1 from jsonb_array_elements(s.items) with ordinality item(value,n)
     where not exists(select 1 from quiz_responses r where r.session_id=s.id and r.student_id=s.student_id and r.item_index=item.n-1 and r.memory_item_id=item.value->>'id' and coalesce(r.data->>'invalidated','false')<>'true'
-     and (nullif(r.selected_option_id,'') is not null or nullif(btrim(r.response),'') is not null or nullif(r.data->>'recording_id','') is not null)))`,[studentId,quizIds]):[],
+     and (r.timed_out=true or nullif(r.selected_option_id,'') is not null or nullif(btrim(r.response),'') is not null or nullif(r.data->>'recording_id','') is not null)))`,[studentId,quizIds]):[],
   assignmentIds.length?read(`select a.id,a.target_id,a.target_snapshot,a.source_kind,a.content_version,a.items->0->>'common_revision' as common_revision,max(r.submitted_at) as submitted_at
    from quiz_assignments a join quiz_submissions r on r.assignment_id=a.id and r.student_id=a.student_id
    where a.student_id=$1 and a.id=any($2::uuid[]) and a.state in('submitted','completed','retry_due','reviewed') and jsonb_array_length(a.items)>0
