@@ -1,3 +1,26 @@
 # Received reference artifacts are byte-verified against their original manifest.
 # Preserve the supplied bytes on Windows and Linux without text conversion.
 packages/contracts/reference/proposed-v2-2026-11-06/** -text
+
+# The generated contract is compared to canonical JSON serialization bytes.
+packages/contracts/domain-v1/generated.schemas.json -text
+
+# These configured source inputs participate in existing private source hashes.
+# Their committed bytes already equal the authoritative originals; do not convert.
+"/universities.json" -text
+"/departments.json" -text
+"/admission_tracks.json" -text
+"/각자의답_MD/1. 프로젝트_용어집_v2.2.md" -text
+"/각자의답_MD/2. 브랜드_정체성_v1.2.md" -text
+"/각자의답_MD/3. 웹가이드북_목차_콘텐츠배치_v3.0.md" -text
+"/각자의답_MD/4. 서비스_PRD_v3.0.md" -text
+"/각자의답_MD/5. 학생부_분석_기준_v2.2.md" -text
+"/각자의답_MD/6. 대학별_면접_기준_v1.3.md" -text
+"/각자의답_MD/7. 웹가이드북_통합제작프로세스_v2.2.md" -text
+"/각자의답_MD/8. 면접엔진_공통운영원칙_v2.0.md" -text
+"/각자의답_MD/9. 면접엔진_질문생성_가이드라인_v2.3.md" -text
+"/각자의답_MD/10. 면접엔진_답변평가_가이드라인_v2.3.md" -text
+"/각자의답_MD/11. 요금제_결제및환불_약관_v0.2_검토초안.md" -text
+"/각자의답_MD/12. 학생용_IA및UX_정밀설계_v1.2.md" -text
+"/각자의답_MD/2027_면접바이블_내용정리_v1.0.md" -text
+"/각자의답_MD/2027_면접바이블_대학별정리_v1.0.md" -text
