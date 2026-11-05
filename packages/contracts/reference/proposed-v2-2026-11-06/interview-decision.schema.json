@@ -1,0 +1,416 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gakja:proposed:interview-decision:v2",
+  "title": "interview-decision — PROPOSED, not production",
+  "description": "검토용 계약. 앱 적용 전 정책 승인·런타임 검사·공유 검증기를 함께 연결해야 한다.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "proposed-v2-2026-11-06"
+        },
+        "source_turn_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_answer_revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_question_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "policy_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "const": "continue_answer"
+        },
+        "assessment": {
+          "type": "null"
+        },
+        "next": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "const": "CONTINUE_ANSWER"
+            },
+            "trigger_kind": {
+              "const": "unfinished_thought"
+            },
+            "question": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "action",
+            "trigger_kind",
+            "question"
+          ],
+          "additionalProperties": false
+        },
+        "reaction": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "schema_version",
+        "source_turn_id",
+        "source_answer_revision_id",
+        "source_question_version_id",
+        "policy_version_id",
+        "source_manifest_sha256",
+        "kind",
+        "assessment",
+        "next",
+        "reaction"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "proposed-v2-2026-11-06"
+        },
+        "source_turn_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_answer_revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_question_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "policy_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "const": "assessed_turn"
+        },
+        "assessment": {
+          "type": "object",
+          "properties": {
+            "coverage": {
+              "enum": [
+                "met",
+                "partial",
+                "unknown"
+              ]
+            },
+            "response": {
+              "enum": [
+                "answered",
+                "unavailable",
+                "unrelated",
+                "unclear"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 180,
+              "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+            }
+          },
+          "required": [
+            "coverage",
+            "response",
+            "reason"
+          ],
+          "additionalProperties": false
+        },
+        "next": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "FOLLOW_UP"
+                },
+                "trigger_kind": {
+                  "enum": [
+                    "missing_subpoint",
+                    "new_claim",
+                    "unresolved_difference",
+                    "important_ambiguity",
+                    "concept_extension"
+                  ]
+                },
+                "question": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 75,
+                      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+                    },
+                    "target": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 180,
+                      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+                    },
+                    "primary_function": {
+                      "enum": [
+                        "FACT",
+                        "MOTIVE",
+                        "ROLE",
+                        "PROCESS",
+                        "CHOICE",
+                        "CONCEPT",
+                        "EVIDENCE",
+                        "RESULT",
+                        "LIMIT",
+                        "ALTERNATIVE",
+                        "TRANSFER",
+                        "CONNECTION",
+                        "VALUE",
+                        "CLARIFY_CONTENT",
+                        "VERIFY_CLAIM"
+                      ]
+                    },
+                    "depth": {
+                      "enum": [
+                        "D1",
+                        "D2",
+                        "D3",
+                        "D4"
+                      ]
+                    },
+                    "strategy_id": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 160,
+                          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "evidence_ref_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160,
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                      },
+                      "minItems": 1,
+                      "maxItems": 12,
+                      "uniqueItems": true
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "target",
+                    "primary_function",
+                    "depth",
+                    "strategy_id",
+                    "evidence_ref_ids"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "action",
+                "trigger_kind",
+                "question"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "CLARIFICATION"
+                },
+                "trigger_kind": {
+                  "const": "same_requirement"
+                },
+                "question": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80,
+                      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+                    },
+                    "preserved_question_version_id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 160,
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "preserved_question_version_id"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "action",
+                "trigger_kind",
+                "question"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "REPLAY"
+                },
+                "trigger_kind": {
+                  "enum": [
+                    "replay_requested",
+                    "observed_silence"
+                  ]
+                },
+                "question": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "action",
+                "trigger_kind",
+                "question"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "TRANSITION"
+                },
+                "trigger_kind": {
+                  "enum": [
+                    "requirement_satisfied",
+                    "no_useful_probe",
+                    "declined_scope",
+                    "answer_unavailable",
+                    "budget_exhausted"
+                  ]
+                },
+                "question": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "action",
+                "trigger_kind",
+                "question"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "CLOSING"
+                },
+                "trigger_kind": {
+                  "enum": [
+                    "time_exhausted",
+                    "session_requested_end",
+                    "pool_exhausted"
+                  ]
+                },
+                "question": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "action",
+                "trigger_kind",
+                "question"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "reaction": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "quote": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 28,
+                  "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 76,
+                  "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+                }
+              },
+              "required": [
+                "quote",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "source_turn_id",
+        "source_answer_revision_id",
+        "source_question_version_id",
+        "policy_version_id",
+        "source_manifest_sha256",
+        "kind",
+        "assessment",
+        "next",
+        "reaction"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

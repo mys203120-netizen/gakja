@@ -1,9 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { isAbsolute, relative, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { z } from 'zod';
 import type { InterviewContext, StudentEvidence } from './load-interview-context';
-import { loadFullRecord, loadStagedFullStudentAnalysis, type AnalysisSourceReview, type FullStudentAnalysis } from './full-student-analysis';
+import { loadStagedFullStudentAnalysisSnapshot, type AnalysisSourceReview, type FullStudentAnalysis } from './full-student-analysis';
+import { type AnalysisReadOptions } from '../repositories/analysis-read-ports';
+import { createLocalReadRepositories } from '../repositories/local-read-repositories';
 
 export const ACTIVITIES_SCHEMA_VERSION = 'offline-source-activities-v1';
 export const ACTIVITIES_RULES_VERSION = 'record-extraction-v1';
@@ -186,23 +188,24 @@ function validateStored(cache: unknown, context: InterviewContext, expectedModel
   } catch { return false; }
 }
 /** Runtime path: file + fingerprint + exact-span checks only. It never calls a provider. */
-export async function loadPreparedActivities(context: InterviewContext, root = process.cwd(), expectedModel = preparedActivitiesModel()): Promise<PreparedActivities | null> {
+export async function loadPreparedActivities(context: InterviewContext, root = process.cwd(), expectedModel = preparedActivitiesModel(), options: AnalysisReadOptions = {}): Promise<PreparedActivities | null> {
   if (context.studentAnalysis) {
     const { contentSha256, ...body } = context.studentAnalysis;
     if (contentSha256 !== hash(JSON.stringify(body)) || context.student.analysisRevision !== context.studentAnalysis.revision || context.student.pdfSha256 !== context.studentAnalysis.recordRevision || context.targetAnalysis?.commonAnalysisRevision !== context.studentAnalysis.revision) return null;
     try {
       const pins=context.manifest.files.filter(file=>file.role==='fullStudentAnalysis');
       if(pins.length!==1||!pins[0].sha256)return null;
-      const file=resolve(root,pins[0].path),scope=relative(resolve(root,'data/prepared/student-analysis-revisions'),file);
-      if(!scope||scope.startsWith('..')||isAbsolute(scope)||hash(await readFile(file,'utf8'))!==pins[0].sha256)return null;
       // The full-analysis loader owns model/policy identity, typed source QA and
       // immutable manifest validation. The legacy extraction model is unrelated
       // to this zero-call compatibility view and is checked only below.
-      const verified=await loadStagedFullStudentAnalysis(context,pins[0].path,root);
+      const repositories=options.repositories??createLocalReadRepositories(root);
+      const snapshot=await loadStagedFullStudentAnalysisSnapshot(context,pins[0].path,root,{...options,repositories,purpose:options.purpose??'analysis-validation'});
+      if(createHash('sha256').update(snapshot.document.bytes).digest('hex')!==pins[0].sha256)return null;
+      const verified=snapshot.analysis;
       if(JSON.stringify(verified.common)!==JSON.stringify(context.studentAnalysis)||JSON.stringify(verified.target)!==JSON.stringify(context.targetAnalysis)||verified.evidence.some(row=>!context.student.evidence.some(item=>JSON.stringify(row)===JSON.stringify(item))))return null;
       const extras=context.student.evidence.filter(row=>!verified.evidence.some(item=>item.id===row.id));
       if(extras.length){
-        const source=await loadFullRecord(root,context.student.pdfSha256);if(!source)return null;
+        const source=snapshot.source;
         if(extras.some(row=>{
           const activity=verified.common.activities.find(item=>item.id===row.originEntityId&&item.mergedFromLegacyIds.includes(row.activityId)),proofs=activity?Object.values(activity.facts).flat():[];
           return row.projectionProvenance?.kind!=='legacy_verified_range_same_declared_activity_id'||row.projectionProvenance.analysisRevision!==verified.common.revision||row.projectionProvenance.legacyEvidenceId!==row.id||!proofs.length||row.sourceRef.pdfSha256!==source.pdfSha256||source.pages.find(page=>page.page===row.page)?.text.slice(row.sourceRef.startOffset,row.sourceRef.endOffset)!==row.text||!proofs.every(proof=>proof.page===row.page&&proof.pageStart>=row.sourceRef.startOffset&&proof.pageEnd<=row.sourceRef.endOffset&&row.text.slice(proof.pageStart-row.sourceRef.startOffset,proof.pageEnd-row.sourceRef.startOffset)===proof.quote);

@@ -193,7 +193,7 @@ export interface InterviewSession {
   createdAt: string;
   updatedAt: string;
   status: "active" | "ending" | "completed";
-  evaluationStatus: "pending" | "running" | "completed" | "failed";
+  evaluationStatus: "pending" | "running" | "completed" | "failed" | "review_required";
   evaluationError?: string;
   target: unknown;
   sourceManifest: unknown;

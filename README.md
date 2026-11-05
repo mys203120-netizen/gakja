@@ -6,6 +6,8 @@
 
 ## 실행
 
+청사진 v2 후속 구현: [PR05 계약 대응표·PR06 추출 계획](docs/pr05-domain-contracts.md), [실제 검증 결과·외부 의존](docs/pr05-verification.md). 평가 승인 0개와 검수 대기 상태는 실제 공급 전까지 유지합니다.
+
 1. Node.js 22 이상 LTS를 설치합니다.
 2. `.env.local`에 실제 키를 입력합니다. 이 파일은 `.env.example`의 이름을 그대로 사용하며 Git에서 제외됩니다.
 3. **`start server.bat`를 더블클릭**합니다. 최초 의존성·모델·학생부 근거 준비 후 실제 서버 health 응답을 확인하고 면접 화면을 엽니다.
@@ -83,6 +85,8 @@ npm run evaluate:interviewer -- --latest
 목소리 속도는 `CLOVA_VOICE_PRIMARY_SPEED=0`, `CLOVA_VOICE_SECOND_SPEED=-1`로 독립 설정합니다. 역할별 설정이 공통 `CLOVA_VOICE_SPEED`보다 우선하며 음수일수록 빠릅니다. 적용에는 서버 재시작이 필요합니다.
 
 ## 검증 명령
+
+2026-11-06 변경 지시에 따라 청사진 v2를 최상위 기준으로, 평가범위 공급계약을 보완 명세로 사용합니다. 철회된 4대 정책과 구분한 현재 구현·검증 범위는 [아키텍처 구현 상태](docs/architecture-implementation-status.md)에 기록합니다.
 
 ```text
 npm run prepare:context

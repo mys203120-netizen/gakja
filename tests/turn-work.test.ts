@@ -78,6 +78,21 @@ test('browser submit timer includes pre-finish work and Space withdrawal/CONTINU
   assert.throws(() => second.assertLive(), /기다리는 시간이 초과/);
 });
 
+test('pausing playback cannot extend unfinished generation past the original 95-second budget', async () => {
+  const clock = new WorkTestClock(), registry = new SubmissionWorkRegistry(95_000, clock), s = session();
+  let browserTimeouts = 0;
+  const wait = new SubmissionWait(scope, 'paused-attempt', 95_000, () => { browserTimeouts++; }, clock);
+  const work = registry.get(s, scope, wait.attemptId, true);
+  const generated = work.run(95_000, async () => new Promise<never>(() => {}));
+  const rejected = assert.rejects(generated, { code: 'TURN_WORK_TIMEOUT' });
+  clock.advance(94_000); assert.equal(wait.pending, true); assert.equal(work.remainingMs(), 1000);
+  // A UI pause changes neither the submit timer nor the server's work clock.
+  clock.advance(1000); await rejected;
+  assert.equal(browserTimeouts, 1); assert.equal(wait.signal.aborted, true);
+  clock.advance(1000); assert.equal(browserTimeouts, 1);
+  assert.throws(() => registry.get(s, scope, wait.attemptId), { code: 'TURN_WORK_TIMEOUT' });
+});
+
 test('only scope-bound cancellation can retire an attempt; durable committed work is retained', async () => {
   const clock = new WorkTestClock(), registry = new SubmissionWorkRegistry(95, clock), s = session();
   const work = registry.get(s, scope, 'a1', true);

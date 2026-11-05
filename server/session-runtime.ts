@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { InterviewContext } from './data/load-interview-context';
 import type { InterviewSession, RecordedTurn } from './protocol';
+import type { SessionStore } from './storage/session-store';
 import { compilePolicyClauseRegistry, COMPILED_RUNTIME_POLICY_VERSION } from './policy/compiled-runtime-policy';
 
 export const SESSION_RUNTIME_VERSION = 'session-runtime-v1';
@@ -67,6 +68,11 @@ export function checkpointSession(session: InterviewSession, phase: string, now 
   if (!session.runtime) return;
   const current = session.turns.at(-1);
   session.runtime.checkpoint = { ...session.runtime.checkpoint, phase, at: now, turnId: current?.id ?? null, answerId: current?.answerId ?? null };
+}
+/** Persist the current snapshot without renewing its checkpoint/recovery window. */
+export async function saveSessionSnapshot(session: InterviewSession, store: Pick<SessionStore, 'save'>, now = new Date().toISOString()) {
+  session.updatedAt = now;
+  await store.save(session);
 }
 export function recoveryProjection(session: InterviewSession) {
   const current = session.turns.at(-1);

@@ -1,0 +1,42 @@
+{
+  "status": "REFERENCE_VALIDATED_OPERATIONAL_ADAPTER_PENDING",
+  "received_schema_version": "proposed-v2-2026-11-06",
+  "runtime_integrated": false,
+  "current_sources": [
+    "각자의답 아키텍처 청사진 v2 / sections 14..16",
+    "각자의답_평가범위_검수자료_공급계약.md v0.1 / user-confirmed evaluation supplement"
+  ],
+  "withdrawn_policy_defaults_adopted": false,
+  "findings": [
+    {
+      "id": "PLAYBACK-RUNTIME-BINDING",
+      "severity": "requires_runtime_adapter",
+      "received": "event identity, utterance text hash, attempt, clock, sequence and position are shape-checked",
+      "required": "Blueprint v2 section 15 requires durable receipt separately from delivered, matching actual turn/utterance and a versioned delivery policy. Shape acceptance alone cannot authorize delivered or entitlement consumption."
+    },
+    {
+      "id": "DELIVERY-THRESHOLD-DECISION",
+      "severity": "policy_decision_pending",
+      "received": "completed and interrupted are observations; no sufficient-playback threshold is supplied",
+      "required": "Blueprint v2 permits completion or an explicitly approved sufficient-playback/interruption policy. This reference sets neither a full-completion-only rule nor a playback-rate or percentage default."
+    },
+    {
+      "id": "EVALUATION-SCOPE-NAME-ADAPTER",
+      "severity": "requires_explicit_versioned_mapping",
+      "received": "evaluation-scope-approval uses objective_knowledge and none",
+      "required": "The evaluation supplement preserves the existing objective_accuracy_core and unresolved names. Map semantics explicitly; do not rename production gate values or make none mean that approval is unnecessary."
+    },
+    {
+      "id": "QUESTION-SPEC-VERSUS-SESSION-APPROVAL",
+      "severity": "requires_separate_supply_contract",
+      "received": "the evaluation envelope already binds session, turn, answer revision and approved question contract",
+      "required": "The supplement separates exact per-question QuestionEvaluationSpec review from actual frozen-session DemandKnowledgeBinding approval. No empty session IDs, ROLE-based autoapproval, nearest-spec fallback, F inheritance or copied reviewer identity."
+    },
+    {
+      "id": "EVALUATION-SUPPLY-COVERAGE",
+      "severity": "outside_reference_scope",
+      "received": "five proposed envelopes and 52 shape / 4 source-span cases",
+      "required": "EV-01..EV-15 test exact registry lookup, authenticated review, frozen input, actual claim/packet scope, revocation, worker supply, correction and aggregation. These fixtures do not approve 35 real questions or validate that operational path. The supplement's cross-reference to the withdrawn four-policy K+R formula does not adopt its numeric defaults here."
+    }
+  ]
+}

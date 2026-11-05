@@ -1,11 +1,10 @@
 import { createHash } from "node:crypto";
-import path from "node:path";
 import { SpeechAudioCache, type SpeechSynthesisOptions, type SpeechSynthesisSettings, type SpeechRole } from "./speech-audio-cache";
+import { createLocalAudioRepository } from '../repositories/local-audio-repository';
 export type { SpeechSynthesisOptions, SpeechSynthesisTiming, SpeechRole } from "./speech-audio-cache";
 
 const TTS_URL = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts";
-const directory = path.join(process.cwd(), "data", "audio");
-const cache = new SpeechAudioCache(directory);
+const cache = new SpeechAudioCache(createLocalAudioRepository());
 export const interviewerVoiceDefaults = { primary: "vdaeseong", secondary: "vmikyung", speed: 0, primarySpeed: 0, secondarySpeed: -1, pitch: 1 } as const;
 
 export type VoiceSettings = SpeechSynthesisSettings;

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, open, readFile } from 'node:fs/promises';
-import path from 'node:path';
+import type { ConversationLogRepository, ConversationLogScope } from '../repositories/conversation-log-ports';
+import { createLocalConversationLogRepository } from '../repositories/local-conversation-log-repository';
 
 export const conversationEventTypes = ['session.created', 'session.snapshot', 'question.prepared', 'acknowledgement.prepared', 'playback.started', 'playback.ended', 'stt.partial', 'stt.final', 'answer.relevance', 'ai.attempt', 'ai.validation', 'phase.changed', 'timings.observed', 'provider.config', 'rules.snapshot', 'sources.snapshot', 'session.ended', 'evaluation.status', 'error'] as const;
 export interface ConversationEvent {
@@ -16,6 +16,11 @@ export interface ConversationLogRecord extends ConversationEvent { schemaVersion
 export interface ConversationLogError { code: string; message: string }
 export interface ConversationLogStatus { sessionId: string; available: boolean | null; queued: number; appended: number; duplicates: number; failedCount: number; lastSeq: number; malformedLines: number; lastAppendedAt: string | null; lastError: ConversationLogError | null }
 export interface ConversationAppendResult { ok: boolean; eventId: string; seq?: number; duplicate?: boolean; error?: ConversationLogError }
+export interface ConversationLog {
+  append(sessionId: string, event: ConversationEvent): Promise<ConversationAppendResult>;
+  flush(sessionId?: string): Promise<ConversationLogStatus[]>;
+  getStatus(sessionId?: string): ConversationLogStatus[];
+}
 type SecretEnvironment = Record<string, string | undefined>;
 const validSession = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 const secretField = (name: string) => /(?:^|_)(?:api_keys?|secrets?(?:_key)?|access_tokens?|refresh_tokens?|passwords?|authorization|credentials?|client_id|client_secret|private_key|tokens?|keys?)(?:_(?:id|value|hash))?$/i.test(name.replace(/([a-z])([A-Z])/g, '$1_$2').replace(/[-\s]/g, '_'));
@@ -61,15 +66,22 @@ const emptyStatus = (sessionId: string): ConversationLogStatus => ({ sessionId, 
 function failure(error: unknown): ConversationLogError { const code = error && typeof error === 'object' && 'code' in error ? String(error.code).replace(/[^A-Z0-9_]/g, '').slice(0, 48) : 'LOG_WRITE_FAILED'; return { code: code || 'LOG_WRITE_FAILED', message: '로컬 대화 로그를 기록하지 못했습니다.' }; }
 
 /** Append-only, one local JSONL per session. Failures are returned, never thrown into interview flow. */
-export class ConversationLogger {
+export class ConversationLogger implements ConversationLog {
   private states = new Map<string, State>();
-  private directory: string;
-  constructor(options: { directory?: string; environment?: SecretEnvironment | (() => SecretEnvironment) } = {}) { this.directory = path.resolve(options.directory ?? path.join(process.cwd(), 'data/conversation-logs')); this.environment = options.environment ?? (() => process.env); }
+  private repository: ConversationLogRepository;
+  private ownerId: string;
+  constructor(options: { directory?: string; environment?: SecretEnvironment | (() => SecretEnvironment); repository?: ConversationLogRepository; ownerId?: string } = {}) {
+    this.repository = options.repository ?? createLocalConversationLogRepository(process.cwd(), { directory: options.directory });
+    this.ownerId = options.ownerId ?? this.repository.ownerId;
+    if (!this.ownerId || this.ownerId !== this.repository.ownerId) throw new Error('CONVERSATION_LOG_OWNER_MISMATCH');
+    this.environment = options.environment ?? (() => process.env);
+  }
   private environment: SecretEnvironment | (() => SecretEnvironment);
   private state(sessionId: string) { let state = this.states.get(sessionId); if (!state) { state = { status: emptyStatus(sessionId), eventIds: new Map(), loaded: false, loadedVersion: -1, needsNewline: false }; this.states.set(sessionId, state); } return state; }
-  private async load(file: string, sessionId: string, state: State) {
+  private async load(file: string, scope: ConversationLogScope, state: State) {
+    const sessionId = scope.sessionId;
     const version = fileVersions.get(file) ?? 0; if (state.loaded && state.loadedVersion === version) return;
-    let content = ''; try { content = await readFile(file, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+    let content = ''; try { content = await this.repository.read(scope); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
     state.eventIds.clear(); state.status.lastSeq = 0; state.status.malformedLines = 0;
     for (const line of content.split('\n')) {
       if (!line.trim()) continue;
@@ -84,16 +96,16 @@ export class ConversationLogger {
     let safe: ConversationEvent;
     try { safe = maskConversationSecrets({ ...event, eventId: suppliedId }, typeof this.environment === 'function' ? this.environment() : this.environment) as ConversationEvent; }
     catch { return Promise.resolve({ ok: false, eventId: '[invalid]', error: { code: 'LOG_SERIALIZATION_FAILED', message: '대화 로그 데이터를 준비하지 못했습니다.' } }); }
-    const timestamp = new Date().toISOString(), file = path.join(this.directory, `${sessionId}.jsonl`), state = this.state(sessionId); state.status.queued++;
+    const scope = { ownerId: this.ownerId, sessionId };
+    const timestamp = new Date().toISOString(), file = this.repository.coordinationKey(scope), state = this.state(sessionId); state.status.queued++;
     return serialize(file, async () => {
       const eventId = safe.eventId!;
       try {
-        await mkdir(this.directory, { recursive: true, mode: 0o700 }); await this.load(file, sessionId, state);
+        await this.repository.ensureDirectory(scope); await this.load(file, scope, state);
         const duplicate = state.eventIds.get(eventId); if (duplicate !== undefined) { state.status.duplicates++; state.status.available = true; return { ok: true, eventId, seq: duplicate, duplicate: true }; }
         const seq = state.status.lastSeq + 1;
         const row: ConversationLogRecord = { ...safe, schemaVersion: 1, sessionId, seq, eventId, timestamp };
-        const handle = await open(file, 'a', 0o600);
-        try { await handle.chmod(0o600); await handle.writeFile(`${state.needsNewline ? '\n' : ''}${JSON.stringify(row)}\n`); } finally { await handle.close(); }
+        await this.repository.append({ ...scope, text: `${state.needsNewline ? '\n' : ''}${JSON.stringify(row)}\n` });
         state.eventIds.set(eventId, seq); state.status.lastSeq = seq; state.status.appended++; state.status.lastAppendedAt = timestamp; state.status.available = true; state.status.lastError = null; state.needsNewline = false;
         const version = (fileVersions.get(file) ?? 0) + 1; fileVersions.set(file, version); state.loadedVersion = version;
         return { ok: true, eventId, seq };
@@ -105,13 +117,13 @@ export class ConversationLogger {
   async flush(sessionId?: string): Promise<ConversationLogStatus[]> {
     const states = [...this.states.values()].filter(state => !sessionId || state.status.sessionId === sessionId);
     await Promise.all(states.map(state => {
-      const file = path.join(this.directory, `${state.status.sessionId}.jsonl`);
-      return serialize(file, async () => { if (!state.status.available || !state.status.lastSeq) return; try { const handle = await open(file, 'r+'); try { await handle.sync(); } finally { await handle.close(); } } catch (error) { state.status.available = false; state.status.failedCount++; state.status.lastError = failure(error); } });
+      const scope = { ownerId: this.ownerId, sessionId: state.status.sessionId }, file = this.repository.coordinationKey(scope);
+      return serialize(file, async () => { if (!state.status.available || !state.status.lastSeq) return; try { await this.repository.sync(scope); } catch (error) { state.status.available = false; state.status.failedCount++; state.status.lastError = failure(error); } });
     }));
     return this.getStatus(sessionId);
   }
 }
-const defaultLogger = new ConversationLogger();
-export const appendConversationEvent = (sessionId: string, event: ConversationEvent) => defaultLogger.append(sessionId, event);
-export const flushConversationLog = (sessionId?: string) => defaultLogger.flush(sessionId);
-export const getConversationLogStatus = (sessionId?: string) => defaultLogger.getStatus(sessionId);
+export const defaultConversationLogger: ConversationLog = new ConversationLogger();
+export const appendConversationEvent = (sessionId: string, event: ConversationEvent) => defaultConversationLogger.append(sessionId, event);
+export const flushConversationLog = (sessionId?: string) => defaultConversationLogger.flush(sessionId);
+export const getConversationLogStatus = (sessionId?: string) => defaultConversationLogger.getStatus(sessionId);

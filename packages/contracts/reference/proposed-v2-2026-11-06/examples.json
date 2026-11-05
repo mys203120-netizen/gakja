@@ -1,0 +1,224 @@
+{
+  "status": "PROPOSED",
+  "answer_submission": [
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "session_id": "sess_demo",
+      "turn_id": "turn_1",
+      "answer_id": "ans_1",
+      "expected_session_revision": 7,
+      "idempotency_key": "submit_1",
+      "kind": "text_answer",
+      "text": "제가 자료를 표로 정리했습니다."
+    },
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "session_id": "sess_demo",
+      "turn_id": "turn_1",
+      "answer_id": "ans_1",
+      "expected_session_revision": 7,
+      "idempotency_key": "submit_1",
+      "kind": "finalized_transcript",
+      "transcript_revision_id": "tr_rev_1"
+    },
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "session_id": "sess_demo",
+      "turn_id": "turn_1",
+      "answer_id": "ans_1",
+      "expected_session_revision": 7,
+      "idempotency_key": "submit_1",
+      "kind": "confirmed_non_answer",
+      "reason": "observed_silence",
+      "capture_id": "cap_1",
+      "capture_revision": 1,
+      "capture_evidence_revision_id": "cap_ev_1",
+      "confirmation": "student_confirmed"
+    }
+  ],
+  "evidence": [
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "evidence_id": "ev_1",
+      "source_version_id": "src_rev_1",
+      "source_sha256": "1526f735f5d06fcb3ead540942068e0b1d1a6a3e5282080218e712cac32f1d50",
+      "start_utf16": 0,
+      "end_utf16": 4,
+      "offset_unit": "utf16_code_unit",
+      "quote": "발표😀",
+      "quote_sha256": "66113fe4a9ff20f23c6a075972c20ac08a0cda0d6ce9b0692a90b8799ffda86e",
+      "kind": "record",
+      "record_version_id": "rec_rev_1",
+      "page_number": 1,
+      "block_id": "block_1",
+      "claim_status": "record_text"
+    },
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "evidence_id": "ev_1",
+      "source_version_id": "src_rev_1",
+      "source_sha256": "1526f735f5d06fcb3ead540942068e0b1d1a6a3e5282080218e712cac32f1d50",
+      "start_utf16": 0,
+      "end_utf16": 4,
+      "offset_unit": "utf16_code_unit",
+      "quote": "발표😀",
+      "quote_sha256": "66113fe4a9ff20f23c6a075972c20ac08a0cda0d6ce9b0692a90b8799ffda86e",
+      "kind": "university",
+      "profile_version_id": "profile_v1",
+      "document_version_id": "doc_v1",
+      "source_authority": "official",
+      "claim_status": "university_source_text"
+    },
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "evidence_id": "ev_1",
+      "source_version_id": "src_rev_1",
+      "source_sha256": "1526f735f5d06fcb3ead540942068e0b1d1a6a3e5282080218e712cac32f1d50",
+      "start_utf16": 0,
+      "end_utf16": 4,
+      "offset_unit": "utf16_code_unit",
+      "quote": "발표😀",
+      "quote_sha256": "66113fe4a9ff20f23c6a075972c20ac08a0cda0d6ce9b0692a90b8799ffda86e",
+      "kind": "answer",
+      "answer_revision_id": "ans_rev_1",
+      "session_id": "sess_demo",
+      "turn_id": "turn_1",
+      "claim_status": "student_claim_unverified"
+    },
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "evidence_id": "ev_1",
+      "source_version_id": "src_rev_1",
+      "source_sha256": "1526f735f5d06fcb3ead540942068e0b1d1a6a3e5282080218e712cac32f1d50",
+      "start_utf16": 0,
+      "end_utf16": 4,
+      "offset_unit": "utf16_code_unit",
+      "quote": "발표😀",
+      "quote_sha256": "66113fe4a9ff20f23c6a075972c20ac08a0cda0d6ce9b0692a90b8799ffda86e",
+      "kind": "student_confirmation",
+      "confirmation_revision_id": "confirmation_rev_1",
+      "student_id": "student_demo",
+      "claim_status": "student_confirmed"
+    }
+  ],
+  "decision": [
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "source_turn_id": "turn_1",
+      "source_answer_revision_id": "ans_rev_1",
+      "source_question_version_id": "q_rev_1",
+      "policy_version_id": "policy_v1",
+      "source_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "kind": "continue_answer",
+      "assessment": null,
+      "next": {
+        "action": "CONTINUE_ANSWER",
+        "trigger_kind": "unfinished_thought",
+        "question": null
+      },
+      "reaction": null
+    },
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "source_turn_id": "turn_1",
+      "source_answer_revision_id": "ans_rev_1",
+      "source_question_version_id": "q_rev_1",
+      "policy_version_id": "policy_v1",
+      "source_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "kind": "assessed_turn",
+      "assessment": {
+        "coverage": "met",
+        "response": "answered",
+        "reason": "실제 질문의 본인 행동 한 가지를 답했습니다."
+      },
+      "next": {
+        "action": "FOLLOW_UP",
+        "trigger_kind": "new_claim",
+        "question": {
+          "text": "성과를 확인한 근거는 무엇인가요?",
+          "target": "실제 언급한 성과의 근거 한 가지",
+          "primary_function": "EVIDENCE",
+          "depth": "D2",
+          "strategy_id": null,
+          "evidence_ref_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "reaction": null
+    }
+  ],
+  "evaluation_scope": [
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "scope_approval_id": "scope_1",
+      "session_id": "sess_demo",
+      "turn_id": "turn_1",
+      "question_version_id": "q_rev_1",
+      "question_contract_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "answer_revision_ids": [
+        "ans_rev_1"
+      ],
+      "source_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "policy_version_id": "policy_v1",
+      "scope": "record_consistency_only",
+      "approval_status": "approved",
+      "approved_by": "reviewer_demo",
+      "approval_revision_id": "scope_rev_1",
+      "packet_refs": [],
+      "claim_review_ids": [],
+      "claim_coverage": "not_applicable",
+      "scientific_truth_authority": "none"
+    },
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "scope_approval_id": "scope_1",
+      "session_id": "sess_demo",
+      "turn_id": "turn_1",
+      "question_version_id": "q_rev_1",
+      "question_contract_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "answer_revision_ids": [
+        "ans_rev_1"
+      ],
+      "source_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "policy_version_id": "policy_v1",
+      "scope": "objective_knowledge",
+      "approval_status": "approved",
+      "approved_by": "reviewer_demo",
+      "approval_revision_id": "scope_rev_1",
+      "packet_refs": [
+        {
+          "packet_id": "packet_1",
+          "packet_version_id": "packet_rev_1",
+          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+      ],
+      "claim_review_ids": [
+        "review_1"
+      ],
+      "claim_coverage": "all_core_claims_reviewed",
+      "scientific_truth_authority": "approved_packet_and_claim"
+    },
+    {
+      "schema_version": "proposed-v2-2026-11-06",
+      "scope_approval_id": "scope_1",
+      "session_id": "sess_demo",
+      "turn_id": "turn_1",
+      "question_version_id": "q_rev_1",
+      "question_contract_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "answer_revision_ids": [
+        "ans_rev_1"
+      ],
+      "source_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "policy_version_id": "policy_v1",
+      "scope": "none",
+      "approval_status": "unresolved",
+      "hold_reason_codes": [
+        "scope_not_approved"
+      ],
+      "packet_refs": [],
+      "claim_review_ids": [],
+      "scientific_truth_authority": "none"
+    }
+  ]
+}

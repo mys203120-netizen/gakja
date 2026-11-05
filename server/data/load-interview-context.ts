@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { writeFile, mkdir } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
 import { interviewConfig } from "../../interview.config";
 import { emptySchoolContext, selectSchoolContext, type InterviewOverview, type SchoolContext } from "./school-context";
 import { verifyStudentSourceText } from './verify-student-source';
@@ -9,9 +9,14 @@ import { loadQuestionStrategyCatalog, type QuestionStrategyCatalog } from './que
 import { compileInterviewerPolicy, type InterviewerPolicyPack } from '../policy/interviewer-policy';
 import { loadPreparedActivities, projectPreparedActivities, type PreparedActivities } from './prepared-activities';
 import { buildStudentTrajectory, createStudentObjectiveCandidates, type StudentObjectiveCandidate, type StudentTrajectoryLink } from '../question-objective';
-import { FULL_ANALYSIS_CURRENT, loadFullStudentAnalysis, type FullStudentAnalysis, type TargetStudentAnalysis } from './full-student-analysis';
+import { loadFullStudentAnalysisSnapshot, type FullStudentAnalysis, type TargetStudentAnalysis } from './full-student-analysis';
 import { captureFullMdPolicyOriginals, fullMdPolicyDiagnostics, type FullMdPolicyOriginals } from '../policy/full-md-policy';
 import type { ApprovedKnowledgeBundle } from './approved-knowledge';
+import { compileEvaluationScopePolicy, type EvaluationScopePolicy } from '../policy/evaluation-scope-policy';
+import { loadBankScopeRegistry, type BankEvaluationScopeRegistry } from './evaluation-scope-registry';
+import { decodeStudentObjectiveCandidate } from '../contracts/question-domain-codecs';
+import { emptyReadScope, assertReadOwner, type AnalysisReadOptions } from '../repositories/analysis-read-ports';
+import { createLocalReadRepositories } from '../repositories/local-read-repositories';
 export { normalizeTrack } from "./school-context";
 
 export interface StudentEvidence {
@@ -83,18 +88,24 @@ export interface InterviewContext {
   /** Optional ended-session evaluation approval. Never student-record truth or
    * realtime question-generation authority; saved in its own context snapshot. */
   approvedKnowledge?: ApprovedKnowledgeBundle;
+  /** Source-bound application templates; never scientific or human approval. */
+  evaluationScopePolicy?: EvaluationScopePolicy;
+  evaluationScopeRegistry?: BankEvaluationScopeRegistry;
   errors: string[];
 }
 const digest = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
 let cachedContext: Promise<InterviewContext> | null = null;
 
-export async function loadInterviewContextAt(root: string, options: { writeManifest?: boolean } = {}): Promise<InterviewContext> {
+export interface InterviewContextReadOptions extends AnalysisReadOptions { writeManifest?: boolean }
+export async function loadInterviewContextAt(root: string, options: InterviewContextReadOptions = {}): Promise<InterviewContext> {
   const errors: string[] = [];
-  const entries = Object.entries(interviewConfig.files).filter(([role]) => role !== "sourceManifest");
-  const inputs = await Promise.all(entries.map(async ([role, path]) => {
-    try { const bytes = await readFile(resolve(root, path)); return { role, path, bytes, sha256: digest(bytes) }; }
-    catch { errors.push(`필수 자료 없음: ${path}${role === "preparedStudent" ? " (npm run prepare:context 실행 필요)" : ""}`); return { role, path, bytes: null, sha256: null }; }
-  }));
+  const repositories = options.repositories ?? createLocalReadRepositories(root);
+  const scope = { ...emptyReadScope(repositories.ownerId), ...options.scope };
+  const purpose = options.purpose ?? 'runtime-context';
+  assertReadOwner(repositories, scope);
+  const readOptions = { repositories, scope, purpose };
+  const { inputs, missing } = await repositories.source.readConfiguredInputs({ scope, purpose });
+  for (const { role, path } of missing) errors.push(`필수 자료 없음: ${path}${role === "preparedStudent" ? " (npm run prepare:context 실행 필요)" : ""}`);
   const text = (role: string) => inputs.find(entry => entry.role === role)?.bytes?.toString("utf8") ?? "";
   for (const [role, version] of Object.entries(interviewConfig.guidelineSourceVersions)) {
     const header = text(role).split(/\r?\n/u).slice(0, 12).join('\n');
@@ -131,7 +142,7 @@ export async function loadInterviewContextAt(root: string, options: { writeManif
   const questionReferences = await loadBookQuestionReferences(root).catch(() => null);
   const questionStrategies = questionReferences ? await loadQuestionStrategyCatalog(questionReferences, { root }).catch(() => null) : null;
   let interviewerPolicy: InterviewerPolicyPack | null = null;
-  try { interviewerPolicy = await compileInterviewerPolicy(root); }
+  try { interviewerPolicy = await compileInterviewerPolicy(root, { inputs }); }
   catch (error) { errors.push(error instanceof Error ? error.message : '면접 운영 규칙의 정본을 확인하지 못했습니다.'); }
   let fullMdPolicyOriginals: FullMdPolicyOriginals | undefined;
   if (interviewerPolicy) {
@@ -173,8 +184,9 @@ export async function loadInterviewContextAt(root: string, options: { writeManif
   };
   const context: InterviewContext = { manifest, target: interviewConfig.target, student, school, interviewOverview: school.interviewOverview, operatingGuidelines: text('operatingGuidelines'), questionGuidelines: text("questionGuidelines"), evaluationGuidelines: text("evaluationGuidelines"), questionReferences, questionStrategies, interviewerPolicy, fullMdPolicyOriginals, errors };
   try {
-    const full = await loadFullStudentAnalysis(context, root);
-    if (full) {
+    const snapshot = await loadFullStudentAnalysisSnapshot(context, root, readOptions);
+    if (snapshot) {
+      const full = snapshot.analysis;
       // Historical excerpts remain on disk. New sessions consume the new, immutable analysis.
       context.studentAnalysis = full.common; context.targetAnalysis = full.target;
       const supplement = student.evidence.flatMap(legacy => {
@@ -191,16 +203,12 @@ export async function loadInterviewContextAt(root: string, options: { writeManif
       if (!pdf || !await verifyStudentSourceText(pdf, runtimeEvidence, student.pageCount!)) throw new Error('FULL_ANALYSIS_PDF_TEXT_MISMATCH');
       // A reviewed target contract can publish a derived envelope under the same
       // immutable common-analysis revision. Pin the exact approved pointer target.
-      const analysisPointer = JSON.parse(await readFile(resolve(root, FULL_ANALYSIS_CURRENT), 'utf8')) as { path: string; revision: string };
-      const analysisFile = analysisPointer.path.replace(/\\/gu, '/');
-      const analysisPath = resolve(root, analysisFile), analysisBase = resolve(root, 'data/prepared/student-analysis-revisions');
-      const analysisRelative = relative(analysisBase, analysisPath);
-      if (analysisRelative.startsWith('..') || isAbsolute(analysisRelative) || analysisPointer.revision !== full.common.revision) throw new Error('FULL_ANALYSIS_MANIFEST_PATH_INVALID');
-      const analysisBytes = await readFile(analysisPath);
-      const analysisEnvelope = JSON.parse(analysisBytes.toString('utf8')) as { common: FullStudentAnalysis; target: TargetStudentAnalysis; evidence: StudentEvidence[] };
-      // Fail closed if an atomic pointer update raced the initial verified load.
-      if (analysisEnvelope.common.contentSha256 !== full.common.contentSha256 || analysisEnvelope.target.contentSha256 !== full.target.contentSha256 || digest(JSON.stringify(analysisEnvelope.evidence)) !== digest(JSON.stringify(full.evidence))) throw new Error('FULL_ANALYSIS_MANIFEST_REVISION_CHANGED');
-      manifest.files.push({ role: 'fullStudentAnalysis', path: analysisFile, sha256: digest(analysisBytes) });
+      if (snapshot.pointer.value.revision !== full.common.revision) throw new Error('FULL_ANALYSIS_MANIFEST_PATH_INVALID');
+      // Compare the captured pointer only; never select a newer revision while
+      // constructing this context. The manifest hashes the first exact bytes.
+      if (!await repositories.analysis.currentPointerUnchanged({ scope, purpose, captured: snapshot.pointer })) throw new Error('FULL_ANALYSIS_MANIFEST_REVISION_CHANGED');
+      if (!await repositories.analysis.analysisDocumentUnchanged({ scope, purpose, captured: snapshot.document })) throw new Error('FULL_ANALYSIS_MANIFEST_REVISION_CHANGED');
+      manifest.files.push({ role: 'fullStudentAnalysis', path: snapshot.document.path.replace(/\\/gu, '/'), sha256: digest(snapshot.document.bytes) });
       Object.assign(manifest.recordIds, { studentId: full.common.studentId, recordRevision: full.common.recordRevision, studentAnalysisRevision: full.common.revision, targetAnalysisRevision: full.target.revision, commonAnalysisContentSha256: full.common.contentSha256, targetAnalysisContentSha256: full.target.contentSha256, admissionProfileRevision: full.target.profileRevision });
       manifest.evidenceIds = runtimeEvidence.map(evidence => evidence.id);
       Object.assign(manifest.recordIds, { evidenceProjectionVersion: 'analysis-and-explicit-legacy-range-v1', verifiedLegacySupplementCount: String(supplement.length) });
@@ -209,9 +217,12 @@ export async function loadInterviewContextAt(root: string, options: { writeManif
       manifest.selectionNotes.push(`동일한 명시적 legacy activity ID와 좌표 포함 관계가 모두 검증된 원문 ${supplement.length}개만 보완 근거로 재연결; 의미 추측 병합이나 전체 분석 완료를 뜻하지 않음`);
     }
   } catch (error) { errors.push(error instanceof Error ? error.message : 'FULL_STUDENT_ANALYSIS_INVALID'); }
-  context.preparedActivities = context.studentAnalysis ? projectPreparedActivities(context, context.studentAnalysis) : await loadPreparedActivities(context, root);
-  context.studentObjectives = createStudentObjectiveCandidates(context, context.preparedActivities);
+  context.preparedActivities = context.studentAnalysis ? projectPreparedActivities(context, context.studentAnalysis) : await loadPreparedActivities(context, root, undefined, readOptions);
+  context.studentObjectives = createStudentObjectiveCandidates(context, context.preparedActivities).map(decodeStudentObjectiveCandidate);
   context.studentTrajectory = buildStudentTrajectory(context);
+  context.evaluationScopePolicy = compileEvaluationScopePolicy(context);
+  try { context.evaluationScopeRegistry = await loadBankScopeRegistry(root) ?? undefined; }
+  catch { errors.push('평가 범위 승인 자료를 확인하지 못했습니다.'); }
   if (options.writeManifest !== false) {
     await mkdir(dirname(resolve(root, interviewConfig.files.sourceManifest)), { recursive: true });
     await writeFile(resolve(root, interviewConfig.files.sourceManifest), JSON.stringify(manifest, null, 2), "utf8");

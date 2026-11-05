@@ -24,7 +24,7 @@ export async function startSyntheticEvaluationWorker(directory: string, environm
   const bundle = await build({ stdin: { resolveDir: workspace, sourcefile: 'synthetic-evaluation-worker-entry.ts',
     contents: `import { runEvaluationWorkerOnce } from ${JSON.stringify(entry)};
 let stopping = false; process.on('SIGTERM', () => { stopping = true; });
-(async () => { while (!stopping) { try { const result = await runEvaluationWorkerOnce(); if (result.processed) continue; } catch (error) { console.error(error); } await new Promise(resolve => setTimeout(resolve, 20)); } })().catch(error => { console.error(error); process.exitCode = 1; });` },
+(async () => { while (!stopping) { try { const result = await runEvaluationWorkerOnce({ reviewReadiness: () => ({ unitCount: 0, readyCount: 0, held: [], invalid: [] }) }); if (result.processed) continue; } catch (error) { console.error(error); } await new Promise(resolve => setTimeout(resolve, 20)); } })().catch(error => { console.error(error); process.exitCode = 1; });` },
     outfile, bundle: true, metafile: true, platform: 'node', format: 'cjs', target: 'node22', logLevel: 'silent',
     plugins: [{ name: 'isolated-evaluation-provider', setup(builder) {
       builder.onResolve({ filter: /^\.\/providers\/openai$/ }, args => args.importer === entry ? { path: fixture } : undefined);

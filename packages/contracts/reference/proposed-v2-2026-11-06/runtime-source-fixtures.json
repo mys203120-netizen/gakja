@@ -1,0 +1,85 @@
+{
+  "source_text": "발표😀 준비",
+  "cases": [
+    {
+      "name": "utf16-valid",
+      "evidence": {
+        "schema_version": "proposed-v2-2026-11-06",
+        "evidence_id": "ev_1",
+        "source_version_id": "src_rev_1",
+        "source_sha256": "1526f735f5d06fcb3ead540942068e0b1d1a6a3e5282080218e712cac32f1d50",
+        "start_utf16": 0,
+        "end_utf16": 4,
+        "offset_unit": "utf16_code_unit",
+        "quote": "발표😀",
+        "quote_sha256": "66113fe4a9ff20f23c6a075972c20ac08a0cda0d6ce9b0692a90b8799ffda86e",
+        "kind": "record",
+        "record_version_id": "rec_rev_1",
+        "page_number": 1,
+        "block_id": "block_1",
+        "claim_status": "record_text"
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "reversed-offset",
+      "evidence": {
+        "schema_version": "proposed-v2-2026-11-06",
+        "evidence_id": "ev_1",
+        "source_version_id": "src_rev_1",
+        "source_sha256": "1526f735f5d06fcb3ead540942068e0b1d1a6a3e5282080218e712cac32f1d50",
+        "start_utf16": 9,
+        "end_utf16": 2,
+        "offset_unit": "utf16_code_unit",
+        "quote": "발표😀",
+        "quote_sha256": "66113fe4a9ff20f23c6a075972c20ac08a0cda0d6ce9b0692a90b8799ffda86e",
+        "kind": "record",
+        "record_version_id": "rec_rev_1",
+        "page_number": 1,
+        "block_id": "block_1",
+        "claim_status": "record_text"
+      },
+      "expected_valid": false
+    },
+    {
+      "name": "wrong-quote",
+      "evidence": {
+        "schema_version": "proposed-v2-2026-11-06",
+        "evidence_id": "ev_1",
+        "source_version_id": "src_rev_1",
+        "source_sha256": "1526f735f5d06fcb3ead540942068e0b1d1a6a3e5282080218e712cac32f1d50",
+        "start_utf16": 0,
+        "end_utf16": 4,
+        "offset_unit": "utf16_code_unit",
+        "quote": "꾸민 내용",
+        "quote_sha256": "66113fe4a9ff20f23c6a075972c20ac08a0cda0d6ce9b0692a90b8799ffda86e",
+        "kind": "record",
+        "record_version_id": "rec_rev_1",
+        "page_number": 1,
+        "block_id": "block_1",
+        "claim_status": "record_text"
+      },
+      "expected_valid": false
+    },
+    {
+      "name": "split-surrogate",
+      "evidence": {
+        "schema_version": "proposed-v2-2026-11-06",
+        "evidence_id": "ev_1",
+        "source_version_id": "src_rev_1",
+        "source_sha256": "1526f735f5d06fcb3ead540942068e0b1d1a6a3e5282080218e712cac32f1d50",
+        "start_utf16": 0,
+        "end_utf16": 3,
+        "offset_unit": "utf16_code_unit",
+        "quote": "발표😀",
+        "quote_sha256": "66113fe4a9ff20f23c6a075972c20ac08a0cda0d6ce9b0692a90b8799ffda86e",
+        "kind": "record",
+        "record_version_id": "rec_rev_1",
+        "page_number": 1,
+        "block_id": "block_1",
+        "claim_status": "record_text"
+      },
+      "expected_valid": false
+    }
+  ]
+}

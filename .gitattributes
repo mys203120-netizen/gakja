@@ -1,0 +1,3 @@
+# Received reference artifacts are byte-verified against their original manifest.
+# Preserve the supplied bytes on Windows and Linux without text conversion.
+packages/contracts/reference/proposed-v2-2026-11-06/** -text

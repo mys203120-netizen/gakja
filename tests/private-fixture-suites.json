@@ -1,0 +1,13 @@
+{
+  "description": "These existing suites include real student PDFs, prepared banks, policy manifests or immutable historical session logs. They remain required for local/release verification via npm test; public CI runs the other suites without copying private data into Git.",
+  "baselineCommit": "a666f7a81dd2e80851f8589d135a0aac67c1eae2",
+  "files": [
+    "actual-user-core-replay.test.ts", "backend-http.test.ts", "bank-quality-audit.test.ts",
+    "compiled-runtime-policy.test.ts", "deep-bank-rebind.test.ts", "dialogue-action-gold.test.ts",
+    "evaluation-end-idempotency.test.ts", "full-md-policy.test.ts", "interviewer-policy.test.ts",
+    "live-e2e-replay.test.ts", "natural-interview-core.test.ts", "playback-event-delivery.test.ts",
+    "question-grounding.test.ts", "question-purpose-lineage.test.ts", "realtime-recovery.test.ts",
+    "realtime-staged-capture.test.ts", "reviewed-bank-upgrade.test.ts", "school-context.test.ts",
+    "single-core-demand-boundary.test.ts", "source-integrity.test.ts", "submission-deadline-http.test.ts"
+  ]
+}

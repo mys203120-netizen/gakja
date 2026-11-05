@@ -1,18 +1,22 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { loadInterviewContextAt, type InterviewContext, type StudentEvidence } from './load-interview-context';
-import { loadStagedFullStudentAnalysis } from './full-student-analysis';
+import { loadInterviewContextAt, type InterviewContext, type InterviewContextReadOptions, type StudentEvidence } from './load-interview-context';
+import { loadStagedFullStudentAnalysisSnapshot } from './full-student-analysis';
 import { projectPreparedActivities } from './prepared-activities';
 import { buildStudentTrajectory, createStudentObjectiveCandidates } from '../question-objective';
 import { verifyStudentSourceText } from './verify-student-source';
+import { emptyReadScope, assertReadOwner } from '../repositories/analysis-read-ports';
+import { createLocalReadRepositories } from '../repositories/local-read-repositories';
 
 const sha = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 
 /** Build the exact context a staged revision will expose after activation, without
  * changing the analysis pointer or saving the overlay as the current manifest. */
-export async function loadStagedInterviewContextAt(root: string, revisionPath: string, options: { writeManifest?: boolean } = {}) {
-  const base = await loadInterviewContextAt(root, options);
+export async function loadStagedInterviewContextAt(root: string, revisionPath: string, options: InterviewContextReadOptions = {}) {
+  const repositories = options.repositories ?? createLocalReadRepositories(root);
+  const scope = { ...emptyReadScope(repositories.ownerId), ...options.scope }, purpose = options.purpose ?? 'staged-context';
+  assertReadOwner(repositories, scope);
+  const readOptions = { repositories, scope, purpose };
+  const base = await loadInterviewContextAt(root, { ...options, ...readOptions });
   const unrelatedErrors = base.errors.filter(error => !/^(?:FULL_ANALYSIS|FULL_STUDENT_ANALYSIS|ANALYSIS_)/u.test(error));
   if (unrelatedErrors.length) throw new Error('STAGED_CONTEXT_SOURCE_INVALID');
   const context = structuredClone(base);
@@ -20,11 +24,12 @@ export async function loadStagedInterviewContextAt(root: string, revisionPath: s
   const readPinned = async (role: string) => {
     const pin = base.manifest.files.find(file => file.role === role);
     if (!pin?.sha256) throw new Error('STAGED_CONTEXT_PIN_MISSING');
-    const bytes = await readFile(path.resolve(root, pin.path));
+    const { bytes } = await repositories.source.readPinnedInput({ scope, purpose, pin });
     if (sha(bytes) !== pin.sha256) throw new Error('STAGED_CONTEXT_SOURCE_CHANGED');
     return bytes;
   };
-  const [staged, originalStudentBytes, pdf] = await Promise.all([loadStagedFullStudentAnalysis(base, revisionPath, root), readPinned('preparedStudent'), readPinned('studentPdf')]);
+  const [snapshot, originalStudentBytes, pdf] = await Promise.all([loadStagedFullStudentAnalysisSnapshot(base, revisionPath, root, readOptions), readPinned('preparedStudent'), readPinned('studentPdf')]);
+  const staged = snapshot.analysis;
   const originalStudent = JSON.parse(originalStudentBytes.toString('utf8')) as InterviewContext['student'];
   const supplement: StudentEvidence[] = originalStudent.evidence.flatMap(legacy => {
     const activity = staged.common.activities.find(activity => activity.id === legacy.activityId && activity.mergedFromLegacyIds.includes(legacy.activityId));
@@ -36,8 +41,9 @@ export async function loadStagedInterviewContextAt(root: string, revisionPath: s
   if (!originalStudent.pageCount || !await verifyStudentSourceText(pdf, evidence, originalStudent.pageCount)) throw new Error('FULL_ANALYSIS_PDF_TEXT_MISMATCH');
   context.studentAnalysis = staged.common; context.targetAnalysis = staged.target;
   context.student = { ...originalStudent, studentId: staged.common.studentId, recordRevision: staged.common.recordRevision, analysisRevision: staged.common.revision, evidence, schemaVersion: 'full-record-analysis-evidence-v1', extractionStatus: staged.common.coverage.needsReviewSourceCount ? 'full_document_extracted_partially_structured' : 'full_document_source_bound_structure', limitations: [...staged.common.limitations] };
-  const analysisPath = staged.revisionPath.replace(/\\/gu, '/'), analysisBytes = await readFile(path.resolve(root, analysisPath));
-  const envelope = JSON.parse(analysisBytes.toString('utf8'));
+  if (!await repositories.analysis.analysisDocumentUnchanged({ scope, purpose, captured: snapshot.document })) throw new Error('FULL_ANALYSIS_MANIFEST_REVISION_CHANGED');
+  const analysisPath = snapshot.document.path.replace(/\\/gu, '/'), analysisBytes = snapshot.document.bytes;
+  const envelope = snapshot.document.value;
   if (envelope.common.contentSha256 !== staged.common.contentSha256 || envelope.target.contentSha256 !== staged.target.contentSha256 || sha(JSON.stringify(envelope.evidence)) !== sha(JSON.stringify(staged.evidence))) throw new Error('FULL_ANALYSIS_MANIFEST_REVISION_CHANGED');
   context.manifest.files = context.manifest.files.filter(file => file.role !== 'fullStudentAnalysis');
   context.manifest.files.push({ role: 'fullStudentAnalysis', path: analysisPath, sha256: sha(analysisBytes) });

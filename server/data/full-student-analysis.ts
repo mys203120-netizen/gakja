@@ -5,6 +5,8 @@ import { z } from 'zod';
 import type { InterviewContext, StudentEvidence } from './load-interview-context';
 import type { StudentObjectiveCandidate } from '../question-objective';
 import { primaryFunctions } from '../protocol';
+import { assertReadOwner, emptyReadScope, type AnalysisReadOptions, type FullRecordPointer, type ReadScope } from '../repositories/analysis-read-ports';
+import { createLocalReadRepositories } from '../repositories/local-read-repositories';
 
 export const FULL_ANALYSIS_VERSION = 'full-student-analysis-v1';
 export const FULL_ANALYSIS_VERSION_V2 = 'full-student-analysis-v2';
@@ -179,12 +181,14 @@ export interface FullStudentAnalysis {
   limitations: string[]; contentSha256: string;
 }
 export interface AnalysisSourceReview { version: 'bounded-academic-source-review-v1'; reviewer: 'codex-source-review'; parentProposalPath: string; parentProposalSha256: string; parentAnalysisRevision: string; artifactPath: string; artifactSha256: string; reviewedAt: string; scope: 'explicit_visually_reviewed_academic_rows_only' }
-export async function verifyAnalysisSourceReview(root: string, review: AnalysisSourceReview | undefined) {
+export async function verifyAnalysisSourceReview(root: string, review: AnalysisSourceReview | undefined, options: AnalysisReadOptions = {}) {
   if (!review) return;
   if (review.version !== 'bounded-academic-source-review-v1' || review.reviewer !== 'codex-source-review' || review.scope !== 'explicit_visually_reviewed_academic_rows_only' || !Number.isFinite(Date.parse(review.reviewedAt))) throw new Error('ANALYSIS_SOURCE_REVIEW_INVALID');
-  for (const [relativePath, expectedHash, base] of [[review.parentProposalPath, review.parentProposalSha256, 'data/prepared/student-analysis-proposals'], [review.artifactPath, review.artifactSha256, 'artifacts']] as const) {
-    const file = path.resolve(root, relativePath), relative = path.relative(path.resolve(root, base), file);
-    if (!relative || relative.startsWith('..') || path.isAbsolute(relative) || !/^[a-f0-9]{64}$/u.test(expectedHash) || hash(await readFile(file, 'utf8')) !== expectedHash) throw new Error('ANALYSIS_SOURCE_REVIEW_ARTIFACT_INVALID');
+  const { repositories, scope } = analysisReadContext(root, options);
+  for (const [reference, expectedHash, kind] of [[review.parentProposalPath, review.parentProposalSha256, 'parent-proposal'], [review.artifactPath, review.artifactSha256, 'analysis-source-review']] as const) {
+    if (!/^[a-f0-9]{64}$/u.test(expectedHash)) throw new Error('ANALYSIS_SOURCE_REVIEW_ARTIFACT_INVALID');
+    const document = await repositories.analysis.readReviewFile({ scope, purpose: 'review-validation', reference, kind });
+    if (hash(document.bytes.toString('utf8')) !== expectedHash) throw new Error('ANALYSIS_SOURCE_REVIEW_ARTIFACT_INVALID');
   }
 }
 export interface TargetStudentAnalysis {
@@ -195,12 +199,12 @@ export interface TargetStudentAnalysis {
   objectiveSourceReview?: { version: 'source-reviewed-objective-extension-v1'; parentRevision: string; parentContentSha256: string; reviewArtifactPath: string; reviewArtifactSha256: string; reviewerId: string; reviewedAt: string; addedObjectiveIds: string[] };
 }
 
-async function verifyObjectiveSourceReview(value: MaterializedAnalysis, source: FullRecordSource, root: string) {
+async function verifyObjectiveSourceReview(value: MaterializedAnalysis, source: FullRecordSource, root: string, options: AnalysisReadOptions = {}) {
   const { target } = value, review = target.objectiveSourceReview;
   if (!review) return;
   if (review.version !== 'source-reviewed-objective-extension-v1' || !review.addedObjectiveIds.length || new Set(review.addedObjectiveIds).size !== review.addedObjectiveIds.length) throw new Error('OBJECTIVE_SOURCE_REVIEW_ARTIFACT_INVALID');
   const suppliedReview = { artifactPath: review.reviewArtifactPath, artifactSha256: review.reviewArtifactSha256, reviewerId: review.reviewerId, reviewedAt: review.reviewedAt };
-  const { artifact, rawExtensions, parentRevision } = await readReviewedObjectiveArtifact(suppliedReview, root);
+  const { artifact, rawExtensions, parentRevision } = await readReviewedObjectiveArtifact(suppliedReview, root, options);
   if (artifact.sourcePdfSha256 !== source.pdfSha256 || artifact.commonContentSha256 !== value.common.contentSha256 || artifact.parentTargetContentSha256 !== review.parentContentSha256 || parentRevision !== review.parentRevision) throw new Error('OBJECTIVE_SOURCE_REVIEW_CONTEXT_MISMATCH');
   const revision = hash(JSON.stringify({ parent: review.parentContentSha256, extensions: rawExtensions, review: suppliedReview }));
   const expected = artifact.extensions.map(row => ({ ...buildReviewedObjectiveExtension(value, source, row), analysisRevision: revision }));
@@ -292,16 +296,70 @@ export const FULL_ANALYSIS_RULES_V2 = FULL_ANALYSIS_RULES + `
 academicRecords.literalValues의 value는 실제 표 셀의 문자값이며 참조 ID나 행 전체가 아니다. valueSpan은 dictionary quote 안의 실제 literal을 지정한다. binding=offsets면 0-based UTF-16 start/end와 literal이 정확히 일치해야 한다. binding=unique_literal이면 start/end=null이며 지정 quote에 literal이 정확히 한 번 나타나야 한다. 오프셋 계산보다 정확한 짧은 행 인용+unique_literal을 권장하며 여러 번 나타나는 값은 임의로 고르지 않는다. provenance는 원문 행·열 위치와 rowLabel/columnLabel의 literal span, 학년·학기·과목·산정체계의 실제 proofRefs를 각각 기록한다. 표 구조를 확인하지 못하면 structureStatus/tableStructure.status=unresolved, 이유를 기록하고 해당 source는 needs_review다. 원문에 없는 성적·상승하락·원인·과학적 참을 만들지 않는다. 원문 존재 검증은 과학 명제의 진실 검증이 아니다.`;
 
 function verifiedBody<T extends { contentSha256: string }>(value: T): T { const { contentSha256, ...body } = value; if (contentSha256 !== hash(JSON.stringify(body))) throw new Error('FULL_ANALYSIS_HASH_INVALID'); return value; }
-export async function loadFullRecord(root: string, expectedPdfSha256?: string): Promise<FullRecordSource | null> {
-  let pointer: { path: string; pdfSha256: string; contentSha256: string };
-  try { pointer = JSON.parse(await readFile(path.resolve(root, 'data/prepared/full-record-current.json'), 'utf8')); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; }
-  const resolved = path.resolve(root, pointer.path), directory = path.resolve(root, 'data/prepared/record-revisions');
-  if (path.relative(directory, resolved).startsWith('..') || path.isAbsolute(path.relative(directory, resolved))) throw new Error('FULL_RECORD_PATH_INVALID');
-  const source = verifiedBody(JSON.parse(await readFile(resolved, 'utf8')) as FullRecordSource);
+function analysisReadContext(root: string, options: AnalysisReadOptions = {}, context?: InterviewContext) {
+  const repositories = options.repositories ?? createLocalReadRepositories(root);
+  // An outer context composition starts with explicit unknown pins. Those nulls
+  // must not erase identities already known by this domain context.
+  const suppliedPins = Object.fromEntries(Object.entries(options.scope ?? {}).filter(([, value]) => value !== null && value !== undefined)) as Partial<ReadScope>;
+  const contextPins = context ? { studentId: context.student.studentId ?? null, supportTargetId: targetIdentity(context), pdfSha256: context.student.pdfSha256 ?? null,
+    recordRevision: context.student.recordRevision ?? null, profileRevision: profileRevision(context) } : null;
+  const scope: ReadScope = { ...emptyReadScope(repositories.ownerId), ...contextPins, ...suppliedPins };
+  assertReadOwner(repositories, scope);
+  // Scope mismatch cannot become a successful legacy fallback merely because
+  // no current analysis pointer exists. Check already-known context pins first.
+  if (contextPins) {
+    for (const key of ['studentId', 'pdfSha256', 'recordRevision', 'supportTargetId', 'profileRevision'] as const) {
+      if (suppliedPins[key] !== undefined && contextPins[key] !== null && suppliedPins[key] !== contextPins[key]) {
+        throw new Error(key === 'supportTargetId' || key === 'profileRevision' ? 'FULL_ANALYSIS_READ_SCOPE_MISMATCH' : 'FULL_RECORD_READ_SCOPE_MISMATCH');
+      }
+    }
+  }
+  return { repositories, scope };
+}
+function assertSourceReadPins(source: FullRecordSource, scope: ReadScope) {
+  if (scope.studentId !== null && scope.studentId !== source.studentId || scope.pdfSha256 !== null && scope.pdfSha256 !== source.pdfSha256 ||
+    scope.recordRevision !== null && scope.recordRevision !== source.recordRevision || scope.sourceRevision !== null && scope.sourceRevision !== source.revision ||
+    scope.sourceContentSha256 !== null && scope.sourceContentSha256 !== source.contentSha256) throw new Error('FULL_RECORD_READ_SCOPE_MISMATCH');
+}
+function resolvedSourceReadScope(source: FullRecordSource, scope: ReadScope): ReadScope {
+  // Only called after validating every supplied source pin. Dependent reads now
+  // carry the source acquired for this operation, never a fresh current lookup.
+  return { ...scope, studentId: source.studentId, pdfSha256: source.pdfSha256, recordRevision: source.recordRevision,
+    sourceRevision: source.revision, sourceContentSha256: source.contentSha256 };
+}
+function resolvedAnalysisReadScope(value: MaterializedAnalysis, scope: ReadScope): ReadScope {
+  return { ...scope, commonRevision: scope.commonRevision ?? value.common.revision, targetRevision: scope.targetRevision ?? value.target.revision };
+}
+function assertAnalysisReadPins(value: MaterializedAnalysis, source: FullRecordSource, scope: ReadScope) {
+  assertSourceReadPins(source, scope);
+  if (scope.studentId !== null && (scope.studentId !== value.common.studentId || scope.studentId !== value.target.studentId) ||
+    scope.supportTargetId !== null && scope.supportTargetId !== value.target.supportTargetId || scope.recordRevision !== null && scope.recordRevision !== value.common.recordRevision ||
+    scope.sourceContentSha256 !== null && scope.sourceContentSha256 !== value.common.sourceContentSha256 ||
+    scope.commonRevision !== null && scope.commonRevision !== value.common.revision || scope.targetRevision !== null && scope.targetRevision !== value.target.revision ||
+    scope.profileRevision !== null && scope.profileRevision !== value.target.profileRevision) throw new Error('FULL_ANALYSIS_READ_SCOPE_MISMATCH');
+}
+/** Existing source/hash/page/UTF-16 range gates, independent of local file I/O. */
+export function validateFullRecord(input: FullRecordSource, pointer: FullRecordPointer, expectedPdfSha256?: string): FullRecordSource {
+  const source = verifiedBody(input);
   if (source.schemaVersion !== 'full-record-source-v1' || source.contentSha256 !== pointer.contentSha256 || source.pdfSha256 !== pointer.pdfSha256 || expectedPdfSha256 && source.pdfSha256 !== expectedPdfSha256 || source.pageCount !== source.pages.length || !source.coverage.fullPageExtraction) throw new Error('FULL_RECORD_STALE_OR_INCOMPLETE');
   if (!Number.isInteger(source.pageCount) || source.pageCount < 1 || source.coverage.expectedPages !== source.pageCount || source.coverage.extractedPages !== source.pages.length || new Set(source.pages.map(page => page.page)).size !== source.pageCount || source.pages.some(page => !Number.isInteger(page.page) || page.page < 1 || page.page > source.pageCount || hash(page.text) !== page.textSha256) || new Set(source.blocks.map(block => block.id)).size !== source.blocks.length) throw new Error('FULL_RECORD_PAGE_IDENTITY_INVALID');
   for (const block of source.blocks) { const page = source.pages.find(page => page.page === block.page); if (!page || !Number.isInteger(block.startOffset) || !Number.isInteger(block.endOffset) || block.startOffset < 0 || block.endOffset <= block.startOffset || block.endOffset > page.text.length || page.text.slice(block.startOffset, block.endOffset) !== block.text || hash(block.text) !== block.textSha256) throw new Error('FULL_RECORD_SOURCE_RANGE_INVALID'); }
   return source;
+}
+export async function loadFullRecordSnapshot(root: string, expectedPdfSha256?: string, options: AnalysisReadOptions = {}) {
+  const { repositories, scope } = analysisReadContext(root, options);
+  // The compatibility argument is already a known PDF pin, including for a
+  // standalone source read. The historical empty-string argument stays ignored.
+  const queryScope = { ...scope, pdfSha256: scope.pdfSha256 ?? (expectedPdfSha256 || null) };
+  const snapshot = await repositories.source.readCurrentRecord({ scope: queryScope, purpose: options.purpose ?? 'source-validation' });
+  if (!snapshot) return null;
+  const source = validateFullRecord(snapshot.document.value, snapshot.pointer.value, expectedPdfSha256);
+  assertSourceReadPins(source, queryScope);
+  return { source, pointer: snapshot.pointer, document: snapshot.document };
+}
+/** Compatibility signature: the second argument is a PDF hash, not a revision. */
+export async function loadFullRecord(root: string, expectedPdfSha256?: string, options: AnalysisReadOptions = {}): Promise<FullRecordSource | null> {
+  return (await loadFullRecordSnapshot(root, expectedPdfSha256, options))?.source ?? null;
 }
 export function analysisSourceProjection(source: FullRecordSource, studentName: string) {
   return source.blocks.map((block, index) => ({ sourceKey: `B${index + 1}`, page: block.page, sourceRefId: block.id, text: /주민등록번호|인적[·ㆍ\s]*학적사항|주소\s*:/u.test(block.text) ? '[개인 식별 정보 구간: identity_excluded로 처리]' : block.text.replaceAll(studentName, '[학생]').replace(/\d{6}\s*-\s*\d{7}/gu, '[개인번호]').replace(/01[016789][ -]?\d{3,4}[ -]?\d{4}/gu, '[연락처]') }));
@@ -416,6 +474,10 @@ export function materializeFullStudentAnalysis(context: InterviewContext, source
 }
 
 export async function saveFullStudentAnalysis(value: ReturnType<typeof materializeFullStudentAnalysis>, source: FullRecordSource, root = process.cwd()) {
+  // PR05 validates existing versioned domain documents without normalizing the
+  // insertion order that their canonical JSON.stringify hashes already pin.
+  const { decodeFullAnalysisPreservingOrder, decodeTargetAnalysisPreservingOrder } = await import('../contracts/analysis-domain-adapters');
+  decodeFullAnalysisPreservingOrder(value.common); decodeTargetAnalysisPreservingOrder(value.target);
   await verifyAnalysisSourceReview(root, value.common.sourceReview);
   const directory = path.resolve(root, 'data/prepared/student-analysis-revisions', value.common.revision); await mkdir(directory, { recursive: true });
   const payload = { ...value, sourceRevision: source.revision, sourceContentSha256: source.contentSha256 };
@@ -458,15 +520,18 @@ const reviewedPurposeArtifactSchema = z.object({
 }).passthrough();
 type ObjectiveSourceReviewInput = { artifactPath: string; artifactSha256: string; reviewerId: string; reviewedAt: string };
 
-async function readReviewedObjectiveArtifact(review: ObjectiveSourceReviewInput, root: string) {
-  const file = path.resolve(root, review.artifactPath), relative = path.relative(path.resolve(root, 'artifacts'), file);
-  if (!relative || relative.startsWith('..') || path.isAbsolute(relative) || !/^[a-f0-9]{64}$/u.test(review.artifactSha256)) throw new Error('OBJECTIVE_SOURCE_REVIEW_ARTIFACT_INVALID');
-  const bytes = await readFile(file, 'utf8');
+async function readReviewedObjectiveArtifact(review: ObjectiveSourceReviewInput, root: string, options: AnalysisReadOptions = {}) {
+  if (!/^[a-f0-9]{64}$/u.test(review.artifactSha256)) throw new Error('OBJECTIVE_SOURCE_REVIEW_ARTIFACT_INVALID');
+  const { repositories, scope } = analysisReadContext(root, options);
+  const document = await repositories.analysis.readReviewFile({ scope, purpose: 'review-validation', kind: 'objective-source-review', reference: review.artifactPath });
+  const bytes = document.bytes.toString('utf8');
   if (hash(bytes) !== review.artifactSha256) throw new Error('OBJECTIVE_SOURCE_REVIEW_ARTIFACT_INVALID');
   const raw = JSON.parse(bytes), checked = reviewedPurposeArtifactSchema.safeParse(raw);
   if (!checked.success || checked.data.reviewerId !== review.reviewerId || checked.data.reviewedAt !== review.reviewedAt || !Number.isFinite(Date.parse(review.reviewedAt))) throw new Error('OBJECTIVE_SOURCE_REVIEW_ARTIFACT_INVALID');
   const artifact = checked.data;
-  const parentFile = analysisRevisionFile(root, artifact.parentAnalysisPath), parent = JSON.parse(await readFile(parentFile, 'utf8')) as MaterializedAnalysis;
+  // The review's parent is a distinct target revision. Child target pins must
+  // never masquerade as known parent identities in the repository request.
+  const parent = (await repositories.analysis.readAnalysis({ scope: { ...scope, targetRevision: null }, purpose: 'review-validation', selection: 'review-parent', reference: artifact.parentAnalysisPath })).value;
   verifiedBody(parent.common); verifiedBody(parent.target);
   if (parent.common.contentSha256 !== artifact.commonContentSha256 || parent.target.contentSha256 !== artifact.parentTargetContentSha256) throw new Error('OBJECTIVE_SOURCE_REVIEW_CONTEXT_MISMATCH');
   // Keep the artifact's original JSON key order solely for the existing revision hash.
@@ -521,13 +586,24 @@ export async function stageReviewedObjectiveExtensions(context: InterviewContext
   await writeFile(manifestFile, JSON.stringify(manifest, null, 2), { flag: 'wx', mode: 0o600 });
   return { ...current, target, revisionPath: path.relative(root, file), manifestPath: path.relative(root, manifestFile), manifest, addedObjectiveIds: added.map(row => row.id) };
 }
-export async function loadFullStudentAnalysis(context: InterviewContext, root = process.cwd()): Promise<ReturnType<typeof materializeFullStudentAnalysis> | null> {
-  let pointer: { path: string; revision: string; sourceContentSha256: string };
-  try { pointer = JSON.parse(await readFile(path.resolve(root, FULL_ANALYSIS_CURRENT), 'utf8')); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; }
-  const source = await loadFullRecord(root, context.student.pdfSha256); if (!source) throw new Error('ANALYSIS_FULL_SOURCE_MISSING');
-  const file = path.resolve(root, pointer.path), base = path.resolve(root, 'data/prepared/student-analysis-revisions');
-  if (path.relative(base, file).startsWith('..') || path.isAbsolute(path.relative(base, file))) throw new Error('ANALYSIS_PATH_INVALID');
-  const result = JSON.parse(await readFile(file, 'utf8')) as ReturnType<typeof materializeFullStudentAnalysis>;
+export async function loadFullStudentAnalysisSnapshot(context: InterviewContext, root = process.cwd(), options: AnalysisReadOptions = {}) {
+  const { repositories, scope } = analysisReadContext(root, options, context), purpose = options.purpose ?? 'analysis-validation';
+  const pointerDocument = await repositories.analysis.readCurrentPointer({ scope, purpose });
+  if (!pointerDocument) {
+    if (options.scope?.commonRevision != null || options.scope?.targetRevision != null) throw new Error('FULL_ANALYSIS_READ_SCOPE_MISMATCH');
+    const sourcePinRequested = (['studentId', 'pdfSha256', 'recordRevision', 'sourceRevision', 'sourceContentSha256'] as const).some(key => options.scope?.[key] != null);
+    if (sourcePinRequested && !await loadFullRecordSnapshot(root, context.student.pdfSha256, { repositories, scope, purpose })) throw new Error('ANALYSIS_FULL_SOURCE_MISSING');
+    return null;
+  }
+  const pointer = pointerDocument.value;
+  const sourceSnapshot = await loadFullRecordSnapshot(root, context.student.pdfSha256, { repositories, scope, purpose });
+  if (!sourceSnapshot) throw new Error('ANALYSIS_FULL_SOURCE_MISSING');
+  const source = sourceSnapshot.source;
+  const queryScope = { ...resolvedSourceReadScope(source, scope), commonRevision: scope.commonRevision ?? pointer.revision };
+  const document = await repositories.analysis.readAnalysis({ scope: queryScope, purpose, selection: 'current', reference: pointer.path });
+  const result = document.value;
+  const { decodeFullAnalysisPreservingOrder, decodeTargetAnalysisPreservingOrder } = await import('../contracts/analysis-domain-adapters');
+  decodeFullAnalysisPreservingOrder(result.common); decodeTargetAnalysisPreservingOrder(result.target);
   verifiedBody(result.common); verifiedBody(result.target);
   const v2 = result.common.schemaVersion === FULL_ANALYSIS_VERSION_V2;
   const expectedBase = fullAnalysisIdentity(context, source, result.common.model, v2 ? 'v2' : 'v1');
@@ -535,11 +611,16 @@ export async function loadFullStudentAnalysis(context: InterviewContext, root = 
   if (![FULL_ANALYSIS_VERSION, FULL_ANALYSIS_VERSION_V2].includes(result.common.schemaVersion) || v2 && (result.common.codecVersion !== STUDENT_ANALYSIS_CODEC_VERSION || result.target.codecVersion !== STUDENT_ANALYSIS_CODEC_VERSION || result.common.identityBase !== expectedBase || !/^[a-f0-9]{64}$/u.test(result.common.inputSha256 ?? '')) || result.target.schemaVersion !== result.common.schemaVersion || result.common.revision !== pointer.revision || result.common.sourceContentSha256 !== source.contentSha256 || result.target.profileRevision !== profileRevision(context) || result.target.supportTargetId !== targetIdentity(context) || result.common.revision !== expectedRevision) throw new Error('FULL_ANALYSIS_STALE');
   for (const evidence of result.evidence) { const page = source.pages.find(page => page.page === evidence.page); if (!page || page.text.slice(evidence.sourceRef.startOffset, evidence.sourceRef.endOffset) !== evidence.text) throw new Error('FULL_ANALYSIS_EVIDENCE_INVALID'); }
   if (result.target.objectives.some(objective => objective.evidenceIds.some(id => !result.evidence.some(evidence => evidence.id === id)))) throw new Error('FULL_ANALYSIS_OBJECTIVE_EVIDENCE_MISSING');
-  if (result.common.studentId !== source.studentId || result.target.studentId !== source.studentId || result.target.commonAnalysisRevision !== result.common.revision || pointer.sourceContentSha256 !== source.contentSha256) throw new Error('FULL_ANALYSIS_STUDENT_OR_REVISION_MISMATCH');
+  if (result.common.studentId !== source.studentId || result.target.studentId !== source.studentId || result.common.recordRevision !== source.recordRevision || result.target.commonAnalysisRevision !== result.common.revision || pointer.sourceContentSha256 !== source.contentSha256) throw new Error('FULL_ANALYSIS_STUDENT_OR_REVISION_MISMATCH');
   if (v2) analysisQAManifest(result, source, null);
-  if (v2) await verifyAnalysisSourceReview(root, result.common.sourceReview);
-  if (v2) await verifyObjectiveSourceReview(result, source, root);
-  return { common: result.common, target: result.target, evidence: result.evidence };
+  const reviewScope = resolvedAnalysisReadScope(result, queryScope);
+  if (v2) await verifyAnalysisSourceReview(root, result.common.sourceReview, { repositories, scope: reviewScope, purpose });
+  if (v2) await verifyObjectiveSourceReview(result, source, root, { repositories, scope: reviewScope, purpose });
+  assertAnalysisReadPins(result, source, scope);
+  return { analysis: { common: result.common, target: result.target, evidence: result.evidence }, source, document, pointer: pointerDocument };
+}
+export async function loadFullStudentAnalysis(context: InterviewContext, root = process.cwd(), options: AnalysisReadOptions = {}): Promise<ReturnType<typeof materializeFullStudentAnalysis> | null> {
+  return (await loadFullStudentAnalysisSnapshot(context, root, options))?.analysis ?? null;
 }
 
 type MaterializedAnalysis = ReturnType<typeof materializeFullStudentAnalysis>;
@@ -557,7 +638,7 @@ function verifyBoundProof(source: FullRecordSource, proof: AnalysisProof) {
 }
 export function analysisQAManifest(value: MaterializedAnalysis, source: FullRecordSource, parentPointerSha256: string | null): AnalysisQAManifest {
   verifiedBody(value.common); verifiedBody(value.target);
-  if (value.common.sourceContentSha256 !== source.contentSha256 || value.target.commonAnalysisRevision !== value.common.revision || value.common.studentId !== source.studentId || value.target.studentId !== source.studentId) throw new Error('FULL_ANALYSIS_STUDENT_OR_REVISION_MISMATCH');
+  if (value.common.sourceContentSha256 !== source.contentSha256 || value.common.recordRevision !== source.recordRevision || value.target.commonAnalysisRevision !== value.common.revision || value.common.studentId !== source.studentId || value.target.studentId !== source.studentId) throw new Error('FULL_ANALYSIS_STUDENT_OR_REVISION_MISMATCH');
   const allProofs = [...value.common.activities.flatMap(row => [...Object.values(row.facts).flat(), ...(row.interpretations ?? []).flatMap(item => item.basisProofs)]), ...value.common.academicRecords.flatMap(row => [...row.proofs, ...(row.interpretations ?? []).flatMap(item => item.basisProofs), ...(row.literalValues ?? []).flatMap(cell => [cell.valueProof, ...(cell.provenance.rowLabel ? [cell.provenance.rowLabel] : []), ...(cell.provenance.columnLabel ? [cell.provenance.columnLabel] : []), ...cell.provenance.gradeProofs, ...cell.provenance.semesterProofs, ...cell.provenance.subjectProofs, ...cell.provenance.gradingSystemProofs])]), ...value.common.trajectories.flatMap(row => row.proofs)];
   for (const proof of allProofs) verifyBoundProof(source, proof);
   for (const record of value.common.academicRecords) {
@@ -586,21 +667,26 @@ export function analysisQAManifest(value: MaterializedAnalysis, source: FullReco
   const body = { schemaVersion: 'student-analysis-qa-v2' as const, codecVersion: STUDENT_ANALYSIS_CODEC_VERSION as typeof STUDENT_ANALYSIS_CODEC_VERSION, revision: value.common.revision, sourceContentSha256: source.contentSha256, commonContentSha256: value.common.contentSha256, targetContentSha256: value.target.contentSha256, evidenceSha256: hash(JSON.stringify(value.evidence)), parentPointerSha256, exactSourceSpansVerified: true as const, literalAlignmentVerified: true as const, verifiedProofCount: allProofs.length, academicLiteralCount: value.common.academicRecords.reduce((count, row) => count + (row.literalValues?.length ?? 0), 0), unresolvedAcademicRecordIds: value.common.academicRecords.filter(row => row.tableStructure?.status === 'unresolved').map(row => row.id), unresolvedAcademicComparisonsBlocked: true as const, allSourcesAccountedFor: true as const, independentlyReviewedSemantics: false as const, scientificTruthVerified: false as const };
   return { ...body, contentSha256: hash(JSON.stringify(body)) };
 }
-function analysisRevisionFile(root: string, revisionPath: string) {
-  const file = path.resolve(root, revisionPath), base = path.resolve(root, 'data/prepared/student-analysis-revisions'), relative = path.relative(base, file);
-  if (!relative || relative.startsWith('..') || path.isAbsolute(relative) || path.basename(file) !== 'analysis.json') throw new Error('ANALYSIS_PATH_INVALID');
-  return file;
-}
-export async function loadStagedFullStudentAnalysis(context: InterviewContext, revisionPath: string, root = process.cwd()) {
-  const source = await loadFullRecord(root, context.student.pdfSha256);
-  if (!source) throw new Error('ANALYSIS_FULL_SOURCE_MISSING');
-  const file = analysisRevisionFile(root, revisionPath), payload = JSON.parse(await readFile(file, 'utf8')) as MaterializedAnalysis & { sourceRevision: string; sourceContentSha256: string };
+export async function loadStagedFullStudentAnalysisSnapshot(context: InterviewContext, revisionPath: string, root = process.cwd(), options: AnalysisReadOptions = {}) {
+  const { repositories, scope } = analysisReadContext(root, options, context), purpose = options.purpose ?? 'analysis-validation';
+  const sourceSnapshot = await loadFullRecordSnapshot(root, context.student.pdfSha256, { repositories, scope, purpose });
+  if (!sourceSnapshot) throw new Error('ANALYSIS_FULL_SOURCE_MISSING');
+  const source = sourceSnapshot.source;
+  const queryScope = resolvedSourceReadScope(source, scope);
+  const document = await repositories.analysis.readAnalysis({ scope: queryScope, purpose, selection: 'staged', reference: revisionPath }), payload = document.value;
+  const { decodeFullAnalysisPreservingOrder, decodeTargetAnalysisPreservingOrder } = await import('../contracts/analysis-domain-adapters');
+  decodeFullAnalysisPreservingOrder(payload.common); decodeTargetAnalysisPreservingOrder(payload.target);
   if (payload.common.schemaVersion !== FULL_ANALYSIS_VERSION_V2 || payload.common.codecVersion !== STUDENT_ANALYSIS_CODEC_VERSION || payload.target.schemaVersion !== FULL_ANALYSIS_VERSION_V2 || payload.target.codecVersion !== STUDENT_ANALYSIS_CODEC_VERSION || payload.sourceRevision !== source.revision || payload.sourceContentSha256 !== source.contentSha256 || payload.target.profileRevision !== profileRevision(context) || payload.target.supportTargetId !== targetIdentity(context) || payload.common.identityBase !== fullAnalysisIdentity(context, source, payload.common.model) || payload.common.revision !== hash(JSON.stringify({ identityBase: payload.common.identityBase, inputSha256: payload.common.inputSha256 }))) throw new Error('FULL_ANALYSIS_STALE');
-  const manifestFile = path.join(path.dirname(file), 'analysis-qa.json'), manifest = verifiedBody(JSON.parse(await readFile(manifestFile, 'utf8')) as AnalysisQAManifest);
+  const reviewScope = resolvedAnalysisReadScope(payload, queryScope);
+  const qaDocument = await repositories.analysis.readQaManifest({ scope: reviewScope, purpose, analysisReference: document.path }), manifest = verifiedBody(qaDocument.value);
   if (JSON.stringify(manifest) !== JSON.stringify(analysisQAManifest(payload, source, manifest.parentPointerSha256))) throw new Error('FULL_ANALYSIS_QA_MANIFEST_INVALID');
-  await verifyAnalysisSourceReview(root, payload.common.sourceReview);
-  await verifyObjectiveSourceReview(payload, source, root);
-  return { common: payload.common, target: payload.target, evidence: payload.evidence, revisionPath: path.relative(root, file), manifestPath: path.relative(root, manifestFile), manifest };
+  await verifyAnalysisSourceReview(root, payload.common.sourceReview, { repositories, scope: reviewScope, purpose });
+  await verifyObjectiveSourceReview(payload, source, root, { repositories, scope: reviewScope, purpose });
+  assertAnalysisReadPins(payload, source, scope);
+  return { analysis: { common: payload.common, target: payload.target, evidence: payload.evidence, revisionPath: document.path, manifestPath: qaDocument.path, manifest }, source, document, qaDocument };
+}
+export async function loadStagedFullStudentAnalysis(context: InterviewContext, revisionPath: string, root = process.cwd(), options: AnalysisReadOptions = {}) {
+  return (await loadStagedFullStudentAnalysisSnapshot(context, revisionPath, root, options)).analysis;
 }
 
 export interface FullAnalysisBankReadiness {

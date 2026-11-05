@@ -396,6 +396,7 @@ const evaluationInstructions = (context: InterviewContext) => `대학 서류기�
 answers의 각 id는 평가 질문 하나다. answerAttempts에는 원질문과 같은 요구의 재진술 뒤 실제 답변이 sourceTurnId별로 연결되어 있다. finalized=true인 조각을 함께 읽어 원질문 id로 한 번 평가한다. CLARIFICATION은 별도 answers 행이나 점수로 만들지 않는다. 각 양수 앵커에는 실제 finalized 답변 한 조각에서 그대로 복사한 quote와 그 요구에 적합한 rationale을 연결한다. 조각을 이어 인용하지 않는다. 모름·거절은 정상 답변일 수 있고 기술 실패·빈 전사·미측정과 구분한다.
 knowledge는 종료 후 명시 검토자가 실제 질문·승인 계약·원문 답변에 묶어 승인한 평가 범위다. holdReasons가 있으면 NOT_EVALUABLE로 남긴다. record_consistency_only이면 A는 기록·답변의 일관성만 확인하며 과학적 정오를 평가하거나 외부 지식을 보충하지 않는다. objective_accuracy_core이면 제공된 승인 packet과 정확한 claimReviews 및 assumptions/excludedScopes 안에서만 A를 판단한다. 문항의 CONCEPT/PROCESS/TRANSFER 등 라벨은 지식 근거 승인권한이 아니다. verifiedCoreError 및 evidence는 서버가 승인된 exact claim proof로 별도 확정하므로 모델은 false와 null을 출력한다.
 I/A/S/R/C 각각의 anchor 0~4, 근거와 정성 코칭만 출력한다. 총점·질문 묶음 가중치·종합 점수는 서버가 MD 산식으로 계산한다. 코어가 진행을 partial/met로 판단했던 결과를 정식 점수로 사용하지 않는다. 실제 답변에서 말한 적 없는 내용·원인·성과·개념 오류를 만들지 않는다. strengths/improvements/strategyCoaching은 명확한 실제 근거가 없으면 빈 배열이다. 활동 S/A 등급은 준비 우선도이며 답변 점수에 가감하지 않는다.
+evaluationSpecification이 있으면 해당 정확한 문항에 승인된 assessableCriteria와 excludedCriteria를 지킨다. 실제 질문 밖의 새 요구를 추가하지 않으며 제외한 사항의 정오·점수·코칭을 만들지 않는다. 사전 규격만으로 답변 승인이 생기는 것은 아니며 실제 knowledge gate가 통과한 범위에서만 판단한다.
 observations는 원시 비전·클라이언트 이벤트가 아닌 실제 관찰의 요약이다. null/unavailable은 미측정이며 좋음/나쁨이나 0으로 대치하지 않는다. 시선·표정·말속도·습관어는 내용 점수에 합산하지 않고 deliveryCoaching에서 관찰 조건과 한계를 함께 밝힌다. 감정·인성·성격·합격 가능성·진실성을 추론하지 않는다. languageClassifications는 제공된 candidateId만 사용하고 문맥상 주제어는 topic_required, 단순 정중 종결은 meaningful/uncertain으로 둔다. 원문을 교정하거나 추임새·횟수·타임스탬프를 복원하지 않는다.
 ${evaluationPolicyProjection(context.evaluationGuidelines ?? '').instructions}`;
 
@@ -420,8 +421,20 @@ function checkedClusterEvaluation(output: unknown, input: EvaluationClusterInput
 
 export async function evaluateSession(context: InterviewContext, session: InterviewSession, options: EvaluationSessionOptions = {}) {
   assertEvaluationQuestionContracts(session);
-  const inputs = buildEvaluationClusterInputs(context, session);
-  if (!inputs.length) return finalizeSessionEvaluation({ summary: '평가할 확정 발화가 없습니다. 관찰된 전사·무음·기술적 불확실성은 구분하여 기록했습니다.', answers: [], languageClassifications: [] }, context, session);
+  const allInputs = buildEvaluationClusterInputs(context, session);
+  if (!allInputs.length) return finalizeSessionEvaluation({ summary: '평가할 확정 발화가 없습니다. 관찰된 전사·무음·기술적 불확실성은 구분하여 기록했습니다.', answers: [], languageClassifications: [] }, context, session);
+  // Only authorized evaluation units reach the model. Held F units remain
+  // explicit NOT_EVALUABLE rows in finalization, so the cluster is not reweighted.
+  const held = allInputs.flatMap(input => input.answers.filter(answer => answer.knowledge.holdReasons.length));
+  const heldAnswers: z.infer<typeof evaluationSchema>['answers'] = held.map(answer => ({ turnId: answer.id, status: 'NOT_EVALUABLE',
+    deferredReason: '이 실제 질문·답변의 평가 범위 검수가 필요합니다.', axes: null, verifiedCoreError: false, verifiedCoreErrorEvidence: null,
+    strengths: [], improvements: [], conflictNeedsReview: [], deliveryCoaching: [], strategyCoaching: [] }));
+  const inputs = allInputs.map(input => {
+    const answers = input.answers.filter(answer => !answer.knowledge.holdReasons.length);
+    const turnIds = new Set(answers.flatMap(answer => [answer.id, ...answer.answerAttempts.map(attempt => attempt.sourceTurnId)]));
+    return { ...input, answers, questionPresentations: input.questionPresentations.filter(item => turnIds.has(item.turnId)),
+      observations: { ...input.observations, answers: input.observations.answers.filter(answer => turnIds.has(answer.turnId)) } };
+  }).filter(input => input.answers.length);
   const model = options.model || process.env.OPENAI_ANALYSIS_MODEL || 'gpt-6.1-terra';
   const instructions = evaluationInstructions(context);
   const format = zodTextFormat(evaluationSchema, 'interview_cluster_evaluation');
@@ -462,8 +475,8 @@ export async function evaluateSession(context: InterviewContext, session: Interv
     await options.onClusterComplete?.({ version: EVALUATION_PIPELINE_VERSION, clusterId: input.clusterId, inputSha256, output: parsed, completedAt: new Date().toISOString() });
   }
   const result = finalizeSessionEvaluation({
-    summary: results.map((value, index) => `묶음 ${index + 1}: ${value.summary}`).join('\n'),
-    answers: results.flatMap(value => value.answers), languageClassifications: results.flatMap(value => value.languageClassifications),
+    summary: results.length ? results.map((value, index) => `묶음 ${index + 1}: ${value.summary}`).join('\n') : '실제 질문·답변의 평가 범위 검수가 필요합니다.',
+    answers: [...results.flatMap(value => value.answers), ...heldAnswers], languageClassifications: results.flatMap(value => value.languageClassifications),
   }, context, session);
   return { ...result, evaluationPipeline: { version: EVALUATION_PIPELINE_VERSION, model, clusterCount: inputs.length,
     reusedClusters, policyProjection: evaluationPolicyProjection(context.evaluationGuidelines ?? '').trace, inputMeasurements: measurements } };

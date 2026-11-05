@@ -1,5 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { assertAudioOwner, emptyAudioScope, type AudioRepository, type AudioScope } from '../repositories/audio-ports';
+import { createLocalAudioRepository } from '../repositories/local-audio-repository';
 
 export type SpeechRole = "primary" | "secondary";
 export interface SpeechSynthesisSettings { speaker: string; speed: number; pitch: number; volume: number; format: "mp3" }
@@ -26,8 +26,14 @@ export class SpeechAudioCache {
   private memoryBytes = 0;
   private inFlight = new Map<string, SharedSynthesis>();
   private writes = new Map<string, Promise<void>>();
-  constructor(private directory: string, private maxBytes = 32 * 1024 * 1024, private maxEntries = 192,
-    private persistBytes: (file: string, bytes: Buffer) => Promise<void> = async (file, bytes) => { await writeFile(file, bytes, { mode: 0o600 }); }) {}
+  private repository: AudioRepository;
+  private scope: AudioScope;
+  constructor(directory: string | AudioRepository, private maxBytes = 32 * 1024 * 1024, private maxEntries = 192,
+    persistBytes?: (file: string, bytes: Buffer) => Promise<void>, options: { repository?: AudioRepository; scope?: Partial<AudioScope> } = {}) {
+    this.repository = options.repository ?? (typeof directory === 'string' ? createLocalAudioRepository(process.cwd(), { directory, persistBytes }) : directory);
+    this.scope = { ...emptyAudioScope(this.repository.ownerId), ...options.scope };
+    assertAudioOwner(this.repository, this.scope);
+  }
 
   private inMemory(id: string) {
     const bytes = this.memory.get(id);
@@ -46,9 +52,8 @@ export class SpeechAudioCache {
       this.memory.delete(oldest);
     }
   }
-  private file(id: string) { return path.join(this.directory, `${id}.mp3`); }
   private persist(id: string, bytes: Buffer) {
-    const write = (async () => { await mkdir(this.directory, { recursive: true }); await this.persistBytes(this.file(id), bytes); })()
+    const write = (async () => { await this.repository.publish({ id, bytes, scope: this.scope, purpose: 'speech-cache', publication: 'speech-cache' }); })()
       .catch(() => { console.warn("면접 음성의 디스크 캐시 저장에 실패했습니다. 현재 음성은 메모리에 보존합니다."); });
     this.writes.set(id, write);
     void write.then(() => { if (this.writes.get(id) === write) this.writes.delete(id); });
@@ -63,7 +68,7 @@ export class SpeechAudioCache {
     };
     operation.promise = (async () => {
       let disk: Buffer | null = null;
-      try { disk = await readFile(this.file(id)); }
+      try { disk = await this.repository.read({ id, scope: this.scope, purpose: 'speech-cache' }); }
       catch { /* A missing private cache entry is synthesized by the real provider. */ }
       active();
       if (disk?.length) { this.remember(id, disk); return { cache: "disk" as const, providerMs: null }; }
@@ -132,7 +137,7 @@ export class SpeechAudioCache {
     const bytes = this.inMemory(id);
     if (bytes) return bytes;
     await this.writes.get(id);
-    try { const stored = await readFile(this.file(id)); if (!stored.length) return null; this.remember(id, stored); return stored; }
+    try { const stored = await this.repository.read({ id, scope: this.scope, purpose: 'speech-cache' }); if (!stored.length) return null; this.remember(id, stored); return stored; }
     catch { return null; }
   }
 
@@ -142,7 +147,7 @@ export class SpeechAudioCache {
     if (!/^[a-f0-9]{64}$/.test(id)) return null;
     await this.writes.get(id);
     try {
-      const stored = await readFile(this.file(id)), memory = this.inMemory(id);
+      const stored = await this.repository.read({ id, scope: this.scope, purpose: 'speech-cache' }), memory = this.inMemory(id);
       if (!stored.length || memory && !stored.equals(memory)) return null;
       return stored;
     } catch { return null; }

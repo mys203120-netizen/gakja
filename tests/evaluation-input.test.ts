@@ -6,6 +6,7 @@ import { buildEvaluationClusterInputs, buildEvaluationObservationSummary, evalua
   evaluationSessionSourceFingerprint, type EvaluationClusterCheckpoint } from '../server/providers/evaluation-input';
 import { evaluateSession } from '../server/providers/openai';
 import { calculateSpeechMetrics } from '../lib/interview/speech-metrics';
+import { reviewedRecordEvaluationFixture } from './fixtures/reviewed-evaluation-knowledge';
 
 function turn(id: string, kind: RecordedTurn['questionKind'] = 'main', root = id, original?: string): RecordedTurn {
   return { id, questionKind: kind, parentMainQuestionId: root, questionText: '본인이 직접 한 일을 설명해 주세요.',
@@ -118,9 +119,10 @@ test('evaluation source identity ignores lifecycle and runtime traces but change
 });
 
 test('a failed later cluster resumes from source-bound validated checkpoints without paying again for completed clusters', async () => {
-  const value = session([turn('q0'), turn('c1', 'clarification', 'q0', 'q0'), turn('f1', 'follow_up', 'q0'), turn('q1')]);
+  const reviewed = reviewedRecordEvaluationFixture(context, session([turn('q0'), turn('c1', 'clarification', 'q0', 'q0'), turn('f1', 'follow_up', 'q0'), turn('q1')]));
+  const value = reviewed.session, approvedContext = reviewed.context;
   const checkpoints: EvaluationClusterCheckpoint[] = [], calls: string[] = [];
-  await assert.rejects(evaluateSession(context, value, {
+  await assert.rejects(evaluateSession(approvedContext, value, {
     requestEvaluation: async request => {
       const input = JSON.parse(request.input) as ReturnType<typeof buildEvaluationClusterInputs>[number]; calls.push(input.clusterId);
       if (input.clusterId === 'q1') throw new Error('synthetic transport failure');
@@ -129,7 +131,7 @@ test('a failed later cluster resumes from source-bound validated checkpoints wit
   }), /transport/u);
   assert.deepEqual(calls, ['q0', 'q1']); assert.equal(checkpoints.length, 1);
   calls.length = 0;
-  const result = await evaluateSession(context, value, { resumeClusters: checkpoints,
+  const result = await evaluateSession(approvedContext, value, { resumeClusters: checkpoints,
     requestEvaluation: async request => { const input = JSON.parse(request.input); calls.push(input.clusterId); return modelResult(input); },
   });
   assert.deepEqual(calls, ['q1']);
@@ -141,27 +143,32 @@ test('a failed later cluster resumes from source-bound validated checkpoints wit
 });
 
 test('changed source text never reuses a checkpoint and fabricated scoring quotes fail before durable checkpointing', async () => {
-  const value = session(), checkpoints: EvaluationClusterCheckpoint[] = [];
-  await evaluateSession(context, value, { requestEvaluation: async request => modelResult(JSON.parse(request.input)), onClusterComplete: checkpoint => { checkpoints.push(checkpoint); } });
-  value.turns[0].rawTranscript = '온도를 다시 측정했습니다.';
+  let reviewed = reviewedRecordEvaluationFixture(context, session());
+  const checkpoints: EvaluationClusterCheckpoint[] = [];
+  await evaluateSession(reviewed.context, reviewed.session, { requestEvaluation: async request => modelResult(JSON.parse(request.input)), onClusterComplete: checkpoint => { checkpoints.push(checkpoint); } });
+  reviewed.session.turns[0].rawTranscript = '온도를 다시 측정했습니다.';
+  // The changed actual answer gets a new explicit synthetic review. An old
+  // approval must remain stale; the purpose here is checkpoint invalidation.
+  reviewed = reviewedRecordEvaluationFixture(context, reviewed.session);
   let calls = 0;
-  await evaluateSession(context, value, { resumeClusters: checkpoints, requestEvaluation: async request => { calls++; return modelResult(JSON.parse(request.input)); } });
+  await evaluateSession(reviewed.context, reviewed.session, { resumeClusters: checkpoints, requestEvaluation: async request => { calls++; return modelResult(JSON.parse(request.input)); } });
   assert.equal(calls, 1);
   const saved: EvaluationClusterCheckpoint[] = [];
-  await assert.rejects(evaluateSession(context, value, { requestEvaluation: async request => {
+  await assert.rejects(evaluateSession(reviewed.context, reviewed.session, { requestEvaluation: async request => {
     const output = modelResult(JSON.parse(request.input)); output.answers[0].axes.I.quote = '원문에 없는 발화'; return output;
   }, onClusterComplete: checkpoint => { saved.push(checkpoint); } }), /QUOTE_NOT_FOUND/u);
   assert.equal(saved.length, 0);
 });
 
 test('whole-request budget includes policy and schema and rejects oversized input before any provider call without truncating source', async () => {
-  const value = session(), before = JSON.stringify(value); let calls = 0;
-  await assert.rejects(evaluateSession({ ...context, evaluationGuidelines: '한'.repeat(50000) }, value, {
+  const reviewed = reviewedRecordEvaluationFixture(context, session()), value = reviewed.session, approvedContext = reviewed.context;
+  const before = JSON.stringify(value); let calls = 0;
+  await assert.rejects(evaluateSession({ ...approvedContext, evaluationGuidelines: '한'.repeat(50000) }, value, {
     requestEvaluation: async request => { calls++; return modelResult(JSON.parse(request.input)); },
   }), /REQUEST_VISIBLE_INPUT_BUDGET_EXCEEDED/u);
   assert.equal(calls, 0); assert.equal(JSON.stringify(value), before);
   const measurements: Array<{ totalVisibleInputBytes: number; blocks: Record<string, { utf8Bytes: number }> }> = [];
-  await evaluateSession(context, value, { requestEvaluation: async request => modelResult(JSON.parse(request.input)), onInputMeasured: result => measurements.push(result) });
+  await evaluateSession(approvedContext, value, { requestEvaluation: async request => modelResult(JSON.parse(request.input)), onInputMeasured: result => measurements.push(result) });
   assert.ok(measurements[0].blocks.instructions.utf8Bytes > 0);
   assert.ok(measurements[0].blocks.schema.utf8Bytes > 0);
   assert.equal(measurements[0].totalVisibleInputBytes, Object.values(measurements[0].blocks).reduce((sum, block) => sum + block.utf8Bytes, 0));

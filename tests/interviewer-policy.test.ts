@@ -37,3 +37,34 @@ test('changed canonical MD bytes fail policy compilation instead of silently cha
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('context policy compilation uses only captured source bytes and preserves the existing exact policy hash', async () => {
+  const original = await compileInterviewerPolicy();
+  const inputs = await Promise.all(original.sourceFiles.map(async source => ({ path: source.path, bytes: await readFile(resolve(source.path)) })));
+  const captured = await compileInterviewerPolicy('__missing_captured_policy_root__', { inputs });
+  assert.equal(JSON.stringify(captured), JSON.stringify(original), 'captured bytes preserve clause positions, original paths and policy hash');
+  const changed = inputs.map((input, index) => index === 0 ? { ...input, bytes: Buffer.concat([input.bytes, Buffer.from('\nchanged')]) } : input);
+  await assert.rejects(compileInterviewerPolicy('__missing_captured_policy_root__', { inputs: changed }), /SOURCE_CHANGED/);
+  const missing = inputs.map((input, index) => index === 0 ? { ...input, bytes: null } : input);
+  await assert.rejects(compileInterviewerPolicy(process.cwd(), { inputs: missing }), /SOURCE_CHANGED/, 'an unavailable captured source cannot fall back to a newer live file');
+});
+
+test('captured missing MD rethrows the original file-read failure without reading a newer live source', async t => {
+  const pack = await compileInterviewerPolicy(), root = await mkdtemp(join(tmpdir(), 'interviewer-policy-missing-'));
+  t.after(async () => {
+    assert.equal(dirname(root), resolve(tmpdir())); assert.ok(basename(root).startsWith('interviewer-policy-missing-'));
+    await rm(root, { recursive: true, force: true });
+  });
+  let original: NodeJS.ErrnoException | undefined;
+  try { await compileInterviewerPolicy(root); } catch (error) { original = error as NodeJS.ErrnoException; }
+  assert.ok(original); assert.equal(original.code, 'ENOENT');
+  const missingSource = pack.sourceFiles.find(source => resolve(root, source.path) === original!.path);
+  assert.ok(missingSource, 'the original missing source is one of the existing exact policy paths');
+  const inputs = await Promise.all(pack.sourceFiles.map(async source => source.path === missingSource.path
+    ? { path: source.path, bytes: null, readError: original }
+    : { path: source.path, bytes: await readFile(resolve(source.path)) }));
+  await assert.rejects(compileInterviewerPolicy(process.cwd(), { inputs }), error => {
+    assert.equal(error, original); assert.equal((error as NodeJS.ErrnoException).code, original!.code);
+    assert.equal((error as Error).message, original!.message); return true;
+  });
+});

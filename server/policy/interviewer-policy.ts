@@ -66,9 +66,18 @@ export const userInterviewerOverrides = [
 ] as const;
 
 /** Explicit reviewed mapping, not LLM policy interpretation. Changed MD bytes require a mapping review. */
-export async function compileInterviewerPolicy(root = process.cwd()): Promise<InterviewerPolicyPack> {
+export async function compileInterviewerPolicy(root = process.cwd(), options: {
+  inputs?: readonly { path: string; bytes: Buffer | null; readError?: unknown }[];
+} = {}): Promise<InterviewerPolicyPack> {
   const loaded = await Promise.all(sourceSpecs.map(async spec => {
-    const bytes = await readFile(resolve(root, spec.path));
+    // A context compiles from the exact MD bytes already pinned in its source
+    // snapshot. Standalone preparation callers retain the original file read.
+    const captured = options.inputs?.find(input => input.path === spec.path);
+    const bytes = options.inputs ? captured?.bytes : await readFile(resolve(root, spec.path));
+    if (!bytes) {
+      if (captured?.readError !== undefined) throw captured.readError;
+      throw new Error('INTERVIEWER_POLICY_SOURCE_CHANGED:' + spec.role);
+    }
     const text = bytes.toString('utf8');
     if (sha(bytes) !== spec.sha256 || text.split(/\r?\n/u)[0] !== spec.title) throw new Error('INTERVIEWER_POLICY_SOURCE_CHANGED:' + spec.role);
     return { ...spec, text };

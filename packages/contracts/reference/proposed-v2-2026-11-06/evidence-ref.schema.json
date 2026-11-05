@@ -1,0 +1,348 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gakja:proposed:evidence-ref:v2",
+  "title": "evidence-ref — PROPOSED, not production",
+  "description": "검토용 계약. 앱 적용 전 정책 승인·런타임 검사·공유 검증기를 함께 연결해야 한다.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "proposed-v2-2026-11-06"
+        },
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "start_utf16": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_utf16": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "offset_unit": {
+          "const": "utf16_code_unit"
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20000,
+          "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+        },
+        "quote_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "const": "record"
+        },
+        "record_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "page_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "block_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "claim_status": {
+          "const": "record_text"
+        }
+      },
+      "required": [
+        "schema_version",
+        "evidence_id",
+        "source_version_id",
+        "source_sha256",
+        "start_utf16",
+        "end_utf16",
+        "offset_unit",
+        "quote",
+        "quote_sha256",
+        "kind",
+        "record_version_id",
+        "page_number",
+        "block_id",
+        "claim_status"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "proposed-v2-2026-11-06"
+        },
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "start_utf16": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_utf16": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "offset_unit": {
+          "const": "utf16_code_unit"
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20000,
+          "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+        },
+        "quote_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "const": "university"
+        },
+        "profile_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "document_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_authority": {
+          "enum": [
+            "official",
+            "reference",
+            "unverified"
+          ]
+        },
+        "claim_status": {
+          "const": "university_source_text"
+        }
+      },
+      "required": [
+        "schema_version",
+        "evidence_id",
+        "source_version_id",
+        "source_sha256",
+        "start_utf16",
+        "end_utf16",
+        "offset_unit",
+        "quote",
+        "quote_sha256",
+        "kind",
+        "profile_version_id",
+        "document_version_id",
+        "source_authority",
+        "claim_status"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "proposed-v2-2026-11-06"
+        },
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "start_utf16": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_utf16": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "offset_unit": {
+          "const": "utf16_code_unit"
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20000,
+          "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+        },
+        "quote_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "const": "answer"
+        },
+        "answer_revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "turn_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "claim_status": {
+          "const": "student_claim_unverified"
+        }
+      },
+      "required": [
+        "schema_version",
+        "evidence_id",
+        "source_version_id",
+        "source_sha256",
+        "start_utf16",
+        "end_utf16",
+        "offset_unit",
+        "quote",
+        "quote_sha256",
+        "kind",
+        "answer_revision_id",
+        "session_id",
+        "turn_id",
+        "claim_status"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "proposed-v2-2026-11-06"
+        },
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_version_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "start_utf16": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_utf16": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "offset_unit": {
+          "const": "utf16_code_unit"
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20000,
+          "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\\u200b]"
+        },
+        "quote_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "const": "student_confirmation"
+        },
+        "confirmation_revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "student_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "claim_status": {
+          "enum": [
+            "student_confirmed",
+            "student_says_different",
+            "cannot_confirm"
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "evidence_id",
+        "source_version_id",
+        "source_sha256",
+        "start_utf16",
+        "end_utf16",
+        "offset_unit",
+        "quote",
+        "quote_sha256",
+        "kind",
+        "confirmation_revision_id",
+        "student_id",
+        "claim_status"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

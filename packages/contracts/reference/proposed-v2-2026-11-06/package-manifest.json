@@ -1,0 +1,94 @@
+{
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "8292a2426ac29a44343339e3dfd6d08b4199d638bce111ae64038f1b1b2422d7",
+      "bytes": 8505,
+      "original_package_file": true
+    },
+    {
+      "path": "answer-submission.schema.json",
+      "sha256": "39e6c516172a40b22dbdb8507f3bee111e08a364609c338386efeaad391104bb",
+      "bytes": 5234,
+      "original_package_file": true
+    },
+    {
+      "path": "build_contracts.py",
+      "sha256": "3a6e092d40e6e30ba72de85bc5654a02300ff5b2cabb5ecf49dfd25acd200a2c",
+      "bytes": 17842,
+      "original_package_file": true
+    },
+    {
+      "path": "delivery-check.json",
+      "sha256": "ee1bbed951fd012369c3d1e1e7f8b7f04027678d621ee4f6fbceffd9b401fa67",
+      "bytes": 1203,
+      "original_package_file": false
+    },
+    {
+      "path": "evaluation-scope-approval.schema.json",
+      "sha256": "2c02a19d7e698dffb80c8fb11f01f2008ef94249a8a4b56e1cc62f57ee928866",
+      "bytes": 12454,
+      "original_package_file": true
+    },
+    {
+      "path": "evidence-ref.schema.json",
+      "sha256": "e6e7a9a3fa445fbaf073f4af5791c46487080228eb3fde4dafddb8f252cfb10a",
+      "bytes": 9123,
+      "original_package_file": true
+    },
+    {
+      "path": "examples.json",
+      "sha256": "cd5382ce9e5676f9c85df2a02bdc1ac01af921465929612bf6250c94c8046372",
+      "bytes": 7725,
+      "original_package_file": true
+    },
+    {
+      "path": "fixtures.json",
+      "sha256": "468845f297b991c11573b441be7b015b4adf205dcf557b89a1346492c6cf2554",
+      "bytes": 42966,
+      "original_package_file": true
+    },
+    {
+      "path": "interview-decision.schema.json",
+      "sha256": "c9e5db55865dbeb8cc9864fa664b8d8f292510fa21c63e99c01b793ca84004b8",
+      "bytes": 12546,
+      "original_package_file": true
+    },
+    {
+      "path": "playback-event.schema.json",
+      "sha256": "c5af9fbfe19b306777ba3c1298ad35c851a8a379b833ce91dd5436a37cfefc8a",
+      "bytes": 10070,
+      "original_package_file": true
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "756cc9e506ae4ee1a6f6c0507088b5cfc0dc8ba350fb2d2d46f1ffa72033adb6",
+      "bytes": 19,
+      "original_package_file": true
+    },
+    {
+      "path": "runtime-source-fixtures.json",
+      "sha256": "d2801db0e018b31aff913a6f1a5a717be8519d3de1bcd352607133a8d5f2eb17",
+      "bytes": 2856,
+      "original_package_file": true
+    },
+    {
+      "path": "validate_contracts.py",
+      "sha256": "d8f763f7bb598fae0f14fae692e90661659942a8567fd69ac1adfea28993cbf2",
+      "bytes": 3485,
+      "original_package_file": true
+    },
+    {
+      "path": "validation-results.json",
+      "sha256": "9772b1aa11c2c3f1b51a2943ee647b2ae37d8e4e9d6982230ad2dfddf7561291",
+      "bytes": 9224,
+      "original_package_file": true
+    },
+    {
+      "path": "먼저읽기.md",
+      "sha256": "1e017c85b9fca97ec1fd724f7d08d219d8b5215fbbfb22cd72ddd81ccbe9c588",
+      "bytes": 4211,
+      "original_package_file": false
+    }
+  ]
+}

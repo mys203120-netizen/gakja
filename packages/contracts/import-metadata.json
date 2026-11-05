@@ -1,0 +1,91 @@
+{
+  "runtime_integrated": false,
+  "reference_version": "proposed-v2-2026-11-06",
+  "files": [
+    {
+      "sha256": "1e017c85b9fca97ec1fd724f7d08d219d8b5215fbbfb22cd72ddd81ccbe9c588",
+      "path": "먼저읽기.md",
+      "bytes": 4211
+    },
+    {
+      "sha256": "39e6c516172a40b22dbdb8507f3bee111e08a364609c338386efeaad391104bb",
+      "path": "answer-submission.schema.json",
+      "bytes": 5234
+    },
+    {
+      "sha256": "3a6e092d40e6e30ba72de85bc5654a02300ff5b2cabb5ecf49dfd25acd200a2c",
+      "path": "build_contracts.py",
+      "bytes": 17842
+    },
+    {
+      "sha256": "ee1bbed951fd012369c3d1e1e7f8b7f04027678d621ee4f6fbceffd9b401fa67",
+      "path": "delivery-check.json",
+      "bytes": 1203
+    },
+    {
+      "sha256": "2c02a19d7e698dffb80c8fb11f01f2008ef94249a8a4b56e1cc62f57ee928866",
+      "path": "evaluation-scope-approval.schema.json",
+      "bytes": 12454
+    },
+    {
+      "sha256": "e6e7a9a3fa445fbaf073f4af5791c46487080228eb3fde4dafddb8f252cfb10a",
+      "path": "evidence-ref.schema.json",
+      "bytes": 9123
+    },
+    {
+      "sha256": "cd5382ce9e5676f9c85df2a02bdc1ac01af921465929612bf6250c94c8046372",
+      "path": "examples.json",
+      "bytes": 7725
+    },
+    {
+      "sha256": "468845f297b991c11573b441be7b015b4adf205dcf557b89a1346492c6cf2554",
+      "path": "fixtures.json",
+      "bytes": 42966
+    },
+    {
+      "sha256": "c9e5db55865dbeb8cc9864fa664b8d8f292510fa21c63e99c01b793ca84004b8",
+      "path": "interview-decision.schema.json",
+      "bytes": 12546
+    },
+    {
+      "sha256": "0970e95e5f3b6b44b107d0f65da585bf46cc96581325299db8cb1f1ce938db92",
+      "path": "package-manifest.json",
+      "bytes": 2926
+    },
+    {
+      "sha256": "c5af9fbfe19b306777ba3c1298ad35c851a8a379b833ce91dd5436a37cfefc8a",
+      "path": "playback-event.schema.json",
+      "bytes": 10070
+    },
+    {
+      "sha256": "8292a2426ac29a44343339e3dfd6d08b4199d638bce111ae64038f1b1b2422d7",
+      "path": "README.md",
+      "bytes": 8505
+    },
+    {
+      "sha256": "756cc9e506ae4ee1a6f6c0507088b5cfc0dc8ba350fb2d2d46f1ffa72033adb6",
+      "path": "requirements.txt",
+      "bytes": 19
+    },
+    {
+      "sha256": "d2801db0e018b31aff913a6f1a5a717be8519d3de1bcd352607133a8d5f2eb17",
+      "path": "runtime-source-fixtures.json",
+      "bytes": 2856
+    },
+    {
+      "sha256": "d8f763f7bb598fae0f14fae692e90661659942a8567fd69ac1adfea28993cbf2",
+      "path": "validate_contracts.py",
+      "bytes": 3485
+    },
+    {
+      "sha256": "9772b1aa11c2c3f1b51a2943ee647b2ae37d8e4e9d6982230ad2dfddf7561291",
+      "path": "validation-results.json",
+      "bytes": 9224
+    }
+  ],
+  "archive_sha256": "a7c30ea11d56a2414d46a5712ae70ad225a926288f683d44b1d768a80438c270",
+  "status": "REFERENCE_VALIDATION_ONLY",
+  "archive_bytes": 29122,
+  "four_policy_source_sha256": "388d66d06a114b5690d364432c804926707795787087021794e2f0581d7cfbbe",
+  "archive_name": "각자의답_부속스키마_52개검증사례.zip"
+}

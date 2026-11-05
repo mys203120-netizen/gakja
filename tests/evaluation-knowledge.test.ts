@@ -204,6 +204,7 @@ test('reviewed preparation CLI rejects missing/foreign authority and pins an imm
     assert.deepEqual((await readdir(root)).sort(), ['context.json', 'reviewed.json', 'session.json']);
     const result = await prepareApprovedKnowledgeCli(['--reviewed-input', 'reviewed.json', '--reviewer', syntheticKnowledgeApproval.approverId,
       '--session-input', 'session.json', '--context-input', 'context.json', '--model', 'explicit-synthetic-cli-model'], root);
+    if (!('revisionPath' in result)) throw new Error('Expected an offline staging result, not an authenticated enqueue result');
     assert.equal(result.providerCalls, 0); assert.equal(result.scientificTruthIndependentlyVerified, false);
     assert.equal(result.originalSessionModified, false); assert.deepEqual(result.heldTurns, []);
     assert.equal(JSON.parse(await readFile(join(root, result.revisionPath), 'utf8')).contentSha256, bundle.contentSha256);
@@ -217,7 +218,7 @@ test('reviewed preparation CLI rejects missing/foreign authority and pins an imm
   } finally { assert.ok(root.startsWith(join(tmpdir(), 'explicit-knowledge-cli-'))); await rm(root, { recursive: true, force: true }); }
 });
 
-test('a reviewed ended evaluation pins a new immutable worker context and job while leaving original session and evaluation bytes intact', async () => {
+test('an unsigned reviewed-input projection stays immutable but cannot execute or enqueue by reviewer name', async () => {
   const root = await mkdtemp(join(tmpdir(), 'explicit-knowledge-worker-'));
   try {
     const value = objective();
@@ -241,22 +242,17 @@ test('a reviewed ended evaluation pins a new immutable worker context and job wh
     const completed = await runEvaluationWorkerOnce({ jobs, sessions,
       evaluate: (context, session, options) => evaluateSession(context, session, { ...options,
         requestEvaluation: async () => { calls++; return output(value); } }) });
-    assert.equal(completed.job!.status, 'completed'); assert.equal(calls, 1);
+    assert.equal(completed.job!.status, 'review_required'); assert.equal(calls, 0);
     assert.equal(JSON.stringify(value.session), original); assert.equal(JSON.stringify(rawContext), originalContext);
     assert.equal(await readFile(join(root, 'original-session.json'), 'utf8'), original);
     const stored = await jobs.result(completed.job!);
-    assert.equal((stored!.evaluation as { answers: Array<{ score: number }> }).answers[0].score, 100);
+    assert.equal(stored, null, 'named input alone cannot publish an evaluation');
     await writeFile(join(root, 'reviewed.json'), JSON.stringify(value.context.approvedKnowledge));
     await writeFile(join(root, 'context.json'), originalContext);
     await new LocalSessionStore(join(root, 'data', 'sessions')).saveContext(rawContext, value.session.runtime.owner.id);
-    const cli = await prepareApprovedKnowledgeCli(['--reviewed-input', 'reviewed.json', '--reviewer', syntheticKnowledgeApproval.approverId,
-      '--session-input', 'original-session.json', '--context-input', 'context.json', '--enqueue', '--model', 'explicit-synthetic-cli-worker-model'], root);
-    assert.ok(cli.evaluationJobId); assert.ok(cli.contextSnapshotSha256);
-    const cliJobs = new EvaluationJobStore(join(root, 'data', 'evaluation-jobs')), cliJob = (await cliJobs.get(cli.evaluationJobId))!;
-    assert.equal(cliJob.contextSnapshotSha256, cli.contextSnapshotSha256);
-    assert.equal(cliJob.sourceSha256, cli.evaluationSourceSha256);
-    assert.equal(cliJob.model, 'explicit-synthetic-cli-worker-model');
-    assert.equal((await cliJobs.snapshot(cliJob)).session.runtime!.contextSnapshotSha256, cli.contextSnapshotSha256);
+    await assert.rejects(prepareApprovedKnowledgeCli(['--reviewed-input', 'reviewed.json', '--reviewer', syntheticKnowledgeApproval.approverId,
+      '--session-input', 'original-session.json', '--context-input', 'context.json', '--enqueue', '--model', 'explicit-synthetic-cli-worker-model'], root),
+    /AUTHENTICATED_SESSION_REVIEW_RECEIPT_REQUIRED/);
     assert.equal(await readFile(join(root, 'original-session.json'), 'utf8'), original);
     const changed = objective(); resealBinding(changed, binding => { binding.reason += ' 새 검토본'; });
     const second = await enqueueReviewedKnowledgeEvaluation(changed.context, value.session, { jobs, sessions, model: 'explicit-synthetic-model' });
@@ -282,7 +278,7 @@ test('reviewed preparation rejects a different base context before publishing an
     await writeFile(join(root, 'session.json'), JSON.stringify(value.session));
     await writeFile(join(root, 'wrong-context.json'), JSON.stringify(altered));
     await assert.rejects(prepareApprovedKnowledgeCli(['--reviewed-input', 'reviewed.json', '--reviewer', syntheticKnowledgeApproval.approverId,
-      '--session-input', 'session.json', '--context-input', 'wrong-context.json', '--enqueue'], root), /APPROVED_KNOWLEDGE_BASE_CONTEXT_CHANGED/u);
+      '--session-input', 'session.json', '--context-input', 'wrong-context.json'], root), /APPROVED_KNOWLEDGE_BASE_CONTEXT_CHANGED/u);
     assert.deepEqual((await readdir(root)).sort(), ['reviewed.json', 'session.json', 'wrong-context.json']);
   } finally { assert.ok(root.startsWith(join(tmpdir(), 'explicit-knowledge-base-pin-'))); await rm(root, { recursive: true, force: true }); }
 });

@@ -10,13 +10,18 @@ import { loadInterviewContext } from "./data/load-interview-context";
 import { sessionDurationSeconds } from "./data/school-context";
 import { ClovaSpeechStream } from "./providers/clova-stt";
 import { synthesizeSpeech, readSpeechAudio, interviewerVoiceDefaults } from "./providers/clova-tts";
-import { EvaluationJobStore, evaluationJobId } from './evaluation-job-store';
+import { createLocalEvaluationJobStore, evaluationJobId } from './evaluation-job-store';
+import { createLocalReviewRepository } from './repositories/local-review-repository';
+import { createLocalEvaluationRevisionRepository } from './repositories/local-evaluation-revision-repository';
+import { loadReviewedEvaluationRevision, retryReviewedEvaluationRevision, type ReviewedEvaluationRevisionView } from './evaluation-revisions';
+import { loadHistoricalCompletedEvaluation } from './evaluation-history';
 import { EVALUATION_PIPELINE_VERSION, evaluationSessionSourceFingerprint } from './providers/evaluation-input';
 import { loadQuestionBank, loadQuestionBankByPinnedPlan, selectNextPreparedMainQuestion, createSessionQuestionPlan } from './data/prepared-question-bank';
+import { bankScopeReadiness } from './data/evaluation-scope-registry';
 import { runRealtimeCore } from './providers/realtime-core';
 import { approvedRestatement } from './providers/approved-restatement';
 import { approvedAudioReplay } from './providers/approved-audio-replay';
-import { LocalSessionStore } from "./storage/local-session-store";
+import { createLocalSessionStore } from "./storage/local-session-store";
 import { actualEvaluativeQuestion, mayReplayQuestion, concatenateStreamTranscript, finalizeCapturedTurnForEnd, IdempotentTurnOperations, isFinalizedAnswer, mayAskClarification, mergeTranscriptObservation, nextPosition, nextRequestSchema, safeProviderError, streamRequestSchema, type InterviewSession, type RecordedTurn, type QuestionDraft } from "./protocol";
 import { observeAnswerSubmission } from "./answer-submission";
 import { calculateSpeechMetrics } from "../lib/interview/speech-metrics";
@@ -31,8 +36,8 @@ import { bindQuestionContractToTurn, assertQuestionContractIntegrity } from './q
 import { buildConversationLedger, conversationLedgerTrace } from './conversation-ledger';
 import { QuestionPreparationError, QuestionValidationError } from './providers/question-grounding';
 import type { SpeechSynthesisSettings } from "./providers/speech-audio-cache";
-import { appendConversationEvent, flushConversationLog, getConversationLogStatus, type ConversationEvent, type ConversationAppendResult } from "./storage/conversation-log";
-import { createSessionRuntime, localDevelopmentOwner, snapshotHash, assertSessionOwner, assertRecoverableSession, restoreLogicalSession, checkpointSession, recoveryProjection, type ClosingUtterance, type PersistedNextResult } from './session-runtime';
+import { defaultConversationLogger, type ConversationEvent, type ConversationAppendResult } from "./storage/conversation-log";
+import { createSessionRuntime, localDevelopmentOwner, snapshotHash, assertSessionOwner, assertRecoverableSession, restoreLogicalSession, checkpointSession, recoveryProjection, saveSessionSnapshot, type ClosingUtterance, type PersistedNextResult } from './session-runtime';
 import { currentQuestionVocabulary } from './providers/speech-vocabulary';
 import { loadGuidebookExposure } from './question-selection';
 import { loadQuestionPurposeLineage } from './data/question-purpose-lineage';
@@ -54,8 +59,9 @@ const webPort = Number(process.env.WEB_PORT ?? 3000);
 const workspaceId = createHash("sha256").update(path.resolve(process.cwd()).toLowerCase()).digest("hex").slice(0, 16);
 const requiredKeys = ["OPENAI_API_KEY", "CLOVA_SPEECH_SECRET_KEY", "CLOVA_VOICE_CLIENT_ID", "CLOVA_VOICE_CLIENT_SECRET"];
 const sessions = new Map<string, InterviewSession>();
-const store = new LocalSessionStore();
-const evaluationJobs = new EvaluationJobStore();
+const store = createLocalSessionStore();
+const evaluationJobs = createLocalEvaluationJobStore();
+const evaluationReviews = createLocalReviewRepository(), evaluationRevisions = createLocalEvaluationRevisionRepository();
 function observeSessionUsage(session: InterviewSession, stage: 'core' | 'review' | 'repair' | 'evaluation', attemptId: string, observation: ProviderUsageObservation) {
   session.providerUsageLedger = recordSessionProviderUsage(session.providerUsageLedger, { stage, attemptId, observation });
   void journal(session, { eventId: journalId('provider.usage', stage, observation.responseId ?? observation.requestId ?? attemptId), type: 'provider.usage', actor: 'provider', payload: { stage, attemptId, observation, pricingBasis: 'published-rates-observed-usage', invoiceVerified: false } });
@@ -190,7 +196,7 @@ async function findSession(id: string) {
   loadingSessions.set(id, loading);
   try { return await loading; } finally { loadingSessions.delete(id); }
 }
-async function save(session: InterviewSession) { session.updatedAt = new Date().toISOString(); await store.save(session); }
+function save(session: InterviewSession) { return saveSessionSnapshot(session, store); }
 type JournalTurn = { questionText: string | null; acknowledgement: string | null; interviewerId: string | null; sourceTurnId?: string | null };
 const journalTurns = new Map<string, Map<string, JournalTurn>>();
 const journalId = (kind: string, ...parts: string[]) => `${kind}:${createHash("sha256").update(parts.join("\u0000")).digest("hex")}`;
@@ -206,9 +212,9 @@ function journal(session: InterviewSession, event: ConversationEvent): Promise<C
     const previous = journalTurns.get(session.id)!.get(event.turnId) ?? { questionText: null, acknowledgement: null, interviewerId: null };
     journalTurns.get(session.id)!.set(event.turnId, { ...previous, ...(event.type === "question.prepared" ? { questionText: payload.text } : { acknowledgement: payload.text }), interviewerId: event.role ?? previous.interviewerId, sourceTurnId: typeof payload.sourceTurnId === "string" ? payload.sourceTurnId : previous.sourceTurnId });
     event = { ...event, eventId: event.eventId ?? journalId(event.type, event.turnId, payload.text, String(payload.audioUrl ?? "")) };
-    if (payload.voice && typeof payload.voice === "object") void appendConversationEvent(session.id, { eventId: journalId("voice.config", event.turnId!, event.type, JSON.stringify(payload.voice)), type: "provider.config", actor: "server", turnId: event.turnId, role: event.role, payload: { voices: [{ interviewerId: event.role, ...(payload.voice as Record<string, unknown>) }], usage: event.type } }).catch(() => {});
+    if (payload.voice && typeof payload.voice === "object") void defaultConversationLogger.append(session.id, { eventId: journalId("voice.config", event.turnId!, event.type, JSON.stringify(payload.voice)), type: "provider.config", actor: "server", turnId: event.turnId, role: event.role, payload: { voices: [{ interviewerId: event.role, ...(payload.voice as Record<string, unknown>) }], usage: event.type } }).catch(() => {});
   }
-  return appendConversationEvent(session.id, event).catch(() => ({ ok: false, eventId: event.eventId ?? "append-failed", error: { code: "LOG_APPEND_FAILED", message: "로컬 대화 로그를 기록하지 못했습니다." } }));
+  return defaultConversationLogger.append(session.id, event).catch(() => ({ ok: false, eventId: event.eventId ?? "append-failed", error: { code: "LOG_APPEND_FAILED", message: "로컬 대화 로그를 기록하지 못했습니다." } }));
 }
 function canonicalJournalTurn(session: InterviewSession, turnId: string): JournalTurn | null {
   const closing = session.runtime?.closingUtterance ?? closingOperations.get(session.id);
@@ -672,12 +678,25 @@ function publicRecovery(session: InterviewSession) {
   return { ...recoveryProjection(session), currentTurn: projection, messages };
 }
 const projectedEvaluationJobs = new Set<string>();
+function projectReviewedEvaluation(session: InterviewSession, reviewed: ReviewedEvaluationRevisionView) {
+  session.evaluationStatus = reviewed.status;
+  if (reviewed.status === 'completed') {
+    session.status = 'completed'; session.evaluation = reviewed.evaluation; delete session.evaluationError;
+  } else {
+    session.status = 'ending'; delete session.evaluation;
+    if (reviewed.error) session.evaluationError = reviewed.error; else delete session.evaluationError;
+  }
+}
 async function syncEvaluation(session: InterviewSession) {
   if (!session.runtime || session.status === 'active') return;
+  const reviewed = await loadReviewedEvaluationRevision({ session, ownerId: owner.id, jobs: evaluationJobs, sessions: store, reviews: evaluationReviews, revisions: evaluationRevisions });
+  if (reviewed) { projectReviewedEvaluation(session, reviewed); return; }
   const context = await sessionContext(session);
   const reference = session.runtime.evaluationJob;
   if (reference && reference.pipelineVersion !== EVALUATION_PIPELINE_VERSION) {
-    session.evaluationStatus = 'failed'; session.evaluationError = 'EVALUATION_PIPELINE_VERSION_CHANGED'; return;
+    const historical = await loadHistoricalCompletedEvaluation(session, context, owner.id, evaluationJobs);
+    if (historical) { session.evaluationStatus = 'completed'; session.status = 'completed'; session.evaluation = historical.evaluation; delete session.evaluationError; return; }
+    session.evaluationStatus = 'failed'; session.status = 'ending'; delete session.evaluation; session.evaluationError = 'EVALUATION_PIPELINE_VERSION_CHANGED'; return;
   }
   const sourceSha256 = evaluationSessionSourceFingerprint(context, session, reference?.model);
   const id = reference?.id ?? evaluationJobId(session.id, owner.id, sourceSha256, EVALUATION_PIPELINE_VERSION);
@@ -701,13 +720,17 @@ async function syncEvaluation(session: InterviewSession) {
       status: session.evaluationStatus, error: session.evaluationError ?? null, jobId: id, sourceSha256, resultSha256: job.resultSha256,
       resultStorage: 'versioned-evaluation-job-result', evaluation: result?.evaluation ?? null,
     } });
-    await flushConversationLog(session.id);
+    await defaultConversationLogger.flush(session.id);
   }
 }
 async function beginEvaluation(session: InterviewSession, retry = false) {
   session.runtime!.evaluationInputFrozenAt ??= new Date().toISOString();
+  const reviewedOptions = { session, ownerId: owner.id, jobs: evaluationJobs, sessions: store, reviews: evaluationReviews, revisions: evaluationRevisions };
+  const reviewed = retry ? await retryReviewedEvaluationRevision(reviewedOptions) : await loadReviewedEvaluationRevision(reviewedOptions);
+  if (reviewed) { projectReviewedEvaluation(session, reviewed); return; }
   await syncEvaluation(session);
   if (session.evaluationStatus === 'completed') return;
+  if (session.evaluationStatus === 'review_required') return;
   if (!retry && session.runtime?.evaluationJob && ['pending', 'running'].includes(session.evaluationStatus)) return;
   const context = await sessionContext(session);
   const model = session.runtime?.evaluationJob?.model ?? process.env.OPENAI_ANALYSIS_MODEL ?? 'gpt-6.1-terra';
@@ -827,7 +850,7 @@ const server = http.createServer(async (req, res) => {
       const bank = !context.errors.length ? await requireQuestionBank(context).catch(() => null) : null;
       const analysisIdentityReady = Boolean(context.student.studentId && context.school.interview?.id);
       let policyReady = true; try { if (context.interviewerPolicy) compilePolicyClauseRegistry(context); } catch { policyReady = false; }
-      return send(res, 200, { ready: !missing.length && !context.errors.length && Boolean(context.interviewOverview) && Boolean(bank) && analysisIdentityReady && policyReady, policyReady, missingKeys: missing, errors: [...context.errors, ...(!policyReady ? ['면접 운영 규칙의 연결 검수가 필요합니다.'] : []), ...(!bank && !context.errors.length ? ['면접 자료의 사전 준비가 필요합니다.'] : []), ...(!analysisIdentityReady ? ['학생 전체 분석과 지원처별 분석의 사전 준비가 필요합니다.'] : [])], target: context.target, realtimePort: port, durationSeconds: context.interviewOverview?.durationSeconds ?? interviewConfig.durationSeconds, interviewOverview: context.interviewOverview, mainQuestionCount, maxFollowUps: interviewConfig.maxFollowUps, turnWaitTimeoutMs: interviewConfig.turnWaitTimeoutMs, sources: { academicYear: context.manifest.academicYear, recordIds: context.manifest.recordIds, studentPageCount: context.student.pageCount, studentEvidenceCount: context.student.evidence.length, rulesVersion: context.manifest.rulesVersion, interviewerPolicy: context.manifest.interviewerPolicy ?? null, questionStrategies: context.manifest.questionStrategyCatalog ?? null, sourceFingerprint: createHash('sha256').update(JSON.stringify({ files: context.manifest.files, versions: context.manifest.guidelineSourceVersions, target: context.target })).digest('hex'), questionReferenceDigest: context.manifest.questionReferenceCatalog?.digest ?? null, questionReferenceCount: context.manifest.questionReferenceCatalog?.runtimeApprovedQuestions ?? 0, questionReferenceAnalysis: context.manifest.questionReferenceCatalog?.analysis?.coverage ?? null, questionBankKey: bank?.key ?? null, questionBankContentSha256: bank?.contentSha256 ?? null }, optionalMissing: process.env.CLOVA_SPEECH_DOMAIN_ID ? [] : ["CLOVA_SPEECH_DOMAIN_ID"], providerValidation: 'not_called', preparationReady: Boolean(bank) && analysisIdentityReady, questionBankReady: Boolean(bank), analysisIdentityReady });
+      return send(res, 200, { ready: !missing.length && !context.errors.length && Boolean(context.interviewOverview) && Boolean(bank) && analysisIdentityReady && policyReady, policyReady, missingKeys: missing, errors: [...context.errors, ...(!policyReady ? ['면접 운영 규칙의 연결 검수가 필요합니다.'] : []), ...(!bank && !context.errors.length ? ['면접 자료의 사전 준비가 필요합니다.'] : []), ...(!analysisIdentityReady ? ['학생 전체 분석과 지원처별 분석의 사전 준비가 필요합니다.'] : [])], target: context.target, realtimePort: port, durationSeconds: context.interviewOverview?.durationSeconds ?? interviewConfig.durationSeconds, interviewOverview: context.interviewOverview, mainQuestionCount, maxFollowUps: interviewConfig.maxFollowUps, turnWaitTimeoutMs: interviewConfig.turnWaitTimeoutMs, sources: { academicYear: context.manifest.academicYear, recordIds: context.manifest.recordIds, studentPageCount: context.student.pageCount, studentEvidenceCount: context.student.evidence.length, rulesVersion: context.manifest.rulesVersion, interviewerPolicy: context.manifest.interviewerPolicy ?? null, questionStrategies: context.manifest.questionStrategyCatalog ?? null, sourceFingerprint: createHash('sha256').update(JSON.stringify({ files: context.manifest.files, versions: context.manifest.guidelineSourceVersions, target: context.target })).digest('hex'), questionReferenceDigest: context.manifest.questionReferenceCatalog?.digest ?? null, questionReferenceCount: context.manifest.questionReferenceCatalog?.runtimeApprovedQuestions ?? 0, questionReferenceAnalysis: context.manifest.questionReferenceCatalog?.analysis?.coverage ?? null, questionBankKey: bank?.key ?? null, questionBankContentSha256: bank?.contentSha256 ?? null }, optionalMissing: process.env.CLOVA_SPEECH_DOMAIN_ID ? [] : ["CLOVA_SPEECH_DOMAIN_ID"], providerValidation: 'not_called', preparationReady: Boolean(bank) && analysisIdentityReady, questionBankReady: Boolean(bank), evaluationScopeReadiness: bankScopeReadiness(context, bank), analysisIdentityReady });
     }
     if (req.method === "POST" && url.pathname === "/api/prepare") {
       await readJson(req);
@@ -885,13 +908,13 @@ const server = http.createServer(async (req, res) => {
     if (!match) throw new HttpError(404, "요청한 기능을 찾을 수 없습니다.");
     const session = await findSession(match[1]);
     scopedSession = session;
-    if (req.method === "GET" && !match[2]) { await syncEvaluation(session); return send(res, 200, { sessionId: session.id, target: session.target, ...publicSessionProgress(session), durationSeconds: sessionDurationSeconds(session, (await sessionContext(session)).interviewOverview?.durationSeconds ?? NaN), mainQuestionTarget: session.mainQuestionTarget, evaluationError: !session.evaluationError ? null : publicServiceError('evaluation'), logging: getConversationLogStatus(session.id)[0] ?? null, recovery: publicRecovery(session), evaluation: session.status === 'completed' ? session.evaluation ?? null : null, localDevelopmentOwner: { mode: owner.mode, authentication: 'development-only-not-commercial-authentication' } }); }
+    if (req.method === "GET" && !match[2]) { await syncEvaluation(session); return send(res, 200, { sessionId: session.id, target: session.target, ...publicSessionProgress(session), durationSeconds: sessionDurationSeconds(session, (await sessionContext(session)).interviewOverview?.durationSeconds ?? NaN), mainQuestionTarget: session.mainQuestionTarget, evaluationError: !session.evaluationError ? null : publicServiceError('evaluation'), logging: defaultConversationLogger.getStatus(session.id)[0] ?? null, recovery: publicRecovery(session), evaluation: session.status === 'completed' ? session.evaluation ?? null : null, localDevelopmentOwner: { mode: owner.mode, authentication: 'development-only-not-commercial-authentication' } }); }
     if (req.method !== "POST") throw new HttpError(405, "허용되지 않은 요청 방식입니다.");
     if (session.runtime!.engineVersion !== interviewConfig.rulesVersion && !['events', 'retry-evaluation'].includes(match[2] ?? '')) throw new HttpError(409, '저장된 면접의 실행 버전이 달라 기록 조회만 가능합니다.');
     if (match[2] === "events") {
       const event = clientConversationEventSchema.parse(await readJson(req));
       const result = await journalClientEvent(session, event);
-      return send(res, 200, { accepted: true, logged: result.ok, duplicate: "duplicate" in result && Boolean(result.duplicate), logging: getConversationLogStatus(session.id)[0] ?? null });
+      return send(res, 200, { accepted: true, logged: result.ok, duplicate: "duplicate" in result && Boolean(result.duplicate), logging: defaultConversationLogger.getStatus(session.id)[0] ?? null });
     }
     if (match[2] === "timings") {
       const body = z.object({ turnId: z.string().uuid(), clientTimings: z.record(z.string().min(1), z.number().finite().min(0)) }).parse(await readJson(req));
@@ -1136,7 +1159,7 @@ const server = http.createServer(async (req, res) => {
       const body = z.object({ metrics: z.unknown().optional(), elapsedMs: z.number().finite().min(0).max(86_400_000).optional() }).parse(await readJson(req));
       await commitSessionEnd(session, body);
       await syncEvaluation(session);
-      await flushConversationLog(session.id);
+      await defaultConversationLogger.flush(session.id);
       return send(res, 202, publicSessionProgress(session));
     }
     if (match[2] === "retry-evaluation") {
@@ -1423,7 +1446,7 @@ function shutdown() {
   for (const group of streams.values()) for (const stream of group) stream.close();
   for (const ws of wss.clients) ws.close();
   wss.close(); server.close();
-  void flushConversationLog();
+  void defaultConversationLogger.flush();
 }
 process.once("SIGINT", shutdown);
 process.once("SIGTERM", shutdown);

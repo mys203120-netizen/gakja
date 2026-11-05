@@ -1,17 +1,15 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { freezeKnowledge, knowledgeHash,
-  parseApprovedKnowledgeBundle, type ApprovedKnowledgeBundle } from '../server/data/approved-knowledge';
+import { knowledgeHash, parseApprovedKnowledgeBundle } from '../server/data/approved-knowledge';
 import type { InterviewContext } from '../server/data/load-interview-context';
 import type { InterviewSession } from '../server/protocol';
-import { buildEvaluationUnits } from '../server/providers/evaluation-turns';
-import { evaluateKnowledgeGate } from '../server/providers/evaluation-knowledge-gate';
 import { EVALUATION_PIPELINE_VERSION, evaluationSessionSourceFingerprint } from '../server/providers/evaluation-input';
-import { enqueueReviewedKnowledgeEvaluation } from '../server/evaluation-worker';
-import { EvaluationJobStore } from '../server/evaluation-job-store';
-import { LocalSessionStore } from '../server/storage/local-session-store';
-import { snapshotHash } from '../server/session-runtime';
+import { createReviewedEvaluationKnowledgeContext } from '../server/data/reviewed-evaluation-context';
+import { supplyReviewedSessionEvaluation, type EndedSessionReviewProposal } from '../server/evaluation-supply';
+export { createReviewedEvaluationKnowledgeContext } from '../server/data/reviewed-evaluation-context';
+import type { ReviewRepository } from '../server/repositories/review-ports';
+import { createLocalReviewRepository } from '../server/repositories/local-review-repository';
 
 const value = (args: string[], flag: string) => {
   const index = args.indexOf(flag);
@@ -20,7 +18,7 @@ const value = (args: string[], flag: string) => {
   return args[index + 1];
 };
 function validateArguments(args: string[]) {
-  const valued = new Set(['--reviewed-input', '--reviewer', '--session-input', '--context-input', '--model']), seen = new Set<string>();
+  const valued = new Set(['--reviewed-input', '--reviewer', '--session-input', '--context-input', '--model', '--proposal-input', '--receipt']), seen = new Set<string>();
   for (let index = 0; index < args.length; index++) {
     const flag = args[index];
     if (seen.has(flag)) throw new Error('APPROVED_KNOWLEDGE_ARGUMENT_DUPLICATED:' + flag);
@@ -31,36 +29,8 @@ function validateArguments(args: string[]) {
     index++;
   }
 }
-async function immutableFile(file: string, content: string) {
-  await mkdir(dirname(file), { recursive: true, mode: 0o700 });
-  try { await writeFile(file, content, { encoding: 'utf8', flag: 'wx', mode: 0o600 }); }
-  catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'EEXIST' || await readFile(file, 'utf8') !== content) throw error;
-  }
-}
 
-/** A separate ended-session context preserves the original interview context.
- * The caller supplies existing reviewed input; this creates no knowledge,
- * source approval, scientific verdict, model output or runtime decision. */
-export function createReviewedEvaluationKnowledgeContext(context: InterviewContext, session: InterviewSession,
-  input: ApprovedKnowledgeBundle, provenance: { path: string; fileSha256: string }) {
-  if (session.status === 'active') throw new Error('APPROVED_KNOWLEDGE_SESSION_NOT_ENDED');
-  if (!session.runtime || snapshotHash(context) !== session.runtime.contextSnapshotSha256) throw new Error('APPROVED_KNOWLEDGE_BASE_CONTEXT_CHANGED');
-  const bundle = parseApprovedKnowledgeBundle(input), evaluationContext = structuredClone(context);
-  evaluationContext.approvedKnowledge = bundle;
-  if (evaluationContext.manifest) {
-    evaluationContext.manifest.files = [...evaluationContext.manifest.files.filter(file => file.role !== 'approvedEvaluationKnowledge'),
-      { role: 'approvedEvaluationKnowledge', ...provenance, sha256: provenance.fileSha256 }].map(({ role, path, sha256 }) => ({ role, path, sha256 }));
-    evaluationContext.manifest.recordIds = { ...evaluationContext.manifest.recordIds, approvedEvaluationKnowledgeSha256: bundle.contentSha256 };
-  }
-  const units = buildEvaluationUnits(session).scoredUnits;
-  const decisions = units.map(unit => ({ turnId: unit.turn.id, ...evaluateKnowledgeGate(evaluationContext, session, unit) }));
-  const invalid = decisions.find(decision => decision.holdReasons.some(reason => /INVALID|CHANGED|CONFLICT/u.test(reason)));
-  if (invalid) throw new Error('APPROVED_KNOWLEDGE_REVIEW_BINDING_INVALID:' + invalid.turnId + ':' + invalid.holdReasons.join(','));
-  return { context: freezeKnowledge(evaluationContext), decisions };
-}
-
-export async function prepareApprovedKnowledgeCli(args: string[], root = process.cwd()) {
+export async function prepareApprovedKnowledgeCli(args: string[], root = process.cwd(), reviews: ReviewRepository = createLocalReviewRepository(root)) {
   validateArguments(args);
   const inputPath = value(args, '--reviewed-input'), reviewer = value(args, '--reviewer');
   if (!inputPath || !reviewer) throw new Error('APPROVED_KNOWLEDGE_REVIEWED_INPUT_AND_REVIEWER_REQUIRED');
@@ -71,8 +41,17 @@ export async function prepareApprovedKnowledgeCli(args: string[], root = process
   const sessionInput = value(args, '--session-input'), contextInput = value(args, '--context-input');
   const model = value(args, '--model') || process.env.OPENAI_ANALYSIS_MODEL || 'gpt-6.1-terra';
   if (Boolean(sessionInput) !== Boolean(contextInput) || bundle.bindings.length && !sessionInput) throw new Error('APPROVED_KNOWLEDGE_ENDED_SESSION_AND_CONTEXT_REQUIRED');
+  if (args.includes('--enqueue')) {
+    const proposalPath = value(args, '--proposal-input'), receiptPath = value(args, '--receipt');
+    if (!sessionInput || !contextInput || !proposalPath || !receiptPath) throw new Error('AUTHENTICATED_SESSION_REVIEW_RECEIPT_REQUIRED');
+    const rawSession = JSON.parse(await readFile(resolve(root, sessionInput), 'utf8')), rawContext = JSON.parse(await readFile(resolve(root, contextInput), 'utf8'));
+    const supplied = await supplyReviewedSessionEvaluation({ session: rawSession.session ?? rawSession, context: rawContext.context ?? rawContext, bundle,
+      proposal: JSON.parse(await readFile(resolve(root, proposalPath), 'utf8')) as EndedSessionReviewProposal,
+      receipt: JSON.parse(await readFile(resolve(root, receiptPath), 'utf8')), root, enqueue: true, model, reviews });
+    return { ...supplied, context: undefined, evaluationJobId: supplied.jobId, authority: 'authenticated_exact_session_review', reviewer };
+  }
   const content = JSON.stringify(bundle, null, 2), fileSha256 = knowledgeHash(content);
-  const path = `data/prepared/approved-knowledge/revisions/${bundle.contentSha256}.json`;
+  const path = reviews.knowledgeRevisionPath(bundle.contentSha256);
   let evaluation = null;
   if (sessionInput && contextInput) {
     const rawSession = JSON.parse(await readFile(resolve(root, sessionInput), 'utf8'));
@@ -86,23 +65,19 @@ export async function prepareApprovedKnowledgeCli(args: string[], root = process
       originalContextSha256: knowledgeHash(JSON.stringify(context)), sessionId: session.id,
       knowledgeContentSha256: bundle.contentSha256, contextSha256,
       sourceSha256: evaluationSessionSourceFingerprint(projection.context, session, model), context: projection.context };
-    evaluation = { path: `data/prepared/approved-knowledge/evaluation-contexts/${contextSha256}.json`,
+    evaluation = { path: reviews.evaluationContextPath(contextSha256),
       envelope, session, decisions: projection.decisions };
   }
   // Validate every review and binding before publishing any output.
   if (args.includes('--enqueue') && !evaluation) throw new Error('APPROVED_KNOWLEDGE_ENDED_SESSION_AND_CONTEXT_REQUIRED');
-  await immutableFile(resolve(root, path), content);
-  if (evaluation) await immutableFile(resolve(root, evaluation.path), JSON.stringify(evaluation.envelope, null, 2));
-  const queued = args.includes('--enqueue') && evaluation ? await enqueueReviewedKnowledgeEvaluation(evaluation.envelope.context, evaluation.session, {
-    jobs: new EvaluationJobStore(resolve(root, 'data/evaluation-jobs')), sessions: new LocalSessionStore(resolve(root, 'data/sessions')),
-    model,
-  }) : null;
+  await reviews.writeKnowledgeRevision(bundle.contentSha256, content, { encoding: 'utf8' });
+  if (evaluation) await reviews.writeEvaluationContext(evaluation.envelope.contextSha256, JSON.stringify(evaluation.envelope, null, 2), { encoding: 'utf8' });
   return { passed: true, providerCalls: 0, sourceAuthenticityIndependentlyVerified: false, scientificTruthIndependentlyVerified: false,
     authority: 'named_reviewed_input_only', reviewer, packets: bundle.packets.length, bindings: bundle.bindings.length,
     contentSha256: bundle.contentSha256, revisionPath: path,
     preparationScope: evaluation ? 'explicit_ended_evaluation_context' : 'reviewed_packet_revision_only',
     evaluationContextPath: evaluation?.path ?? null, evaluationSourceSha256: evaluation?.envelope.sourceSha256 ?? null,
-    evaluationJobId: queued?.job.id ?? null, contextSnapshotSha256: queued?.contextSnapshotSha256 ?? null,
+    evaluationJobId: null, contextSnapshotSha256: null, publicationAuthorized: false,
     heldTurns: evaluation?.decisions.filter(decision => decision.holdReasons.length).map(({ turnId, holdReasons }) => ({ turnId, holdReasons })) ?? [],
     originalSessionModified: false, originalContextModified: false };
 }

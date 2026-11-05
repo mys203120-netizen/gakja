@@ -5,8 +5,10 @@ import { buildEvaluationObservations, type EvaluationObservations } from './answ
 import { buildEvaluationUnits, type EvaluationUnit } from './evaluation-turns';
 import { evaluationKnowledgeInput } from './evaluation-knowledge-gate';
 import { parseApprovedKnowledgeBundle } from '../data/approved-knowledge';
+import { findExactQuestionEvaluationSpec } from '../data/evaluation-scope-registry';
 
-export const EVALUATION_PIPELINE_VERSION = 'source-bound-cluster-evaluation-v4-reviewed-knowledge';
+export const EVALUATION_PIPELINE_VERSION = 'source-bound-cluster-evaluation-v5-reviewed-supply';
+export const HISTORICAL_REVIEWED_KNOWLEDGE_PIPELINE_VERSION = 'source-bound-cluster-evaluation-v4-reviewed-knowledge';
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const finite = (value: unknown) => typeof value === 'number' && Number.isFinite(value) ? value : null;
@@ -190,7 +192,13 @@ export function buildEvaluationClusterInputs(context: InterviewContext, session:
           activityId: item.activityId, priority: item.priority, reason: item.reason, criterionName: item.criterionName,
         })), scoreInfluence: false,
       } : null,
-      answers: clusterUnits.map(unit => ({ ...answerInput(unit), knowledge: evaluationKnowledgeInput(context, session, unit) })),
+      answers: clusterUnits.map(unit => {
+        const spec = context.evaluationScopeRegistry ? findExactQuestionEvaluationSpec(context, session, unit.turn, context.evaluationScopeRegistry) : undefined;
+        return { ...answerInput(unit), knowledge: evaluationKnowledgeInput(context, session, unit),
+          ...(spec?.review.status === 'approved' ? { evaluationSpecification: { id: spec.evaluationSpecId, revision: spec.revision,
+            reviewedDemand: spec.reviewedDemand, assessableCriteria: spec.assessableCriteria, excludedCriteria: spec.excludedCriteria,
+            evidenceExpectations: spec.evidenceExpectations, rubricVersion: spec.rubricVersion } } : {}) };
+      }),
       questionPresentations: (session.questionPresentations ?? []).filter(item => turnIds.has(item.turnId)).map(item => ({
         turnId: item.turnId, rootTurnId: item.rootTurnId, questionKind: item.questionKind,
         clockId: item.clockId, startedAtMs: item.startedAtMs, completedAtMs: item.completedAtMs,
@@ -210,7 +218,26 @@ export function evaluationSessionSourceFingerprint(context: InterviewContext, se
     model,
     evaluationGuidelinesSha256: hash(context.evaluationGuidelines ?? ''),
     approvedKnowledgeSha256: context.approvedKnowledge ? parseApprovedKnowledgeBundle(context.approvedKnowledge).contentSha256 : null,
+    evaluationScopePolicySha256: context.evaluationScopePolicy?.contentSha256 ?? null,
+    evaluationSpecRegistrySha256: context.evaluationScopeRegistry?.contentSha256 ?? null,
+    sessionReviewReceiptSha256: context.manifest?.recordIds?.sessionReviewReceiptSha256 ?? null,
     clusters: buildEvaluationClusterInputs(context, session),
+    unscored: buildEvaluationUnits(session).unscoredAnswers,
+  }));
+}
+
+/** Frozen v4 input contract for reading completed historical results only.
+ * Never upgrades an old context or authorizes execution by the current worker.
+ * Its field order and absent scope-policy field preserve the published v4 hash. */
+export function historicalEvaluationSourceFingerprint(context: InterviewContext, session: InterviewSession,
+  version: string, model: string) {
+  if (version !== HISTORICAL_REVIEWED_KNOWLEDGE_PIPELINE_VERSION || context.evaluationScopePolicy || context.evaluationScopeRegistry) {
+    throw new Error('HISTORICAL_EVALUATION_PIPELINE_UNSUPPORTED');
+  }
+  return hash(JSON.stringify({ version, model,
+    evaluationGuidelinesSha256: hash(context.evaluationGuidelines ?? ''),
+    approvedKnowledgeSha256: context.approvedKnowledge ? parseApprovedKnowledgeBundle(context.approvedKnowledge).contentSha256 : null,
+    clusters: buildEvaluationClusterInputs(context, session).map(input => ({ ...input, version })),
     unscored: buildEvaluationUnits(session).unscoredAnswers,
   }));
 }

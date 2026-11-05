@@ -1,0 +1,11 @@
+import { readdir, readFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+const manifest = JSON.parse(await readFile(new URL('../tests/private-fixture-suites.json', import.meta.url), 'utf8'));
+const files = (await readdir(new URL('../tests/', import.meta.url))).filter(file => file.endsWith('.test.ts')).sort();
+for (const file of manifest.files) if (!files.includes(file)) throw new Error(`Unknown private fixture suite: ${file}`);
+const portable = files.filter(file => !manifest.files.includes(file));
+console.log(`Portable suite: ${portable.length} files. ${manifest.files.length} private-fixture suites require separate npm test release verification.`);
+console.log(`Private fixture manifest: tests/private-fixture-suites.json`);
+const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', '--test-concurrency=4', ...portable.map(file => `tests/${file}`)], { stdio: 'inherit', windowsHide: true });
+if (result.error) throw result.error;
+process.exitCode = result.status ?? 1;

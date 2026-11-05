@@ -279,11 +279,17 @@ export function approveQuestionContract(draft: QuestionDraft, blueprint: Questio
   return deepFreeze({ ...body, contentSha256: hash(JSON.stringify(body)) });
 }
 
+/** Existing hash preimage and serialization, exposed for lossless codec reads.
+ * Full utterance/semantic/review authority still requires the original draft. */
+export function assertApprovedQuestionContractHashes(contract: ApprovedQuestionContract): void {
+  const { contentSha256, ...body } = contract;
+  if (contract.version !== 'approved-question-contract-v1' || contentSha256 !== hash(JSON.stringify(body)) || contract.blueprintSha256 !== hash(JSON.stringify(contract.blueprint))) throw new Error('QUESTION_CONTRACT_MUTATED');
+}
 export function assertQuestionContractIntegrity(draft: QuestionDraft, contract: ApprovedQuestionContract): void {
   assertRepairProof(draft);
   if (draft.questionBlueprint && hash(JSON.stringify(draft.questionBlueprint)) !== contract.blueprintSha256) throw new Error('QUESTION_CONTRACT_MUTATED');
-  const { contentSha256, ...body } = contract;
-  if (contract.version !== 'approved-question-contract-v1' || contentSha256 !== hash(JSON.stringify(body)) || contract.finalUtteranceSha256 !== hash(draft.questionText) || contract.semanticContractSha256 !== hash(JSON.stringify(semanticContract(draft))) || contract.blueprintSha256 !== hash(JSON.stringify(contract.blueprint)) || contract.reviewTraceSha256 !== hash(JSON.stringify(draft.premiseValidation))) throw new Error('QUESTION_CONTRACT_MUTATED');
+  assertApprovedQuestionContractHashes(contract);
+  if (contract.finalUtteranceSha256 !== hash(draft.questionText) || contract.semanticContractSha256 !== hash(JSON.stringify(semanticContract(draft))) || contract.reviewTraceSha256 !== hash(JSON.stringify(draft.premiseValidation))) throw new Error('QUESTION_CONTRACT_MUTATED');
 }
 
 /** A bank question receives actual turn/cluster IDs without repeating its unchanged semantic review. */

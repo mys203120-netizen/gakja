@@ -4,6 +4,8 @@ import { InterviewAudioPreloader, InterviewPlaybackGate } from '../lib/interview
 import { canStartListeningAfterAudio, ProgressiveInterviewAudio } from '../lib/interview/progressive-audio';
 import { NextTurnOperation, NextTurnResponseError, readNextTurnResponse } from '../lib/interview/next-turn-stream';
 import { ClientTimingLedger } from '../lib/interview/client-timings';
+import { SubmissionWait } from '../lib/interview/submission-wait';
+import { WorkTestClock } from './fixtures/work-test-clock';
 import type { PreparedTurn } from '../server/protocol';
 
 const deferred = <T,>() => { let resolve!: (value: T) => void, reject!: (error: Error) => void; const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
@@ -124,3 +126,37 @@ test('an audio ended event queued during suspension never starts microphone capt
   for (const phase of ['suspended', 'ending', 'completed']) assert.equal(canStartListeningAfterAudio(phase, false), false);
   assert.equal(canStartListeningAfterAudio('preparing_next', false), true);
 });
+
+for (const pauseBeforeReady of [false, true]) {
+  test(`a turn ready at 94s survives paused 95/96s boundaries and retries the same audio (${pauseBeforeReady ? 'ready during pause' : 'ready before pause'})`, async () => {
+    const clock = new WorkTestClock(), gate = new InterviewPlaybackGate();
+    const epoch = 7, operation = new NextTurnOperation(epoch, 'answered', 'session');
+    let requests = 0, timeouts = 0, questionPlays = 0, failPlayback = true;
+    const wait = new SubmissionWait({ turnId: 'answered', answerId: 'answer', captureRevision: 1 }, 'attempt', 95_000, () => { timeouts++; }, clock);
+    wait.finishSent = true;
+    if (pauseBeforeReady) gate.pause();
+    clock.advance(94_000);
+    const prepared = await operation.load(async () => {
+      requests++;
+      return readNextTurnResponse(Response.json({ turn, done: false }), () => {});
+    });
+    operation.complete(prepared);
+    wait.assertLive(); wait.complete();
+    if (!pauseBeforeReady) gate.pause();
+    const player = new ProgressiveInterviewAudio({
+      prepare: async url => url, wait: () => gate.wait(), current: () => operation.epoch === epoch && !wait.signal.aborted,
+      play: async (url, onPlaying) => { if (url === turn.questionAudioUrl) { questionPlays++; if (failPlayback) throw new Error('local playback failed'); } onPlaying(); },
+      acknowledgementPlaying: () => {}, acknowledgementEnded: () => {}, questionPlaying: next => { assert.equal(next.id, prepared.turn!.id); },
+    });
+    const playback = player.playTurn(prepared.turn!);
+    const failedPlayback = assert.rejects(playback, /local playback failed/);
+    await tick();
+    for (const at of [95_000, 96_000]) { clock.advance(at - clock.time); assert.equal(timeouts, 0); assert.equal(wait.signal.aborted, false); assert.equal(questionPlays, 0); }
+    assert.equal(wait.pending, false); assert.equal(operation.result!.turn, prepared.turn);
+    gate.resume(); await failedPlayback;
+    failPlayback = false; player.retry(prepared.turn!.id); await player.playTurn(prepared.turn!);
+    assert.equal(requests, 1); assert.equal(questionPlays, 2);
+    assert.equal(operation.epoch, epoch); assert.equal(operation.result!.turn!.id, turn.id);
+    clock.advance(95_000); assert.equal(timeouts, 0);
+  });
+}

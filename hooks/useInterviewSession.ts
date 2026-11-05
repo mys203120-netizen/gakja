@@ -141,7 +141,7 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
   const retireRun = useCallback(() => {
     questionRecoveryRequiresEnd.current = false;
     const waiting = submissionWait.current;
-    if (waiting?.finishSent && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type: 'cancel_submission', ...waiting.scope, submissionAttemptId: waiting.attemptId }));
+    if (waiting?.pending && waiting.finishSent && socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type: 'cancel_submission', ...waiting.scope, submissionAttemptId: waiting.attemptId }));
     submissionWait.current?.cancel(); submissionWait.current = null;
     startupCountdown.current.cancel(); firstLaunch.current = false; startupTarget.current = null;
     clientEvents.current.retire(); playbackTurn.current = null;
@@ -376,7 +376,6 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
         if (stateRef.current.phase === 'speaking_acknowledgement') dispatch({ type: 'phase', phase: phaseAfterAcknowledgement(hadBegun.current) });
       },
       questionPlaying: next => {
-        submissionWait.current?.complete();
         turn.current = next; playbackRole.current = 'speaking_question'; playbackTurn.current = next.id;
         observeClientEvent({ type: 'question_playing', turnId: next.id, phase: 'speaking_question' }, epoch);
         hadBegun.current = true; if (activeStarted.current === null) activeStarted.current = performance.now();
@@ -413,7 +412,14 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
     if (epoch !== generation.current) return;
     playbackGate.current.resume();
     const audio = media.audio.current;
-    if (pendingAudioCancel.current && audio?.paused && !audio.ended) { if (playbackRole.current) dispatch({ type: 'phase', phase: playbackRole.current }); await audio.play(); }
+    if (pendingAudioCancel.current && audio?.paused && !audio.ended) {
+      // The native player announces each utterance once. A resumed playing event
+      // must restart its clock without announcing/revealing a second question.
+      const role = playbackRole.current;
+      const playing = () => { if (epoch === generation.current && !playbackGate.current.paused && role && !stateRef.current.endingRequested) dispatch({ type: 'phase', phase: role }); };
+      audio.addEventListener('playing', playing, { once: true });
+      try { await audio.play(); } finally { audio.removeEventListener('playing', playing); }
+    }
   }, [dispatch, media]);
 
   const start = useCallback(async (): Promise<void> => {
@@ -440,7 +446,7 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
   const nextQuestion = useCallback(async function requestNext(epoch: number, preparationRecoveryAttempt = 0): Promise<void> {
     if (epoch !== generation.current || stateRef.current.endingRequested || stateRef.current.phase === 'ending' || stateRef.current.phase === 'completed') return;
     const current = turn.current, sessionId = stateRef.current.sessionId; if (!current || !sessionId) return;
-    if (stateRef.current.phase !== 'speaking_acknowledgement') dispatch({ type: 'phase', phase: 'preparing_next' });
+    if (!['speaking_acknowledgement', 'suspended', 'error'].includes(stateRef.current.phase)) dispatch({ type: 'phase', phase: 'preparing_next' });
     try {
       if (finishAfterAnswer.current || duration.current.hasExpired(elapsed())) { await endRef.current(); return; }
       let operation = nextOperation.current;
@@ -448,6 +454,7 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
         operation = new NextTurnOperation(epoch, current.id, sessionId); nextOperation.current = operation;
       }
       const active = operation;
+      const waiting = submissionWait.current;
       const result = await active.load(() => {
         const observation = answerObservations.current.get(current.id);
         const capture = answerCapture.current.snapshot();
@@ -464,8 +471,11 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
             return result;
           });
       });
-      if (epoch !== generation.current || stateRef.current.endingRequested) return;
-      submissionWait.current?.assertLive();
+      if (epoch !== generation.current || stateRef.current.endingRequested || nextOperation.current !== active || submissionWait.current !== waiting) return;
+      waiting?.assertLive();
+      // A validated turn_ready is durable even while paused or waiting for the
+      // browser to play. Neither pause nor a failed local playback restarts work.
+      waiting?.complete();
       if (stateRef.current.phase === 'suspended' || stateRef.current.phase === 'error') { pendingTurn.current = result.turn; return; }
       if (!active.startPlayback()) return;
       nextCommitted.current = current.id;
@@ -504,6 +514,7 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
         await endRef.current(); return;
       }
       if (result.action === 'CONTINUE_ANSWER') {
+        submissionWait.current?.complete();
         submitting.current = false; answerFinalized.current = false;
         message(answerId.current, 'candidate', 'answer', transcript.current, true);
         if (stateRef.current.phase === 'suspended') { resumePhase.current = 'listening'; return; }
@@ -514,7 +525,7 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
       if (answerCapture.current.snapshot()?.stage === 'candidate') answerCapture.current.lockAdvance();
       answerFinalized.current = true;
       message(answerId.current, 'candidate', 'answer', transcript.current);
-      if (stateRef.current.phase === 'suspended') { resumePhase.current = 'preparing_next'; return; }
+      if (stateRef.current.phase === 'suspended') resumePhase.current = 'preparing_next';
       await nextQuestion(epoch);
     } catch (error) { if (epoch === generation.current && candidateOperation.current === operation) fail(error, () => { void actions.current.candidate(epoch); }); }
   }, [beginListening, elapsed, fail, message, nextQuestion]);
@@ -550,7 +561,9 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
         // stream, revision, PCM route, transcript and speech clock running.
         wait.complete(); submissionWait.current = null;
         submitting.current = false; submitted.current = false; setCapturingTail(false);
-        dispatch({ type: 'phase', phase: 'listening' }); return;
+        if (String(stateRef.current.phase) === 'suspended') resumePhase.current = 'listening';
+        else dispatch({ type: 'phase', phase: 'listening' });
+        return;
       }
       wait.assertLive();
       await media.flush(); if (epoch !== generation.current) return;
@@ -597,7 +610,7 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
       await pauseFinished.current; if (epoch !== generation.current) return;
       await connect(sessionId, preparation.realtimePort, epoch); if (epoch !== generation.current) return;
       const previous = resumePhase.current;
-      if (previous !== 'listening') dispatch({ type: 'phase', phase: previous === 'finalizing_transcript' ? 'finalizing_transcript' : playbackRole.current ?? 'preparing_next' });
+      if (previous !== 'listening') dispatch({ type: 'phase', phase: previous === 'finalizing_transcript' ? 'finalizing_transcript' : 'preparing_next' });
       playbackGate.current.resume();
       if (previous === 'listening') { dispatch({ type: 'phase', phase: 'preparing_next' }); beginListening(true); }
       else if (previous === 'finalizing_transcript') { if (answerFinalized.current) await nextQuestion(epoch); else if (candidateOperation.current) await reviewCandidate(epoch); else { dispatch({ type: 'phase', phase: 'finalizing_transcript' }); if (pendingFinish.current && finalized.current) send(pendingFinish.current); } }
@@ -704,7 +717,7 @@ export function useInterviewSession(media: AudioDevices, metrics: () => unknown,
   useEffect(() => {
     if (state.phase !== 'completed' || !state.sessionId || state.evaluationStatus === 'completed') return;
     const epoch = generation.current;
-    const poll = setInterval(() => { void api<{ evaluationStatus: string }>(`/api/sessions/${encodeURIComponent(state.sessionId!)}`).then(result => { if (epoch === generation.current && stateRef.current.sessionId === state.sessionId) dispatch({ type: 'evaluation', status: result.evaluationStatus }); }).catch(() => {}); }, 1800);
+    const poll = setInterval(() => { void api<{ evaluationStatus: string }>(`/api/sessions/${encodeURIComponent(state.sessionId!)}`).then(result => { if (epoch === generation.current && stateRef.current.sessionId === state.sessionId) dispatch({ type: 'evaluation', status: result.evaluationStatus }); }).catch(() => {}); }, state.evaluationStatus === 'review_required' ? 15_000 : 1800);
     return () => clearInterval(poll);
   }, [dispatch, state.evaluationStatus, state.phase, state.sessionId]);
   const invalidateSession = useCallback(() => { retireRun(); }, [retireRun]);

@@ -1,0 +1,409 @@
+{
+  "status": "passed",
+  "artifact_status": "PROPOSED_NOT_INTEGRATED",
+  "validator": "jsonschema",
+  "validator_version": "4.26.0",
+  "dialect": "2020-12",
+  "schema_count": 5,
+  "shape_cases": 52,
+  "shape_passed": 52,
+  "source_span_cases": 4,
+  "source_span_passed": 4,
+  "typescript_ajv": "not_run_dependency_unavailable",
+  "pydantic": "not_run_no_production_adapter",
+  "application_tests": "not_run_no_application_changes",
+  "paid_api_calls": 0,
+  "database_authorization_validation": "not_run_not_claimed",
+  "cases": [
+    {
+      "name": "text-valid",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "transcript-valid-shape-only",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "silence-valid-shape-only",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "no-answer-variant",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "both-text-and-transcript",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "text-empty",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "text-ascii-whitespace",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "text-unicode-whitespace",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "transcript-with-text",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "silence-cannot-claim-stt-failure",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "silence-no-evidence",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "client-injected-owner",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "record-evidence-valid-shape",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "university-evidence-valid-shape",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "answer-evidence-valid-shape",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "confirmation-evidence-valid-shape",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "answer-is-not-record-fact",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "record-page-zero",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "wrong-offset-unit",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "quote-hash-malformed",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "cross-kind-extra-fields",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "reversed-offset-shape-only",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "wrong-quote-shape-only",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "started-playback",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "completed-playback",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "interrupted-playback",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "failed-playback",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "ready-is-not-playback",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "completed-no-duration",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "playback-negative-sequence",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "playback-no-clock",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "playback-invalid-date",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "followup-met-new-claim-permitted",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "continue-without-assessment",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "CLARIFICATION-valid",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "REPLAY-valid",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "TRANSITION-valid",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "CLOSING-valid",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "continue-with-assessment",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "assessed-null-assessment",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "f-cannot-have-same-trigger",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "trigger-is-not-function",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "f-no-source-ids",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "f-too-long",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "general-approved",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "academic-approved-shape-only",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "none-explicitly-held",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true,
+      "error_count": 0
+    },
+    {
+      "name": "academic-without-packets",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "academic-without-claim-reviews",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "general-cannot-authorize-scientific-truth",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "none-cannot-self-approve",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    },
+    {
+      "name": "scope-no-manifest",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true,
+      "error_count": 1
+    }
+  ],
+  "source_span_results": [
+    {
+      "name": "utf16-valid",
+      "expected_valid": true,
+      "actual_valid": true,
+      "passed": true
+    },
+    {
+      "name": "reversed-offset",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true
+    },
+    {
+      "name": "wrong-quote",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true
+    },
+    {
+      "name": "split-surrogate",
+      "expected_valid": false,
+      "actual_valid": false,
+      "passed": true
+    }
+  ]
+}

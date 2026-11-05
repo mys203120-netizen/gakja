@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-06",
+  "source": "각자의답 아키텍처 청사진 v2 / implementation-contracts",
+  "original_files_identical": [
+    "README.md",
+    "answer-submission.schema.json",
+    "build_contracts.py",
+    "evaluation-scope-approval.schema.json",
+    "evidence-ref.schema.json",
+    "examples.json",
+    "fixtures.json",
+    "interview-decision.schema.json",
+    "playback-event.schema.json",
+    "requirements.txt",
+    "runtime-source-fixtures.json",
+    "validate_contracts.py",
+    "validation-results.json"
+  ],
+  "rerun": {
+    "status": "passed",
+    "artifact_status": "PROPOSED_NOT_INTEGRATED",
+    "validator": "jsonschema",
+    "validator_version": "4.26.0",
+    "dialect": "2020-12",
+    "schema_count": 5,
+    "shape_cases": 52,
+    "shape_passed": 52,
+    "source_span_cases": 4,
+    "source_span_passed": 4,
+    "typescript_ajv": "not_run_dependency_unavailable",
+    "pydantic": "not_run_no_production_adapter",
+    "application_tests": "not_run_no_application_changes",
+    "paid_api_calls": 0,
+    "database_authorization_validation": "not_run_not_claimed"
+  },
+  "scope": "Schema shape and pure UTF-16/quote/hash checks only; no app integration or paid API calls."
+}

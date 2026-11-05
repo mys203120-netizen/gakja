@@ -3,15 +3,17 @@ import path from "node:path";
 import type { InterviewSession } from "../protocol";
 import type { InterviewContext } from '../data/load-interview-context';
 import { assertSessionOwner, snapshotHash } from '../session-runtime';
+import type { SessionStore } from './session-store';
+export type { SessionStore } from './session-store';
 
-export interface SessionStore { save(session: InterviewSession): Promise<void> }
+export interface LocalSessionStoreOptions {
+  replaceFile?: typeof rename;
+  wait?: (milliseconds: number) => Promise<void>;
+}
 /** Local-only adapter. A future DB adapter can implement the same boundary. */
 export class LocalSessionStore implements SessionStore {
   private writes = new Map<string, Promise<void>>();
-  constructor(private directory = path.join(process.cwd(), "data", "sessions"), private readonly io: {
-    replaceFile?: typeof rename;
-    wait?: (milliseconds: number) => Promise<void>;
-  } = {}) {}
+  constructor(private directory = path.join(process.cwd(), "data", "sessions"), private readonly io: LocalSessionStoreOptions = {}) {}
   async load(id: string, ownerId: string): Promise<InterviewSession | null> {
     if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error('INVALID_SESSION_ID');
     let text: string;
@@ -66,4 +68,10 @@ export class LocalSessionStore implements SessionStore {
     this.writes.set(session.id, pending);
     return pending;
   }
+}
+
+/** Composition owns the existing directory convention. Callers retain this
+ * instance for their operation/server lifetime so its write queue is preserved. */
+export function createLocalSessionStore(root = process.cwd(), options: LocalSessionStoreOptions = {}): LocalSessionStore {
+  return new LocalSessionStore(path.join(root, 'data/sessions'), options);
 }
