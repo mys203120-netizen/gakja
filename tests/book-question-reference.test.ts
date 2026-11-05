@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { interviewReferenceFiles } from '../interview-files.mjs';
@@ -131,6 +132,88 @@ test('legacy or escaped figure paths are rejected; absent images are recorded wi
   assert.equal(corpus.counts.missingFigureFiles, 1);
   assert.equal(corpus.figures[0].exists, false);
   assert.equal(corpus.figures[0].sha256, null);
+});
+
+test('relocated exact sources reuse their preserved corpus and owned image without reading the old absolute path', async t => {
+  const original = await fixture(), relocated = await fixture(); t.after(original.close); t.after(relocated.close);
+  const corpus = await prepareBookQuestionReferences(original);
+  const cache = interviewReferenceFiles.preparedQuestionReferences;
+  const copied = [interviewReferenceFiles.bookContentMd, interviewReferenceFiles.bookUniversityMd, cache];
+  for (const relative of copied) {
+    await mkdir(path.dirname(path.join(relocated.root, relative)), { recursive: true });
+    await copyFile(path.join(original.root, relative), path.join(relocated.root, relative));
+  }
+  const before = await Promise.all(copied.map(relative => readFile(path.join(relocated.root, relative))));
+  await writeFile(path.join(original.root, interviewReferenceFiles.bookFiguresDirectory, 'fixture.png'), 'old-root-must-not-be-read');
+  assert.deepEqual(await loadBookQuestionReferences(relocated.root), corpus);
+  assert.deepEqual(await prepareBookQuestionReferences(relocated), corpus);
+  assert.deepEqual(await Promise.all(copied.map(relative => readFile(path.join(relocated.root, relative)))), before);
+
+  const cachePath = path.join(relocated.root, cache), sourcePath = path.join(relocated.root, copied[0]);
+  const imagePath = path.join(relocated.root, interviewReferenceFiles.bookFiguresDirectory, 'fixture.png');
+  const restore = async () => {
+    for (let index = 0; index < copied.length; index++) await writeFile(path.join(relocated.root, copied[index]), before[index]);
+    await writeFile(imagePath, 'synthetic-image-bytes');
+  };
+  const seal = (value: typeof corpus) => { value.digest = createHash('sha256').update(JSON.stringify({ ...value, generatedAt: undefined, digest: undefined })).digest('hex'); return JSON.stringify(value); };
+  const mutations = [
+    () => rm(cachePath),
+    () => writeFile(cachePath, '{invalid-json'),
+    () => writeFile(cachePath, JSON.stringify({ ...corpus, digest: '0'.repeat(64) })),
+    () => writeFile(sourcePath, Buffer.concat([before[0], Buffer.from('\nchanged-source')])),
+    () => rm(imagePath),
+    () => writeFile(imagePath, 'changed-current-image'),
+    ...(['sourcePath', 'sourceLine', 'path', 'sha256'] as const).map(field => async () => {
+      const changed = structuredClone(corpus);
+      if (field === 'sourceLine') changed.figures[0].sourceLine++;
+      else changed.figures[0][field] = 'mismatched-binding';
+      await writeFile(cachePath, seal(changed));
+    }),
+    async () => { const changed = structuredClone(corpus); changed.questions[0].runtimeApproved = true; await writeFile(cachePath, seal(changed)); },
+  ];
+  for (const mutate of mutations) { await restore(); await mutate(); assert.equal(await loadBookQuestionReferences(relocated.root), null); }
+  await restore(); assert.deepEqual(await loadBookQuestionReferences(relocated.root), corpus);
+});
+
+test('preserved synthetic Windows-drive and Unix-root document links both reopen unchanged on either host platform', async t => {
+  const temporary = await fixture(); t.after(temporary.close);
+  const original = await prepareBookQuestionReferences(temporary), directory = interviewReferenceFiles.bookFiguresDirectory;
+  const sourcePath = path.join(temporary.root, interviewReferenceFiles.bookContentMd);
+  const cachePath = path.join(temporary.root, interviewReferenceFiles.preparedQuestionReferences);
+  for (const oldRoot of ['C:/explicit-synthetic-previous-workspace', '/explicit-synthetic-previous-workspace']) {
+    const text = preparation + `\n![합성 그림](<${oldRoot}/${directory}/fixture.png>)`, corpus = structuredClone(original);
+    // These unapproved synthetic records describe the exact prior document;
+    // no real source, receipt or stored approval is rewritten for the test.
+    const sourceSha = createHash('sha256').update(text).digest('hex');
+    corpus.sourceHashes[0].sha256 = sourceSha;
+    for (const question of corpus.questions) if (question.source.path === interviewReferenceFiles.bookContentMd) question.source.sha256 = sourceSha;
+    corpus.digest = createHash('sha256').update(JSON.stringify({ ...corpus, generatedAt: undefined, digest: undefined })).digest('hex');
+    const saved = JSON.stringify(corpus); await writeFile(sourcePath, text); await writeFile(cachePath, saved);
+    assert.deepEqual(await loadBookQuestionReferences(temporary.root), corpus);
+    assert.deepEqual(await prepareBookQuestionReferences(temporary), corpus);
+    assert.equal(await readFile(sourcePath, 'utf8'), text); assert.equal(await readFile(cachePath, 'utf8'), saved);
+    assert.ok(corpus.questions.every(question => !question.runtimeApproved));
+  }
+});
+
+test('even a self-consistent preserved binding cannot authorize foreign directories, URLs or escaped absolute image links', async t => {
+  const temporary = await fixture(); t.after(temporary.close);
+  const corpus = await prepareBookQuestionReferences(temporary), directory = interviewReferenceFiles.bookFiguresDirectory;
+  const sourcePath = path.join(temporary.root, interviewReferenceFiles.bookContentMd);
+  const cachePath = path.join(temporary.root, interviewReferenceFiles.preparedQuestionReferences);
+  for (const link of [
+    `https://example.invalid/${directory}/fixture.png`, `file:///old/${directory}/fixture.png`,
+    `//server/share/${directory}/fixture.png`, `C:/old/../root/${directory}/fixture.png`,
+    `C:/old/./${directory}/fixture.png`, `C:/old//${directory}/fixture.png`,
+    `C:/old/%2e%2e/${directory}/fixture.png`, `C:/old/${directory}/%66ixture.png`,
+    `C:/old/foreign/figures/fixture.png`, `C:/${directory}/nested/fixture.png`,
+  ]) {
+    const text = preparation + `\n![합성 그림](<${link}>)`, changed = structuredClone(corpus);
+    changed.sourceHashes[0].sha256 = createHash('sha256').update(text).digest('hex');
+    changed.digest = createHash('sha256').update(JSON.stringify({ ...changed, generatedAt: undefined, digest: undefined })).digest('hex');
+    await writeFile(sourcePath, text); await writeFile(cachePath, JSON.stringify(changed));
+    await assert.rejects(prepareBookQuestionReferences(temporary), /현재 figures 폴더|파일 경로/u);
+  }
 });
 
 test('runtime samples are a bounded question-only projection with citations and explicit provenance', async t => {

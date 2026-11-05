@@ -162,12 +162,29 @@ export function extractBookQuestions(text: string, sourcePath: string, documentK
 function configured(options: CorpusOptions = {}) {
   return { root: path.resolve(options.root ?? process.cwd()), sourcePaths: options.sourcePaths ?? [interviewReferenceFiles.bookContentMd, interviewReferenceFiles.bookUniversityMd] as [string, string], figuresDirectory: options.figuresDirectory ?? interviewReferenceFiles.bookFiguresDirectory };
 }
+/** Old absolute links are document provenance only, never filesystem read paths. */
+function isRelocatedFigureLink(value: string, relative: string) {
+  if (/[\u0000-\u001f\u007f%?#<>"|*]/u.test(value) || value.includes('//') || value.split('/').some(part => part === '.' || part === '..')) return false;
+  if (!/^(?:[A-Za-z]:\/|\/)/u.test(value) || /^(?:[A-Za-z]:\/|\/)/u.test(relative)) return false;
+  if (/^[A-Za-z]:\//u.test(value) && value.slice(2).includes(':')) return false;
+  return value.endsWith(`/${relative}`);
+}
+async function preservedFigureBindings(settings: ReturnType<typeof configured>, sources: SourceFile[]): Promise<BookQuestionCorpus | null> {
+  try {
+    const corpus = JSON.parse(await readFile(path.resolve(settings.root, interviewReferenceFiles.preparedQuestionReferences), 'utf8')) as BookQuestionCorpus;
+    if (corpus.schemaVersion !== BOOK_QUESTION_CORPUS_VERSION || corpus.policyVersion !== BOOK_QUESTION_SELECTION_POLICY ||
+      corpus.figuresDirectory !== settings.figuresDirectory || !Array.isArray(corpus.figures) ||
+      JSON.stringify(corpus.sourceHashes) !== JSON.stringify(sources) || contentDigest(corpus) !== corpus.digest) return null;
+    return corpus;
+  } catch { return null; }
+}
 async function sourceInputs(options: CorpusOptions = {}) {
   const settings = configured(options);
   const files = await Promise.all(settings.sourcePaths.map(async (sourcePath, index) => {
     const text = await readFile(path.resolve(settings.root, sourcePath), 'utf8');
     return { text, source: { path: sourcePath, sha256: digest(text), lineCount: linesOf(text).length, documentKind: index === 0 ? 'preparation' as const : 'university' as const } };
   }));
+  let preservedBindings: Promise<BookQuestionCorpus | null> | undefined;
   const figures: FigureReference[] = [];
   for (const file of files) for (const line of linesOf(file.text)) for (const match of line.text.matchAll(/!\[[^\]]*\]\(<?([^)>]+)>?\)/gu)) {
     const value = match[1].replace(/\\/gu, '/');
@@ -176,9 +193,18 @@ async function sourceInputs(options: CorpusOptions = {}) {
     const resolved = path.resolve(settings.root, relative), figureRoot = path.resolve(settings.root, settings.figuresDirectory);
     if (path.dirname(resolved) !== figureRoot || !/\.(?:png|jpg|jpeg|webp)$/iu.test(filename)) throw new Error('참고 그림의 파일 경로가 유효하지 않습니다.');
     const canonical = resolved.replace(/\\/gu, '/');
-    if (value !== canonical && value !== relative) throw new Error(`참고 그림 경로를 현재 figures 폴더로 갱신해야 합니다: ${file.source.path}:${line.number}`);
+    const relocated = value !== canonical && value !== relative;
+    const invalidLink = () => new Error(`참고 그림 경로를 현재 figures 폴더로 갱신해야 합니다: ${file.source.path}:${line.number}`);
+    if (relocated && !isRelocatedFigureLink(value, relative)) throw invalidLink();
     const bytes = await readFile(resolved).catch(() => null);
-    figures.push({ sourcePath: file.source.path, sourceLine: line.number, path: relative, sha256: bytes ? digest(bytes) : null, exists: Boolean(bytes) });
+    const figure = { sourcePath: file.source.path, sourceLine: line.number, path: relative, sha256: bytes ? digest(bytes) : null, exists: Boolean(bytes) };
+    // A relocated link needs the exact preserved source and image binding. The
+    // normal verifiedCache path still validates the entire semantic corpus.
+    if (relocated) {
+      const preserved = await (preservedBindings ??= preservedFigureBindings(settings, files.map(file => file.source)));
+      if (!bytes || !preserved?.figures.some(previous => JSON.stringify(previous) === JSON.stringify(figure))) throw invalidLink();
+    }
+    figures.push(figure);
   }
   return { ...settings, files, figures };
 }
