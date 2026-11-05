@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "각자의답 장면 연결 예제",
+    "slug": "each-answer-scene-example",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "dark",
+    "ios": { "supportsTablet": true },
+    "android": { "package": "com.eachanswer.sceneexample" }
+  }
+}

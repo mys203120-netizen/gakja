@@ -1,0 +1,19 @@
+{
+  "id": "no-dedicated-delivery",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "scripts/verify-live2d-assets.mjs",
+    "--delivery-root",
+    "production/live2d/incoming",
+    "--report",
+    "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\validation-runs\\2026-11-05-cb7e4f99-b59a-484a-922e-9359d5c6db3f\\no-delivery.json"
+  ],
+  "startedAt": "2026-11-04T16:21:36.250Z",
+  "finishedAt": "2026-11-04T16:21:36.329Z",
+  "expectedExitCode": 2,
+  "exitCode": 13,
+  "signal": null,
+  "stdout": "",
+  "stderr": "Warning: Detected unsettled top-level await at file:///C:/Users/MaYunsong/Documents/%EA%B0%81%EC%9E%90%EC%9D%98%EB%8B%B5NEW/scripts/verify-live2d-assets.mjs:214\r\n      const { deliveryCli } = await import('../lib/live2d/delivery-validation.mjs');\r\n                              ^\r\n\r\n\r\n\r\n",
+  "status": "FAIL"
+}

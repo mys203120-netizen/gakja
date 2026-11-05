@@ -1,0 +1,19 @@
+{
+  "id": "current-scene-blocked",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "scripts/verify-live2d-assets.mjs",
+    "--manifest",
+    "public/live2d/scene.json",
+    "--report",
+    "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\validation-runs\\2026-11-05-final-49b802b9-54d1-47d7-8b9a-f2542cfbd950\\current-scene.json"
+  ],
+  "startedAt": "2026-11-04T16:28:52.542Z",
+  "finishedAt": "2026-11-04T16:28:52.647Z",
+  "expectedExitCode": 1,
+  "exitCode": 1,
+  "signal": null,
+  "stdout": "{\n  \"status\": \"blocked\",\n  \"scope\": \"static-asset-integrity\",\n  \"runtimeValidation\": \"not-run\",\n  \"releaseReady\": false,\n  \"checkedAt\": \"2026-11-04T16:28:52.629Z\",\n  \"manifestPath\": \"C:\\\\Users\\\\MaYunsong\\\\Documents\\\\각자의답NEW\\\\public\\\\live2d\\\\scene.json\",\n  \"errors\": [\n    \"장면 상태가 blocked입니다. 전용 모델과 실행 SDK 준비를 마쳐야 합니다.\",\n    \"제작 차단: 레이어 PSD 제작됨. 전용 캐릭터 cmo3, can3 및 moc3 리깅·내보내기는 미제작\",\n    \"제작 차단: 라이선스를 확인한 Cubism Core 및 MotionSync Core 미제공\",\n    \"제작 차단: 최종 가림 레이어 및 모델별 MotionSync 설정 미제작\",\n    \"제작 차단: 한국어 CLOVA 음성·실제 모델·모바일 기기 결합 검수 미수행\",\n    \"실제 Cubism 렌더러 모듈과 Core 경로가 없습니다.\",\n    \"실제 전용 모델 2개가 필요합니다.\"\n  ],\n  \"warnings\": [\n    \"분리된 장면 레이어가 없습니다. 합성 및 손/책상 가림 관계는 검수되지 않았습니다.\",\n    \"이 검사는 파일 참조·비어 있지 않은 파일·JSON 구성만 확인합니다. MOC3/Core의 실제 로드·파라미터 일치·알파 합성·예술 품질·기기 성능·라이선스는 검증하지 않습니다.\"\n  ],\n  \"checkedFiles\": 1,\n  \"models\": [],\n  \"reportPath\": \"C:\\\\Users\\\\MaYunsong\\\\Documents\\\\각자의답NEW\\\\production\\\\live2d\\\\validation-runs\\\\2026-11-05-final-49b802b9-54d1-47d7-8b9a-f2542cfbd950\\\\current-scene.json\"\n}\n",
+  "stderr": "",
+  "status": "PASS"
+}

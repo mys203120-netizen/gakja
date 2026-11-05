@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "each-answer-live2d-delivery-v1",
+  "title": "각자의답 외부 리깅 납품 manifest — 실제 파일만 기록",
+  "type": "object",
+  "required": ["schemaVersion", "deliveryId", "modelKind", "versions", "models", "files"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "deliveryId": {"type": "string", "minLength": 1},
+    "modelKind": {"enum": ["dedicated", "sample"]},
+    "versions": {
+      "type": "object",
+      "required": ["editor", "exporter", "cubismWeb", "motionSyncWeb", "cubismCore", "motionSyncCore"],
+      "properties": {
+        "editor": {"type": "string", "minLength": 1},
+        "exporter": {"type": "string", "minLength": 1},
+        "cubismWeb": {"const": "5-r.5"},
+        "motionSyncWeb": {"const": "5-r.3"},
+        "cubismCore": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "motionSyncCore": {"type": "string", "minLength": 1}
+      }
+    },
+    "models": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {
+        "type": "object", "required": ["speakerId", "model3", "cmo3", "can3", "parameters"],
+        "properties": {
+          "speakerId": {"enum": ["interviewer-1", "interviewer-2"]},
+          "model3": {"$ref": "#/$defs/path"},
+          "cmo3": {"$ref": "#/$defs/path"},
+          "can3": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/path"}},
+          "parameters": {"$ref": "#/$defs/path"}
+        }
+      }
+    },
+    "files": {
+      "description": "delivery.json 자체는 자기 해시를 만들 수 없으므로 제외. 나머지 모든 납품 파일을 포함.",
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["path", "bytes", "sha256"],
+        "properties": {
+          "path": {"$ref": "#/$defs/path"},
+          "bytes": {"type": "integer", "minimum": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    }
+  },
+  "$defs": {"path": {"type": "string", "minLength": 1, "description": "대소문자가 정확한 package-relative 경로. /로 구분하고 절대 경로, .., ., 역슬래시, URI 인코딩, 쿼리, 프래그먼트와 링크는 불허."}}
+}

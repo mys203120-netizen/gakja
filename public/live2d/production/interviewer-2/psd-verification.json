@@ -1,0 +1,2248 @@
+{
+  "status": "verified-file-format",
+  "generatedAt": "2026-11-04T14:42:48.719Z",
+  "manifest": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\manifest.json",
+  "manifestSha256": "edd382fca4d112751e8562925fb7fd599412425e15deb6d7a4e2d5e36836fc23",
+  "library": {
+    "name": "ag-psd",
+    "version": "34.1.0"
+  },
+  "canvas": {
+    "width": 1672,
+    "height": 941,
+    "dpi": 72
+  },
+  "inputs": [
+    {
+      "id": "Mouth_Open_Reference",
+      "name": "Mouth_Open_Reference",
+      "groups": [
+        "Reference"
+      ],
+      "x": 1167,
+      "y": 319,
+      "z": 201,
+      "visible": false,
+      "role": "reference",
+      "width": 99,
+      "height": 53,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Mouth_Open_Reference.png",
+      "pngSha256": "19acda2829b2d3f39555deea714eb7453c83ccfe706354d756d7c8c18041162b",
+      "rgbaSha256": "0a9837231d88699c5caa4013793139038af2e36411ebe78ff19e70b8dade16b1",
+      "alpha": {
+        "transparent": 592,
+        "translucent": 4655,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Approved_Master_Reference",
+      "name": "Approved_Master_Reference",
+      "groups": [
+        "Reference"
+      ],
+      "x": 45,
+      "y": 46,
+      "z": 200,
+      "visible": false,
+      "role": "reference",
+      "width": 1589,
+      "height": 832,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Approved_Master_Reference.png",
+      "pngSha256": "6ff33a71bfb2bb12b8ce564b323206476b65049e1975d9e4f28ac21ebe400a94",
+      "rgbaSha256": "379530d5605decb1ad2fb174d45d0545f2ae378ed3832cb556929eb1a812358b",
+      "alpha": {
+        "transparent": 922842,
+        "translucent": 398753,
+        "opaque": 453
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Hand_R",
+      "name": "Hand_R",
+      "groups": [
+        "Hands"
+      ],
+      "x": 1008,
+      "y": 765,
+      "z": 121,
+      "visible": true,
+      "role": "part",
+      "width": 292,
+      "height": 103,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Hand_R.png",
+      "pngSha256": "d4142aa8d6f4dbcd4aad235b196e450f6bc6c9cf73ad59a950c7fa490437d3c1",
+      "rgbaSha256": "9046d98c59bbed3669a657478069c9699fc130d3d14b291751cdbc7de8f20e07",
+      "alpha": {
+        "transparent": 10774,
+        "translucent": 19295,
+        "opaque": 7
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Hand_L",
+      "name": "Hand_L",
+      "groups": [
+        "Hands"
+      ],
+      "x": 1234,
+      "y": 795,
+      "z": 120,
+      "visible": true,
+      "role": "part",
+      "width": 199,
+      "height": 67,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Hand_L.png",
+      "pngSha256": "ed52679d608a88ff61fb6c5a3d5bd7aaac9c7c060d3eb368444b5e263ca09579",
+      "rgbaSha256": "1b6d21b189516d5d7f0d181834ccd74a708c706cca121be50db56d5fb88119d8",
+      "alpha": {
+        "transparent": 3427,
+        "translucent": 9899,
+        "opaque": 7
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Earring_L",
+      "name": "Earring_L",
+      "groups": [
+        "Head",
+        "Jewelry"
+      ],
+      "x": 1306,
+      "y": 292,
+      "z": 111,
+      "visible": true,
+      "role": "part",
+      "width": 28,
+      "height": 36,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Earring_L.png",
+      "pngSha256": "b2bafd2cf88fc4c73a055010a2f1be0c3491a33a847cc5e297ebd5886dd56eff",
+      "rgbaSha256": "bc25fe96bc26cd546e806c78fd39c83b3dd675a852a116786badf4b3554913a6",
+      "alpha": {
+        "transparent": 367,
+        "translucent": 641,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Earring_R",
+      "name": "Earring_R",
+      "groups": [
+        "Head",
+        "Jewelry"
+      ],
+      "x": 1102,
+      "y": 325,
+      "z": 110,
+      "visible": true,
+      "role": "part",
+      "width": 28,
+      "height": 36,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Earring_R.png",
+      "pngSha256": "16240d939a37e9e0d67f82cf4ffe99e3423245d80559619b50d7bff3d6edec5a",
+      "rgbaSha256": "69f38ea21e2bf4e09442722a75fe3743ae1898c930f0a54a68379bf7caf96b98",
+      "alpha": {
+        "transparent": 367,
+        "translucent": 641,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Hair_Side_L",
+      "name": "Hair_Side_L",
+      "groups": [
+        "Head",
+        "Hair"
+      ],
+      "x": 1293,
+      "y": 92,
+      "z": 102,
+      "visible": true,
+      "role": "part",
+      "width": 112,
+      "height": 347,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Hair_Side_L.png",
+      "pngSha256": "e8a537657410cd2183f54e394b9f1d8fbb52ce2d73afd8b2e0b6277e79d7f03a",
+      "rgbaSha256": "33d894637cc01f56095dd18cbf855c15c029e2c6224b94c313bacc2c9f18d8c9",
+      "alpha": {
+        "transparent": 18184,
+        "translucent": 20678,
+        "opaque": 2
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Hair_Front_C",
+      "name": "Hair_Front_C",
+      "groups": [
+        "Head",
+        "Hair"
+      ],
+      "x": 1103,
+      "y": 46,
+      "z": 101,
+      "visible": true,
+      "role": "part",
+      "width": 194,
+      "height": 393,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Hair_Front_C.png",
+      "pngSha256": "1ba9719b86ac4f74efc9451ab147ceb7576f5d98d0f181dc214f7a252b6d46f1",
+      "rgbaSha256": "0eedf70e89856160ecc204e8f2f7cabd003f20865858278e568f3afa007859df",
+      "alpha": {
+        "transparent": 53897,
+        "translucent": 22345,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Hair_Side_R",
+      "name": "Hair_Side_R",
+      "groups": [
+        "Head",
+        "Hair"
+      ],
+      "x": 998,
+      "y": 78,
+      "z": 100,
+      "visible": true,
+      "role": "part",
+      "width": 109,
+      "height": 361,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Hair_Side_R.png",
+      "pngSha256": "bd4f7aae5c537258e366bf2691adccdb468d0a7ffa1971a7935756ba8d941680",
+      "rgbaSha256": "8af49917fb1e6dc2d7ef3ff8c91e4215744872a9b807432de901792cbf9ba0ae",
+      "alpha": {
+        "transparent": 15466,
+        "translucent": 23883,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "LowerLip",
+      "name": "LowerLip",
+      "groups": [
+        "Head",
+        "Mouth"
+      ],
+      "x": 1169,
+      "y": 319,
+      "z": 84,
+      "visible": true,
+      "role": "part",
+      "width": 94,
+      "height": 36,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\LowerLip.png",
+      "pngSha256": "412aa362096397e5c229e822676ff7c46b8dcb961d925b7485cbf8411df750e7",
+      "rgbaSha256": "de9b85ba707d36743850a3554e4f2efa63f90284cc8e69ccfbc0f66aff3a7312",
+      "alpha": {
+        "transparent": 2379,
+        "translucent": 1005,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "UpperLip",
+      "name": "UpperLip",
+      "groups": [
+        "Head",
+        "Mouth"
+      ],
+      "x": 1169,
+      "y": 318,
+      "z": 83,
+      "visible": true,
+      "role": "part",
+      "width": 94,
+      "height": 25,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\UpperLip.png",
+      "pngSha256": "df2dfac2447f3f1c84ea3813930c7de0d5ae905a2d82091656e3fa71a6795a98",
+      "rgbaSha256": "14f12de272125b25d91a2128ba5f5a19f38e8e67481fa7fb5e5c6ecb33223ebe",
+      "alpha": {
+        "transparent": 1511,
+        "translucent": 839,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Mouth_Skin_Occlusion",
+      "name": "Mouth_Skin_Occlusion",
+      "groups": [
+        "Head",
+        "Mouth"
+      ],
+      "x": 1158,
+      "y": 301,
+      "z": 82,
+      "visible": true,
+      "role": "part",
+      "width": 121,
+      "height": 82,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Mouth_Skin_Occlusion.png",
+      "pngSha256": "47f6ad7e9873a7c6c042ef74aa4b86ca394680ac94391a19dfa371c9e071b13f",
+      "rgbaSha256": "c9fae865b34d39b05df7e4aef627a959a9a24bfe311242f34f28d2d54982635b",
+      "alpha": {
+        "transparent": 1113,
+        "translucent": 8809,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Teeth_Upper",
+      "name": "Teeth_Upper",
+      "groups": [
+        "Head",
+        "Mouth"
+      ],
+      "x": 1179,
+      "y": 328,
+      "z": 81,
+      "visible": true,
+      "role": "part",
+      "width": 77,
+      "height": 20,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Teeth_Upper.png",
+      "pngSha256": "3176db0ba721e24a8833a531aa9498b28d0af183fd146609742c598ce0a4b9ac",
+      "rgbaSha256": "ee0df05b4a674881fc80637e9fad8a9808fd93d96d647b949d92f19d7748b86a",
+      "alpha": {
+        "transparent": 1037,
+        "translucent": 503,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Mouth_Inside",
+      "name": "Mouth_Inside",
+      "groups": [
+        "Head",
+        "Mouth"
+      ],
+      "x": 1175,
+      "y": 327,
+      "z": 80,
+      "visible": true,
+      "role": "part",
+      "width": 84,
+      "height": 39,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Mouth_Inside.png",
+      "pngSha256": "31b04e89d71c22e6ecf65cce5526ab45f6741e51452b6137d2ec6cf0bbc5df64",
+      "rgbaSha256": "e743c55a5c0e53cdde1d641202940d8d5c889e217395c8dafd8511cffc295a30",
+      "alpha": {
+        "transparent": 2066,
+        "translucent": 1210,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Nose_Base",
+      "name": "Nose_Base",
+      "groups": [
+        "Head",
+        "Nose"
+      ],
+      "x": 1189,
+      "y": 267,
+      "z": 75,
+      "visible": true,
+      "role": "part",
+      "width": 50,
+      "height": 48,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Nose_Base.png",
+      "pngSha256": "f2da21a051ec63be1517a71b539ec9ce08dca78d1e38069557885e9260436774",
+      "rgbaSha256": "d0eaf7a79fa71345f2baaae688679788d689e0edddc30d5683161d32c8d952e4",
+      "alpha": {
+        "transparent": 792,
+        "translucent": 1608,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Brow_L",
+      "name": "Brow_L",
+      "groups": [
+        "Head",
+        "Brows"
+      ],
+      "x": 1211,
+      "y": 179,
+      "z": 71,
+      "visible": true,
+      "role": "part",
+      "width": 78,
+      "height": 38,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Brow_L.png",
+      "pngSha256": "4a0d6867a5412dc5f8d38edf9a0805fd438d935ac4be17bcebea617e8ae4dbf9",
+      "rgbaSha256": "1992cdd505894e6d0d772f5bd0fe1d09499f2fca339ae0ffcb91215c9f277e91",
+      "alpha": {
+        "transparent": 1863,
+        "translucent": 1101,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Brow_R",
+      "name": "Brow_R",
+      "groups": [
+        "Head",
+        "Brows"
+      ],
+      "x": 1119,
+      "y": 191,
+      "z": 70,
+      "visible": true,
+      "role": "part",
+      "width": 55,
+      "height": 41,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Brow_R.png",
+      "pngSha256": "b603309e5ac5dd50207f0cbf969691ea8386b0627d4d31512919308801403758",
+      "rgbaSha256": "b5c468a5e62819ee1a42cd25eec1fd5c6d4b503c884944af96da71f9251b464c",
+      "alpha": {
+        "transparent": 1098,
+        "translucent": 1157,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "LowerLid_L",
+      "name": "LowerLid_L",
+      "groups": [
+        "Head",
+        "Eye_L"
+      ],
+      "x": 1221,
+      "y": 233,
+      "z": 64,
+      "visible": true,
+      "role": "part",
+      "width": 51,
+      "height": 22,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\LowerLid_L.png",
+      "pngSha256": "7e2cd5b78e89c6bd4f4533a3b1f2bdad275e16eb1b5876c1b88295bf9e08a6ef",
+      "rgbaSha256": "37f6a85b51e86b9393526334cbd2554ec96746841c66862b60cbeff266d8a5d3",
+      "alpha": {
+        "transparent": 841,
+        "translucent": 281,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "UpperLid_L",
+      "name": "UpperLid_L",
+      "groups": [
+        "Head",
+        "Eye_L"
+      ],
+      "x": 1220,
+      "y": 216,
+      "z": 63,
+      "visible": true,
+      "role": "part",
+      "width": 54,
+      "height": 27,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\UpperLid_L.png",
+      "pngSha256": "693cbdd482394ad292c7de14934887d8487a5259cdb4168f5c754d5ee5b74a75",
+      "rgbaSha256": "f935b9d4844b280aeb1b5c8e5e7313d3415a77c793fe109ff395551071c25fe0",
+      "alpha": {
+        "transparent": 988,
+        "translucent": 470,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "EyeHighlight_L",
+      "name": "EyeHighlight_L",
+      "groups": [
+        "Head",
+        "Eye_L"
+      ],
+      "x": 1252,
+      "y": 226,
+      "z": 62,
+      "visible": true,
+      "role": "part",
+      "width": 7,
+      "height": 7,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\EyeHighlight_L.png",
+      "pngSha256": "03521105d41609dc911393a04dfca623eb24717ba4f7a0cd57bf2126d35a6250",
+      "rgbaSha256": "db5b4be4279009a0177eda070c49185aa2e7326765196af5ac677e8028a89f39",
+      "alpha": {
+        "transparent": 45,
+        "translucent": 4,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Iris_L",
+      "name": "Iris_L",
+      "groups": [
+        "Head",
+        "Eye_L"
+      ],
+      "x": 1232,
+      "y": 219,
+      "z": 61,
+      "visible": true,
+      "role": "part",
+      "width": 28,
+      "height": 30,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Iris_L.png",
+      "pngSha256": "e29b619991f1949ae0339987897972b0126a726d31f5662fe16fcebd79960316",
+      "rgbaSha256": "d002579875e01048f883fe129000512165685859a709f4e67adbc8ea7a997f9c",
+      "alpha": {
+        "transparent": 356,
+        "translucent": 484,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "EyeWhite_L",
+      "name": "EyeWhite_L",
+      "groups": [
+        "Head",
+        "Eye_L"
+      ],
+      "x": 1223,
+      "y": 220,
+      "z": 60,
+      "visible": true,
+      "role": "part",
+      "width": 47,
+      "height": 28,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\EyeWhite_L.png",
+      "pngSha256": "cd6c8b60f3e2773ffa2c681571269a912f2ccbbaf9a5b7f7926ed78b1b777cce",
+      "rgbaSha256": "19cfef88556950807cbff544cdb1f147ddddba8d824bcf62067fe347aafbd60c",
+      "alpha": {
+        "transparent": 564,
+        "translucent": 752,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "LowerLid_R",
+      "name": "LowerLid_R",
+      "groups": [
+        "Head",
+        "Eye_R"
+      ],
+      "x": 1125,
+      "y": 255,
+      "z": 54,
+      "visible": true,
+      "role": "part",
+      "width": 55,
+      "height": 19,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\LowerLid_R.png",
+      "pngSha256": "4233dd77dd349b6d1662ed65ca475e1762174df1512eb7e6c9f2216521431ed6",
+      "rgbaSha256": "defbcb0950db8c828fce7fb6cfd12b57b5565d1f9c7d53b0468ac7baaf7176d2",
+      "alpha": {
+        "transparent": 774,
+        "translucent": 271,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "UpperLid_R",
+      "name": "UpperLid_R",
+      "groups": [
+        "Head",
+        "Eye_R"
+      ],
+      "x": 1123,
+      "y": 234,
+      "z": 53,
+      "visible": true,
+      "role": "part",
+      "width": 58,
+      "height": 26,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\UpperLid_R.png",
+      "pngSha256": "819fe6e30ebb0e3878e0c6b4277cbaf58ff477d70321638136b9025bbc29cdb2",
+      "rgbaSha256": "3d07bcfb8815f0c70299c26d0ec266d730fc90c632c088eec715caf1f08534b4",
+      "alpha": {
+        "transparent": 974,
+        "translucent": 534,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "EyeHighlight_R",
+      "name": "EyeHighlight_R",
+      "groups": [
+        "Head",
+        "Eye_R"
+      ],
+      "x": 1161,
+      "y": 247,
+      "z": 52,
+      "visible": true,
+      "role": "part",
+      "width": 5,
+      "height": 5,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\EyeHighlight_R.png",
+      "pngSha256": "dea6d0060782c8061622ae42b62a8e8808a37e3e0d590b15874d2be77f4b220b",
+      "rgbaSha256": "bf2cc06d8fd50348cef48ec510da86ff2687da68d8769bae7c1e4b0210556486",
+      "alpha": {
+        "transparent": 24,
+        "translucent": 1,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Iris_R",
+      "name": "Iris_R",
+      "groups": [
+        "Head",
+        "Eye_R"
+      ],
+      "x": 1141,
+      "y": 237,
+      "z": 51,
+      "visible": true,
+      "role": "part",
+      "width": 28,
+      "height": 30,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Iris_R.png",
+      "pngSha256": "0eda52d2867408d4f9a218536d254605ecf45c3309fbeae30844b9eb0ba722bc",
+      "rgbaSha256": "1d404db5bad3a35a468aeb08a8d600bed0431dba55dcf212eb860e9e6d0c6b2d",
+      "alpha": {
+        "transparent": 356,
+        "translucent": 484,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "EyeWhite_R",
+      "name": "EyeWhite_R",
+      "groups": [
+        "Head",
+        "Eye_R"
+      ],
+      "x": 1126,
+      "y": 238,
+      "z": 50,
+      "visible": true,
+      "role": "part",
+      "width": 51,
+      "height": 29,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\EyeWhite_R.png",
+      "pngSha256": "733fed3d58c832ef730d09b0286ad0e0208f236ddb5a2a27a3e3efc62b818da3",
+      "rgbaSha256": "f203bddd0ad779f98dba69187ccca5852639b1fbd81a52c9caab5abbc87f66b1",
+      "alpha": {
+        "transparent": 620,
+        "translucent": 859,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Face_Base",
+      "name": "Face_Base",
+      "groups": [
+        "Head",
+        "Skin"
+      ],
+      "x": 1088,
+      "y": 96,
+      "z": 42,
+      "visible": true,
+      "role": "part",
+      "width": 236,
+      "height": 305,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Face_Base.png",
+      "pngSha256": "d7ba6da88092e944f891b87d8a85733a043dc93b42decff88543247e1e3d9775",
+      "rgbaSha256": "e1e3a105ffd197d52f0bdaa7ea9b22b802f9a57a4ba60e8a4bbf0a287e397f96",
+      "alpha": {
+        "transparent": 15843,
+        "translucent": 56019,
+        "opaque": 118
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Ear_L",
+      "name": "Ear_L",
+      "groups": [
+        "Head",
+        "Skin"
+      ],
+      "x": 1303,
+      "y": 231,
+      "z": 41,
+      "visible": true,
+      "role": "part",
+      "width": 37,
+      "height": 76,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Ear_L.png",
+      "pngSha256": "4e3dc3c63b64b92ba974e64c78e81733952ba72428c637280c45f1fc08373fee",
+      "rgbaSha256": "601698e9364148473274765f21ca760b85e4b826e585b1df1e7633b09a90c03f",
+      "alpha": {
+        "transparent": 1023,
+        "translucent": 1742,
+        "opaque": 47
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Ear_R",
+      "name": "Ear_R",
+      "groups": [
+        "Head",
+        "Skin"
+      ],
+      "x": 1082,
+      "y": 269,
+      "z": 40,
+      "visible": true,
+      "role": "part",
+      "width": 39,
+      "height": 62,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Ear_R.png",
+      "pngSha256": "866a1dabb15c3d2569d56884fd83dfeba740a6ca9a3f0637faaca6cccb4d752c",
+      "rgbaSha256": "35e4a4bda47a52c2b00be001a376d1fd075f9818ebdcccd1021edbb6b1c0e820",
+      "alpha": {
+        "transparent": 904,
+        "translucent": 1514,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Neck",
+      "name": "Neck",
+      "groups": [
+        "Head",
+        "Neck"
+      ],
+      "x": 1133,
+      "y": 357,
+      "z": 20,
+      "visible": true,
+      "role": "part",
+      "width": 183,
+      "height": 216,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Neck.png",
+      "pngSha256": "5ca9a9090912107843aaf29b0a332b68f2c2acd528b1a76a5983235f63a8e9f4",
+      "rgbaSha256": "86b3bd9ff237bcec721ebb506346ff82c3dbf2e4a0aa3635b829b0f802360caf",
+      "alpha": {
+        "transparent": 10880,
+        "translucent": 28648,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Forearm_L",
+      "name": "Forearm_L",
+      "groups": [
+        "Body"
+      ],
+      "x": 1399,
+      "y": 721,
+      "z": 5,
+      "visible": true,
+      "role": "part",
+      "width": 233,
+      "height": 148,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Forearm_L.png",
+      "pngSha256": "f00673bce57bf9d22556f1cb46dce1aeb228abd575d53fdb6776dc05203a464c",
+      "rgbaSha256": "a89ae928a22205ddc0789cca79c4ff96f1ded2309581155be54f52683fad93f0",
+      "alpha": {
+        "transparent": 11389,
+        "translucent": 23023,
+        "opaque": 72
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Forearm_R",
+      "name": "Forearm_R",
+      "groups": [
+        "Body"
+      ],
+      "x": 845,
+      "y": 725,
+      "z": 4,
+      "visible": true,
+      "role": "part",
+      "width": 247,
+      "height": 142,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Forearm_R.png",
+      "pngSha256": "c8fb76dcab5b9907cf96ad3e2f51e6d9e5a5b022c67ce7da3634efa2ae93fe56",
+      "rgbaSha256": "3a40c6d0f5359f74da9f5979654c94a6956150a2e52aefbe4505a5417be00d72",
+      "alpha": {
+        "transparent": 11363,
+        "translucent": 23635,
+        "opaque": 76
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "UpperArm_L",
+      "name": "UpperArm_L",
+      "groups": [
+        "Body"
+      ],
+      "x": 1393,
+      "y": 447,
+      "z": 3,
+      "visible": true,
+      "role": "part",
+      "width": 171,
+      "height": 329,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\UpperArm_L.png",
+      "pngSha256": "34fcd6fd948ed2e277f06d5e2e4882c14df651bfe48f443414e18435dc1fd762",
+      "rgbaSha256": "ce5b35e622a44bf1ba100a890bce20811c4af9751b50c0f1d68e5617151a92fb",
+      "alpha": {
+        "transparent": 22686,
+        "translucent": 33529,
+        "opaque": 44
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "UpperArm_R",
+      "name": "UpperArm_R",
+      "groups": [
+        "Body"
+      ],
+      "x": 893,
+      "y": 439,
+      "z": 2,
+      "visible": true,
+      "role": "part",
+      "width": 191,
+      "height": 309,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\UpperArm_R.png",
+      "pngSha256": "1ca6b4760e5a3e8cf586d32e645c2e42fa256f69384e48011b26e5c8cc807b9f",
+      "rgbaSha256": "61d17a82416e4686681ac83bde4fcaf5dd4fc666c31134eb03356e637cb5d386",
+      "alpha": {
+        "transparent": 19392,
+        "translucent": 39547,
+        "opaque": 80
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Shirt",
+      "name": "Shirt",
+      "groups": [
+        "Body"
+      ],
+      "x": 1127,
+      "y": 463,
+      "z": 1,
+      "visible": true,
+      "role": "part",
+      "width": 189,
+      "height": 330,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Shirt.png",
+      "pngSha256": "52ed8e536a70e22a7b514d0847bc17e1a96978a0b1ca724880ca0ea1c23eacae",
+      "rgbaSha256": "1e7da66e9405cc757b551a40143e76c4962ff8ca3ff1cc327a3c290a089e1a1c",
+      "alpha": {
+        "transparent": 20709,
+        "translucent": 41661,
+        "opaque": 0
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    },
+    {
+      "id": "Jacket",
+      "name": "Jacket",
+      "groups": [
+        "Body"
+      ],
+      "x": 45,
+      "y": 348,
+      "z": 0,
+      "visible": true,
+      "role": "part",
+      "width": 1589,
+      "height": 530,
+      "sourcePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\parts\\Jacket.png",
+      "pngSha256": "995ee191fa66e041900afbc540809caccbf040902ff79fa7199c1ec842e26c6e",
+      "rgbaSha256": "e4bf5bcf84b605e3870e2852b8d737a55c74ccf9b535265900ad1c681cb34bde",
+      "alpha": {
+        "transparent": 760825,
+        "translucent": 81200,
+        "opaque": 145
+      },
+      "sourceHadIccProfile": true,
+      "colorHandling": "embedded input ICC converted to sRGB"
+    }
+  ],
+  "outputs": [
+    {
+      "kind": "artwork_master",
+      "path": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\artwork_master.psd",
+      "bytes": 4281847,
+      "sha256": "0884bc920a4b63cea182dc01650a5d9a5a345b8ff56fe8952e9c1faaebc36d9b",
+      "signature": "8BPS",
+      "version": 1,
+      "colorMode": "RGB",
+      "bitsPerChannel": 8,
+      "width": 1672,
+      "height": 941,
+      "channels": 4,
+      "rasterLayers": 37,
+      "iccSha256": "c56e1685d888f5edb92fe07f2750f387f8fe8e91b32ff8fb0b56bfbbb9458353",
+      "iccBytes": 480,
+      "layers": [
+        {
+          "id": "Mouth_Open_Reference",
+          "name": "Mouth_Open_Reference",
+          "groups": [
+            "Reference"
+          ],
+          "x": 1167,
+          "y": 319,
+          "width": 99,
+          "height": 53,
+          "visible": false,
+          "rgbaSha256": "0a9837231d88699c5caa4013793139038af2e36411ebe78ff19e70b8dade16b1",
+          "alpha": {
+            "transparent": 592,
+            "translucent": 4655,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Approved_Master_Reference",
+          "name": "Approved_Master_Reference",
+          "groups": [
+            "Reference"
+          ],
+          "x": 45,
+          "y": 46,
+          "width": 1589,
+          "height": 832,
+          "visible": false,
+          "rgbaSha256": "379530d5605decb1ad2fb174d45d0545f2ae378ed3832cb556929eb1a812358b",
+          "alpha": {
+            "transparent": 922842,
+            "translucent": 398753,
+            "opaque": 453
+          }
+        },
+        {
+          "id": "Hand_R",
+          "name": "Hand_R",
+          "groups": [
+            "Hands"
+          ],
+          "x": 1008,
+          "y": 765,
+          "width": 292,
+          "height": 103,
+          "visible": true,
+          "rgbaSha256": "9046d98c59bbed3669a657478069c9699fc130d3d14b291751cdbc7de8f20e07",
+          "alpha": {
+            "transparent": 10774,
+            "translucent": 19295,
+            "opaque": 7
+          }
+        },
+        {
+          "id": "Hand_L",
+          "name": "Hand_L",
+          "groups": [
+            "Hands"
+          ],
+          "x": 1234,
+          "y": 795,
+          "width": 199,
+          "height": 67,
+          "visible": true,
+          "rgbaSha256": "1b6d21b189516d5d7f0d181834ccd74a708c706cca121be50db56d5fb88119d8",
+          "alpha": {
+            "transparent": 3427,
+            "translucent": 9899,
+            "opaque": 7
+          }
+        },
+        {
+          "id": "Earring_L",
+          "name": "Earring_L",
+          "groups": [
+            "Head",
+            "Jewelry"
+          ],
+          "x": 1306,
+          "y": 292,
+          "width": 28,
+          "height": 36,
+          "visible": true,
+          "rgbaSha256": "bc25fe96bc26cd546e806c78fd39c83b3dd675a852a116786badf4b3554913a6",
+          "alpha": {
+            "transparent": 367,
+            "translucent": 641,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Earring_R",
+          "name": "Earring_R",
+          "groups": [
+            "Head",
+            "Jewelry"
+          ],
+          "x": 1102,
+          "y": 325,
+          "width": 28,
+          "height": 36,
+          "visible": true,
+          "rgbaSha256": "69f38ea21e2bf4e09442722a75fe3743ae1898c930f0a54a68379bf7caf96b98",
+          "alpha": {
+            "transparent": 367,
+            "translucent": 641,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Hair_Side_L",
+          "name": "Hair_Side_L",
+          "groups": [
+            "Head",
+            "Hair"
+          ],
+          "x": 1293,
+          "y": 92,
+          "width": 112,
+          "height": 347,
+          "visible": true,
+          "rgbaSha256": "33d894637cc01f56095dd18cbf855c15c029e2c6224b94c313bacc2c9f18d8c9",
+          "alpha": {
+            "transparent": 18184,
+            "translucent": 20678,
+            "opaque": 2
+          }
+        },
+        {
+          "id": "Hair_Front_C",
+          "name": "Hair_Front_C",
+          "groups": [
+            "Head",
+            "Hair"
+          ],
+          "x": 1103,
+          "y": 46,
+          "width": 194,
+          "height": 393,
+          "visible": true,
+          "rgbaSha256": "0eedf70e89856160ecc204e8f2f7cabd003f20865858278e568f3afa007859df",
+          "alpha": {
+            "transparent": 53897,
+            "translucent": 22345,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Hair_Side_R",
+          "name": "Hair_Side_R",
+          "groups": [
+            "Head",
+            "Hair"
+          ],
+          "x": 998,
+          "y": 78,
+          "width": 109,
+          "height": 361,
+          "visible": true,
+          "rgbaSha256": "8af49917fb1e6dc2d7ef3ff8c91e4215744872a9b807432de901792cbf9ba0ae",
+          "alpha": {
+            "transparent": 15466,
+            "translucent": 23883,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "LowerLip",
+          "name": "LowerLip",
+          "groups": [
+            "Head",
+            "Mouth"
+          ],
+          "x": 1169,
+          "y": 319,
+          "width": 94,
+          "height": 36,
+          "visible": true,
+          "rgbaSha256": "de9b85ba707d36743850a3554e4f2efa63f90284cc8e69ccfbc0f66aff3a7312",
+          "alpha": {
+            "transparent": 2379,
+            "translucent": 1005,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "UpperLip",
+          "name": "UpperLip",
+          "groups": [
+            "Head",
+            "Mouth"
+          ],
+          "x": 1169,
+          "y": 318,
+          "width": 94,
+          "height": 25,
+          "visible": true,
+          "rgbaSha256": "14f12de272125b25d91a2128ba5f5a19f38e8e67481fa7fb5e5c6ecb33223ebe",
+          "alpha": {
+            "transparent": 1511,
+            "translucent": 839,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Mouth_Skin_Occlusion",
+          "name": "Mouth_Skin_Occlusion",
+          "groups": [
+            "Head",
+            "Mouth"
+          ],
+          "x": 1158,
+          "y": 301,
+          "width": 121,
+          "height": 82,
+          "visible": true,
+          "rgbaSha256": "c9fae865b34d39b05df7e4aef627a959a9a24bfe311242f34f28d2d54982635b",
+          "alpha": {
+            "transparent": 1113,
+            "translucent": 8809,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Teeth_Upper",
+          "name": "Teeth_Upper",
+          "groups": [
+            "Head",
+            "Mouth"
+          ],
+          "x": 1179,
+          "y": 328,
+          "width": 77,
+          "height": 20,
+          "visible": true,
+          "rgbaSha256": "ee0df05b4a674881fc80637e9fad8a9808fd93d96d647b949d92f19d7748b86a",
+          "alpha": {
+            "transparent": 1037,
+            "translucent": 503,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Mouth_Inside",
+          "name": "Mouth_Inside",
+          "groups": [
+            "Head",
+            "Mouth"
+          ],
+          "x": 1175,
+          "y": 327,
+          "width": 84,
+          "height": 39,
+          "visible": true,
+          "rgbaSha256": "e743c55a5c0e53cdde1d641202940d8d5c889e217395c8dafd8511cffc295a30",
+          "alpha": {
+            "transparent": 2066,
+            "translucent": 1210,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Nose_Base",
+          "name": "Nose_Base",
+          "groups": [
+            "Head",
+            "Nose"
+          ],
+          "x": 1189,
+          "y": 267,
+          "width": 50,
+          "height": 48,
+          "visible": true,
+          "rgbaSha256": "d0eaf7a79fa71345f2baaae688679788d689e0edddc30d5683161d32c8d952e4",
+          "alpha": {
+            "transparent": 792,
+            "translucent": 1608,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Brow_L",
+          "name": "Brow_L",
+          "groups": [
+            "Head",
+            "Brows"
+          ],
+          "x": 1211,
+          "y": 179,
+          "width": 78,
+          "height": 38,
+          "visible": true,
+          "rgbaSha256": "1992cdd505894e6d0d772f5bd0fe1d09499f2fca339ae0ffcb91215c9f277e91",
+          "alpha": {
+            "transparent": 1863,
+            "translucent": 1101,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Brow_R",
+          "name": "Brow_R",
+          "groups": [
+            "Head",
+            "Brows"
+          ],
+          "x": 1119,
+          "y": 191,
+          "width": 55,
+          "height": 41,
+          "visible": true,
+          "rgbaSha256": "b5c468a5e62819ee1a42cd25eec1fd5c6d4b503c884944af96da71f9251b464c",
+          "alpha": {
+            "transparent": 1098,
+            "translucent": 1157,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "LowerLid_L",
+          "name": "LowerLid_L",
+          "groups": [
+            "Head",
+            "Eye_L"
+          ],
+          "x": 1221,
+          "y": 233,
+          "width": 51,
+          "height": 22,
+          "visible": true,
+          "rgbaSha256": "37f6a85b51e86b9393526334cbd2554ec96746841c66862b60cbeff266d8a5d3",
+          "alpha": {
+            "transparent": 841,
+            "translucent": 281,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "UpperLid_L",
+          "name": "UpperLid_L",
+          "groups": [
+            "Head",
+            "Eye_L"
+          ],
+          "x": 1220,
+          "y": 216,
+          "width": 54,
+          "height": 27,
+          "visible": true,
+          "rgbaSha256": "f935b9d4844b280aeb1b5c8e5e7313d3415a77c793fe109ff395551071c25fe0",
+          "alpha": {
+            "transparent": 988,
+            "translucent": 470,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "EyeHighlight_L",
+          "name": "EyeHighlight_L",
+          "groups": [
+            "Head",
+            "Eye_L"
+          ],
+          "x": 1252,
+          "y": 226,
+          "width": 7,
+          "height": 7,
+          "visible": true,
+          "rgbaSha256": "db5b4be4279009a0177eda070c49185aa2e7326765196af5ac677e8028a89f39",
+          "alpha": {
+            "transparent": 45,
+            "translucent": 4,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Iris_L",
+          "name": "Iris_L",
+          "groups": [
+            "Head",
+            "Eye_L"
+          ],
+          "x": 1232,
+          "y": 219,
+          "width": 28,
+          "height": 30,
+          "visible": true,
+          "rgbaSha256": "d002579875e01048f883fe129000512165685859a709f4e67adbc8ea7a997f9c",
+          "alpha": {
+            "transparent": 356,
+            "translucent": 484,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "EyeWhite_L",
+          "name": "EyeWhite_L",
+          "groups": [
+            "Head",
+            "Eye_L"
+          ],
+          "x": 1223,
+          "y": 220,
+          "width": 47,
+          "height": 28,
+          "visible": true,
+          "rgbaSha256": "19cfef88556950807cbff544cdb1f147ddddba8d824bcf62067fe347aafbd60c",
+          "alpha": {
+            "transparent": 564,
+            "translucent": 752,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "LowerLid_R",
+          "name": "LowerLid_R",
+          "groups": [
+            "Head",
+            "Eye_R"
+          ],
+          "x": 1125,
+          "y": 255,
+          "width": 55,
+          "height": 19,
+          "visible": true,
+          "rgbaSha256": "defbcb0950db8c828fce7fb6cfd12b57b5565d1f9c7d53b0468ac7baaf7176d2",
+          "alpha": {
+            "transparent": 774,
+            "translucent": 271,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "UpperLid_R",
+          "name": "UpperLid_R",
+          "groups": [
+            "Head",
+            "Eye_R"
+          ],
+          "x": 1123,
+          "y": 234,
+          "width": 58,
+          "height": 26,
+          "visible": true,
+          "rgbaSha256": "3d07bcfb8815f0c70299c26d0ec266d730fc90c632c088eec715caf1f08534b4",
+          "alpha": {
+            "transparent": 974,
+            "translucent": 534,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "EyeHighlight_R",
+          "name": "EyeHighlight_R",
+          "groups": [
+            "Head",
+            "Eye_R"
+          ],
+          "x": 1161,
+          "y": 247,
+          "width": 5,
+          "height": 5,
+          "visible": true,
+          "rgbaSha256": "bf2cc06d8fd50348cef48ec510da86ff2687da68d8769bae7c1e4b0210556486",
+          "alpha": {
+            "transparent": 24,
+            "translucent": 1,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Iris_R",
+          "name": "Iris_R",
+          "groups": [
+            "Head",
+            "Eye_R"
+          ],
+          "x": 1141,
+          "y": 237,
+          "width": 28,
+          "height": 30,
+          "visible": true,
+          "rgbaSha256": "1d404db5bad3a35a468aeb08a8d600bed0431dba55dcf212eb860e9e6d0c6b2d",
+          "alpha": {
+            "transparent": 356,
+            "translucent": 484,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "EyeWhite_R",
+          "name": "EyeWhite_R",
+          "groups": [
+            "Head",
+            "Eye_R"
+          ],
+          "x": 1126,
+          "y": 238,
+          "width": 51,
+          "height": 29,
+          "visible": true,
+          "rgbaSha256": "f203bddd0ad779f98dba69187ccca5852639b1fbd81a52c9caab5abbc87f66b1",
+          "alpha": {
+            "transparent": 620,
+            "translucent": 859,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Face_Base",
+          "name": "Face_Base",
+          "groups": [
+            "Head",
+            "Skin"
+          ],
+          "x": 1088,
+          "y": 96,
+          "width": 236,
+          "height": 305,
+          "visible": true,
+          "rgbaSha256": "e1e3a105ffd197d52f0bdaa7ea9b22b802f9a57a4ba60e8a4bbf0a287e397f96",
+          "alpha": {
+            "transparent": 15843,
+            "translucent": 56019,
+            "opaque": 118
+          }
+        },
+        {
+          "id": "Ear_L",
+          "name": "Ear_L",
+          "groups": [
+            "Head",
+            "Skin"
+          ],
+          "x": 1303,
+          "y": 231,
+          "width": 37,
+          "height": 76,
+          "visible": true,
+          "rgbaSha256": "601698e9364148473274765f21ca760b85e4b826e585b1df1e7633b09a90c03f",
+          "alpha": {
+            "transparent": 1023,
+            "translucent": 1742,
+            "opaque": 47
+          }
+        },
+        {
+          "id": "Ear_R",
+          "name": "Ear_R",
+          "groups": [
+            "Head",
+            "Skin"
+          ],
+          "x": 1082,
+          "y": 269,
+          "width": 39,
+          "height": 62,
+          "visible": true,
+          "rgbaSha256": "35e4a4bda47a52c2b00be001a376d1fd075f9818ebdcccd1021edbb6b1c0e820",
+          "alpha": {
+            "transparent": 904,
+            "translucent": 1514,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Neck",
+          "name": "Neck",
+          "groups": [
+            "Head",
+            "Neck"
+          ],
+          "x": 1133,
+          "y": 357,
+          "width": 183,
+          "height": 216,
+          "visible": true,
+          "rgbaSha256": "86b3bd9ff237bcec721ebb506346ff82c3dbf2e4a0aa3635b829b0f802360caf",
+          "alpha": {
+            "transparent": 10880,
+            "translucent": 28648,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Forearm_L",
+          "name": "Forearm_L",
+          "groups": [
+            "Body"
+          ],
+          "x": 1399,
+          "y": 721,
+          "width": 233,
+          "height": 148,
+          "visible": true,
+          "rgbaSha256": "a89ae928a22205ddc0789cca79c4ff96f1ded2309581155be54f52683fad93f0",
+          "alpha": {
+            "transparent": 11389,
+            "translucent": 23023,
+            "opaque": 72
+          }
+        },
+        {
+          "id": "Forearm_R",
+          "name": "Forearm_R",
+          "groups": [
+            "Body"
+          ],
+          "x": 845,
+          "y": 725,
+          "width": 247,
+          "height": 142,
+          "visible": true,
+          "rgbaSha256": "3a40c6d0f5359f74da9f5979654c94a6956150a2e52aefbe4505a5417be00d72",
+          "alpha": {
+            "transparent": 11363,
+            "translucent": 23635,
+            "opaque": 76
+          }
+        },
+        {
+          "id": "UpperArm_L",
+          "name": "UpperArm_L",
+          "groups": [
+            "Body"
+          ],
+          "x": 1393,
+          "y": 447,
+          "width": 171,
+          "height": 329,
+          "visible": true,
+          "rgbaSha256": "ce5b35e622a44bf1ba100a890bce20811c4af9751b50c0f1d68e5617151a92fb",
+          "alpha": {
+            "transparent": 22686,
+            "translucent": 33529,
+            "opaque": 44
+          }
+        },
+        {
+          "id": "UpperArm_R",
+          "name": "UpperArm_R",
+          "groups": [
+            "Body"
+          ],
+          "x": 893,
+          "y": 439,
+          "width": 191,
+          "height": 309,
+          "visible": true,
+          "rgbaSha256": "61d17a82416e4686681ac83bde4fcaf5dd4fc666c31134eb03356e637cb5d386",
+          "alpha": {
+            "transparent": 19392,
+            "translucent": 39547,
+            "opaque": 80
+          }
+        },
+        {
+          "id": "Shirt",
+          "name": "Shirt",
+          "groups": [
+            "Body"
+          ],
+          "x": 1127,
+          "y": 463,
+          "width": 189,
+          "height": 330,
+          "visible": true,
+          "rgbaSha256": "1e7da66e9405cc757b551a40143e76c4962ff8ca3ff1cc327a3c290a089e1a1c",
+          "alpha": {
+            "transparent": 20709,
+            "translucent": 41661,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Jacket",
+          "name": "Jacket",
+          "groups": [
+            "Body"
+          ],
+          "x": 45,
+          "y": 348,
+          "width": 1589,
+          "height": 530,
+          "visible": true,
+          "rgbaSha256": "e4bf5bcf84b605e3870e2852b8d737a55c74ccf9b535265900ad1c681cb34bde",
+          "alpha": {
+            "transparent": 760825,
+            "translucent": 81200,
+            "opaque": 145
+          }
+        }
+      ],
+      "mergedRgbaSha256": "669006868e423ea9471da6f1dafbbd96bb9971fd5ec05d7373905198239343fa",
+      "mergedPreviewVerification": {
+        "alphaExact": true,
+        "pinnedCodecPredictionByteExact": true,
+        "maxPremultipliedRgbError": 1.3176470588235294,
+        "allowedPremultipliedRgbError": 1.5,
+        "derivedPerPixelBound": "1 + 0.5*(alpha/255)",
+        "reason": "ag-psd 34.1.0 white-matte Uint8Array truncation followed by Uint8ClampedArray unmatte rounding; every independent layer RGBA is byte-exact"
+      }
+    },
+    {
+      "kind": "cubism_import",
+      "path": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\production\\interviewer-2\\cubism_import.psd",
+      "bytes": 2950223,
+      "sha256": "2a5c319d9f1ce6f3c4daad3218ee4903e72b65c49044f2e1b2149937c263fbc6",
+      "signature": "8BPS",
+      "version": 1,
+      "colorMode": "RGB",
+      "bitsPerChannel": 8,
+      "width": 1672,
+      "height": 941,
+      "channels": 4,
+      "rasterLayers": 35,
+      "iccSha256": "c56e1685d888f5edb92fe07f2750f387f8fe8e91b32ff8fb0b56bfbbb9458353",
+      "iccBytes": 480,
+      "layers": [
+        {
+          "id": "Hand_R",
+          "name": "Hand_R",
+          "groups": [],
+          "x": 1008,
+          "y": 765,
+          "width": 292,
+          "height": 103,
+          "visible": true,
+          "rgbaSha256": "9046d98c59bbed3669a657478069c9699fc130d3d14b291751cdbc7de8f20e07",
+          "alpha": {
+            "transparent": 10774,
+            "translucent": 19295,
+            "opaque": 7
+          }
+        },
+        {
+          "id": "Hand_L",
+          "name": "Hand_L",
+          "groups": [],
+          "x": 1234,
+          "y": 795,
+          "width": 199,
+          "height": 67,
+          "visible": true,
+          "rgbaSha256": "1b6d21b189516d5d7f0d181834ccd74a708c706cca121be50db56d5fb88119d8",
+          "alpha": {
+            "transparent": 3427,
+            "translucent": 9899,
+            "opaque": 7
+          }
+        },
+        {
+          "id": "Earring_L",
+          "name": "Earring_L",
+          "groups": [],
+          "x": 1306,
+          "y": 292,
+          "width": 28,
+          "height": 36,
+          "visible": true,
+          "rgbaSha256": "bc25fe96bc26cd546e806c78fd39c83b3dd675a852a116786badf4b3554913a6",
+          "alpha": {
+            "transparent": 367,
+            "translucent": 641,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Earring_R",
+          "name": "Earring_R",
+          "groups": [],
+          "x": 1102,
+          "y": 325,
+          "width": 28,
+          "height": 36,
+          "visible": true,
+          "rgbaSha256": "69f38ea21e2bf4e09442722a75fe3743ae1898c930f0a54a68379bf7caf96b98",
+          "alpha": {
+            "transparent": 367,
+            "translucent": 641,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Hair_Side_L",
+          "name": "Hair_Side_L",
+          "groups": [],
+          "x": 1293,
+          "y": 92,
+          "width": 112,
+          "height": 347,
+          "visible": true,
+          "rgbaSha256": "33d894637cc01f56095dd18cbf855c15c029e2c6224b94c313bacc2c9f18d8c9",
+          "alpha": {
+            "transparent": 18184,
+            "translucent": 20678,
+            "opaque": 2
+          }
+        },
+        {
+          "id": "Hair_Front_C",
+          "name": "Hair_Front_C",
+          "groups": [],
+          "x": 1103,
+          "y": 46,
+          "width": 194,
+          "height": 393,
+          "visible": true,
+          "rgbaSha256": "0eedf70e89856160ecc204e8f2f7cabd003f20865858278e568f3afa007859df",
+          "alpha": {
+            "transparent": 53897,
+            "translucent": 22345,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Hair_Side_R",
+          "name": "Hair_Side_R",
+          "groups": [],
+          "x": 998,
+          "y": 78,
+          "width": 109,
+          "height": 361,
+          "visible": true,
+          "rgbaSha256": "8af49917fb1e6dc2d7ef3ff8c91e4215744872a9b807432de901792cbf9ba0ae",
+          "alpha": {
+            "transparent": 15466,
+            "translucent": 23883,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "LowerLip",
+          "name": "LowerLip",
+          "groups": [],
+          "x": 1169,
+          "y": 319,
+          "width": 94,
+          "height": 36,
+          "visible": true,
+          "rgbaSha256": "de9b85ba707d36743850a3554e4f2efa63f90284cc8e69ccfbc0f66aff3a7312",
+          "alpha": {
+            "transparent": 2379,
+            "translucent": 1005,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "UpperLip",
+          "name": "UpperLip",
+          "groups": [],
+          "x": 1169,
+          "y": 318,
+          "width": 94,
+          "height": 25,
+          "visible": true,
+          "rgbaSha256": "14f12de272125b25d91a2128ba5f5a19f38e8e67481fa7fb5e5c6ecb33223ebe",
+          "alpha": {
+            "transparent": 1511,
+            "translucent": 839,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Mouth_Skin_Occlusion",
+          "name": "Mouth_Skin_Occlusion",
+          "groups": [],
+          "x": 1158,
+          "y": 301,
+          "width": 121,
+          "height": 82,
+          "visible": true,
+          "rgbaSha256": "c9fae865b34d39b05df7e4aef627a959a9a24bfe311242f34f28d2d54982635b",
+          "alpha": {
+            "transparent": 1113,
+            "translucent": 8809,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Teeth_Upper",
+          "name": "Teeth_Upper",
+          "groups": [],
+          "x": 1179,
+          "y": 328,
+          "width": 77,
+          "height": 20,
+          "visible": true,
+          "rgbaSha256": "ee0df05b4a674881fc80637e9fad8a9808fd93d96d647b949d92f19d7748b86a",
+          "alpha": {
+            "transparent": 1037,
+            "translucent": 503,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Mouth_Inside",
+          "name": "Mouth_Inside",
+          "groups": [],
+          "x": 1175,
+          "y": 327,
+          "width": 84,
+          "height": 39,
+          "visible": true,
+          "rgbaSha256": "e743c55a5c0e53cdde1d641202940d8d5c889e217395c8dafd8511cffc295a30",
+          "alpha": {
+            "transparent": 2066,
+            "translucent": 1210,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Nose_Base",
+          "name": "Nose_Base",
+          "groups": [],
+          "x": 1189,
+          "y": 267,
+          "width": 50,
+          "height": 48,
+          "visible": true,
+          "rgbaSha256": "d0eaf7a79fa71345f2baaae688679788d689e0edddc30d5683161d32c8d952e4",
+          "alpha": {
+            "transparent": 792,
+            "translucent": 1608,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Brow_L",
+          "name": "Brow_L",
+          "groups": [],
+          "x": 1211,
+          "y": 179,
+          "width": 78,
+          "height": 38,
+          "visible": true,
+          "rgbaSha256": "1992cdd505894e6d0d772f5bd0fe1d09499f2fca339ae0ffcb91215c9f277e91",
+          "alpha": {
+            "transparent": 1863,
+            "translucent": 1101,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Brow_R",
+          "name": "Brow_R",
+          "groups": [],
+          "x": 1119,
+          "y": 191,
+          "width": 55,
+          "height": 41,
+          "visible": true,
+          "rgbaSha256": "b5c468a5e62819ee1a42cd25eec1fd5c6d4b503c884944af96da71f9251b464c",
+          "alpha": {
+            "transparent": 1098,
+            "translucent": 1157,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "LowerLid_L",
+          "name": "LowerLid_L",
+          "groups": [],
+          "x": 1221,
+          "y": 233,
+          "width": 51,
+          "height": 22,
+          "visible": true,
+          "rgbaSha256": "37f6a85b51e86b9393526334cbd2554ec96746841c66862b60cbeff266d8a5d3",
+          "alpha": {
+            "transparent": 841,
+            "translucent": 281,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "UpperLid_L",
+          "name": "UpperLid_L",
+          "groups": [],
+          "x": 1220,
+          "y": 216,
+          "width": 54,
+          "height": 27,
+          "visible": true,
+          "rgbaSha256": "f935b9d4844b280aeb1b5c8e5e7313d3415a77c793fe109ff395551071c25fe0",
+          "alpha": {
+            "transparent": 988,
+            "translucent": 470,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "EyeHighlight_L",
+          "name": "EyeHighlight_L",
+          "groups": [],
+          "x": 1252,
+          "y": 226,
+          "width": 7,
+          "height": 7,
+          "visible": true,
+          "rgbaSha256": "db5b4be4279009a0177eda070c49185aa2e7326765196af5ac677e8028a89f39",
+          "alpha": {
+            "transparent": 45,
+            "translucent": 4,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Iris_L",
+          "name": "Iris_L",
+          "groups": [],
+          "x": 1232,
+          "y": 219,
+          "width": 28,
+          "height": 30,
+          "visible": true,
+          "rgbaSha256": "d002579875e01048f883fe129000512165685859a709f4e67adbc8ea7a997f9c",
+          "alpha": {
+            "transparent": 356,
+            "translucent": 484,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "EyeWhite_L",
+          "name": "EyeWhite_L",
+          "groups": [],
+          "x": 1223,
+          "y": 220,
+          "width": 47,
+          "height": 28,
+          "visible": true,
+          "rgbaSha256": "19cfef88556950807cbff544cdb1f147ddddba8d824bcf62067fe347aafbd60c",
+          "alpha": {
+            "transparent": 564,
+            "translucent": 752,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "LowerLid_R",
+          "name": "LowerLid_R",
+          "groups": [],
+          "x": 1125,
+          "y": 255,
+          "width": 55,
+          "height": 19,
+          "visible": true,
+          "rgbaSha256": "defbcb0950db8c828fce7fb6cfd12b57b5565d1f9c7d53b0468ac7baaf7176d2",
+          "alpha": {
+            "transparent": 774,
+            "translucent": 271,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "UpperLid_R",
+          "name": "UpperLid_R",
+          "groups": [],
+          "x": 1123,
+          "y": 234,
+          "width": 58,
+          "height": 26,
+          "visible": true,
+          "rgbaSha256": "3d07bcfb8815f0c70299c26d0ec266d730fc90c632c088eec715caf1f08534b4",
+          "alpha": {
+            "transparent": 974,
+            "translucent": 534,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "EyeHighlight_R",
+          "name": "EyeHighlight_R",
+          "groups": [],
+          "x": 1161,
+          "y": 247,
+          "width": 5,
+          "height": 5,
+          "visible": true,
+          "rgbaSha256": "bf2cc06d8fd50348cef48ec510da86ff2687da68d8769bae7c1e4b0210556486",
+          "alpha": {
+            "transparent": 24,
+            "translucent": 1,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Iris_R",
+          "name": "Iris_R",
+          "groups": [],
+          "x": 1141,
+          "y": 237,
+          "width": 28,
+          "height": 30,
+          "visible": true,
+          "rgbaSha256": "1d404db5bad3a35a468aeb08a8d600bed0431dba55dcf212eb860e9e6d0c6b2d",
+          "alpha": {
+            "transparent": 356,
+            "translucent": 484,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "EyeWhite_R",
+          "name": "EyeWhite_R",
+          "groups": [],
+          "x": 1126,
+          "y": 238,
+          "width": 51,
+          "height": 29,
+          "visible": true,
+          "rgbaSha256": "f203bddd0ad779f98dba69187ccca5852639b1fbd81a52c9caab5abbc87f66b1",
+          "alpha": {
+            "transparent": 620,
+            "translucent": 859,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Face_Base",
+          "name": "Face_Base",
+          "groups": [],
+          "x": 1088,
+          "y": 96,
+          "width": 236,
+          "height": 305,
+          "visible": true,
+          "rgbaSha256": "e1e3a105ffd197d52f0bdaa7ea9b22b802f9a57a4ba60e8a4bbf0a287e397f96",
+          "alpha": {
+            "transparent": 15843,
+            "translucent": 56019,
+            "opaque": 118
+          }
+        },
+        {
+          "id": "Ear_L",
+          "name": "Ear_L",
+          "groups": [],
+          "x": 1303,
+          "y": 231,
+          "width": 37,
+          "height": 76,
+          "visible": true,
+          "rgbaSha256": "601698e9364148473274765f21ca760b85e4b826e585b1df1e7633b09a90c03f",
+          "alpha": {
+            "transparent": 1023,
+            "translucent": 1742,
+            "opaque": 47
+          }
+        },
+        {
+          "id": "Ear_R",
+          "name": "Ear_R",
+          "groups": [],
+          "x": 1082,
+          "y": 269,
+          "width": 39,
+          "height": 62,
+          "visible": true,
+          "rgbaSha256": "35e4a4bda47a52c2b00be001a376d1fd075f9818ebdcccd1021edbb6b1c0e820",
+          "alpha": {
+            "transparent": 904,
+            "translucent": 1514,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Neck",
+          "name": "Neck",
+          "groups": [],
+          "x": 1133,
+          "y": 357,
+          "width": 183,
+          "height": 216,
+          "visible": true,
+          "rgbaSha256": "86b3bd9ff237bcec721ebb506346ff82c3dbf2e4a0aa3635b829b0f802360caf",
+          "alpha": {
+            "transparent": 10880,
+            "translucent": 28648,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Forearm_L",
+          "name": "Forearm_L",
+          "groups": [],
+          "x": 1399,
+          "y": 721,
+          "width": 233,
+          "height": 148,
+          "visible": true,
+          "rgbaSha256": "a89ae928a22205ddc0789cca79c4ff96f1ded2309581155be54f52683fad93f0",
+          "alpha": {
+            "transparent": 11389,
+            "translucent": 23023,
+            "opaque": 72
+          }
+        },
+        {
+          "id": "Forearm_R",
+          "name": "Forearm_R",
+          "groups": [],
+          "x": 845,
+          "y": 725,
+          "width": 247,
+          "height": 142,
+          "visible": true,
+          "rgbaSha256": "3a40c6d0f5359f74da9f5979654c94a6956150a2e52aefbe4505a5417be00d72",
+          "alpha": {
+            "transparent": 11363,
+            "translucent": 23635,
+            "opaque": 76
+          }
+        },
+        {
+          "id": "UpperArm_L",
+          "name": "UpperArm_L",
+          "groups": [],
+          "x": 1393,
+          "y": 447,
+          "width": 171,
+          "height": 329,
+          "visible": true,
+          "rgbaSha256": "ce5b35e622a44bf1ba100a890bce20811c4af9751b50c0f1d68e5617151a92fb",
+          "alpha": {
+            "transparent": 22686,
+            "translucent": 33529,
+            "opaque": 44
+          }
+        },
+        {
+          "id": "UpperArm_R",
+          "name": "UpperArm_R",
+          "groups": [],
+          "x": 893,
+          "y": 439,
+          "width": 191,
+          "height": 309,
+          "visible": true,
+          "rgbaSha256": "61d17a82416e4686681ac83bde4fcaf5dd4fc666c31134eb03356e637cb5d386",
+          "alpha": {
+            "transparent": 19392,
+            "translucent": 39547,
+            "opaque": 80
+          }
+        },
+        {
+          "id": "Shirt",
+          "name": "Shirt",
+          "groups": [],
+          "x": 1127,
+          "y": 463,
+          "width": 189,
+          "height": 330,
+          "visible": true,
+          "rgbaSha256": "1e7da66e9405cc757b551a40143e76c4962ff8ca3ff1cc327a3c290a089e1a1c",
+          "alpha": {
+            "transparent": 20709,
+            "translucent": 41661,
+            "opaque": 0
+          }
+        },
+        {
+          "id": "Jacket",
+          "name": "Jacket",
+          "groups": [],
+          "x": 45,
+          "y": 348,
+          "width": 1589,
+          "height": 530,
+          "visible": true,
+          "rgbaSha256": "e4bf5bcf84b605e3870e2852b8d737a55c74ccf9b535265900ad1c681cb34bde",
+          "alpha": {
+            "transparent": 760825,
+            "translucent": 81200,
+            "opaque": 145
+          }
+        }
+      ],
+      "mergedRgbaSha256": "669006868e423ea9471da6f1dafbbd96bb9971fd5ec05d7373905198239343fa",
+      "mergedPreviewVerification": {
+        "alphaExact": true,
+        "pinnedCodecPredictionByteExact": true,
+        "maxPremultipliedRgbError": 1.3176470588235294,
+        "allowedPremultipliedRgbError": 1.5,
+        "derivedPerPixelBound": "1 + 0.5*(alpha/255)",
+        "reason": "ag-psd 34.1.0 white-matte Uint8Array truncation followed by Uint8ClampedArray unmatte rounding; every independent layer RGBA is byte-exact"
+      }
+    }
+  ],
+  "scope": "Independent RGBA raster layers are preserved. No segmentation, repainting, anatomical verification, PSD application import, or rigging was performed by this packaging helper.",
+  "unverified": [
+    "Photoshop UI opening/editing",
+    "Cubism Editor import",
+    "part anatomy and visual completeness",
+    "rigging and export"
+  ]
+}

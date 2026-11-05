@@ -1,0 +1,23 @@
+{
+  "name": "each-answer-expo-scene-example",
+  "version": "0.1.0",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "engines": { "node": "^22.13.0 || ^24.3.0 || >=26.0.0" },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "expo": "~58.0.22",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-webview": "14.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "~19.3.0",
+    "typescript": "~6.0.3"
+  }
+}

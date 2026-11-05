@@ -1,0 +1,31 @@
+.layout :global(.interview-stage) { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); align-items: start; gap: 30px; padding: 86px 32px 130px; overflow-y: auto; }
+.layout :global(.question-card), .layout :global(.question-card:not(.ready-card)) { position: relative; inset: auto; width: 100%; max-height: calc(100dvh - 350px); padding: 24px; border-radius: 18px; }
+.layout :global(.question-card:not(.ready-card) .question-heading h2) { font-size: 20px; }
+.layout :global(.question-card:not(.ready-card) .question-content p) { font-size: 15px; }
+.layout :global(.center-stage), .layout :global(.center-stage.is-ready), .layout :global(.center-stage:not(.is-ready)) { position: relative; inset: auto; transform: none; width: 100%; max-width: 1050px; align-self: center; margin: 0 auto; grid-column: 2; grid-row: 1; }
+.layout :global(.center-copy) { position: static; inset: auto; transform: none; margin-top: 16px; min-height: 105px; }
+.layout :global(.center-copy h2) { font-size: 19px; }
+.layout :global(.self-camera) { left: 32px; right: auto; bottom: 108px; width: 218px; }
+.layout :global(.room-name) { visibility: visible !important; }
+.layout :global(.conversation-toggle-wrap) { top: 20px; right: 155px; }
+.layout :global(.compact-target) { display: none; }
+.layout :global(.answer-action>span) { position: static; font-size: 10px; margin-left: 15px; }
+.layout :global(.candidate-label) { font-size: 12px; }
+@media (max-width: 1050px) and (min-width: 701px) {
+  .layout :global(.interview-stage) { grid-template-columns: 250px minmax(0, 1fr); gap: 20px; padding-inline: 22px; }
+  .layout :global(.self-camera) { left: 22px; width: 190px; }
+  .layout :global(.question-card) { padding: 18px; }
+}
+@media (max-width: 700px) {
+  .layout :global(.interview-stage) { display: block; padding: 76px 16px 150px; }
+  .layout :global(.question-card), .layout :global(.question-card:not(.ready-card)) { max-height: 200px; padding: 18px; }
+  .layout :global(.center-stage), .layout :global(.center-stage.is-ready), .layout :global(.center-stage:not(.is-ready)) { margin-top: 20px; }
+  .layout :global(.self-camera) { position: relative; inset: auto; width: 145px; margin: 20px auto 0; }
+  .layout :global(.center-copy) { min-height: 70px; }
+  .layout :global(.center-copy h2) { font-size: 17px; }
+  .layout :global(.room-footer) { display: none; }
+  .layout :global(.device-bar) { position: fixed; bottom: max(16px, env(safe-area-inset-bottom)); background: #171717f5; padding: 8px; border-radius: 18px; }
+  .layout :global(.room-header) { left: 20px; right: 20px; }
+  .layout :global(.conversation-toggle-wrap) { right: 100px; }
+  .layout :global(.answer-action>span) { margin-left: 0; }
+}

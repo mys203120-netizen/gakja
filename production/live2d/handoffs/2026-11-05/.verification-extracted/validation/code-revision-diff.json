@@ -1,0 +1,197 @@
+{
+  "initialCapturedAt": "2026-11-04T16:02:33.939Z",
+  "finalSnapshotAt": "2026-11-04T16:32:32.319Z",
+  "changeSemantics": "Snapshot inventory difference; added does not assert filesystem creation time.",
+  "immutableArtworkPsdDocsAndExistingEvidenceUnchanged": true,
+  "changes": [
+    {
+      "path": "components/interview/InterviewerScene.tsx",
+      "change": "modified",
+      "before": {
+        "path": "components/interview/InterviewerScene.tsx",
+        "bytes": 3134,
+        "sha256": "6f8cc2959c6cc01f5605b4109106cbde1cb1c36bb3dba570092e1fc18c996888"
+      },
+      "after": {
+        "path": "components/interview/InterviewerScene.tsx",
+        "bytes": 3129,
+        "sha256": "5b873a61d2632ea2ffa7174be2414293a070c829c34277ecf3e69a1bb316e937"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "integrations/live2d/renderer.mjs",
+      "change": "modified",
+      "before": {
+        "path": "integrations/live2d/renderer.mjs",
+        "bytes": 23380,
+        "sha256": "33d13da5f2308459610a0b5594c409d7b2df243278caca44071082d12f4f5895"
+      },
+      "after": {
+        "path": "integrations/live2d/renderer.mjs",
+        "bytes": 25130,
+        "sha256": "49c3826d961d1bc18d6c8dd6384df52589f38ca5bc074ba4eb29e238c254e5cf"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/asset-validation.mjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "lib/live2d/asset-validation.mjs",
+        "bytes": 18002,
+        "sha256": "a4474c2196c714cafda2ec3975b14c06978f66989903fb1ef7d75edca64f705e"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/core-validation.mjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "lib/live2d/core-validation.mjs",
+        "bytes": 35177,
+        "sha256": "7c779961b3f43feb23157beeecd73a4e97a23090b00cd45a893dabc4c9c37744"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/delivery-contract.schema.json",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "lib/live2d/delivery-contract.schema.json",
+        "bytes": 2243,
+        "sha256": "28f25b9328935f0f8383a4fc5d9df33b69c3bf02f7387e54dbe13cf4630c8f60"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/delivery-validation.mjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "lib/live2d/delivery-validation.mjs",
+        "bytes": 18436,
+        "sha256": "a4d93f5846bd73e8674f2134300b8b64f9e2b4083fd9d27810a99ca8618b3f60"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/manifest.ts",
+      "change": "modified",
+      "before": {
+        "path": "lib/live2d/manifest.ts",
+        "bytes": 2722,
+        "sha256": "91bdb0b3fbcfdae07dfd1999b7dc476537b19d0f4c0bec76c129e203f8109d19"
+      },
+      "after": {
+        "path": "lib/live2d/manifest.ts",
+        "bytes": 7381,
+        "sha256": "67c53bc20213c37be115e85948a2d84a37a3e03768262c9f1abe08b5b9217f77"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/types.ts",
+      "change": "modified",
+      "before": {
+        "path": "lib/live2d/types.ts",
+        "bytes": 2316,
+        "sha256": "cbc36486cf979ed71ca786450653e320580365f97b8b86280ba7637ed4b2d833"
+      },
+      "after": {
+        "path": "lib/live2d/types.ts",
+        "bytes": 2849,
+        "sha256": "9b049f302867f7c1b5a8c0f2f68e0311ad40b33ac3470d22cbff03b38d4ef62f"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "scripts/package-live2d-handoff.mjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "scripts/package-live2d-handoff.mjs",
+        "bytes": 35933,
+        "sha256": "5df935c7700058f8d3fd44f12238b8d65273deb4671ac2ecd93f92cfdaae10be"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "scripts/setup-live2d-sdk.mjs",
+      "change": "modified",
+      "before": {
+        "path": "scripts/setup-live2d-sdk.mjs",
+        "bytes": 4672,
+        "sha256": "61afad043b082d9b9c9ac0b690361fc2edf2dac1f8e301569c833c3750568b34"
+      },
+      "after": {
+        "path": "scripts/setup-live2d-sdk.mjs",
+        "bytes": 5218,
+        "sha256": "e6c412ddaf43442464c301b564433268202325827c574f43a924204fb1018523"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "scripts/verify-live2d-assets.mjs",
+      "change": "modified",
+      "before": {
+        "path": "scripts/verify-live2d-assets.mjs",
+        "bytes": 16522,
+        "sha256": "d9213b74c8b9399d9ee02dae90cec1878811ffdc81b2af1d9f82bdde5c6cf640"
+      },
+      "after": {
+        "path": "scripts/verify-live2d-assets.mjs",
+        "bytes": 1692,
+        "sha256": "8d08573431fda7277165307b1f9a0c74f8bec45d53d764e62dcf44c557c485cf"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "tests/live2d-core-validation.test.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "tests/live2d-core-validation.test.ts",
+        "bytes": 6565,
+        "sha256": "ea8952bc43ab36010c05b61ad4a59f344bd702e0109d7a9c1440e80db40665f7"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "tests/live2d-delivery-validation.test.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "tests/live2d-delivery-validation.test.ts",
+        "bytes": 9864,
+        "sha256": "883413878b4a3b429e2756dd71a8a3aa343bd13c57cf18fe1f14b9ca45c18294"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "tests/live2d-manifest-gate.test.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "tests/live2d-manifest-gate.test.ts",
+        "bytes": 7065,
+        "sha256": "07b5e5e1db1f8e2a19e3da4f6d0d9b73f71fddf0c5b6932e63d278703004c7e0"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "tests/live2d-scene.test.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "tests/live2d-scene.test.ts",
+        "bytes": 7166,
+        "sha256": "0c9a52c01a2166d468ebccb8a3067ecc4236a37cd7a702ebfca4e5bb6b2e07a8"
+      },
+      "authorizedCodeRevision": true
+    }
+  ]
+}

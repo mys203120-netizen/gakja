@@ -1,0 +1,66 @@
+{
+  "sources": [
+    {
+      "file": "approved-master.png",
+      "sha256": "3bf038ef601262a96806cd1b153f280e225c72b3f3d037ee11f5a5d549cee741"
+    },
+    {
+      "file": "underpaint.png",
+      "sha256": "87e95aa32d37af66e5839f392a147e131cc60c3f6a11870e798b5fb9242d5b3d"
+    },
+    {
+      "file": "mouth-open-source.png",
+      "sha256": "59ecb5efc26f07531079bfca7bb7fc2f136dfc879ca5e6e6f9f52ea1edd6bff2"
+    }
+  ],
+  "sourceRegistrations": [
+    {
+      "file": "approved-master.png",
+      "width": 1672,
+      "height": 941,
+      "padding": {
+        "right": 0,
+        "bottom": 0
+      },
+      "scale": 1,
+      "translation": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "underpaint.png",
+      "width": 1671,
+      "height": 941,
+      "padding": {
+        "right": 1,
+        "bottom": 0
+      },
+      "scale": 1,
+      "translation": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "mouth-open-source.png",
+      "width": 1671,
+      "height": 941,
+      "padding": {
+        "right": 1,
+        "bottom": 0
+      },
+      "scale": 1,
+      "translation": [
+        0,
+        0
+      ]
+    }
+  ],
+  "method": "Deterministic alpha masks; original-feature pixels and ImageGen occlusion underpaint; hidden sclera/reflection reconstruction as recorded per layer",
+  "layerCount": 37,
+  "artLayerCount": 35,
+  "cubismRigCreated": false,
+  "photoshopOpened": false,
+  "cubismImportVerified": false
+}

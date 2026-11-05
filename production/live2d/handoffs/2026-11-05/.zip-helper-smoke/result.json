@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "archive-CRC-and-actual-extraction-verified",
+  "python": "3.11.9",
+  "zipImplementation": "Python stdlib zipfile / ZIP_DEFLATED",
+  "archivePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\handoffs\\2026-11-05\\.zip-helper-smoke\\smoke.zip",
+  "archiveBytes": 183,
+  "archiveSha256": "6c2bb4ff613b0b6808f972c862f05656ecccfa5dca45c7bc1a69be90e555fb50",
+  "crcCheckedAllMembers": true,
+  "relativePathListExact": true,
+  "actualExtractionPerformed": true,
+  "extractionDirectory": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\handoffs\\2026-11-05\\.zip-helper-smoke\\extracted",
+  "extractedFileHashesExact": true,
+  "fileCount": 1,
+  "files": [
+    {
+      "path": "한글경로/proof.txt",
+      "bytes": 39,
+      "sha256": "4ba10b4f6b9af24e1eeab75ffd9704c4f1377ec9cf8b90a3f2a88ffe0e05e005",
+      "crc32": "125d9109"
+    }
+  ]
+}

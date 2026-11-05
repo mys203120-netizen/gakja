@@ -1,0 +1,124 @@
+{
+  "Version": 3,
+  "Meta": {
+    "Duration": 1.6,
+    "Fps": 30,
+    "Loop": false,
+    "AreBeziersRestricted": true,
+    "CurveCount": 7,
+    "TotalSegmentCount": 7,
+    "TotalPointCount": 28,
+    "UserDataCount": 0,
+    "TotalUserDataSize": 0
+  },
+  "FadeInTime": 0.65,
+  "FadeOutTime": 0.45,
+  "Curves": [
+    {
+      "Target": "Parameter",
+      "Id": "ParamAngleX",
+      "Segments": [
+        0,
+        0,
+        1,
+        0.533333,
+        0,
+        1.066667,
+        0,
+        1.6,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamAngleY",
+      "Segments": [
+        0,
+        0,
+        1,
+        0.533333,
+        0,
+        1.066667,
+        0,
+        1.6,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamAngleZ",
+      "Segments": [
+        0,
+        0,
+        1,
+        0.533333,
+        0,
+        1.066667,
+        0,
+        1.6,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamBodyAngleX",
+      "Segments": [
+        0,
+        0,
+        1,
+        0.533333,
+        0,
+        1.066667,
+        0,
+        1.6,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamBodyAngleY",
+      "Segments": [
+        0,
+        0,
+        1,
+        0.533333,
+        0,
+        1.066667,
+        0,
+        1.6,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamBodyAngleZ",
+      "Segments": [
+        0,
+        0,
+        1,
+        0.533333,
+        0,
+        1.066667,
+        0,
+        1.6,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamQuestionGesture",
+      "Segments": [
+        0,
+        0,
+        1,
+        0.533333,
+        0,
+        1.066667,
+        0,
+        1.6,
+        0
+      ]
+    }
+  ],
+  "UserData": []
+}

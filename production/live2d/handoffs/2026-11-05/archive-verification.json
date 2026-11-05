@@ -1,0 +1,1418 @@
+{
+  "schemaVersion": 1,
+  "status": "archive-CRC-and-actual-extraction-verified",
+  "python": "3.11.9",
+  "zipImplementation": "Python stdlib zipfile / ZIP_DEFLATED",
+  "archivePath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\handoffs\\2026-11-05\\each-answer-live2d-handoff-2026-11-05.zip",
+  "archiveBytes": 32995706,
+  "archiveSha256": "855109347822f67e83230ef72fe379db42a6b1cbfcbee87865decae21592b307",
+  "crcCheckedAllMembers": true,
+  "relativePathListExact": true,
+  "actualExtractionPerformed": true,
+  "extractionDirectory": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\handoffs\\2026-11-05\\.verification-extracted",
+  "extractedFileHashesExact": true,
+  "fileCount": 198,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 8527,
+      "sha256": "d563217866be9c73440a73508ee83bb59a5cb961333e9c9797e25d186ef1292f",
+      "crc32": "bfa3d6e1"
+    },
+    {
+      "path": "baseline-initial.json",
+      "bytes": 34379,
+      "sha256": "4fd82f24ee32af4991f2191592eb1d96529fd67269a77b50aa1bf3673ce19e7a",
+      "crc32": "31e3c4c5"
+    },
+    {
+      "path": "baseline-manifest.json",
+      "bytes": 56550,
+      "sha256": "538ca734057358ca5ecc67532cdf5722ef74bece9ef9fe2a0cb66617f40a2e08",
+      "crc32": "0e624ec5"
+    },
+    {
+      "path": "source/app/interview/scene/page.tsx",
+      "bytes": 133,
+      "sha256": "03d895d998d6f89f8973ddbe4e726c5b8a92a5c1a397c3510e25716a1392b21a",
+      "crc32": "c398d119"
+    },
+    {
+      "path": "source/components/interview/InterviewerScene.module.css",
+      "bytes": 921,
+      "sha256": "0d6018b37bc759a543b9e717c1116f97cc2fc8ca356422250ac5831dec97bf83",
+      "crc32": "ffde22fa"
+    },
+    {
+      "path": "source/components/interview/InterviewerScene.tsx",
+      "bytes": 3129,
+      "sha256": "5b873a61d2632ea2ffa7174be2414293a070c829c34277ecf3e69a1bb316e937",
+      "crc32": "5ed94a18"
+    },
+    {
+      "path": "source/components/interview/SceneHost.module.css",
+      "bytes": 1257,
+      "sha256": "fb3801e8246a4c9398fad56e34830cd1506a22fdaff8c481513d10bac8764db0",
+      "crc32": "9a0eac04"
+    },
+    {
+      "path": "source/components/interview/SceneHost.tsx",
+      "bytes": 6350,
+      "sha256": "72e8544830cd1319c3fd0b4214b954b94364c073cae7aecbda8eec930373822f",
+      "crc32": "99af5b8a"
+    },
+    {
+      "path": "source/components/interview/SceneInterview.module.css",
+      "bytes": 2710,
+      "sha256": "3b6b474d7e6ad7b9646ead65e48f37d81fc9869a529a8709f4ebd6d1c3e1ae11",
+      "crc32": "ac5998b5"
+    },
+    {
+      "path": "source/docs/live2d/art-review.md",
+      "bytes": 4756,
+      "sha256": "ed9fb549b114c55b2b0a6cad6e222a7389ac95f9e034244b9baecc4de913ff06",
+      "crc32": "43cf7c7b"
+    },
+    {
+      "path": "source/docs/live2d/authoring-tools.md",
+      "bytes": 12243,
+      "sha256": "2d216e9cdd9ade78763d34bf6a164c9f88b91052455c667d5802baf0bf84bf81",
+      "crc32": "03716e9a"
+    },
+    {
+      "path": "source/docs/live2d/motion_spec.md",
+      "bytes": 9722,
+      "sha256": "1e84f9c0c5f36dec3a9664444d7773674063cadb4b638618b17af54a0cfa9965",
+      "crc32": "2df94613"
+    },
+    {
+      "path": "source/docs/live2d/mouth_rigging_spec.md",
+      "bytes": 5053,
+      "sha256": "03a5fc828fee2726678a947c3f012c6c2d624ea2af3aa1a7f162af7b842e694a",
+      "crc32": "a866aaa4"
+    },
+    {
+      "path": "source/docs/live2d/parameter_spec.md",
+      "bytes": 8388,
+      "sha256": "b69d7f86b6c0e94010d7d79a032b8789f2d6a7201a2d039434285ccf6739391e",
+      "crc32": "730f2d75"
+    },
+    {
+      "path": "source/docs/live2d/production-spec.md",
+      "bytes": 16246,
+      "sha256": "c9087e6adc778713b459f4302046d22c6fcfebb4fcf65fd057100eeef9f7ec05",
+      "crc32": "fa7e758d"
+    },
+    {
+      "path": "source/docs/live2d/qa_report.md",
+      "bytes": 4787,
+      "sha256": "de9297587ac5fff4c0e68f337229c6acb582db502965850b413d6f1214514d02",
+      "crc32": "cd7e038a"
+    },
+    {
+      "path": "source/docs/live2d/runtime_integration.md",
+      "bytes": 12047,
+      "sha256": "f9fd0c74045550f6bfbf40e7b585cdb35d524fdf60de18ae43bb97e0cba97d5f",
+      "crc32": "03549d97"
+    },
+    {
+      "path": "source/docs/live2d/sdk-research.md",
+      "bytes": 12050,
+      "sha256": "b26538aec17d989145d44d0ef1f00a681a0eda7afdb0bef8385e7eefa4021a7a",
+      "crc32": "feadaec2"
+    },
+    {
+      "path": "source/examples/expo-scene/App.tsx",
+      "bytes": 11312,
+      "sha256": "f91171b27768355304f1b0b337d7b029504d772a8838aeb42c858ad2d4cfb791",
+      "crc32": "93437d3c"
+    },
+    {
+      "path": "source/examples/expo-scene/README.md",
+      "bytes": 5522,
+      "sha256": "4f5b541d3b00f89e9e2384aafcfc13c9d5b708f955bcdbd871cfda33d6f95d9a",
+      "crc32": "439497b6"
+    },
+    {
+      "path": "source/examples/expo-scene/app.json",
+      "bytes": 297,
+      "sha256": "08c6e1ba835951f1d1ce808b8cdc19a9cd90a0ca45826ef1a76a996ed68bcbd8",
+      "crc32": "86976d36"
+    },
+    {
+      "path": "source/examples/expo-scene/package-lock.json",
+      "bytes": 231578,
+      "sha256": "3bb46f64261a300868b2142ba5c00b8c849c0cde7b9bb64c629cf30b7ed7a200",
+      "crc32": "619a791e"
+    },
+    {
+      "path": "source/examples/expo-scene/package.json",
+      "bytes": 557,
+      "sha256": "8089d5fd39c4872efeb9b5c0a948e966369853109ab76e3438366ab967e1f5c3",
+      "crc32": "b9d60820"
+    },
+    {
+      "path": "source/examples/expo-scene/tsconfig.json",
+      "bytes": 146,
+      "sha256": "c093fdca212719c7b7a9f39ee801907fa52af11d9bbf9ee1671935f9f5483471",
+      "crc32": "8e79a98b"
+    },
+    {
+      "path": "source/integrations/live2d/README.md",
+      "bytes": 6467,
+      "sha256": "9b1c29155c25a75cc86a6887193e3b5da3ef8d9f3def168b6c7e9315a6d47322",
+      "crc32": "255bf281"
+    },
+    {
+      "path": "source/integrations/live2d/renderer.mjs",
+      "bytes": 25130,
+      "sha256": "49c3826d961d1bc18d6c8dd6384df52589f38ca5bc074ba4eb29e238c254e5cf",
+      "crc32": "93262198"
+    },
+    {
+      "path": "source/lib/live2d/asset-validation.mjs",
+      "bytes": 18002,
+      "sha256": "a4474c2196c714cafda2ec3975b14c06978f66989903fb1ef7d75edca64f705e",
+      "crc32": "92a4a18b"
+    },
+    {
+      "path": "source/lib/live2d/bridge.ts",
+      "bytes": 1850,
+      "sha256": "d54f88230fde6da5a3436fdec47783cb9e7b9b5a0c1da3ee4266f6f5ffe73a33",
+      "crc32": "5031b7f7"
+    },
+    {
+      "path": "source/lib/live2d/browser-scene.ts",
+      "bytes": 5814,
+      "sha256": "7be7c4f5b46a8ed9de10094777946a80bc387a0440f0b9b73f6a081a6c4bb23f",
+      "crc32": "f7a99347"
+    },
+    {
+      "path": "source/lib/live2d/command-player.ts",
+      "bytes": 4117,
+      "sha256": "b6c7f02f573e51e669937b32f25433d786b5c7d6f5620981c3b5a1d50923ef51",
+      "crc32": "fce2ddeb"
+    },
+    {
+      "path": "source/lib/live2d/core-validation.mjs",
+      "bytes": 35177,
+      "sha256": "7c779961b3f43feb23157beeecd73a4e97a23090b00cd45a893dabc4c9c37744",
+      "crc32": "da735bba"
+    },
+    {
+      "path": "source/lib/live2d/delivery-contract.schema.json",
+      "bytes": 2243,
+      "sha256": "28f25b9328935f0f8383a4fc5d9df33b69c3bf02f7387e54dbe13cf4630c8f60",
+      "crc32": "d5982d58"
+    },
+    {
+      "path": "source/lib/live2d/delivery-validation.mjs",
+      "bytes": 18436,
+      "sha256": "a4d93f5846bd73e8674f2134300b8b64f9e2b4083fd9d27810a99ca8618b3f60",
+      "crc32": "0b4fc2f0"
+    },
+    {
+      "path": "source/lib/live2d/director.ts",
+      "bytes": 2981,
+      "sha256": "37ab573420461983c1438221b5d566846fbdbd9ce43cc527e35333d3f9db0899",
+      "crc32": "77532a1d"
+    },
+    {
+      "path": "source/lib/live2d/load-core.ts",
+      "bytes": 1652,
+      "sha256": "27913bc2caf8f192ec1cfb5afbd12d4cefb14a3b68a36fd57c5660d404ac014f",
+      "crc32": "56259f13"
+    },
+    {
+      "path": "source/lib/live2d/manifest.ts",
+      "bytes": 7381,
+      "sha256": "67c53bc20213c37be115e85948a2d84a37a3e03768262c9f1abe08b5b9217f77",
+      "crc32": "4e2c02c3"
+    },
+    {
+      "path": "source/lib/live2d/phase.ts",
+      "bytes": 697,
+      "sha256": "377f54bfdfdc1b684cd868a4f9713f966f648ab8a549c0800958dca75c9aef1b",
+      "crc32": "b145ef2b"
+    },
+    {
+      "path": "source/lib/live2d/types.ts",
+      "bytes": 2849,
+      "sha256": "9b049f302867f7c1b5a8c0f2f68e0311ad40b33ac3470d22cbff03b38d4ef62f",
+      "crc32": "fad725ec"
+    },
+    {
+      "path": "source/package-lock.json",
+      "bytes": 276099,
+      "sha256": "f7afc68a1af33b68ed718eafa362c321df53d54bfd14330152e6c5629aabd6f2",
+      "crc32": "cd898e99"
+    },
+    {
+      "path": "source/package.json",
+      "bytes": 2316,
+      "sha256": "d7552db075efa78fe04ae0dfeec5deb2703c9e57fd391c9a317b5e6ebd4e7722",
+      "crc32": "3c39567b"
+    },
+    {
+      "path": "source/public/live2d/art/artwork-inspection.json",
+      "bytes": 2194,
+      "sha256": "74fd8021d528964b2813de998d54a4c53a8934c8a400730905b2ede028eaa6c2",
+      "crc32": "f275e7c5"
+    },
+    {
+      "path": "source/public/live2d/art/female-neutral-cutout-working.png",
+      "bytes": 885744,
+      "sha256": "3bf038ef601262a96806cd1b153f280e225c72b3f3d037ee11f5a5d549cee741",
+      "crc32": "95b6a66b"
+    },
+    {
+      "path": "source/public/live2d/art/generation-prompts.json",
+      "bytes": 4116,
+      "sha256": "3ac4613174af4949c48db3c93fd49442fb3df18e9dd602c2351b34c916fbb126",
+      "crc32": "fb41898a"
+    },
+    {
+      "path": "source/public/live2d/art/male-neutral-cutout-working.png",
+      "bytes": 807307,
+      "sha256": "2e31cfc92563c01b198b72a4a922691d1eed1be65768baf7c3155d136a5084f6",
+      "crc32": "f913fade"
+    },
+    {
+      "path": "source/public/live2d/art/neutral-scene-working.png",
+      "bytes": 2025942,
+      "sha256": "b81bb9ff4d46e26133e5313648948472c927046ddc5db03f0aa6a22ffe2e1763",
+      "crc32": "4ac51d2c"
+    },
+    {
+      "path": "source/public/live2d/art/reference.png",
+      "bytes": 419581,
+      "sha256": "769243b4aa632fc3619fba9602c9672cd2258b3679b6e873accb67e34ffd3a13",
+      "crc32": "abfd3515"
+    },
+    {
+      "path": "source/public/live2d/art/room-with-desk-working.png",
+      "bytes": 2149379,
+      "sha256": "7eb3bdc1124e03dd9c4a199637096483bdbe69da0eae21c6dc35c45f0a2f43d6",
+      "crc32": "284f1b31"
+    },
+    {
+      "path": "source/public/live2d/production/README.md",
+      "bytes": 2953,
+      "sha256": "5509dcc718c6c498c077ec327cc219d4cb8c61af5bd66c481d3378e2decc8cf4",
+      "crc32": "7c1ebd3d"
+    },
+    {
+      "path": "source/public/live2d/production/generation-prompts.json",
+      "bytes": 10344,
+      "sha256": "48d90a69e7f05db9649f5eec81e8286a32f4a70372b5784686aa28da304542d7",
+      "crc32": "6e808b2a"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/artwork_master.psd",
+      "bytes": 4049637,
+      "sha256": "7b83f4d2d4d56eda28c7f4ed439d9afbbda84968d528b2128d025d88dd76df26",
+      "crc32": "819f819d"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/cubism_import.psd",
+      "bytes": 2781349,
+      "sha256": "3f747bf1c4e1655a4ef3b89cb36656714639d6284750684c117def294eb662cb",
+      "crc32": "d576a1f1"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/face-base-isolation.png",
+      "bytes": 993232,
+      "sha256": "aa47a52a37b622e5bcf2cacb85c2c29e5be4afbfc1bd01f5ae06e75d68f35136",
+      "crc32": "bc9a9916"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/layer_manifest.csv",
+      "bytes": 7119,
+      "sha256": "b70376d8ad386976252a4297649a9fbbd9d4b27cb24cf487a1a5fb2d72d2310e",
+      "crc32": "9ff2fb50"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts-composite.png",
+      "bytes": 1000179,
+      "sha256": "abd38a90cc3dd28cc5043bc51d84c55ccc5bf449d8fe70008ec3f47a3c81ebc5",
+      "crc32": "d4c6b9cd"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts-provenance.json",
+      "bytes": 1432,
+      "sha256": "c2677a111091ed9544791803041aa3eb876b3272c54ce30d6ec6146e91693e9a",
+      "crc32": "a70ccd41"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Approved_Master_Reference.png",
+      "bytes": 985453,
+      "sha256": "8a2dff1da434a78e76e32296dd4a7cceea82ea4e9810d76b4c2351eff369872d",
+      "crc32": "d9331e75"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Brow_L.png",
+      "bytes": 8217,
+      "sha256": "48bc1967b33bb92a47adcae605e2cade364f8c19c55b3b451fd6294663bf6865",
+      "crc32": "0e81f5f7"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Brow_R.png",
+      "bytes": 9670,
+      "sha256": "86dd6117334ef64574f922df53e0b05f48f6285cb0b9803f2b23b74df5f5aa2e",
+      "crc32": "ef2584c4"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Ear_L.png",
+      "bytes": 5244,
+      "sha256": "f7dcf96634528e8de9695ebcdd186d9ece3948ec91a9872aaaa2d40b47a8ff87",
+      "crc32": "5385c477"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Ear_R.png",
+      "bytes": 10082,
+      "sha256": "23a759289aa26fbbe03a60c7b568148f51f9c2a7c583d19f8b450ddd5d048ac4",
+      "crc32": "0f998959"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/EyeHighlight_L.png",
+      "bytes": 499,
+      "sha256": "a1da7c2664e80bfaca4d8a94397a502d3a2516c934733df83544825512a63fd9",
+      "crc32": "e83ea46f"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/EyeHighlight_R.png",
+      "bytes": 498,
+      "sha256": "709648985a5b0162a6e99324acef17534368d0a5106eab4c0e97a3e1203c4e41",
+      "crc32": "94946501"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/EyeWhite_L.png",
+      "bytes": 1765,
+      "sha256": "39ae3c246dff60c258ad308dc92f2a9415e3d7e7665311b5374cf1e335135bcc",
+      "crc32": "813fd45c"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/EyeWhite_R.png",
+      "bytes": 2106,
+      "sha256": "6dcf9cad12b3c6c7254b9093759bb051a7cd01a7e2f10964fa8e777ae88df2b9",
+      "crc32": "eab561ab"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Face_Base.png",
+      "bytes": 135640,
+      "sha256": "f382b389f6c4f02a9990097827ad7c9d00bf9a957cd7fa8b4410289c1198a69a",
+      "crc32": "4b2403bd"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Forearm_L.png",
+      "bytes": 41505,
+      "sha256": "a46615765b0ef4d0401a1a537b264c9b3708dbcaa07ef94ed827edd979465b6f",
+      "crc32": "27090e9e"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Forearm_R.png",
+      "bytes": 69811,
+      "sha256": "3d767000101025e49dc70efa7f3b889ad4e25ec6fa460acee5162246cab6ae4a",
+      "crc32": "e72455f8"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Glasses_Frame.png",
+      "bytes": 23229,
+      "sha256": "0ea2e72e42a353194c9a7e7f0c2a6f77fb8399dba2119c6e13f399fe75e47506",
+      "crc32": "8052099d"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Hair_Front_C.png",
+      "bytes": 46747,
+      "sha256": "9bacb50533a3d00b9205df773663e1652f3e42c484723ef83e69bbc8d76e5d4e",
+      "crc32": "ad416ed1"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Hair_Side_L.png",
+      "bytes": 23062,
+      "sha256": "4b18d8b28fbcfd2d9d5955e14ffd57f7090c3af91518a4d00b185233c418b3b7",
+      "crc32": "8c5bdf6e"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Hair_Side_R.png",
+      "bytes": 15694,
+      "sha256": "17d77bafb76059994ac89f81f8bd70e3afb89f09611c12f3fb133b39ec44c87b",
+      "crc32": "3a8d9aa8"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Hand_L.png",
+      "bytes": 47778,
+      "sha256": "f9f9b9c51a2ab6e807451c512145b6b62ddc412a7bf64cb14eb5a67962d58e8b",
+      "crc32": "f7e4e049"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Hand_R.png",
+      "bytes": 52833,
+      "sha256": "68efe9f0ee7f47560d473921047d42d73271f1f3be0c01eb3f27c8900c5f6a50",
+      "crc32": "0006ca94"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Iris_L.png",
+      "bytes": 2017,
+      "sha256": "1bb5dd9606b01502c74f9ca3c33fffdf04a87f491eeac668003a9574040d8192",
+      "crc32": "80c03104"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Iris_R.png",
+      "bytes": 2022,
+      "sha256": "6ed9b36c3942ea7c8af019f401267efbd4cfbee1d13fe3899bee62dbb544f6e2",
+      "crc32": "a90d9bc7"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Jacket.png",
+      "bytes": 263723,
+      "sha256": "bceb2e94abb47ef9f0a83089abca2d1e1589ad87f601939281f957673a865d58",
+      "crc32": "4ba1cbd4"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/LowerLid_L.png",
+      "bytes": 1359,
+      "sha256": "2237333e9a393fb30ad4b2d133e6a11b639c0e7f3d304fb050e90af9fcebac38",
+      "crc32": "624ec973"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/LowerLid_R.png",
+      "bytes": 1326,
+      "sha256": "3b08f7d2992da0fbc5b3fce00462289cffa3c71b9bbbab52bab69a886cab6396",
+      "crc32": "ea2daf9e"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/LowerLip.png",
+      "bytes": 3209,
+      "sha256": "fb5a5fd6d56a76146bce205b930988c0886f85bc49dc916ec3bd240fb9d95bd2",
+      "crc32": "af5553ba"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Mouth_Inside.png",
+      "bytes": 5048,
+      "sha256": "397feee6d030d3c961af1a1d14fc652bee7d97f484cacdf5986d1ddf78d9e870",
+      "crc32": "d4b3599f"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Mouth_Open_Reference.png",
+      "bytes": 15865,
+      "sha256": "85f09a1d8c6632b9b0a4847dff46fbd3a65a1b472d948266679727f3c5a3b91f",
+      "crc32": "e2f1ea06"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Mouth_Skin_Occlusion.png",
+      "bytes": 21554,
+      "sha256": "f560f89699d87a57d7cde13d9d0edf8dd29a3cb4c706ac7021358b6a04052fb2",
+      "crc32": "d3ae5802"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Neck.png",
+      "bytes": 56681,
+      "sha256": "04c7ea7c70ffdfdc6f65feff28f89c15fda7ec5fc53c022f8ff4e5379f59b397",
+      "crc32": "8c5a5c85"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Nose_Base.png",
+      "bytes": 6396,
+      "sha256": "a0a72611733af58686f02661544ea5df90896d3666d6e852b8b0965ea9ac4e5e",
+      "crc32": "b64e5ef9"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Pen.png",
+      "bytes": 3711,
+      "sha256": "4244bac05deaef043d1498fbc8e33d616edd19bf78e07eb225e222a53d0cec20",
+      "crc32": "d9573e9c"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Shirt.png",
+      "bytes": 78111,
+      "sha256": "cfd1df34657046e7df26d7e25cf2581caacb8ca442cff4b118b6317f752af9cc",
+      "crc32": "d2677e72"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/Teeth_Upper.png",
+      "bytes": 2438,
+      "sha256": "47ce0199acdca9cccc1a42be2151ab4ced9ac9d738c8b263ed710d2a19b203d2",
+      "crc32": "1c9c7f79"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/UpperArm_L.png",
+      "bytes": 60744,
+      "sha256": "19d7b235d490e59506d17c1c384f45380a0655e7529f282ae754db116ca29432",
+      "crc32": "c2bebabe"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/UpperArm_R.png",
+      "bytes": 88833,
+      "sha256": "d1abd89a691e4d094552371310df7a4d84a3585aedf3d66d61c399c9d63d2b72",
+      "crc32": "f9728cb1"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/UpperLid_L.png",
+      "bytes": 2311,
+      "sha256": "7546db550d30131d7c54091e0e58a4773db9bfdce9b023fe676235c8003f7c82",
+      "crc32": "7e2c49cf"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/UpperLid_R.png",
+      "bytes": 2287,
+      "sha256": "3e2dee7bfb62f9176f72eb4b21ea00f55ed97e3234c966fffdfd7e567989092d",
+      "crc32": "beb21c72"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/UpperLip.png",
+      "bytes": 2855,
+      "sha256": "de6eef6fb121906abdceaac0c2a605dbdde0c6b7a0f8904d6287739e287485a0",
+      "crc32": "e66bba75"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/parts/manifest.json",
+      "bytes": 15181,
+      "sha256": "a04d120c0108e73f51a18e10f60e3110d8665c7073f8a7c51e8a99ac6e5371ac",
+      "crc32": "5f27d5c1"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/psd-verification.json",
+      "bytes": 64481,
+      "sha256": "af31967c3f3f6e9c4fdc7335070d7f2e904506f6ac8d4adde3e667928ac8f1c0",
+      "crc32": "1fd284e5"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/references/mouth-rounded.png",
+      "bytes": 770062,
+      "sha256": "4208ad856d0db71d7517d37978634144317e0278a076f30542e9c824e14b2e52",
+      "crc32": "5f8794e4"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/references/mouth-wide.png",
+      "bytes": 787992,
+      "sha256": "a6bcd1735beab2e2e498247a493e3d0ea9ad249f807d05f5ed319848e5890d23",
+      "crc32": "f9e07ea6"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/sources/approved-master.png",
+      "bytes": 807307,
+      "sha256": "2e31cfc92563c01b198b72a4a922691d1eed1be65768baf7c3155d136a5084f6",
+      "crc32": "f913fade"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/sources/inspection.json",
+      "bytes": 6618,
+      "sha256": "f657a40e092a413f0e925d2b83a122c4808c914124a186663e518e38a7aa41f4",
+      "crc32": "007bcc1f"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/sources/mouth-open-source.png",
+      "bytes": 785663,
+      "sha256": "cdded7312c6d1cea00235c69f013578836b671369efa1c57630025fad83bf093",
+      "crc32": "6d874ff8"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-1/sources/underpaint.png",
+      "bytes": 704505,
+      "sha256": "b3025b322bc2d744d8e1e6e1101fd758fd3d6f1294f073c0a0cc67915205a859",
+      "crc32": "241e434b"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/artwork_master.psd",
+      "bytes": 4281847,
+      "sha256": "0884bc920a4b63cea182dc01650a5d9a5a345b8ff56fe8952e9c1faaebc36d9b",
+      "crc32": "c23b0317"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/cubism_import.psd",
+      "bytes": 2950223,
+      "sha256": "2a5c319d9f1ce6f3c4daad3218ee4903e72b65c49044f2e1b2149937c263fbc6",
+      "crc32": "3c1858c1"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/face-base-isolation.png",
+      "bytes": 1146320,
+      "sha256": "3baef939e77e3d9d1d5cb4de061fc611c7977333362fb41c93991b4127c148db",
+      "crc32": "cf12ddbd"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/feature-geometry.json",
+      "bytes": 12373,
+      "sha256": "49cd111963d4f6ee07a96a8bf422fe5795e41ac10766da119d35da160f8e9785",
+      "crc32": "3555cf9d"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/layer_manifest.csv",
+      "bytes": 6933,
+      "sha256": "aa421d8f86330d66edc7ee69e833bceddfc60b1580b32c53a569a100f7fc41bd",
+      "crc32": "96d4891d"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts-composite.png",
+      "bytes": 1153137,
+      "sha256": "b6b81fd68e1460252f8a0992d8a92b0d415da07f5227b6ec33024ad0c75ea2da",
+      "crc32": "de75e9dc"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts-provenance.json",
+      "bytes": 1432,
+      "sha256": "7e2982d729697e54d1d3dfcf70d8d407957c52d4bdda3fb05db656c8389bbeb6",
+      "crc32": "729387d7"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Approved_Master_Reference.png",
+      "bytes": 1130695,
+      "sha256": "6ff33a71bfb2bb12b8ce564b323206476b65049e1975d9e4f28ac21ebe400a94",
+      "crc32": "43560fc5"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Brow_L.png",
+      "bytes": 8496,
+      "sha256": "4a0d6867a5412dc5f8d38edf9a0805fd438d935ac4be17bcebea617e8ae4dbf9",
+      "crc32": "8c238c2e"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Brow_R.png",
+      "bytes": 6314,
+      "sha256": "b603309e5ac5dd50207f0cbf969691ea8386b0627d4d31512919308801403758",
+      "crc32": "c934b8a8"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Ear_L.png",
+      "bytes": 6482,
+      "sha256": "4e3dc3c63b64b92ba974e64c78e81733952ba72428c637280c45f1fc08373fee",
+      "crc32": "11d9757f"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Ear_R.png",
+      "bytes": 5467,
+      "sha256": "866a1dabb15c3d2569d56884fd83dfeba740a6ca9a3f0637faaca6cccb4d752c",
+      "crc32": "fed9309c"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Earring_L.png",
+      "bytes": 2666,
+      "sha256": "b2bafd2cf88fc4c73a055010a2f1be0c3491a33a847cc5e297ebd5886dd56eff",
+      "crc32": "9b28a2bd"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Earring_R.png",
+      "bytes": 2629,
+      "sha256": "16240d939a37e9e0d67f82cf4ffe99e3423245d80559619b50d7bff3d6edec5a",
+      "crc32": "b792cae3"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/EyeHighlight_L.png",
+      "bytes": 446,
+      "sha256": "03521105d41609dc911393a04dfca623eb24717ba4f7a0cd57bf2126d35a6250",
+      "crc32": "bce72e63"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/EyeHighlight_R.png",
+      "bytes": 427,
+      "sha256": "dea6d0060782c8061622ae42b62a8e8808a37e3e0d590b15874d2be77f4b220b",
+      "crc32": "ea8ac395"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/EyeWhite_L.png",
+      "bytes": 2026,
+      "sha256": "cd6c8b60f3e2773ffa2c681571269a912f2ccbbaf9a5b7f7926ed78b1b777cce",
+      "crc32": "db011478"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/EyeWhite_R.png",
+      "bytes": 2316,
+      "sha256": "733fed3d58c832ef730d09b0286ad0e0208f236ddb5a2a27a3e3efc62b818da3",
+      "crc32": "07cb3d29"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Face_Base.png",
+      "bytes": 134749,
+      "sha256": "d7ba6da88092e944f891b87d8a85733a043dc93b42decff88543247e1e3d9775",
+      "crc32": "1c0014fa"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Forearm_L.png",
+      "bytes": 63516,
+      "sha256": "f00673bce57bf9d22556f1cb46dce1aeb228abd575d53fdb6776dc05203a464c",
+      "crc32": "f4ce656b"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Forearm_R.png",
+      "bytes": 67114,
+      "sha256": "c8fb76dcab5b9907cf96ad3e2f51e6d9e5a5b022c67ce7da3634efa2ae93fe56",
+      "crc32": "57e25526"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Hair_Front_C.png",
+      "bytes": 64387,
+      "sha256": "1ba9719b86ac4f74efc9451ab147ceb7576f5d98d0f181dc214f7a252b6d46f1",
+      "crc32": "a5df4167"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Hair_Side_L.png",
+      "bytes": 57340,
+      "sha256": "e8a537657410cd2183f54e394b9f1d8fbb52ce2d73afd8b2e0b6277e79d7f03a",
+      "crc32": "bc01476b"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Hair_Side_R.png",
+      "bytes": 67504,
+      "sha256": "bd4f7aae5c537258e366bf2691adccdb468d0a7ffa1971a7935756ba8d941680",
+      "crc32": "1777cbf7"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Hand_L.png",
+      "bytes": 28577,
+      "sha256": "ed52679d608a88ff61fb6c5a3d5bd7aaac9c7c060d3eb368444b5e263ca09579",
+      "crc32": "e7657ef6"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Hand_R.png",
+      "bytes": 53793,
+      "sha256": "d4142aa8d6f4dbcd4aad235b196e450f6bc6c9cf73ad59a950c7fa490437d3c1",
+      "crc32": "c255e48a"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Iris_L.png",
+      "bytes": 2119,
+      "sha256": "e29b619991f1949ae0339987897972b0126a726d31f5662fe16fcebd79960316",
+      "crc32": "553f5270"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Iris_R.png",
+      "bytes": 2072,
+      "sha256": "0eda52d2867408d4f9a218536d254605ecf45c3309fbeae30844b9eb0ba722bc",
+      "crc32": "b1fa5097"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Jacket.png",
+      "bytes": 247412,
+      "sha256": "995ee191fa66e041900afbc540809caccbf040902ff79fa7199c1ec842e26c6e",
+      "crc32": "9ad1d19e"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/LowerLid_L.png",
+      "bytes": 1567,
+      "sha256": "7e2cd5b78e89c6bd4f4533a3b1f2bdad275e16eb1b5876c1b88295bf9e08a6ef",
+      "crc32": "1c6a4f7e"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/LowerLid_R.png",
+      "bytes": 1479,
+      "sha256": "4233dd77dd349b6d1662ed65ca475e1762174df1512eb7e6c9f2216521431ed6",
+      "crc32": "9098c39c"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/LowerLip.png",
+      "bytes": 3827,
+      "sha256": "412aa362096397e5c229e822676ff7c46b8dcb961d925b7485cbf8411df750e7",
+      "crc32": "a31a51c0"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Mouth_Inside.png",
+      "bytes": 4722,
+      "sha256": "31b04e89d71c22e6ecf65cce5526ab45f6741e51452b6137d2ec6cf0bbc5df64",
+      "crc32": "e38db956"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Mouth_Open_Reference.png",
+      "bytes": 13294,
+      "sha256": "19acda2829b2d3f39555deea714eb7453c83ccfe706354d756d7c8c18041162b",
+      "crc32": "7cd4403a"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Mouth_Skin_Occlusion.png",
+      "bytes": 19571,
+      "sha256": "47f6ad7e9873a7c6c042ef74aa4b86ca394680ac94391a19dfa371c9e071b13f",
+      "crc32": "86629803"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Neck.png",
+      "bytes": 68980,
+      "sha256": "5ca9a9090912107843aaf29b0a332b68f2c2acd528b1a76a5983235f63a8e9f4",
+      "crc32": "6a883a79"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Nose_Base.png",
+      "bytes": 5252,
+      "sha256": "f2da21a051ec63be1517a71b539ec9ce08dca78d1e38069557885e9260436774",
+      "crc32": "768dcdb2"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Shirt.png",
+      "bytes": 99342,
+      "sha256": "52ed8e536a70e22a7b514d0847bc17e1a96978a0b1ca724880ca0ea1c23eacae",
+      "crc32": "4fa1950d"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/Teeth_Upper.png",
+      "bytes": 2331,
+      "sha256": "3176db0ba721e24a8833a531aa9498b28d0af183fd146609742c598ce0a4b9ac",
+      "crc32": "38a1a92a"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/UpperArm_L.png",
+      "bytes": 86633,
+      "sha256": "34fcd6fd948ed2e277f06d5e2e4882c14df651bfe48f443414e18435dc1fd762",
+      "crc32": "d73ace97"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/UpperArm_R.png",
+      "bytes": 107142,
+      "sha256": "1ca6b4760e5a3e8cf586d32e645c2e42fa256f69384e48011b26e5c8cc807b9f",
+      "crc32": "fe70f20b"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/UpperLid_L.png",
+      "bytes": 2264,
+      "sha256": "693cbdd482394ad292c7de14934887d8487a5259cdb4168f5c754d5ee5b74a75",
+      "crc32": "ab4e80a3"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/UpperLid_R.png",
+      "bytes": 2465,
+      "sha256": "819fe6e30ebb0e3878e0c6b4277cbaf58ff477d70321638136b9025bbc29cdb2",
+      "crc32": "43481187"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/UpperLip.png",
+      "bytes": 3454,
+      "sha256": "df2dfac2447f3f1c84ea3813930c7de0d5ae905a2d82091656e3fa71a6795a98",
+      "crc32": "18e7df1f"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/parts/manifest.json",
+      "bytes": 14995,
+      "sha256": "edd382fca4d112751e8562925fb7fd599412425e15deb6d7a4e2d5e36836fc23",
+      "crc32": "d8802a86"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/psd-verification.json",
+      "bytes": 64601,
+      "sha256": "d0b4f708a7b227c8464635f50d707153b66096526d7c4b5d0652fd158b3bee08",
+      "crc32": "d647e2a1"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/references/mouth-rounded.png",
+      "bytes": 842758,
+      "sha256": "d61578f367d74e7607848926022e664908b1c69db1820c829825ab4c42dadc18",
+      "crc32": "3480bb26"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/references/mouth-wide.png",
+      "bytes": 834338,
+      "sha256": "09c62e21d7635518af55f49963cdc75c0841d17938788b4e5f68f6535403262f",
+      "crc32": "70223166"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/sources/approved-master.png",
+      "bytes": 885744,
+      "sha256": "3bf038ef601262a96806cd1b153f280e225c72b3f3d037ee11f5a5d549cee741",
+      "crc32": "95b6a66b"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/sources/inspection.json",
+      "bytes": 6624,
+      "sha256": "f360bcafce886c766f5366a058b71ce0b0becae2ed3b16ab2acec56f55f8987f",
+      "crc32": "7e22a944"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/sources/mouth-open-source.png",
+      "bytes": 845102,
+      "sha256": "59ecb5efc26f07531079bfca7bb7fc2f136dfc879ca5e6e6f9f52ea1edd6bff2",
+      "crc32": "b101b00d"
+    },
+    {
+      "path": "source/public/live2d/production/interviewer-2/sources/underpaint.png",
+      "bytes": 733237,
+      "sha256": "87e95aa32d37af66e5839f392a147e131cc60c3f6a11870e798b5fb9242d5b3d",
+      "crc32": "e0f4ba45"
+    },
+    {
+      "path": "source/public/live2d/production/motions/catalog.json",
+      "bytes": 6502,
+      "sha256": "ea5d6c395ed1a8af4765ad40ac2ae014136cbf220f1408b3e8c7746ffff50219",
+      "crc32": "eaf803f5"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-1/Attentive.exp3.json",
+      "bytes": 643,
+      "sha256": "59825b22acbcbb1a97946beca692414ae1fad20318b30e4572544d8ab72bab85",
+      "crc32": "e665ae8f"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-1/Closing.motion3.json",
+      "bytes": 2698,
+      "sha256": "43815c657cb54e2097a7e0ea6e735e629c998b40816d8ccae608635255c1c780",
+      "crc32": "4b2c2434"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-1/Greeting.motion3.json",
+      "bytes": 2693,
+      "sha256": "e38080f9737d80964716c03833490fe57fa371fe7c3a66e6c60ff8d4f08cadce",
+      "crc32": "d38a9c78"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-1/Listening.motion3.json",
+      "bytes": 2405,
+      "sha256": "397c81a1bddaaab77b26b8f0d900c4d7a0a84c9a3b95fa35249c090ad55ef7ec",
+      "crc32": "49c1a09d"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-1/Neutral.exp3.json",
+      "bytes": 625,
+      "sha256": "ddfeda729ff0d6471ac50d9d4aa50d69156f0b52bc1cfef21abf730afc864166",
+      "crc32": "010869d9"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-1/QuestionStart.motion3.json",
+      "bytes": 2875,
+      "sha256": "daf8239e89e78da59d85cee783bf825f0dd6a748eb536483457b180528b23be3",
+      "crc32": "1c5c093f"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-1/ReturnToNeutral.motion3.json",
+      "bytes": 1831,
+      "sha256": "1066ae6757f9ef2b21f60ea1fa1324ef96313723012745c0863290d3c17e94ce",
+      "crc32": "af0eda27"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-1/SmallNod.motion3.json",
+      "bytes": 2394,
+      "sha256": "9aad54fa7f929b434c643d74e98cfc76a7225ee9d155e8568a91d0ed528ed68c",
+      "crc32": "ae33a0f1"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-1/SoftSmile.exp3.json",
+      "bytes": 639,
+      "sha256": "4658a770ccfcafb2f952ddd4d9d0f6e3a3bd6f192e71b2c5bd017c02fb986442",
+      "crc32": "b6d7882d"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-2/Attentive.exp3.json",
+      "bytes": 647,
+      "sha256": "4dbf73c160c0814a4bbdc2844c381085f114f433f54101f06771bfdf74f29dd3",
+      "crc32": "f06958de"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-2/Closing.motion3.json",
+      "bytes": 2711,
+      "sha256": "9d4786045a52f8e2cd99879cddade4277cb0c9d3a9e1f2e804a77299ea7dab66",
+      "crc32": "e598036a"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-2/Greeting.motion3.json",
+      "bytes": 2650,
+      "sha256": "a98975a25c48cc26ec0f5039181cb32572c670809893e107f3d88b6fa30ba354",
+      "crc32": "3fe008df"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-2/Listening.motion3.json",
+      "bytes": 2421,
+      "sha256": "982e6c94c89176125f26c31597f60409b2d8195e87bd392e8a6b68907754ce48",
+      "crc32": "51b86df6"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-2/Neutral.exp3.json",
+      "bytes": 625,
+      "sha256": "ddfeda729ff0d6471ac50d9d4aa50d69156f0b52bc1cfef21abf730afc864166",
+      "crc32": "010869d9"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-2/QuestionStart.motion3.json",
+      "bytes": 3021,
+      "sha256": "d731532dbda9b244fca3f872ce88ab2a61686d21bdc11c611096621bdef53964",
+      "crc32": "4627a820"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-2/ReturnToNeutral.motion3.json",
+      "bytes": 1831,
+      "sha256": "9b2d62a03a8c8876faf054104e667191dc70365d27d07c238a646764131f37b3",
+      "crc32": "697c9230"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-2/SmallNod.motion3.json",
+      "bytes": 2403,
+      "sha256": "e7630bf965a472c414ac9d0d8c3146c83916b661b7cfbe37b0140cf180e0f528",
+      "crc32": "e85c7b44"
+    },
+    {
+      "path": "source/public/live2d/production/motions/interviewer-2/SoftSmile.exp3.json",
+      "bytes": 647,
+      "sha256": "be537d68cb4bb1e09ba96d526f8aab71b5ec0ff78a5f67ddb84bb33528f88546",
+      "crc32": "a13f7195"
+    },
+    {
+      "path": "source/public/live2d/production/qa-summary.json",
+      "bytes": 2420,
+      "sha256": "c84825bee0f1901484b9fa6b51d2651a13c03e770702a2f2c27206080ee6b4a1",
+      "crc32": "3a692b62"
+    },
+    {
+      "path": "source/public/live2d/runtime/provenance.json",
+      "bytes": 739,
+      "sha256": "70a0c8c0f239d2c44da5af2947a095a54d9f1d4a16f54c1bbd674d9e103c0b0f",
+      "crc32": "4dcfdf20"
+    },
+    {
+      "path": "source/public/live2d/scene.json",
+      "bytes": 541,
+      "sha256": "70112c7c78b6511fc7469d9e240bb84fa7c4366f6305b0fd603cefc246581d3c",
+      "crc32": "34e8e9a1"
+    },
+    {
+      "path": "source/scripts/build-interviewer-psd.mjs",
+      "bytes": 23731,
+      "sha256": "dc050215b5f379a254862d7fd74d5e702486f109548531d94e1207b01c00b3aa",
+      "crc32": "3e174458"
+    },
+    {
+      "path": "source/scripts/package-live2d-handoff.mjs",
+      "bytes": 35933,
+      "sha256": "5df935c7700058f8d3fd44f12238b8d65273deb4671ac2ecd93f92cfdaae10be",
+      "crc32": "1c828635"
+    },
+    {
+      "path": "source/scripts/prepare-interviewer-motions.mjs",
+      "bytes": 16445,
+      "sha256": "7fc14c9f95239e5c00af0701ed687e5292826c4452a102c384f3d45566078e30",
+      "crc32": "a4c36561"
+    },
+    {
+      "path": "source/scripts/prepare-interviewer-parts.mjs",
+      "bytes": 21494,
+      "sha256": "3c1aef27fc3476c58ea03187882459a6e084d995aa3487e496cb5f6174777fc7",
+      "crc32": "3d38fd0e"
+    },
+    {
+      "path": "source/scripts/setup-live2d-sdk.mjs",
+      "bytes": 5218,
+      "sha256": "e6c412ddaf43442464c301b564433268202325827c574f43a924204fb1018523",
+      "crc32": "7a9e6406"
+    },
+    {
+      "path": "source/scripts/source-artwork-inspection.mjs",
+      "bytes": 8754,
+      "sha256": "af63104653ff88d73ecb7d4132a3d28c6d82a0e3eb6ac4d78711ff671f74d93d",
+      "crc32": "c4b44703"
+    },
+    {
+      "path": "source/scripts/verify-interviewer-production.mjs",
+      "bytes": 3456,
+      "sha256": "36c62e1b88afcae384edf0568f5f3c6c5ad07e6ed8329b10fb1b871bbbc80f9d",
+      "crc32": "bd1a7026"
+    },
+    {
+      "path": "source/scripts/verify-live2d-assets.mjs",
+      "bytes": 1692,
+      "sha256": "8d08573431fda7277165307b1f9a0c74f8bec45d53d764e62dcf44c557c485cf",
+      "crc32": "1cc7e4a5"
+    },
+    {
+      "path": "source/tests/live2d-core-validation.test.ts",
+      "bytes": 6565,
+      "sha256": "ea8952bc43ab36010c05b61ad4a59f344bd702e0109d7a9c1440e80db40665f7",
+      "crc32": "bbf53054"
+    },
+    {
+      "path": "source/tests/live2d-delivery-validation.test.ts",
+      "bytes": 9864,
+      "sha256": "883413878b4a3b429e2756dd71a8a3aa343bd13c57cf18fe1f14b9ca45c18294",
+      "crc32": "62a96f13"
+    },
+    {
+      "path": "source/tests/live2d-manifest-gate.test.ts",
+      "bytes": 7065,
+      "sha256": "07b5e5e1db1f8e2a19e3da4f6d0d9b73f71fddf0c5b6932e63d278703004c7e0",
+      "crc32": "2a16bb5d"
+    },
+    {
+      "path": "source/tests/live2d-scene.test.ts",
+      "bytes": 7166,
+      "sha256": "0c9a52c01a2166d468ebccb8a3067ecc4236a37cd7a702ebfca4e5bb6b2e07a8",
+      "crc32": "284d8dda"
+    },
+    {
+      "path": "source/tsconfig.json",
+      "bytes": 712,
+      "sha256": "1ac3ba7bb42b653bf9bd66f7f99a97c91c629b6dffcf96187915751995e39a29",
+      "crc32": "8628c0c4"
+    },
+    {
+      "path": "validation/code-revision-diff.json",
+      "bytes": 6278,
+      "sha256": "a2e31b792b8a48285a8e4b7f4f57c58029402add537847cf269a9826edf2a2ea",
+      "crc32": "12b7495c"
+    },
+    {
+      "path": "validation/external/current-scene-blocked.json",
+      "bytes": 2173,
+      "sha256": "e2245169b6d6157003f694b709d477efd96772cca900ba5a11c8ac3b41c56d76",
+      "crc32": "bfe9ce41"
+    },
+    {
+      "path": "validation/external/current-scene.json",
+      "bytes": 1519,
+      "sha256": "4568cd0d44a2834c5f8ca108cb34f43a5bd692c6390e3c1a033a6bcd5e1e9c0e",
+      "crc32": "a0ac4800"
+    },
+    {
+      "path": "validation/external/lint.json",
+      "bytes": 872,
+      "sha256": "6c4c62611f51b6adc27248aa0af5054a83dd9b5f87c65ca0ad558811cf5b1dc5",
+      "crc32": "1791dac4"
+    },
+    {
+      "path": "validation/external/no-dedicated-delivery.json",
+      "bytes": 1338,
+      "sha256": "9bc6ae1a28662bd3a965851c51d2d6f04bd9fe53bd8f449bc565760b9d4a521c",
+      "crc32": "ece9c381"
+    },
+    {
+      "path": "validation/external/no-delivery.json",
+      "bytes": 1960,
+      "sha256": "0c782de545cf59ebb12fb44d7751b0ecc58bfaba15cfacc7156ffba46aa26148",
+      "crc32": "00df25ac"
+    },
+    {
+      "path": "validation/external/provenance.json",
+      "bytes": 767,
+      "sha256": "8b4d3d888f6b348adfa06f26fec05ff257afef077977254e7f2d3ff5752651be",
+      "crc32": "62168bf5"
+    },
+    {
+      "path": "validation/external/targeted-tests.json",
+      "bytes": 4674,
+      "sha256": "825583feb971a007ee4f94765a1a16d9b0ae2a56ccacdf66d28b93fd316a00fc",
+      "crc32": "dcd0efcd"
+    },
+    {
+      "path": "validation/external/typecheck.json",
+      "bytes": 374,
+      "sha256": "73ab15c4cb443011b9e15803a072a54154a7b9ca7603e6c42f0d259e2df2c810",
+      "crc32": "3f62e1c3"
+    },
+    {
+      "path": "validation/external/verification-run.json",
+      "bytes": 6555,
+      "sha256": "94034009a0e165b7fdd22a0aac710d9a0fa07104d12f812e30dcc6cbfb99a1ca",
+      "crc32": "3da5cecd"
+    },
+    {
+      "path": "validation/production-input-check.json",
+      "bytes": 4055,
+      "sha256": "58ffe700a9fae2e549d6f248627ce48dc186599115e304c5bbced530f196f310",
+      "crc32": "63174d74"
+    }
+  ],
+  "handoffReady": true,
+  "verifiedAt": "2026-11-04T16:32:44.664Z",
+  "sourceStableAcrossCopyZipAndExtraction": true,
+  "originalImmutableSourceMatchesInitialCapture": true,
+  "authorizedCodeRevisionsRecorded": [
+    {
+      "path": "components/interview/InterviewerScene.tsx",
+      "change": "modified",
+      "before": {
+        "path": "components/interview/InterviewerScene.tsx",
+        "bytes": 3134,
+        "sha256": "6f8cc2959c6cc01f5605b4109106cbde1cb1c36bb3dba570092e1fc18c996888"
+      },
+      "after": {
+        "path": "components/interview/InterviewerScene.tsx",
+        "bytes": 3129,
+        "sha256": "5b873a61d2632ea2ffa7174be2414293a070c829c34277ecf3e69a1bb316e937"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "integrations/live2d/renderer.mjs",
+      "change": "modified",
+      "before": {
+        "path": "integrations/live2d/renderer.mjs",
+        "bytes": 23380,
+        "sha256": "33d13da5f2308459610a0b5594c409d7b2df243278caca44071082d12f4f5895"
+      },
+      "after": {
+        "path": "integrations/live2d/renderer.mjs",
+        "bytes": 25130,
+        "sha256": "49c3826d961d1bc18d6c8dd6384df52589f38ca5bc074ba4eb29e238c254e5cf"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/asset-validation.mjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "lib/live2d/asset-validation.mjs",
+        "bytes": 18002,
+        "sha256": "a4474c2196c714cafda2ec3975b14c06978f66989903fb1ef7d75edca64f705e"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/core-validation.mjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "lib/live2d/core-validation.mjs",
+        "bytes": 35177,
+        "sha256": "7c779961b3f43feb23157beeecd73a4e97a23090b00cd45a893dabc4c9c37744"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/delivery-contract.schema.json",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "lib/live2d/delivery-contract.schema.json",
+        "bytes": 2243,
+        "sha256": "28f25b9328935f0f8383a4fc5d9df33b69c3bf02f7387e54dbe13cf4630c8f60"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/delivery-validation.mjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "lib/live2d/delivery-validation.mjs",
+        "bytes": 18436,
+        "sha256": "a4d93f5846bd73e8674f2134300b8b64f9e2b4083fd9d27810a99ca8618b3f60"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/manifest.ts",
+      "change": "modified",
+      "before": {
+        "path": "lib/live2d/manifest.ts",
+        "bytes": 2722,
+        "sha256": "91bdb0b3fbcfdae07dfd1999b7dc476537b19d0f4c0bec76c129e203f8109d19"
+      },
+      "after": {
+        "path": "lib/live2d/manifest.ts",
+        "bytes": 7381,
+        "sha256": "67c53bc20213c37be115e85948a2d84a37a3e03768262c9f1abe08b5b9217f77"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "lib/live2d/types.ts",
+      "change": "modified",
+      "before": {
+        "path": "lib/live2d/types.ts",
+        "bytes": 2316,
+        "sha256": "cbc36486cf979ed71ca786450653e320580365f97b8b86280ba7637ed4b2d833"
+      },
+      "after": {
+        "path": "lib/live2d/types.ts",
+        "bytes": 2849,
+        "sha256": "9b049f302867f7c1b5a8c0f2f68e0311ad40b33ac3470d22cbff03b38d4ef62f"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "scripts/package-live2d-handoff.mjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "scripts/package-live2d-handoff.mjs",
+        "bytes": 35933,
+        "sha256": "5df935c7700058f8d3fd44f12238b8d65273deb4671ac2ecd93f92cfdaae10be"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "scripts/setup-live2d-sdk.mjs",
+      "change": "modified",
+      "before": {
+        "path": "scripts/setup-live2d-sdk.mjs",
+        "bytes": 4672,
+        "sha256": "61afad043b082d9b9c9ac0b690361fc2edf2dac1f8e301569c833c3750568b34"
+      },
+      "after": {
+        "path": "scripts/setup-live2d-sdk.mjs",
+        "bytes": 5218,
+        "sha256": "e6c412ddaf43442464c301b564433268202325827c574f43a924204fb1018523"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "scripts/verify-live2d-assets.mjs",
+      "change": "modified",
+      "before": {
+        "path": "scripts/verify-live2d-assets.mjs",
+        "bytes": 16522,
+        "sha256": "d9213b74c8b9399d9ee02dae90cec1878811ffdc81b2af1d9f82bdde5c6cf640"
+      },
+      "after": {
+        "path": "scripts/verify-live2d-assets.mjs",
+        "bytes": 1692,
+        "sha256": "8d08573431fda7277165307b1f9a0c74f8bec45d53d764e62dcf44c557c485cf"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "tests/live2d-core-validation.test.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "tests/live2d-core-validation.test.ts",
+        "bytes": 6565,
+        "sha256": "ea8952bc43ab36010c05b61ad4a59f344bd702e0109d7a9c1440e80db40665f7"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "tests/live2d-delivery-validation.test.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "tests/live2d-delivery-validation.test.ts",
+        "bytes": 9864,
+        "sha256": "883413878b4a3b429e2756dd71a8a3aa343bd13c57cf18fe1f14b9ca45c18294"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "tests/live2d-manifest-gate.test.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "tests/live2d-manifest-gate.test.ts",
+        "bytes": 7065,
+        "sha256": "07b5e5e1db1f8e2a19e3da4f6d0d9b73f71fddf0c5b6932e63d278703004c7e0"
+      },
+      "authorizedCodeRevision": true
+    },
+    {
+      "path": "tests/live2d-scene.test.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "path": "tests/live2d-scene.test.ts",
+        "bytes": 7166,
+        "sha256": "0c9a52c01a2166d468ebccb8a3067ecc4236a37cd7a702ebfca4e5bb6b2e07a8"
+      },
+      "authorizedCodeRevision": true
+    }
+  ],
+  "initialBaselineSha256": "4fd82f24ee32af4991f2191592eb1d96529fd67269a77b50aa1bf3673ce19e7a",
+  "baselineManifest": {
+    "path": "package/baseline-manifest.json",
+    "sha256": "538ca734057358ca5ecc67532cdf5722ef74bece9ef9fe2a0cb66617f40a2e08"
+  },
+  "targetFlags": {
+    "currentHandOff": true,
+    "assetValidationPassed": false,
+    "artworkFinal": false,
+    "actualRigCreated": false,
+    "moc3Exported": false,
+    "modelLoadVerified": false,
+    "motionSyncVerified": false,
+    "runtimeQAComplete": false,
+    "expoDeviceVerified": false,
+    "performance30FpsMeasured": false,
+    "releaseReady": false
+  }
+}

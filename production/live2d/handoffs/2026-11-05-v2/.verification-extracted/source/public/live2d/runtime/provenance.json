@@ -1,0 +1,26 @@
+{
+  "builtAt": "2026-11-03T14:53:21.112Z",
+  "sources": [
+    {
+      "name": "Framework",
+      "repository": "https://github.com/Live2D/CubismWebFramework.git",
+      "tag": "5-r.5",
+      "commit": "198a3769c26ca3d7b600e932590433badd392edd"
+    },
+    {
+      "name": "MotionSync",
+      "repository": "https://github.com/Live2D/CubismWebMotionSyncComponents.git",
+      "tag": "5-r.3",
+      "commit": "90806089d1753bf2e7643287319d2123b59a8546"
+    }
+  ],
+  "bundle": {
+    "path": "/live2d/runtime/renderer.mjs",
+    "bytes": 611554,
+    "sha256": "fa07de58e671d5c72cbeabb642cc909af7f6a6269efa6db298c22e91175a0033",
+    "esbuild": "0.28.2"
+  },
+  "coreBinariesIncluded": false,
+  "modelsIncluded": false,
+  "runtimeVerified": false
+}

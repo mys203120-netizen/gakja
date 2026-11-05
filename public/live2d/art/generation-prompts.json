@@ -1,0 +1,21 @@
+{
+  "tool": "built-in image_gen",
+  "artStatus": "working-art-only; not approved rig sources",
+  "prompts": [
+    {
+      "output": "neutral-scene-working.png",
+      "input": "reference.png",
+      "prompt": "Use case: identity-preserve. Edit target: the supplied reference image. Deliver a high quality 16:9 1920x1080 or larger preproduction neutral-pose scene painting for the Korean university interview service 각자의답. Preserve exactly the two adult interviewers' face identities, ages, proportions, hairstyle dimensional strands, man's black thin glasses, woman's pearl earrings and watch, navy blazer charcoal shirt and taupe blazer cream blouse, all soft high-quality 3D animated-film shading. Preserve camera, desk, cups, papers, bookshelves, plants, chairs, university seen through windows, warm daylight, original positions and composition. Change ONLY their hand poses to relaxed neutral: man has both hands resting naturally on desk, no reaching hand; pen can rest in right hand on desk. Woman has both hands resting naturally on desk near her open notebook, neither hand near chin. Keep their calm friendly neutral expression, closed lips, restrained professional smile. Avoid face drift, anime, flat vector, oversized eyes, any text, watermark or labels. This is a static art working plate, NOT a Live2D model. Make natural occlusion and contact shadows for hands on desktop. Do not add any UI."
+    },
+    {
+      "output": "room-with-desk-working.png",
+      "input": "neutral-scene-working.png",
+      "prompt": "Use case: precise-object-edit. Edit target: attached image. Produce a clean 16:9 high-resolution background working plate for later Live2D compositing, exact same camera and framing. Remove BOTH interviewers completely, including every head, hair, torso, clothing, hands, pen held by man and every human shadow. Restore convincingly the chair seat/back, wall, windows, exterior building and tabletop behind them. Keep both dark desk chairs in the same positions. Preserve the wood desk, black mug left, cream mug right, notebooks, papers and open book, shelf and plants, lamp, window and university vista. Same warm daylight and soft dimensional 3D animated-film style. No new objects, no people, no character fragments, no labels, no text overlays or watermarks. Retain complete desktop and foreground table edge; this is a BACKGROUND WORKING PLATE WITH DESK, not a fully separated production layer set. Pixel registration should stay as close as possible to the reference. Do not zoom or recrop."
+    },
+    {
+      "output": "male-neutral-cutout-working.png",
+      "input": "reference.png",
+      "prompt": "Use case: background-extraction and identity-preserve. Edit target: Image 1 ORIGINAL two-interviewer reference, same character identity and lighting. Deliver ONLY the male interviewer as a standalone production-art WORKING CUTOUT with real transparent alpha background, a 16:9 transparent canvas. Keep him in original left side coordinates (head center x30%, y23%; shoulders extend x8%-49%; seated torso to lower canvas y82%) for later registration. Remove all female, room, chairs, desk, mugs, notebooks and papers. Preserve original man's exact age, face shape, thin black glasses, short thick parted black-brown hair, navy textured blazer and charcoal button shirt, gentle restrained closed-mouth expression, soft dimensional 3D animated-film materials. Change right reaching hand to neutral: both hands rest at desktop height y75%, with forearms placed naturally horizontally, right hand can loosely hold slim pen. Include complete hands and fingers with correct anatomy. Render hidden lower torso and arms sufficiently under original desk occlusion, ending naturally at lower edge. NO WATCH on man (original reference has none), no jewelry, no added accessories. Do not alter face identity, no anime, flat vector, labels, text, checkerboard, watermark, outlines or drop shadows on background. This is one flattened RGBA character working artwork, NOT separated face/eye/mouth parts and NOT a Live2D model. Preserve natural own-body contact shading."
+    }
+  ]
+}

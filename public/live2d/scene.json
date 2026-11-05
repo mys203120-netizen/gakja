@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "status": "blocked",
+  "canvas": { "width": 1920, "height": 1080 },
+  "fallback": "/live2d/art/reference.png",
+  "runtime": null,
+  "models": [],
+  "layers": [],
+  "blockers": [
+    "레이어 PSD 제작됨. 전용 캐릭터 cmo3, can3 및 moc3 리깅·내보내기는 미제작",
+    "라이선스를 확인한 Cubism Core 및 MotionSync Core 미제공",
+    "최종 가림 레이어 및 모델별 MotionSync 설정 미제작",
+    "한국어 CLOVA 음성·실제 모델·모바일 기기 결합 검수 미수행"
+  ]
+}

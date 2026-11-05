@@ -1,0 +1,10 @@
+import {mkdir,writeFile} from 'node:fs/promises';
+import {loadInterviewContext} from '../server/data/load-interview-context';
+import {compilePolicyClauseRegistry,selectRuntimePolicy} from '../server/policy/compiled-runtime-policy';
+const context=await loadInterviewContext();
+if(context.errors.length)throw new Error('CONTEXT_NOT_READY');
+const registry=compilePolicyClauseRegistry(context),selected=selectRuntimePolicy(context);
+await mkdir('data/prepared/runtime-policy-registry',{recursive:true});
+const path=`data/prepared/runtime-policy-registry/${registry.contentSha256}.json`;
+await writeFile(path,JSON.stringify(registry,null,2),{mode:0o600});
+console.log(JSON.stringify({path,version:registry.version,coverage:registry.coverage,activeRealtimeClauses:selected.trace.activeClauseIds.length,omittedAtRealtime:selected.trace.omittedClauses.length,fixedInstructionCharacters:selected.instructions.length,note:'Character count is not a model token count. Structural coverage does not prove semantic completeness.'}));

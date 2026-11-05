@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "status": "authored-curves-awaiting-dedicated-models",
+  "parameterStatus": "proposed-not-exported",
+  "units": "model-parameter-values-not-physical-angles",
+  "modelLoadTested": false,
+  "runtimePlaybackTested": false,
+  "handGestureEnabled": false,
+  "mouthParametersIncluded": false,
+  "expressionBlinkChannelsIncluded": false,
+  "authoringReferences": {
+    "motionParser": "https://github.com/Live2D/CubismWebFramework/blob/5-r.5/src/motion/cubismmotionjson.ts",
+    "segmentParser": "https://github.com/Live2D/CubismWebFramework/blob/5-r.5/src/motion/cubismmotion.ts",
+    "expressionParser": "https://github.com/Live2D/CubismWebFramework/blob/5-r.5/src/motion/cubismexpressionmotion.ts"
+  },
+  "proposedParameters": {
+    "ParamAngleX": {
+      "min": -5,
+      "max": 5,
+      "default": 0,
+      "motionLimit": 0.5
+    },
+    "ParamAngleY": {
+      "min": -4,
+      "max": 4,
+      "default": 0,
+      "motionLimit": 0.4
+    },
+    "ParamAngleZ": {
+      "min": -3,
+      "max": 3,
+      "default": 0,
+      "motionLimit": 0.15
+    },
+    "ParamBodyAngleX": {
+      "min": -2,
+      "max": 2,
+      "default": 0,
+      "motionLimit": 0.12
+    },
+    "ParamBodyAngleY": {
+      "min": -2,
+      "max": 2,
+      "default": 0,
+      "motionLimit": 0.1
+    },
+    "ParamBodyAngleZ": {
+      "min": -2,
+      "max": 2,
+      "default": 0,
+      "motionLimit": 0.08
+    },
+    "ParamQuestionGesture": {
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "motionLimit": 0
+    },
+    "ParamBrowLY": {
+      "min": -1,
+      "max": 1,
+      "default": 0,
+      "expressionLimit": 0.08
+    },
+    "ParamBrowRY": {
+      "min": -1,
+      "max": 1,
+      "default": 0,
+      "expressionLimit": 0.08
+    },
+    "ParamBrowLAngle": {
+      "min": -1,
+      "max": 1,
+      "default": 0,
+      "expressionLimit": 0.08
+    },
+    "ParamBrowRAngle": {
+      "min": -1,
+      "max": 1,
+      "default": 0,
+      "expressionLimit": 0.08
+    },
+    "ParamEyeLSmile": {
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "expressionLimit": 0.08
+    },
+    "ParamEyeRSmile": {
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "expressionLimit": 0.08
+    }
+  },
+  "files": [
+    {
+      "speakerId": "interviewer-1",
+      "name": "Greeting",
+      "kind": "motion",
+      "file": "interviewer-1/Greeting.motion3.json",
+      "sha256": "e38080f9737d80964716c03833490fe57fa371fe7c3a66e6c60ff8d4f08cadce"
+    },
+    {
+      "speakerId": "interviewer-1",
+      "name": "QuestionStart",
+      "kind": "motion",
+      "file": "interviewer-1/QuestionStart.motion3.json",
+      "sha256": "daf8239e89e78da59d85cee783bf825f0dd6a748eb536483457b180528b23be3"
+    },
+    {
+      "speakerId": "interviewer-1",
+      "name": "Listening",
+      "kind": "motion",
+      "file": "interviewer-1/Listening.motion3.json",
+      "sha256": "397c81a1bddaaab77b26b8f0d900c4d7a0a84c9a3b95fa35249c090ad55ef7ec"
+    },
+    {
+      "speakerId": "interviewer-1",
+      "name": "SmallNod",
+      "kind": "motion",
+      "file": "interviewer-1/SmallNod.motion3.json",
+      "sha256": "9aad54fa7f929b434c643d74e98cfc76a7225ee9d155e8568a91d0ed528ed68c"
+    },
+    {
+      "speakerId": "interviewer-1",
+      "name": "ReturnToNeutral",
+      "kind": "motion",
+      "file": "interviewer-1/ReturnToNeutral.motion3.json",
+      "sha256": "1066ae6757f9ef2b21f60ea1fa1324ef96313723012745c0863290d3c17e94ce"
+    },
+    {
+      "speakerId": "interviewer-1",
+      "name": "Closing",
+      "kind": "motion",
+      "file": "interviewer-1/Closing.motion3.json",
+      "sha256": "43815c657cb54e2097a7e0ea6e735e629c998b40816d8ccae608635255c1c780"
+    },
+    {
+      "speakerId": "interviewer-1",
+      "name": "Neutral",
+      "kind": "expression",
+      "file": "interviewer-1/Neutral.exp3.json",
+      "sha256": "ddfeda729ff0d6471ac50d9d4aa50d69156f0b52bc1cfef21abf730afc864166"
+    },
+    {
+      "speakerId": "interviewer-1",
+      "name": "SoftSmile",
+      "kind": "expression",
+      "file": "interviewer-1/SoftSmile.exp3.json",
+      "sha256": "4658a770ccfcafb2f952ddd4d9d0f6e3a3bd6f192e71b2c5bd017c02fb986442"
+    },
+    {
+      "speakerId": "interviewer-1",
+      "name": "Attentive",
+      "kind": "expression",
+      "file": "interviewer-1/Attentive.exp3.json",
+      "sha256": "59825b22acbcbb1a97946beca692414ae1fad20318b30e4572544d8ab72bab85"
+    },
+    {
+      "speakerId": "interviewer-2",
+      "name": "Greeting",
+      "kind": "motion",
+      "file": "interviewer-2/Greeting.motion3.json",
+      "sha256": "a98975a25c48cc26ec0f5039181cb32572c670809893e107f3d88b6fa30ba354"
+    },
+    {
+      "speakerId": "interviewer-2",
+      "name": "QuestionStart",
+      "kind": "motion",
+      "file": "interviewer-2/QuestionStart.motion3.json",
+      "sha256": "d731532dbda9b244fca3f872ce88ab2a61686d21bdc11c611096621bdef53964"
+    },
+    {
+      "speakerId": "interviewer-2",
+      "name": "Listening",
+      "kind": "motion",
+      "file": "interviewer-2/Listening.motion3.json",
+      "sha256": "982e6c94c89176125f26c31597f60409b2d8195e87bd392e8a6b68907754ce48"
+    },
+    {
+      "speakerId": "interviewer-2",
+      "name": "SmallNod",
+      "kind": "motion",
+      "file": "interviewer-2/SmallNod.motion3.json",
+      "sha256": "e7630bf965a472c414ac9d0d8c3146c83916b661b7cfbe37b0140cf180e0f528"
+    },
+    {
+      "speakerId": "interviewer-2",
+      "name": "ReturnToNeutral",
+      "kind": "motion",
+      "file": "interviewer-2/ReturnToNeutral.motion3.json",
+      "sha256": "9b2d62a03a8c8876faf054104e667191dc70365d27d07c238a646764131f37b3"
+    },
+    {
+      "speakerId": "interviewer-2",
+      "name": "Closing",
+      "kind": "motion",
+      "file": "interviewer-2/Closing.motion3.json",
+      "sha256": "9d4786045a52f8e2cd99879cddade4277cb0c9d3a9e1f2e804a77299ea7dab66"
+    },
+    {
+      "speakerId": "interviewer-2",
+      "name": "Neutral",
+      "kind": "expression",
+      "file": "interviewer-2/Neutral.exp3.json",
+      "sha256": "ddfeda729ff0d6471ac50d9d4aa50d69156f0b52bc1cfef21abf730afc864166"
+    },
+    {
+      "speakerId": "interviewer-2",
+      "name": "SoftSmile",
+      "kind": "expression",
+      "file": "interviewer-2/SoftSmile.exp3.json",
+      "sha256": "be537d68cb4bb1e09ba96d526f8aab71b5ec0ff78a5f67ddb84bb33528f88546"
+    },
+    {
+      "speakerId": "interviewer-2",
+      "name": "Attentive",
+      "kind": "expression",
+      "file": "interviewer-2/Attentive.exp3.json",
+      "sha256": "4dbf73c160c0814a4bbdc2844c381085f114f433f54101f06771bfdf74f29dd3"
+    }
+  ]
+}

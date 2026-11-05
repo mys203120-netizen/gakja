@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+data/
+.env*
+!.env.example
+*.tsbuildinfo
+*.log
+artifacts/
+tmp/
+윤지우학생 생활기록부.pdf
+public/vendor/
+public/models/
+__pycache__/
+

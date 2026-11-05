@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "runId": "695cc301-1efa-4889-9e92-b891f20aac94",
+  "checkedAt": "2026-11-04T16:28:52.501Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "scripts/verify-live2d-assets.mjs",
+    "--delivery-root",
+    "production/live2d/incoming",
+    "--report",
+    "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\validation-runs\\2026-11-05-final-49b802b9-54d1-47d7-8b9a-f2542cfbd950\\no-delivery.json"
+  ],
+  "environment": {
+    "node": "v24.16.0",
+    "platform": "win32",
+    "arch": "x64",
+    "cwd": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW"
+  },
+  "deliveryRoot": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\incoming",
+  "levels": {
+    "level1": {
+      "status": "BLOCKED",
+      "errors": [
+        "납품 manifest를 읽지 못했습니다: ENOENT: no such file or directory, realpath 'C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\incoming'"
+      ],
+      "warnings": [],
+      "files": [],
+      "models": []
+    },
+    "level2": {
+      "status": "BLOCKED",
+      "executedWithCore": false,
+      "models": [],
+      "reason": "실제 모델 납품 패키지가 없습니다."
+    },
+    "level3": {
+      "status": "NOT_RUN",
+      "executed": false,
+      "motionSyncVerified": false,
+      "runtimeQAComplete": false,
+      "reason": "허용된 렌더링·실제 출력 음성·실기기 실행기가 없어 실행하지 않았습니다."
+    }
+  },
+  "modelKind": null,
+  "actualModelNewlyAuthored": false,
+  "validationScope": "returned delivery validation, not authorship or visual approval",
+  "assetValidationPassed": false,
+  "modelLoadVerified": false,
+  "motionSyncVerified": false,
+  "runtimeQAComplete": false,
+  "releaseReady": false,
+  "status": "BLOCKED",
+  "summary": {
+    "level1": "BLOCKED",
+    "level2": "BLOCKED",
+    "level3": "NOT_RUN",
+    "actualModelNewlyAuthored": false,
+    "releaseReady": false
+  }
+}

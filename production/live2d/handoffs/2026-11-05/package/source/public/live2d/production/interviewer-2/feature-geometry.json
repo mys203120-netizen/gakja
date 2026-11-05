@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "speakerId": "interviewer-2",
+  "status": "visually-inspected-original-pixel-mask-plan",
+  "source": {
+    "path": "public/live2d/art/female-neutral-cutout-working.png",
+    "width": 1672,
+    "height": 941,
+    "sha256": "3bf038ef601262a96806cd1b153f280e225c72b3f3d037ee11f5a5d549cee741"
+  },
+  "inspectionReference": {
+    "path": "tmp/interviewer-review/female-head-inspection.png",
+    "width": 760,
+    "height": 740,
+    "sha256": "aa6798c4c2e17aa8515e500a78d341f847a4e0f1bd680fb01f1536f31b7ac43f",
+    "usage": "Visual enlargement only. All recorded coordinates refer to the 1672x941 source, never to this enlargement."
+  },
+  "coordinateSystem": {
+    "units": "source-image-pixels",
+    "origin": "top-left",
+    "xPositive": "right",
+    "yPositive": "down",
+    "characterL": "screen-right",
+    "characterR": "screen-left",
+    "bboxFormat": "x,y,width,height",
+    "pathFormat": "SVG path data in the original source coordinate system"
+  },
+  "sourcePolicy": {
+    "faceAppearance": "user-approved",
+    "fourEarlierVisualCorrections": "user-skipped",
+    "rgbPixels": "Preserve original source RGB for every extracted feature. Do not regenerate a face, iris, brow, lip or earring.",
+    "alpha": "Intersect every extraction mask with the original source alpha.",
+    "underpaint": "A separate blank-face underpaint is supplied by the parent workflow. It is not a replacement for the visible original features.",
+    "mouthInterior": "Separate source pending. Do not claim visible closed-mouth pixels contain a complete mouth interior, teeth or tongue.",
+    "hiddenPixels": "Hidden sclera, hidden iris perimeter and skin behind hair are not restored by these coordinate masks.",
+    "accuracy": "Hand-traced visual mask plan. Boundaries need composite inspection after extraction, especially eyelid edges and the lip seam."
+  },
+  "maskConventions": {
+    "fillRule": "nonzero unless a feature explicitly declares evenodd",
+    "preserveCanvas": true,
+    "resampling": "Do not resize individual layers before extraction.",
+    "featherSourcePixels": {
+      "hair": 0,
+      "iris": 0.35,
+      "eyelid": 0.5,
+      "brow": 0.7,
+      "lip": 0.45,
+      "earring": 0.3
+    },
+    "featherMeaning": "Proposed alpha-edge antialiasing only, not RGB recoloring or a new facial feature. Existing source-alpha boundary remains authoritative."
+  },
+  "masks": {
+    "hairOuter": {
+      "bbox": [1003, 44, 400, 391],
+      "path": "M 1185 46 C 1210 45 1224 62 1235 73 C 1260 61 1286 79 1307 105 C 1329 134 1337 163 1364 187 C 1384 203 1398 226 1398 252 C 1395 279 1404 311 1391 344 C 1378 378 1353 399 1310 407 C 1291 412 1277 408 1269 403 L 1167 405 C 1147 421 1130 432 1107 431 C 1068 426 1040 408 1026 380 C 1015 359 1005 342 1007 324 C 1006 309 1013 300 1018 293 C 1007 282 1007 264 1013 244 C 1022 208 1036 171 1055 133 C 1077 88 1127 47 1185 46 Z",
+      "clipToOriginalAlpha": true
+    },
+    "innerFace": {
+      "bbox": [1097, 124, 222, 280],
+      "path": "M 1164 132 C 1184 125 1202 125 1219 131 C 1248 133 1266 166 1283 192 C 1294 207 1304 219 1312 235 C 1317 256 1313 278 1311 303 C 1306 342 1287 373 1258 389 C 1236 402 1213 401 1192 393 C 1159 380 1132 358 1116 330 C 1104 311 1097 288 1103 265 C 1111 244 1128 223 1138 199 C 1148 178 1150 149 1164 132 Z",
+      "usage": "Bare-face boundary used as a hole in the hair extraction; front hair stays above this boundary. Original forehead/cheek RGB is retained in the face source."
+    },
+    "neck": {
+      "bbox": [1157, 375, 151, 195],
+      "path": "M 1162 382 C 1170 417 1169 432 1180 464 L 1218 541 C 1227 555 1237 563 1246 568 C 1263 544 1285 483 1292 445 C 1297 424 1292 397 1287 380 C 1255 400 1206 409 1162 382 Z",
+      "usage": "Exclusion from hair, not a claim that the hidden full neck is painted. Collar/torso retain their original occlusion."
+    },
+    "earL": {
+      "screenSide": "right",
+      "bbox": [1306, 234, 32, 73],
+      "path": "M 1311 239 C 1320 234 1333 240 1335 254 C 1338 272 1331 292 1322 305 L 1311 304 C 1308 292 1310 281 1314 268 C 1316 257 1315 248 1311 239 Z"
+    },
+    "earR": {
+      "screenSide": "left",
+      "bbox": [1080, 276, 41, 64],
+      "path": "M 1091 278 C 1082 281 1081 300 1090 316 C 1096 329 1104 335 1114 337 L 1119 323 C 1111 314 1108 296 1108 282 C 1101 278 1096 277 1091 278 Z"
+    }
+  },
+  "hair": {
+    "id": "HairMain",
+    "strategy": "Single original-pixel core hair layer before optional later subdivision",
+    "outerMaskRef": "masks.hairOuter",
+    "subtractMaskRefs": ["masks.innerFace", "masks.neck", "masks.earL", "masks.earR"],
+    "subtractFeatureRefs": ["features.earringL.mask", "features.earringR.mask"],
+    "pivot": [1219, 386],
+    "clipToOriginalAlpha": true,
+    "notes": [
+      "The outside silhouette comes from source alpha; the broad path only isolates the head from jacket/body.",
+      "Keep crown, side waves and visible ends together initially. Do not add excessive tiny strands or repaint the accepted hairstyle.",
+      "The inner-face/ear/neck holes prevent skin pixels from being assigned to the hair layer. Inspect overlap seams after extraction."
+    ]
+  },
+  "features": {
+    "eyeL": {
+      "idPrefix": "EyeL",
+      "screenSide": "right",
+      "bbox": [1220, 214, 69, 40],
+      "pivot": [1245, 235.5],
+      "socketMask": {
+        "path": "M 1222 240 C 1227 226 1240 216 1253 216 C 1267 215 1277 226 1287 226 L 1289 235 C 1273 249 1244 255 1222 251 Z"
+      },
+      "openingMask": {
+        "path": "M 1228 247 C 1231 232 1241 223 1252 223 C 1261 221 1269 225 1278 231 C 1262 243 1248 250 1228 247 Z"
+      },
+      "iris": {
+        "shape": "ellipse",
+        "cx": 1244.8,
+        "cy": 235.5,
+        "rx": 12.4,
+        "ry": 13,
+        "clipMaskRef": "features.eyeL.openingMask",
+        "source": "Original visible iris/pupil/highlights only",
+        "hiddenPerimeterRestored": false
+      },
+      "sclera": {
+        "outerMaskRef": "features.eyeL.openingMask",
+        "subtractFeatureRefs": ["features.eyeL.iris"],
+        "source": "Original visible white only; iris pixels must not remain burned into the sclera layer",
+        "occludedScleraRestored": false
+      },
+      "upperLidEdge": {
+        "path": "M 1223 241 C 1230 224 1244 216 1257 218 C 1269 219 1277 229 1286 227 L 1286 232 C 1276 237 1269 226 1257 224 C 1244 222 1234 233 1229 247 L 1225 249 Z"
+      },
+      "lowerLidEdge": {
+        "path": "M 1227 246 C 1245 250 1265 242 1278 231 L 1281 235 C 1264 249 1245 255 1227 250 Z"
+      },
+      "notes": "Keep original lash tips and lid shading. A closed eyelid needs separate skin underpaint; squeezing the iris/whole socket is not a finished blink rig."
+    },
+    "eyeR": {
+      "idPrefix": "EyeR",
+      "screenSide": "left",
+      "bbox": [1119, 232, 65, 40],
+      "pivot": [1155, 252],
+      "socketMask": {
+        "path": "M 1120 250 C 1128 237 1140 233 1153 235 C 1168 235 1179 244 1183 255 L 1182 266 C 1163 273 1137 272 1120 261 Z"
+      },
+      "openingMask": {
+        "path": "M 1126 257 C 1134 244 1143 240 1154 241 C 1163 240 1172 247 1179 255 C 1166 264 1140 268 1126 257 Z"
+      },
+      "iris": {
+        "shape": "ellipse",
+        "cx": 1154.7,
+        "cy": 251.7,
+        "rx": 12.1,
+        "ry": 12.6,
+        "clipMaskRef": "features.eyeR.openingMask",
+        "source": "Original visible iris/pupil/highlights only",
+        "hiddenPerimeterRestored": false
+      },
+      "sclera": {
+        "outerMaskRef": "features.eyeR.openingMask",
+        "subtractFeatureRefs": ["features.eyeR.iris"],
+        "source": "Original visible white only; iris pixels must not remain burned into the sclera layer",
+        "occludedScleraRestored": false
+      },
+      "upperLidEdge": {
+        "path": "M 1120 251 C 1128 236 1142 234 1155 236 C 1167 236 1178 246 1182 255 L 1178 259 C 1172 247 1164 242 1154 242 C 1142 240 1133 248 1127 259 L 1122 259 Z"
+      },
+      "lowerLidEdge": {
+        "path": "M 1126 256 C 1140 267 1165 264 1178 255 L 1181 260 C 1162 271 1139 272 1124 261 Z"
+      },
+      "notes": "Screen-left is character-right. Do not mirror the original iris, highlight or eyelashes to make the other eye."
+    },
+    "browL": {
+      "id": "BrowL",
+      "screenSide": "right",
+      "bbox": [1209, 185, 72, 25],
+      "pivot": [1244, 199],
+      "mask": {
+        "path": "M 1211 196 C 1226 186 1248 185 1265 193 C 1273 197 1277 202 1280 207 C 1264 198 1240 195 1215 205 Z"
+      },
+      "source": "Original brow hairs and their local alpha edge"
+    },
+    "browR": {
+      "id": "BrowR",
+      "screenSide": "left",
+      "bbox": [1124, 196, 54, 28],
+      "pivot": [1154, 209],
+      "mask": {
+        "path": "M 1126 211 C 1141 201 1160 196 1171 204 L 1176 213 C 1157 206 1142 213 1128 221 Z"
+      },
+      "source": "Original brow hairs; preserve the portion naturally covered by the side fringe"
+    },
+    "mouth": {
+      "idPrefix": "Mouth",
+      "bbox": [1169, 313, 96, 43],
+      "pivot": [1217, 336],
+      "corners": {
+        "screenLeft": [1177, 337],
+        "screenRight": [1257, 320]
+      },
+      "wholeVisibleMask": {
+        "path": "M 1171 331 C 1189 330 1203 323 1216 325 C 1230 326 1246 319 1258 314 L 1264 322 C 1254 341 1235 352 1215 354 C 1195 354 1179 347 1170 339 Z"
+      },
+      "upperLip": {
+        "path": "M 1177 337 C 1189 339 1201 333 1212 330 C 1221 328 1227 332 1235 328 C 1242 327 1250 323 1257 320 C 1253 326 1245 331 1234 335 C 1219 340 1199 343 1177 337 Z",
+        "source": "Original upper-lip RGB, including the original smile contour"
+      },
+      "lowerLip": {
+        "path": "M 1177 337 C 1196 344 1218 340 1235 334 C 1246 329 1252 324 1257 320 C 1249 336 1235 345 1217 348 C 1200 349 1186 344 1177 337 Z",
+        "source": "Original lower-lip RGB and highlight; no replacement lip texture"
+      },
+      "seamGuide": {
+        "path": "M 1177 337 C 1197 344 1223 338 1235 334 C 1244 330 1251 324 1257 320",
+        "usage": "Registration guide only; never render this path as an artificial dark stroke"
+      },
+      "mouthInterior": {
+        "status": "separate-source-pending",
+        "extractFromOriginal": false,
+        "teethPresentInClosedSource": false,
+        "tonguePresentInClosedSource": false
+      },
+      "notes": [
+        "The two lips share the observed closed-mouth seam; masks need a composite seam check before rigging.",
+        "Do not expose empty alpha between lips and call it an authored mouth cavity.",
+        "Do not rotate a separately generated mouth onto this face; keep the approved original pixels."
+      ]
+    },
+    "earringL": {
+      "id": "EarringL",
+      "screenSide": "right",
+      "bbox": [1310, 295, 20, 29],
+      "pivot": [1320, 300],
+      "pearlCenter": [1319.5, 313.5],
+      "pearlRadius": 7.2,
+      "mask": {
+        "path": "M 1318 296 C 1323 295 1326 299 1323 304 L 1323 307 C 1330 310 1326 322 1319 322 C 1311 322 1309 313 1313 308 L 1317 305 C 1315 302 1315 298 1318 296 Z"
+      },
+      "source": "Original stud, connector and pearl, retaining highlight"
+    },
+    "earringR": {
+      "id": "EarringR",
+      "screenSide": "left",
+      "bbox": [1106, 328, 20, 28],
+      "pivot": [1114, 332],
+      "pearlCenter": [1116, 344.5],
+      "pearlRadius": 7.2,
+      "mask": {
+        "path": "M 1113 329 C 1118 328 1120 333 1117 337 C 1125 337 1126 349 1120 352 C 1112 356 1107 350 1108 343 C 1108 340 1110 338 1112 337 C 1110 334 1111 331 1113 329 Z"
+      },
+      "source": "Original stud, connector and pearl, retaining highlight"
+    }
+  },
+  "occlusionPlan": [
+    "Keep neck behind face/chin and torso collar.",
+    "Keep ear skin behind the hair waves that cover its upper edge.",
+    "Place original visible sclera behind original iris/pupil; place lid/lash edges over both.",
+    "Place brows above face, with naturally overlapping fringe above brows where source pixels require it.",
+    "Keep earring studs attached to their ear-side pivot; preserve the existing hair/pearl overlap.",
+    "Place separate mouth interior behind both original lips only after the actual interior source is supplied."
+  ],
+  "notVerified": [
+    "Extracted masks have not yet been composited and inspected at neutral pose.",
+    "No hidden eye/skin/hair area has been restored by this JSON.",
+    "No mesh, deformation, Cubism model export, blink or lip-sync has been validated."
+  ]
+}

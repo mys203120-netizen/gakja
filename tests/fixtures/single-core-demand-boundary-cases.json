@@ -1,0 +1,502 @@
+{
+  "version": "md-demand-boundary-human-labels-v1",
+  "policyVersion": "source-bound-dialogue-policy-v15",
+  "purpose": "Human review labels for bounded real-core comparison; not semantic TS predicates, model answer scripts, or production source facts.",
+  "mdBasis": [
+    "MD8 §§10,11,13,14",
+    "MD9 §§12,14,15,16",
+    "MD10 §§10,11"
+  ],
+  "cases": [
+    {
+      "id": "HIST-Q14",
+      "provenance": "exact_historical_human_answer",
+      "source": {
+        "path": "data/sessions/8f54631b-d1ce-404a-97ba-17394fd111b9.json",
+        "sha256": "314738be844dedad0156f59c134ec8de56670dfa97d4e1ffdccd5a90fd3b62e1",
+        "turnId": "90623d80-ddd4-4070-aa62-d34be7de2c8a",
+        "answerId": "bb57bdca-0134-47ac-8475-81cee1767bbb"
+      },
+      "question": "표본 크기에 따라 95% 신뢰구간의 폭이 달라진다는 점은 데이터의 불확실성을 어떻게 보여 주나요?",
+      "rawTranscript": "실내 구간이 95%센트라는 이야기는 추정이 적중할 확률이 95%다. 이 말입니다. 그러니까 데이터의 불확실성은 당연히 그 추정이 적중하지 않을 확률은 5%에 있겠죠. 대신에 실내 구간의 크기가 길어지면 길어질수록 점점 추정 자체가 당연해질 수밖에 없다라는 함정이 있겠죠. ",
+      "rawTranscriptSha256": "fef0e2b598059cada1d1150a65095c485c42e3a795e503ba729d4c9d227f7b62",
+      "expected": {
+        "coverage": [
+          "partial"
+        ],
+        "actions": [
+          "FOLLOW_UP",
+          "TRANSITION"
+        ],
+        "answered": [
+          "구간 폭과 적중 가능성의 관계 및 넓은 추정의 함정"
+        ],
+        "missing": [
+          "표본 크기에 따른 구간 폭 변화"
+        ],
+        "followUpScope": "표본 크기→폭의 변화 관계 하나. 폭과 불확실성의 전체 설명을 다시 요구하지 않는다.",
+        "function": [
+          "CONCEPT"
+        ],
+        "depth": [
+          "D1",
+          "D2"
+        ]
+      },
+      "manualReview": [
+        "라벨 일치만으로 통과시키지 않고 후보가 이미 답한 범위를 다시 요구하는지 실제 문장으로 읽는다.",
+        "자연어 의미는 단일 코어가 판단한다. 이 fixture를 런타임 분기나 정답 템플릿으로 사용하지 않는다."
+      ]
+    },
+    {
+      "id": "HIST-Q15",
+      "provenance": "exact_historical_human_answer",
+      "source": {
+        "path": "data/sessions/8f54631b-d1ce-404a-97ba-17394fd111b9.json",
+        "sha256": "314738be844dedad0156f59c134ec8de56670dfa97d4e1ffdccd5a90fd3b62e1",
+        "turnId": "cf7a3e7d-93e8-4bb4-a7de-b8ea6c890e59",
+        "answerId": "0e49a1d2-34d4-432f-8ad7-7b06d4c9ac11"
+      },
+      "question": "신뢰구간의 폭이 커질수록 추정이 더 확실해진다고 말씀하셨는데, 그렇게 판단한 근거는 무엇인가요?",
+      "rawTranscript": "예를 들어서 시험을 쳤다고 생각합시다. 그럼 제가 당신 아들 시험 점수가 0점부터 100점 사이에 있을 거라고 만약에 추정했다고 칩시다. 그럼 재추정이 적중할 확률은 몇 퍼센트죠 100%죠 그러면 이 추정이 과연 좋은 추정이라고 볼 수 있을까요 아니죠. 당연한 추정이니까 근데 제가 만약에 당신 아들의 시험 점수가 78점입니다라고 찍으면 그러면 여기는 신뢰도가 있나요 없죠. 왜냐하면 너무 디테일한 값이기 때문에 그렇습니다. 범위가 넓어지면 넓어질수록 추정은 당연해지는 겁니다. 즉 그 추정이 적중할 확률도 높아지는 거고요 그럼 추정이 적중할 확률 즉 신뢰도가 높아진다는 게 과연 좋은 걸까요 아니죠. 그만큼 추정의 범위도 넓어진다라는 이야기인 거죠. ",
+      "rawTranscriptSha256": "8ed49ccad895e6d303f9f7f87f6ea3e00691486af48f6e3883f7978b341b5013",
+      "expected": {
+        "coverage": [
+          "met"
+        ],
+        "actions": [
+          "TRANSITION"
+        ],
+        "answered": [
+          "넓은 구간의 높은 적중 가능성과 추정 유용성은 다르다는 예시·근거"
+        ],
+        "missing": [],
+        "followUpScope": null
+      },
+      "manualReview": [
+        "라벨 일치만으로 통과시키지 않고 후보가 이미 답한 범위를 다시 요구하는지 실제 문장으로 읽는다.",
+        "자연어 의미는 단일 코어가 판단한다. 이 fixture를 런타임 분기나 정답 템플릿으로 사용하지 않는다."
+      ]
+    },
+    {
+      "id": "HIST-Q12",
+      "provenance": "exact_historical_human_answer",
+      "source": {
+        "path": "data/sessions/8f54631b-d1ce-404a-97ba-17394fd111b9.json",
+        "sha256": "314738be844dedad0156f59c134ec8de56670dfa97d4e1ffdccd5a90fd3b62e1",
+        "turnId": "cae1d5cf-529f-4e29-aee9-6727ad6575ae",
+        "answerId": "59ebadf6-606c-4acf-a524-097c0c73a6d3"
+      },
+      "question": "버추얼 시티의 에너지 시스템 구현에서 직접 맡아 한 일이 있다면 무엇인가요?",
+      "rawTranscript": "뭐 버추얼 시티니까 아무래도 이게 상상력이 중요하잖아요 그래서 저는 구현에 있어서 머리를 담당했습니다. ",
+      "rawTranscriptSha256": "eb6729c0343643b6a93051416cc2a87d27b8f99cbbb8c1d0ff5dc81036cf3c37",
+      "expected": {
+        "coverage": [
+          "partial",
+          "unknown"
+        ],
+        "actions": [
+          "CLARIFICATION"
+        ],
+        "answered": [
+          "머리를 담당했다는 막연한 역할 표현"
+        ],
+        "missing": [
+          "그 표현이 뜻하는 실제 행동"
+        ],
+        "followUpScope": null
+      },
+      "manualReview": [
+        "라벨 일치만으로 통과시키지 않고 후보가 이미 답한 범위를 다시 요구하는지 실제 문장으로 읽는다.",
+        "자연어 의미는 단일 코어가 판단한다. 이 fixture를 런타임 분기나 정답 템플릿으로 사용하지 않는다."
+      ]
+    },
+    {
+      "id": "HIST-Q18",
+      "provenance": "exact_historical_human_answer",
+      "source": {
+        "path": "data/sessions/8f54631b-d1ce-404a-97ba-17394fd111b9.json",
+        "sha256": "314738be844dedad0156f59c134ec8de56670dfa97d4e1ffdccd5a90fd3b62e1",
+        "turnId": "37703dee-e527-4388-936d-10fa92627812",
+        "answerId": "aafa91d9-bbd1-41ab-a3da-284a27636ec9"
+      },
+      "question": "실험에서 본인이 직접 맡아 한 일은 무엇인가요?",
+      "rawTranscript": "실험을전체적으로 설계하고 각 조원들이 어떤 부분을 실험 도중에 기록하고 그리고 그걸 바탕으로 실험이 잘못된 점과 잘 된 점을 찾아낼 수 있어야 하는지에 대해서 조언해 주는 리더십을 발휘했다고 생각하시면 되겠습니다. ",
+      "rawTranscriptSha256": "b4fa5122386a4fdf8d3c1b46e0fc1bf044b2e93551464d572c870dba5bb3b661",
+      "expected": {
+        "coverage": [
+          "met"
+        ],
+        "actions": [
+          "TRANSITION"
+        ],
+        "answered": [
+          "실험 전체 설계와 조원 기록/분석 조언이라는 직접 역할"
+        ],
+        "missing": [],
+        "followUpScope": null
+      },
+      "manualReview": [
+        "라벨 일치만으로 통과시키지 않고 후보가 이미 답한 범위를 다시 요구하는지 실제 문장으로 읽는다.",
+        "자연어 의미는 단일 코어가 판단한다. 이 fixture를 런타임 분기나 정답 템플릿으로 사용하지 않는다."
+      ]
+    },
+    {
+      "id": "CONTRAST-CI-FULL",
+      "provenance": "synthetic_human_labeled_contrast_not_a_user_record",
+      "question": "표본 크기에 따라 95% 신뢰구간의 폭이 달라진다는 점은 데이터의 불확실성을 어떻게 보여 주나요?",
+      "rawTranscript": "다른 조건과 신뢰수준이 같으면 표본이 많을수록 구간은 좁아집니다. 추정할 수 있는 범위가 좁아져 불확실성이 작아진다는 뜻입니다. 넓기만 한 범위는 맞히기 쉬워도 정밀한 추정은 아닙니다.",
+      "rawTranscriptSha256": "5a16ae13bac900fab1a8cc16853712c39130d2ab3d643697b8f68f95c888c57f",
+      "expected": {
+        "coverage": [
+          "met"
+        ],
+        "actions": [
+          "TRANSITION"
+        ],
+        "answered": [
+          "표본 크기→폭 변화",
+          "폭이 나타내는 불확실성·정밀도"
+        ],
+        "missing": []
+      },
+      "manualReview": [
+        "같은 관계를 WHY/근거로 다시 묻지 않는다. 별도 새 주장 없는 완전 충족 대조군이다."
+      ]
+    },
+    {
+      "id": "CONTRAST-CI-ONLY-DIRECTION",
+      "provenance": "synthetic_human_labeled_contrast_not_a_user_record",
+      "question": "표본 크기에 따라 95% 신뢰구간의 폭이 달라진다는 점은 데이터의 불확실성을 어떻게 보여 주나요?",
+      "rawTranscript": "다른 조건이 같으면 표본이 많을수록 신뢰구간 폭은 좁아집니다.",
+      "rawTranscriptSha256": "e3930f99cae80f30735778a17345cbc2a72b30f46eb82fc3ce23e7115e97a364",
+      "expected": {
+        "coverage": [
+          "partial",
+          "met"
+        ],
+        "actions": [
+          "FOLLOW_UP",
+          "TRANSITION"
+        ],
+        "answered": [
+          "표본 크기→폭 변화"
+        ],
+        "missing": [
+          "폭과 불확실성 해석의 연결이 현재 요구상 실제 필요한지 판단"
+        ],
+        "followUpScope": "필요하다면 불확실성 해석 한 점만. 이미 설명한 표본 크기→폭 방향은 재요구하지 않는다."
+      },
+      "manualReview": [
+        "직전 HIST-Q14와 반대 방향의 부분 충족이다. 표본 크기를 항상 빠진 것으로 고정하지 않는다."
+      ]
+    },
+    {
+      "id": "CONTRAST-CI-MEANING-REQUEST",
+      "provenance": "synthetic_human_labeled_contrast_not_a_user_record",
+      "question": "표본 크기에 따라 95% 신뢰구간의 폭이 달라진다는 점은 데이터의 불확실성을 어떻게 보여 주나요?",
+      "rawTranscript": "질문이 무슨 뜻인지 모르겠습니다. 쉬운 말로 다시 말씀해 주세요.",
+      "rawTranscriptSha256": "4975d48a41a440562bacbae422ffcb5f027c88eb90b9d2f1df07976296f78c2e",
+      "expected": {
+        "coverage": [
+          "unknown"
+        ],
+        "response": [
+          "answered"
+        ],
+        "actions": [
+          "CLARIFICATION"
+        ],
+        "answered": [],
+        "missing": [
+          "현재 전체 요구"
+        ]
+      },
+      "manualReview": [
+        "같은 전체 요구를 쉬운 표현으로 다시 묻는 C다. 깊이를 낮췄다는 이유만으로 F로 세지 않는다."
+      ]
+    },
+    {
+      "id": "CONTRAST-62-FULL",
+      "provenance": "synthetic_human_labeled_contrast_not_a_user_record",
+      "question": "층간 삽입된 CNT의 스페이서 역할로 정전용량이 62% 향상됐다는 판단의 근거는 무엇인가요?",
+      "rawTranscript": "논문에서 같은 전류 밀도와 질량 기준으로 측정한 순수 맥신 전극의 정전용량 100과 복합 전극의 162를 비교했습니다. 증가량 62를 원래 값 100으로 나누고 100을 곱한 결과입니다. 제가 직접 측정한 값이라는 뜻은 아닙니다.",
+      "rawTranscriptSha256": "7f22353c2a666afdfd69d7c5c554605be9e2ee90da694cf7335643c807373ceb",
+      "expected": {
+        "coverage": [
+          "met"
+        ],
+        "actions": [
+          "TRANSITION"
+        ],
+        "answered": [
+          "비교 대상·동일 조건·계산 근거·연구 출처 귀속"
+        ],
+        "missing": []
+      },
+      "manualReview": [
+        "합성 수치는 학생의 미검증 답변이다. 기록 확정 사실이나 자기 실험으로 승격하지 않는다. 같은 산출 근거를 다시 요구하지 않는다."
+      ]
+    },
+    {
+      "id": "CONTRAST-62-SEARCH-ONLY",
+      "provenance": "synthetic_human_labeled_contrast_not_a_user_record",
+      "question": "층간 삽입된 CNT의 스페이서 역할로 정전용량이 62% 향상됐다는 판단의 근거는 무엇인가요?",
+      "rawTranscript": "GPT에 검색해서 62%라는 수치를 찾았습니다.",
+      "rawTranscriptSha256": "fd8ac3e035f6810da7905fbc9dca698db164d4477c05dd24c7381856cb5f62fa",
+      "expected": {
+        "coverage": [
+          "partial",
+          "unknown"
+        ],
+        "response": [
+          "answered"
+        ],
+        "actions": [
+          "CLARIFICATION",
+          "FOLLOW_UP",
+          "TRANSITION"
+        ],
+        "answered": [
+          "자료 검색 경로"
+        ],
+        "missing": [
+          "실제로 확인한 비교 원자료가 있는지"
+        ],
+        "followUpScope": "F라면 확인 가능한 비교 원자료의 존재 등 실제 새 확인점 하나. 62% 근거 전체 재요구는 C다."
+      },
+      "manualReview": [
+        "GPT 검색 경로를 비교 원자료로 승인하지 않는다. 허용 action만 맞고 같은 전체 요구를 F로 반복하면 실패다."
+      ]
+    },
+    {
+      "id": "CONTRAST-62-UNAVAILABLE",
+      "provenance": "synthetic_human_labeled_contrast_not_a_user_record",
+      "question": "층간 삽입된 CNT의 스페이서 역할로 정전용량이 62% 향상됐다는 판단의 근거는 무엇인가요?",
+      "rawTranscript": "그 비교 원자료와 계산 과정은 기억나지 않습니다. 더 설명할 수 없습니다.",
+      "rawTranscriptSha256": "b315ffb3bfc965902106ae474bf799067197213831ae123e5ddbb662f1336db8",
+      "expected": {
+        "coverage": [
+          "unknown",
+          "partial"
+        ],
+        "response": [
+          "unavailable"
+        ],
+        "actions": [
+          "TRANSITION"
+        ],
+        "answered": [
+          "현재 근거 범위의 명시적 기억 불가"
+        ],
+        "missing": []
+      },
+      "manualReview": [
+        "모름·거절 범위를 다른 말의 F/C로 재추궁하지 않는다."
+      ]
+    },
+    {
+      "id": "CONTRAST-ROLE-NEW-CLAIM",
+      "provenance": "synthetic_human_labeled_contrast_not_a_user_record",
+      "question": "비타민C 세포노화 방지 실험에서 본인이 직접 한 일이 있다면 무엇인가요?",
+      "rawTranscript": "각 조가 기록할 양식을 만들었습니다. 그 양식 덕분에 조원들의 기록 오류가 전부 없어졌다고 생각합니다.",
+      "rawTranscriptSha256": "1ecf435754216c5d644ab20199614873a649ddd809424beab04b6701f0620f46",
+      "expected": {
+        "coverage": [
+          "met"
+        ],
+        "actions": [
+          "FOLLOW_UP",
+          "TRANSITION"
+        ],
+        "answered": [
+          "기록 양식 제작이라는 개인 역할"
+        ],
+        "missing": [
+          "기록 오류가 전부 없어졌다는 실제 새 주장 근거"
+        ],
+        "followUpScope": "필요하다면 오류가 전부 없어졌다고 판단한 근거 하나. 양식을 만든 역할을 다시 요구하지 않는다."
+      },
+      "manualReview": [
+        "역할 충족을 partial로 소급하지 않는다. 새 효과 주장의 실익이 있을 때만 met 상태의 F가 가능하다."
+      ]
+    },
+    {
+      "id": "CONTRAST-CORRECTION-FULL",
+      "provenance": "synthetic_human_labeled_contrast_not_a_user_record",
+      "question": "62% 향상을 어떤 비교 근거로 판단했나요?",
+      "rawTranscript": "먼저 정정하겠습니다. 제가 직접 실험한 게 아니라 논문의 두 조건 그래프를 비교했습니다. 같은 기준의 맥신 전극 100과 복합 전극 162를 보고 차이를 원래 값으로 나눠 62%로 계산했습니다.",
+      "rawTranscriptSha256": "52199d276d3f22b7259575f7286213cf92e52d35ced1007d3dfa477f5f62f66b",
+      "expected": {
+        "coverage": [
+          "met"
+        ],
+        "actions": [
+          "TRANSITION"
+        ],
+        "answered": [
+          "직접 실험 주체 정정",
+          "비교 자료와 계산 근거"
+        ],
+        "missing": []
+      },
+      "manualReview": [
+        "정정이 있었다는 이유로 뒤의 비교·계산 설명을 버리지 않는다. 이미 해소된 실험 주체 차이를 다시 추궁하지 않는다."
+      ]
+    },
+    {
+      "id": "CONTRAST-CORRECTION-ONLY",
+      "provenance": "synthetic_human_labeled_contrast_not_a_user_record",
+      "question": "그 논문에서 62%를 비교한 대상과 조건은 무엇인가요?",
+      "rawTranscript": "먼저 앞의 말만 정정할게요. 제가 직접 실험한 것은 아니고 논문을 읽었습니다.",
+      "rawTranscriptSha256": "5157df4805ff8545b99021da1ab935b0f37101a48a754a70a656d9f4e84e5032",
+      "expected": {
+        "coverage": [
+          "unknown"
+        ],
+        "response": [
+          "answered"
+        ],
+        "actions": [
+          "CLARIFICATION",
+          "TRANSITION"
+        ],
+        "answered": [
+          "이전 수행 주체 정정"
+        ],
+        "missing": [
+          "현재 질문 전체의 비교 대상·조건"
+        ]
+      },
+      "manualReview": [
+        "현재 전체 요구는 아직 답하지 않았다. 정정으로 존재하는 과거 설명을 지우지도, 정정 자체를 새 F 요구로 만들지도 않는다."
+      ]
+    }
+  ],
+  "wholeCausalDemandContrasts": {
+    "provenance": "synthetic_model_authored_contrast_not_a_user_record_or_human_signoff",
+    "purpose": "Offline Q6-style whole-demand contrasts. These student statements are not approved scientific knowledge, runtime predicates or required model wording.",
+    "cases": [
+      {
+        "id": "CONTRAST-CAUSAL-WHOLE-WHY-HOW",
+        "question": "암모니아 크래킹의 흡열 특성이 에너지 재소모로 이어지는 이유를 설명해 주세요.",
+        "rawTranscript": "제가 생각하기에는 흡열과 에너지가 서로 관련 있어서 그런 것 같습니다.",
+        "rawTranscriptSha256": "894ba7f6093d2d90bdb146f4ea96f730ee6ab2bd9a36b0a8a3585b2db606da32",
+        "expected": {
+          "coverage": ["partial", "unknown"],
+          "response": ["answered"],
+          "actions": ["CLARIFICATION", "TRANSITION"],
+          "answered": ["흡열과 에너지의 관련성에 대한 설명 시도"],
+          "missing": ["현재 질문이 요구한 전체 인과 설명"],
+          "followUpScope": null
+        },
+        "manualReview": ["WHY를 HOW로 바꿔 같은 인과 관계 전체를 다시 설명시키는 것은 새 하위 요구가 아니다. 별도 미답 관계나 실제 새 주장이 없으므로 F로 세지 않는다."]
+      },
+      {
+        "id": "CONTRAST-CAUSAL-WHOLE-FULL",
+        "question": "암모니아 크래킹의 흡열 특성이 에너지 재소모로 이어지는 이유를 설명해 주세요.",
+        "rawTranscript": "분해 과정에 외부 열을 계속 공급해야 하고 그 열을 마련하는 데 에너지가 다시 필요하기 때문이라고 이해했습니다.",
+        "rawTranscriptSha256": "2911bbc43163c86a974d1a4ebd25bd5945197878353663da8fdc5eff650e26a7",
+        "expected": {
+          "coverage": ["met"],
+          "response": ["answered"],
+          "actions": ["TRANSITION"],
+          "answered": ["학생이 이해한 열 공급과 에너지 재소모의 인과 설명"],
+          "missing": [],
+          "followUpScope": null
+        },
+        "manualReview": ["내용 충족과 과학적 정오는 구별한다. 별도 새 주장 없는 완전 충족 대조군이며 같은 인과를 WHY/HOW로 재요구하지 않는다."]
+      }
+    ]
+  },
+  "finalUtteranceQa": {
+    "provenance": "synthetic_model_authored_qa_not_human_signoff",
+    "purpose": "Exercise the existing offline verifier using explicit model review verdicts of final utterances. No heuristic here proves natural-language meaning or approves a production release.",
+    "cases": [
+      {
+        "id": "Q6-WHOLE-WHY-HOW-AS-F",
+        "inputCaseId": "CONTRAST-CAUSAL-WHOLE-WHY-HOW",
+        "action": "FOLLOW_UP",
+        "coreText": "흡열 특성 때문에 크래킹 반응을 진행하는 데 에너지가 어떻게 쓰이는지 설명해 주세요.",
+        "finalText": "흡열 특성 때문에 크래킹 반응을 진행하는 데 에너지가 어떻게 쓰이는지 설명해 주세요.",
+        "surfaceOrigin": "core",
+        "expectedVerdict": "fail",
+        "failedChecks": ["demandRelation", "usefulSingleSubpoint"],
+        "note": "Same entire causal demand with WHY changed to HOW; no independent missing subpoint is isolated."
+      },
+      {
+        "id": "Q6-WHOLE-SAME-AS-C",
+        "inputCaseId": "CONTRAST-CAUSAL-WHOLE-WHY-HOW",
+        "action": "CLARIFICATION",
+        "coreText": "말씀하신 열의 필요와 에너지 재소모가 어떤 관계인지 설명해 주세요.",
+        "finalText": "말씀하신 열의 필요와 에너지 재소모가 어떤 관계인지 설명해 주세요.",
+        "surfaceOrigin": "core",
+        "expectedVerdict": "pass",
+        "failedChecks": [],
+        "note": "A non-evaluative restatement preserves the original whole causal requirement."
+      },
+      {
+        "id": "Q14-MISSING-SUBPOINT-AS-F",
+        "inputCaseId": "HIST-Q14",
+        "action": "FOLLOW_UP",
+        "coreText": "표본 크기가 커지면 신뢰구간의 폭은 어떻게 달라지나요?",
+        "finalText": "표본 크기가 커지면 신뢰구간의 폭은 어떻게 달라지나요?",
+        "surfaceOrigin": "core",
+        "expectedVerdict": "pass",
+        "failedChecks": [],
+        "note": "Only the unanswered size-to-width relation is requested; the prior width explanation remains answered."
+      },
+      {
+        "id": "Q14-REPAIR-REINTRODUCES-ANSWERED-SCOPE",
+        "inputCaseId": "HIST-Q14",
+        "action": "FOLLOW_UP",
+        "coreText": "표본 크기가 커지면 신뢰구간의 폭은 어떻게 달라지나요?",
+        "finalText": "표본 크기에 따른 구간 폭의 변화가 데이터의 불확실성을 어떻게 보여 주나요?",
+        "surfaceOrigin": "repair",
+        "expectedVerdict": "fail",
+        "failedChecks": ["demandRelation", "answeredScopePreserved", "usefulSingleSubpoint", "repairedMeaningPreserved"],
+        "note": "The repaired final sentence broadens the narrow core probe into the original whole demand."
+      },
+      {
+        "id": "Q14-DISCRETIONARY-TRANSITION",
+        "inputCaseId": "HIST-Q14",
+        "action": "TRANSITION",
+        "coreText": null,
+        "finalText": null,
+        "surfaceOrigin": "none",
+        "expectedVerdict": "pass",
+        "failedChecks": [],
+        "note": "A legitimate transition is allowed; a test must not force a follow-up to reach its preferred path."
+      }
+    ]
+  },
+  "continuousE2EProposal": {
+    "bankPath": "data/prepared/question-banks/8cabaf23bae113cbcd3490f7010d9e7f250c27ada4f9e124d117e49bfced9eaf.json",
+    "bankKey": "8cabaf23bae113cbcd3490f7010d9e7f250c27ada4f9e124d117e49bfced9eaf",
+    "candidateId": "ad66fd389372de493ad28f8fef422dd569b8a4efafb9ee403a1666293f30c13e",
+    "rootQuestion": "표본 크기에 따라 95% 신뢰구간의 폭이 달라진다는 점은 데이터의 불확실성을 어떻게 보여 주나요?",
+    "syntheticOnly": true,
+    "forceActionOrStubModel": false,
+    "steps": [
+      {
+        "after": "Q0",
+        "answer": "구간 폭이 넓으면 더 많은 값을 포함하니 맞히기 쉬워집니다. 하지만 너무 넓으면 좋은 추정은 아닙니다.",
+        "expected": "partial. F1을 고르면 아직 답하지 않은 표본 크기→폭 변화만 확인한다. 전체 폭·불확실성 설명 재요구는 실패."
+      },
+      {
+        "after": "F1 actually asks the missing size-width relation",
+        "answer": "다른 조건과 신뢰수준이 같으면 표본이 많아질수록 폭은 좁아집니다. 그리고 구간이 좁아졌다면 반드시 참값을 포함한다고 생각했습니다.",
+        "expected": "요구된 크기→폭 관계는 met로 보존한다. 새 항상 포함 주장을 확인할 실익이 있으면 근거 한 점의 F2가 가능하다. F2를 얻기 위해 coverage=partial을 강제하지 않는다."
+      },
+      {
+        "after": "F2 actually asks the new guarantee claim",
+        "answer": "반드시 포함한다는 말은 제가 과장했습니다. 구간이 좁다는 것과 항상 참값을 포함한다는 것은 같은 뜻이 아닙니다.",
+        "expected": "정정 범위를 수용해 T. 같은 보장 주장을 재추궁하거나 F3 생성 금지."
+      }
+    ],
+    "boundaries": [
+      "코어가 MD상 실익이 없다고 T를 고르면 경로를 통과시키기 위해 답변이나 질문을 강제하지 않는다. 해당 시도는 연속F2 미도달로 기록한다.",
+      "원문 없는 직접 수행·실제 측정치를 새 사실로 가정하지 않는다. 합성 답변과 세션은 명확히 synthetic provenance로 남긴다."
+    ]
+  }
+}

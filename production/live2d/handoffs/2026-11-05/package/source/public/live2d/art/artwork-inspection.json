@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "inspectedAt": "2026-11-03T14:51:12.343Z",
+  "method": "PNG metadata and decoded alpha pixel inspection; no art alteration",
+  "images": [
+    {
+      "file": "reference.png",
+      "bytes": 419581,
+      "sha256": "769243b4aa632fc3619fba9602c9672cd2258b3679b6e873accb67e34ffd3a13",
+      "width": 640,
+      "height": 360,
+      "channels": 3,
+      "hasAlpha": false,
+      "pixels": {
+        "transparent": 0,
+        "partial": 0,
+        "opaque": 230400
+      },
+      "alphaBounds": {
+        "left": 0,
+        "top": 0,
+        "right": 639,
+        "bottom": 359
+      },
+      "status": "user-reference"
+    },
+    {
+      "file": "neutral-scene-working.png",
+      "bytes": 2025942,
+      "sha256": "b81bb9ff4d46e26133e5313648948472c927046ddc5db03f0aa6a22ffe2e1763",
+      "width": 1672,
+      "height": 941,
+      "channels": 3,
+      "hasAlpha": false,
+      "pixels": {
+        "transparent": 0,
+        "partial": 0,
+        "opaque": 1573352
+      },
+      "alphaBounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1671,
+        "bottom": 940
+      },
+      "status": "working-art-not-rig-ready"
+    },
+    {
+      "file": "room-with-desk-working.png",
+      "bytes": 2149379,
+      "sha256": "7eb3bdc1124e03dd9c4a199637096483bdbe69da0eae21c6dc35c45f0a2f43d6",
+      "width": 1672,
+      "height": 941,
+      "channels": 3,
+      "hasAlpha": false,
+      "pixels": {
+        "transparent": 0,
+        "partial": 0,
+        "opaque": 1573352
+      },
+      "alphaBounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1671,
+        "bottom": 940
+      },
+      "status": "working-art-not-rig-ready"
+    },
+    {
+      "file": "male-neutral-cutout-working.png",
+      "bytes": 807307,
+      "sha256": "2e31cfc92563c01b198b72a4a922691d1eed1be65768baf7c3155d136a5084f6",
+      "width": 1672,
+      "height": 941,
+      "channels": 4,
+      "hasAlpha": true,
+      "pixels": {
+        "transparent": 1195349,
+        "partial": 377543,
+        "opaque": 460
+      },
+      "alphaBounds": {
+        "left": 0,
+        "top": 48,
+        "right": 1535,
+        "bottom": 940
+      },
+      "status": "working-art-not-rig-ready"
+    }
+  ]
+}

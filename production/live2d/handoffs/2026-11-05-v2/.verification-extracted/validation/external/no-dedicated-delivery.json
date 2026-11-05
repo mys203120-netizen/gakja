@@ -1,0 +1,19 @@
+{
+  "id": "no-dedicated-delivery",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "scripts/verify-live2d-assets.mjs",
+    "--delivery-root",
+    "production/live2d/incoming",
+    "--report",
+    "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\validation-runs\\2026-11-05-final-49b802b9-54d1-47d7-8b9a-f2542cfbd950\\no-delivery.json"
+  ],
+  "startedAt": "2026-11-04T16:28:52.395Z",
+  "finishedAt": "2026-11-04T16:28:52.530Z",
+  "expectedExitCode": 2,
+  "exitCode": 2,
+  "signal": null,
+  "stdout": "{\n  \"status\": \"BLOCKED\",\n  \"deliveryId\": null,\n  \"level1\": \"BLOCKED\",\n  \"level2\": \"BLOCKED\",\n  \"level3\": \"NOT_RUN\",\n  \"actualModelNewlyAuthored\": false,\n  \"releaseReady\": false,\n  \"assetValidationPassed\": false,\n  \"modelLoadVerified\": false,\n  \"motionSyncVerified\": false,\n  \"runtimeQAComplete\": false,\n  \"errors\": [\n    \"납품 manifest를 읽지 못했습니다: ENOENT: no such file or directory, realpath 'C:\\\\Users\\\\MaYunsong\\\\Documents\\\\각자의답NEW\\\\production\\\\live2d\\\\incoming'\"\n  ],\n  \"reportPath\": \"C:\\\\Users\\\\MaYunsong\\\\Documents\\\\각자의답NEW\\\\production\\\\live2d\\\\validation-runs\\\\2026-11-05-final-49b802b9-54d1-47d7-8b9a-f2542cfbd950\\\\no-delivery.json\"\n}\n",
+  "stderr": "",
+  "status": "PASS"
+}

@@ -1,0 +1,75 @@
+{
+  "status": "partial-complete",
+  "scope": "existing PSD package hashes, recorded exact layer roundtrip and required independent parts",
+  "checkedAt": "2026-11-04T14:54:46.486Z",
+  "speakers": [
+    {
+      "id": "interviewer-1",
+      "partPngs": 37,
+      "artLayers": 35,
+      "outputs": [
+        {
+          "file": "artwork_master.psd",
+          "bytes": 4049637,
+          "sha256": "7b83f4d2d4d56eda28c7f4ed439d9afbbda84968d528b2128d025d88dd76df26",
+          "layers": 37,
+          "rgb8": true,
+          "srgbIccVerified": true,
+          "independentLayerRgbaExact": true
+        },
+        {
+          "file": "cubism_import.psd",
+          "bytes": 2781349,
+          "sha256": "3f747bf1c4e1655a4ef3b89cb36656714639d6284750684c117def294eb662cb",
+          "layers": 35,
+          "rgb8": true,
+          "srgbIccVerified": true,
+          "independentLayerRgbaExact": true
+        }
+      ],
+      "cubismImportTested": false,
+      "rigCreated": false,
+      "moc3Exported": false
+    },
+    {
+      "id": "interviewer-2",
+      "partPngs": 37,
+      "artLayers": 35,
+      "outputs": [
+        {
+          "file": "artwork_master.psd",
+          "bytes": 4281847,
+          "sha256": "0884bc920a4b63cea182dc01650a5d9a5a345b8ff56fe8952e9c1faaebc36d9b",
+          "layers": 37,
+          "rgb8": true,
+          "srgbIccVerified": true,
+          "independentLayerRgbaExact": true
+        },
+        {
+          "file": "cubism_import.psd",
+          "bytes": 2950223,
+          "sha256": "2a5c319d9f1ce6f3c4daad3218ee4903e72b65c49044f2e1b2149937c263fbc6",
+          "layers": 35,
+          "rgb8": true,
+          "srgbIccVerified": true,
+          "independentLayerRgbaExact": true
+        }
+      ],
+      "cubismImportTested": false,
+      "rigCreated": false,
+      "moc3Exported": false
+    }
+  ],
+  "motionCatalogPresent": true,
+  "photoshopVerification": "excluded-by-user",
+  "computerUse": "prohibited-by-user",
+  "cubismEditorAvailable": false,
+  "actualRigCreated": false,
+  "actualModelRuntimeTested": false,
+  "releaseReady": false,
+  "blockers": [
+    "No available Cubism Editor authoring/export path in this environment; GUI automation prohibited by user.",
+    "Dedicated cmo3/can3/moc3/model3/texture atlas/MotionSync mapping have not been authored or exported.",
+    "Natural deformation, Korean audio lip sync and mobile performance require the dedicated exported models."
+  ]
+}

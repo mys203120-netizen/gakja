@@ -1,0 +1,164 @@
+{
+  "checkedAt": "2026-11-04T16:21:36.420Z",
+  "environment": {
+    "node": "v24.16.0",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "status": "FAIL",
+  "scope": "toolchain-and-failure-handling; not actual dedicated model/renderer/audio/device validation",
+  "runs": [
+    {
+      "id": "targeted-tests",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/tsx/dist/cli.mjs",
+        "--test",
+        "tests/live2d-delivery-validation.test.ts",
+        "tests/live2d-core-validation.test.ts",
+        "tests/live2d-manifest-gate.test.ts",
+        "tests/live2d-scene.test.ts",
+        "tests/scene-playback-identity.test.ts"
+      ],
+      "startedAt": "2026-11-04T16:21:02.779Z",
+      "finishedAt": "2026-11-04T16:21:03.852Z",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "signal": null,
+      "status": "PASS",
+      "outputFile": "targeted-tests.json"
+    },
+    {
+      "id": "typecheck",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--incremental",
+        "false"
+      ],
+      "startedAt": "2026-11-04T16:21:03.854Z",
+      "finishedAt": "2026-11-04T16:21:27.683Z",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "signal": null,
+      "status": "PASS",
+      "outputFile": "typecheck.json"
+    },
+    {
+      "id": "lint",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/eslint/bin/eslint.js",
+        "scripts/verify-live2d-assets.mjs",
+        "scripts/setup-live2d-sdk.mjs",
+        "scripts/package-live2d-handoff.mjs",
+        "lib/live2d/delivery-validation.mjs",
+        "lib/live2d/core-validation.mjs",
+        "lib/live2d/manifest.ts",
+        "lib/live2d/types.ts",
+        "components/interview/InterviewerScene.tsx",
+        "integrations/live2d/renderer.mjs",
+        "tests/live2d-delivery-validation.test.ts",
+        "tests/live2d-core-validation.test.ts",
+        "tests/live2d-manifest-gate.test.ts"
+      ],
+      "startedAt": "2026-11-04T16:21:27.686Z",
+      "finishedAt": "2026-11-04T16:21:36.247Z",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "signal": null,
+      "status": "PASS",
+      "outputFile": "lint.json"
+    },
+    {
+      "id": "no-dedicated-delivery",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/verify-live2d-assets.mjs",
+        "--delivery-root",
+        "production/live2d/incoming",
+        "--report",
+        "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\validation-runs\\2026-11-05-cb7e4f99-b59a-484a-922e-9359d5c6db3f\\no-delivery.json"
+      ],
+      "startedAt": "2026-11-04T16:21:36.250Z",
+      "finishedAt": "2026-11-04T16:21:36.329Z",
+      "expectedExitCode": 2,
+      "exitCode": 13,
+      "signal": null,
+      "status": "FAIL",
+      "outputFile": "no-dedicated-delivery.json"
+    },
+    {
+      "id": "current-scene-blocked",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/verify-live2d-assets.mjs",
+        "--manifest",
+        "public/live2d/scene.json",
+        "--report",
+        "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\production\\live2d\\validation-runs\\2026-11-05-cb7e4f99-b59a-484a-922e-9359d5c6db3f\\current-scene.json"
+      ],
+      "startedAt": "2026-11-04T16:21:36.330Z",
+      "finishedAt": "2026-11-04T16:21:36.417Z",
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "signal": null,
+      "status": "PASS",
+      "outputFile": "current-scene-blocked.json"
+    }
+  ],
+  "targetHashes": [
+    {
+      "path": "scripts/verify-live2d-assets.mjs",
+      "bytes": 19494,
+      "sha256": "673de8c6bbe31a03c0e6fb6c615e424a0c06ac705183ea94a2b67cd6909a43b0"
+    },
+    {
+      "path": "scripts/setup-live2d-sdk.mjs",
+      "bytes": 5218,
+      "sha256": "e6c412ddaf43442464c301b564433268202325827c574f43a924204fb1018523"
+    },
+    {
+      "path": "lib/live2d/delivery-validation.mjs",
+      "bytes": 18432,
+      "sha256": "8d29ce686809a643fe441691e8b44623ac07a375196f9e894cc4857653315dc5"
+    },
+    {
+      "path": "lib/live2d/delivery-contract.schema.json",
+      "bytes": 2243,
+      "sha256": "28f25b9328935f0f8383a4fc5d9df33b69c3bf02f7387e54dbe13cf4630c8f60"
+    },
+    {
+      "path": "lib/live2d/core-validation.mjs",
+      "bytes": 35177,
+      "sha256": "7c779961b3f43feb23157beeecd73a4e97a23090b00cd45a893dabc4c9c37744"
+    },
+    {
+      "path": "lib/live2d/manifest.ts",
+      "bytes": 7381,
+      "sha256": "67c53bc20213c37be115e85948a2d84a37a3e03768262c9f1abe08b5b9217f77"
+    },
+    {
+      "path": "lib/live2d/types.ts",
+      "bytes": 2849,
+      "sha256": "9b049f302867f7c1b5a8c0f2f68e0311ad40b33ac3470d22cbff03b38d4ef62f"
+    },
+    {
+      "path": "components/interview/InterviewerScene.tsx",
+      "bytes": 3129,
+      "sha256": "5b873a61d2632ea2ffa7174be2414293a070c829c34277ecf3e69a1bb316e937"
+    },
+    {
+      "path": "integrations/live2d/renderer.mjs",
+      "bytes": 25130,
+      "sha256": "49c3826d961d1bc18d6c8dd6384df52589f38ca5bc074ba4eb29e238c254e5cf"
+    }
+  ],
+  "handoffReady": false,
+  "assetValidationPassed": false,
+  "modelLoadVerified": false,
+  "motionSyncVerified": false,
+  "runtimeQAComplete": false,
+  "releaseReady": false
+}

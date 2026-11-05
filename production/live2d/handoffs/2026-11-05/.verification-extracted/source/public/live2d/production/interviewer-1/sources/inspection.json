@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "scope": "source-PNG-metadata-and-alpha-only",
+  "inspectedAt": "2026-11-04T14:34:29.243Z",
+  "speakerId": "interviewer-1",
+  "sourceDirectory": "public/live2d/production/interviewer-1/sources",
+  "status": "complete-metadata",
+  "expectedFiles": [
+    "approved-master.png",
+    "underpaint.png",
+    "mouth-open-source.png"
+  ],
+  "missingExpectedFiles": [],
+  "files": [
+    {
+      "path": "public/live2d/production/interviewer-1/sources/approved-master.png",
+      "name": "approved-master.png",
+      "bytes": 807307,
+      "sha256": "2e31cfc92563c01b198b72a4a922691d1eed1be65768baf7c3155d136a5084f6",
+      "format": "PNG",
+      "width": 1672,
+      "height": 941,
+      "storedBitsPerChannel": 8,
+      "pngColorType": 6,
+      "storedColorModel": "RGBA",
+      "decodedDepth": "uchar",
+      "decodedColorSpace": "srgb",
+      "decodedChannels": 4,
+      "isStoredRGB8": true,
+      "embeddedIccProfile": null,
+      "colorProfileInterpretation": "no embedded ICC profile found; no profile was assigned",
+      "orientation": 1,
+      "hasStoredAlphaChannel": true,
+      "alphaMeasurement": {
+        "sampleDepth": 8,
+        "source": "decoded stored transparency",
+        "minimum": 0,
+        "maximum": 255,
+        "pixels": {
+          "transparent": 1195349,
+          "translucent": 377543,
+          "opaque": 460,
+          "total": 1573352
+        },
+        "actualTransparencyDetected": true,
+        "greaterThan0": {
+          "threshold": 0,
+          "comparison": "alpha > threshold",
+          "pixelCount": 378003,
+          "bounds": {
+            "left": 0,
+            "top": 48,
+            "rightExclusive": 1536,
+            "bottomExclusive": 941,
+            "width": 1536,
+            "height": 893
+          }
+        },
+        "greaterThan128": {
+          "threshold": 128,
+          "comparison": "alpha > threshold",
+          "pixelCount": 367960,
+          "bounds": {
+            "left": 86,
+            "top": 53,
+            "rightExclusive": 908,
+            "bottomExclusive": 835,
+            "width": 822,
+            "height": 782
+          }
+        },
+        "coordinateSystem": "storage pixel coordinates; origin top-left; right/bottom exclusive; no auto-orientation"
+      }
+    },
+    {
+      "path": "public/live2d/production/interviewer-1/sources/mouth-open-source.png",
+      "name": "mouth-open-source.png",
+      "bytes": 785663,
+      "sha256": "cdded7312c6d1cea00235c69f013578836b671369efa1c57630025fad83bf093",
+      "format": "PNG",
+      "width": 1671,
+      "height": 941,
+      "storedBitsPerChannel": 8,
+      "pngColorType": 6,
+      "storedColorModel": "RGBA",
+      "decodedDepth": "uchar",
+      "decodedColorSpace": "srgb",
+      "decodedChannels": 4,
+      "isStoredRGB8": true,
+      "embeddedIccProfile": null,
+      "colorProfileInterpretation": "no embedded ICC profile found; no profile was assigned",
+      "orientation": 1,
+      "hasStoredAlphaChannel": true,
+      "alphaMeasurement": {
+        "sampleDepth": 8,
+        "source": "decoded stored transparency",
+        "minimum": 0,
+        "maximum": 255,
+        "pixels": {
+          "transparent": 1193792,
+          "translucent": 377863,
+          "opaque": 756,
+          "total": 1572411
+        },
+        "actualTransparencyDetected": true,
+        "greaterThan0": {
+          "threshold": 0,
+          "comparison": "alpha > threshold",
+          "pixelCount": 378619,
+          "bounds": {
+            "left": 33,
+            "top": 47,
+            "rightExclusive": 1609,
+            "bottomExclusive": 884,
+            "width": 1576,
+            "height": 837
+          }
+        },
+        "greaterThan128": {
+          "threshold": 128,
+          "comparison": "alpha > threshold",
+          "pixelCount": 369613,
+          "bounds": {
+            "left": 85,
+            "top": 51,
+            "rightExclusive": 909,
+            "bottomExclusive": 837,
+            "width": 824,
+            "height": 786
+          }
+        },
+        "coordinateSystem": "storage pixel coordinates; origin top-left; right/bottom exclusive; no auto-orientation"
+      }
+    },
+    {
+      "path": "public/live2d/production/interviewer-1/sources/underpaint.png",
+      "name": "underpaint.png",
+      "bytes": 704505,
+      "sha256": "b3025b322bc2d744d8e1e6e1101fd758fd3d6f1294f073c0a0cc67915205a859",
+      "format": "PNG",
+      "width": 1671,
+      "height": 941,
+      "storedBitsPerChannel": 8,
+      "pngColorType": 6,
+      "storedColorModel": "RGBA",
+      "decodedDepth": "uchar",
+      "decodedColorSpace": "srgb",
+      "decodedChannels": 4,
+      "isStoredRGB8": true,
+      "embeddedIccProfile": null,
+      "colorProfileInterpretation": "no embedded ICC profile found; no profile was assigned",
+      "orientation": 1,
+      "hasStoredAlphaChannel": true,
+      "alphaMeasurement": {
+        "sampleDepth": 8,
+        "source": "decoded stored transparency",
+        "minimum": 0,
+        "maximum": 255,
+        "pixels": {
+          "transparent": 1210619,
+          "translucent": 361214,
+          "opaque": 578,
+          "total": 1572411
+        },
+        "actualTransparencyDetected": true,
+        "greaterThan0": {
+          "threshold": 0,
+          "comparison": "alpha > threshold",
+          "pixelCount": 361792,
+          "bounds": {
+            "left": 81,
+            "top": 99,
+            "rightExclusive": 1358,
+            "bottomExclusive": 901,
+            "width": 1277,
+            "height": 802
+          }
+        },
+        "greaterThan128": {
+          "threshold": 128,
+          "comparison": "alpha > threshold",
+          "pixelCount": 353399,
+          "bounds": {
+            "left": 84,
+            "top": 104,
+            "rightExclusive": 910,
+            "bottomExclusive": 836,
+            "width": 826,
+            "height": 732
+          }
+        },
+        "coordinateSystem": "storage pixel coordinates; origin top-left; right/bottom exclusive; no auto-orientation"
+      }
+    }
+  ],
+  "warnings": [
+    "Sources have different canvas sizes. This report does not register or rescale them; artwork part offsets must be explicit."
+  ],
+  "errors": [],
+  "visualReviewPerformed": false,
+  "geometryChanged": false,
+  "sourceFilesChanged": false,
+  "limitations": [
+    "Alpha bounds describe occupied pixels, not anatomical part boundaries.",
+    "Actual transparency is measured; painted checkerboard detection is not a visual claim.",
+    "This inspection does not prove face consistency, inpainting quality, mouth anatomy, alignment, PSD editability, rigging, or Live2D execution."
+  ]
+}

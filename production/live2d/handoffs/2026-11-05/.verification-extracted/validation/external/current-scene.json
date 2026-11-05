@@ -1,0 +1,30 @@
+{
+  "status": "blocked",
+  "scope": "static-asset-integrity",
+  "runtimeValidation": "not-run",
+  "releaseReady": false,
+  "checkedAt": "2026-11-04T16:28:52.629Z",
+  "manifestPath": "C:\\Users\\MaYunsong\\Documents\\각자의답NEW\\public\\live2d\\scene.json",
+  "errors": [
+    "장면 상태가 blocked입니다. 전용 모델과 실행 SDK 준비를 마쳐야 합니다.",
+    "제작 차단: 레이어 PSD 제작됨. 전용 캐릭터 cmo3, can3 및 moc3 리깅·내보내기는 미제작",
+    "제작 차단: 라이선스를 확인한 Cubism Core 및 MotionSync Core 미제공",
+    "제작 차단: 최종 가림 레이어 및 모델별 MotionSync 설정 미제작",
+    "제작 차단: 한국어 CLOVA 음성·실제 모델·모바일 기기 결합 검수 미수행",
+    "실제 Cubism 렌더러 모듈과 Core 경로가 없습니다.",
+    "실제 전용 모델 2개가 필요합니다."
+  ],
+  "warnings": [
+    "분리된 장면 레이어가 없습니다. 합성 및 손/책상 가림 관계는 검수되지 않았습니다.",
+    "이 검사는 파일 참조·비어 있지 않은 파일·JSON 구성만 확인합니다. MOC3/Core의 실제 로드·파라미터 일치·알파 합성·예술 품질·기기 성능·라이선스는 검증하지 않습니다."
+  ],
+  "checkedFiles": [
+    {
+      "url": "/live2d/art/reference.png",
+      "kind": "장애 대체 이미지",
+      "bytes": 419581,
+      "sha256": "769243b4aa632fc3619fba9602c9672cd2258b3679b6e873accb67e34ffd3a13"
+    }
+  ],
+  "models": []
+}

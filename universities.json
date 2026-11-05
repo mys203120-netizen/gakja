@@ -1,0 +1,4832 @@
+[
+  {
+    "id": "bible_8704c828dbe7e8a7",
+    "name": "감리교신학대학교",
+    "logo_image": "/school-logos/0000050.jpg",
+    "public_school_code": "0000050",
+    "website_url": "https://www.mtu.ac.kr",
+    "admission_url": "https://www.mtu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_8704c828dbe7e8a7",
+      "definition_kind": "education_goal",
+      "title": "교육목표",
+      "points": [
+        "신앙의 양육",
+        "에큐메니칼 전통",
+        "전통문화와의 간학문적 대화",
+        "신앙공동체의 지도력",
+        "사회와 세계를 위한 봉사",
+        "평화와 생명의 구현"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.mtu.ac.kr/mtu/contents/view.do?mId=71",
+        "title": "감리교신학대학교 학교안내 · 교육이념",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_07524c703a97ee"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.mtu.ac.kr/mtu/file/2027_hakbu_info.pdf",
+          "title": "감리교신학대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/mtu.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "5dd1faf8d91cacfbaebe047b6d65c62b32ee1db6d3f791ec95461ffe714dd846",
+          "local_file_bytes": 499719
+        }
+      ],
+      "notes": [
+        "자기소개시간과 면접시간을 분리. 요소별 비율 미명시."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_a3364993ac915cc1",
+    "name": "강서대학교",
+    "logo_image": "/school-logos/0000079.jpg",
+    "public_school_code": "0000079",
+    "website_url": null,
+    "admission_url": "http://admission.gangseo.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_a3364993ac915cc1",
+      "definition_kind": "talent",
+      "title": "탐나는 GS 인재",
+      "points": [
+        "General Specialist",
+        "Global Star",
+        "Good Samaritan"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://gangseo.ac.kr/kcua/homeService?menuCode=HC1201",
+        "title": "강서대학교 비전 이념: 인재상 및 핵심역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_03be75c61fb9c1"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://entrance.gangseo.ac.kr/template/2027susi.pdf",
+          "title": "강서대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/0.txt",
+          "note": "PDF30쪽",
+          "local_file_sha256": "2d961350547df1b2c94a9bb0bea756835759cb61f3e21811d988de1a752d4be7",
+          "local_file_bytes": 126972
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_98afbb0916406f78",
+    "name": "건국대학교",
+    "logo_image": "/school-logos/0000052.jpg",
+    "public_school_code": "0000052",
+    "website_url": "https://www.konkuk.ac.kr",
+    "admission_url": "http://enter.konkuk.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_98afbb0916406f78",
+      "definition_kind": "talent",
+      "title": "WE人",
+      "points": [
+        "창의적 전문인",
+        "실천적 사회인",
+        "선도적 세계인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.konkuk.ac.kr/ceri/13139/subview.do",
+        "title": "건국대학교 교육성과관리센터 KU인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_715245f55ac26f"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://enter.kku.ac.kr/upload_data/mojib/20260602112619_68.pdf",
+          "title": "건국대학교 공식 입학자료 konkuk-glocal",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\konkuk-glocal.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "c979cacec2c02892de9737c68a523e02d7a9b30ed90c695511fe976ec251af1d",
+          "local_file_bytes": 2180457
+        },
+        {
+          "url": "https://enter.konkuk.ac.kr",
+          "title": "건국대학교 공식 입학자료 konkuk",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\konkuk.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "20c62b66159fdda73a42e6aa716b61ab8b6430f2f6496b165df8e952bb4afc5d",
+          "local_file_bytes": 252
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000243061&fileSn=1",
+          "title": "건국대학교 2027학년도 수시모집요강 (대교협 대학제공 원본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "C:\\Users\\MaYunsong\\Documents\\각자의답\\output\\interview-details-2027-2026-11-01\\qa\\primary-0.pdf",
+          "note": "대학이 대교협에 제공한 공식 2027 수시모집요강 원문 확인",
+          "local_file_sha256": "b22320e5500ff9c0ef3f941c10a6dedf1caffb0380a8c551802ff0aed477e8e2",
+          "local_file_bytes": 15052701
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_925d9b5de199c382",
+    "name": "경희대학교",
+    "logo_image": "/school-logos/925d9b5de199.ico",
+    "public_school_code": "0000066",
+    "website_url": "https://www.khu.ac.kr",
+    "admission_url": "http://iphak.khu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_925d9b5de199c382",
+      "definition_kind": "talent",
+      "title": "성찰하는 지성인·창조하는 미래인·공존하는 세계인",
+      "points": [
+        "성찰하는 지성인",
+        "창조하는 미래인",
+        "공존하는 세계인"
+      ],
+      "academic_year": 2027,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://iphak.khu.ac.kr/detail.do?board_seq=17324&menuurl=RnNfVbLHUGrJz9kJgEyRDQ%3D%3D&pageNo=1",
+        "title": "2027학년도 경희대학교 수시 신입생 모집요강(2026-08-11 최종 수정)",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_44821d809ae54f"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "공식 게시글이 연결하는 20,955,880바이트 최종 PDF를 내려받아 확인. 시행계획의 잠정 정의만으로 판정하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000245976&fileSn=1",
+          "title": "경희대학교 2027학년도 수시 신입생 모집요강(대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-1-retry.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "4c70778e09d03015f1ca6b00a0b402eb9880a52f2e3b54c6f1092d31b0f4575d",
+          "local_file_bytes": 21353244
+        },
+        {
+          "url": "https://iphak.khu.ac.kr/file/download.do?sfn=20260826010029371_2027%ed%95%99%eb%85%84%eb%8f%84+%ea%b2%bd%ed%9d%ac%eb%8c%80%ed%95%99%ea%b5%90+%ec%88%98%ec%8b%9c+%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95-%ec%b5%9c%ec%a2%85_20260811(%ea%b3%b5%ec%a7%80).pdf&ofn=2027%ed%95%99%eb%85%84%eb%8f%84+%ea%b2%bd%ed%9d%ac%eb%8c%80%ed%95%99%ea%b5%90+%ec%88%98%ec%8b%9c+%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95-%ec%b5%9c%ec%a2%85_20260811(%ea%b3%b5%ec%a7%80).pdf",
+          "title": "공식자료 확인시도: khu-pdf",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000245976&fileSn=1",
+          "title": "공식자료 확인시도: baro-1",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "Command failed: curl.exe -L --fail --silent --show-error --max-time 45 --output output/interview-details-2027-2026-11-01/source-a/baro-1.pdf https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000245976&fileSn=1\ncurl: (28) Operation timed out after 45002 milliseconds with 12497468 out of 21353244 bytes received"
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_b552e9fc54ce381f",
+    "name": "고려대학교",
+    "logo_image": "/school-logos/0000069.gif",
+    "public_school_code": "0000069",
+    "website_url": "https://www.korea.ac.kr",
+    "admission_url": "https://oku.korea.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_b552e9fc54ce381f",
+      "definition_kind": "talent",
+      "title": "사람중심의 창의인재",
+      "points": [
+        "공유가치를 만드는 공감형 인재",
+        "기본에 충실한 창의융합형 인재",
+        "세계와 소통하는 도전형 인재"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.korea.ac.kr/ko/369/subview.do",
+        "title": "고려대학교 고대비전 · 교육목표 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": "2023-12-18",
+        "id": "src_d3cc190070403e"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://oku.korea.ac.kr/oku/cms/FR_CON/index.do?MENU_ID=680",
+          "title": "고려대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/1-more.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "fec6b3ff65b1438b37325f3b93d242e5e4c4a0b1498bfb200d30e01f9e600f53",
+          "local_file_bytes": 57780
+        },
+        {
+          "url": "https://oku.korea.ac.kr/attach/202610/1792973469910_0.pdf",
+          "title": "고려대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/1.txt",
+          "note": "PDF29~30쪽",
+          "local_file_sha256": "791806f84d230fa6c52e9bff2e43ff7ecf84e9d3dbda62c7844823fc6f815f36",
+          "local_file_bytes": 155005
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_a176017d0be64d99",
+    "name": "광운대학교",
+    "logo_image": "/school-logos/0000074.jpg",
+    "public_school_code": "0000074",
+    "website_url": "https://www.kw.ac.kr",
+    "admission_url": "https://iphak.kw.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_a176017d0be64d99",
+      "definition_kind": "talent",
+      "title": "실사구시형 인재",
+      "points": [
+        "교양과 전공 탐구",
+        "융합적 소통과 창의성",
+        "지속가능한 미래 구현"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://ingenium.kw.ac.kr/univ/greeting.php",
+        "title": "광운대학교 인제니움대학 · 학장인사말의 대학 전체 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_30c0cf051322de"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "포인트는 공식 한 문장 정의의 요약이며 하위 인재상 명칭이 아님. 현재 지정 출처에 참빛인재 명칭은 직접 나오지 않아 실사구시형 인재로 표제를 보완."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://iphak.kw.ac.kr/upload_data/mojib/20260129145109_60.pdf",
+          "title": "광운대학교 공식 입학자료 kw",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\kw.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "38a553f075fd2599318c0722a783e79c1e84b4f2b638dd33b5a80f63f5488c15",
+          "local_file_bytes": 391348
+        },
+        {
+          "url": "https://iphak.kw.ac.kr/early/mojib.php",
+          "title": "광운대학교 공식 입학자료 kw-current",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\kw-current.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "7b9ec04c69e07f95c757d2deae248d3779cd34ea6b68b8237b5bc4b2c0262429",
+          "local_file_bytes": 817
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000246873&fileSn=1",
+          "title": "광운대학교 공식 입학자료 baro-광운대학교",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\baro-광운대학교.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "7b3507e6e0c6cca5adbc1c566d5fc85e62dae25c43dfc6cd56fb01994fe5fb32",
+          "local_file_bytes": 850634
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_76a0e39e6271c1f1",
+    "name": "국민대학교",
+    "logo_image": "/school-logos/0000078.jpg",
+    "public_school_code": "0000078",
+    "website_url": "https://www.kookmin.ac.kr",
+    "admission_url": "http://admission.kookmin.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_76a0e39e6271c1f1",
+      "definition_kind": "talent",
+      "title": "도전하는 국민인 · 공동체적 실용융합인재",
+      "points": [
+        "실천하는 교양인",
+        "소통하는 협력인",
+        "앞서가는 미래인",
+        "창의적인 전문인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.kookmin.ac.kr/comm/menu/user/f4bf28bb9ab0519299e17737ade33d63/content/index.do",
+        "title": "국민대학교 교육이념·비전 · 인재상 및 교육목표",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_51c617904dc137"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000243009&fileSn=1",
+          "title": "국민대학교 2027학년도 수시모집요강(대교협 어디가 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-2.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "3268d871015f92d2596a723b0f6659ff14ee4768b370caf71882bd43f801a0a4",
+          "local_file_bytes": 11294563
+        },
+        {
+          "url": "https://admission.kookmin.ac.kr/datafiles/contents/국민대학교_2027학년도_수시_모집요강(2026.09.09).pdf",
+          "title": "공식자료 확인시도: kookmin-pdf",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_5ec50ef5a0c04166",
+    "name": "덕성여자대학교",
+    "logo_image": "/school-logos/0000099.gif",
+    "public_school_code": "0000099",
+    "website_url": "https://www.duksung.ac.kr",
+    "admission_url": "http://enter.duksung.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_5ec50ef5a0c04166",
+      "definition_kind": "talent",
+      "title": "창의적 지식인·협력하는 전문인·실천하는 시민",
+      "points": [
+        "창의적 지식인",
+        "협력하는 전문인",
+        "실천하는 시민"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.duksung.ac.kr/contents/contents.do?ciIdx=39&menuId=932",
+        "title": "덕성여자대학교 덕성소개 · 창학이념과 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": "2025-06-20",
+        "id": "src_c2776165bfea0a"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://enter.duksung.ac.kr/mojib/?m_type=SUSI",
+          "title": "덕성여자대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/2.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "dbf07dc3dc4f629192a42c6fe57c1ab3c7bed467612f4cb065948698974b7929",
+          "local_file_bytes": 68520
+        },
+        {
+          "url": "https://enter.duksung.ac.kr/upload_data/mojib/20260529152629_19.pdf",
+          "title": "덕성여자대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/2.txt",
+          "note": "PDF73~74쪽(인쇄71~72쪽) 면접평가항목/시간 및 방법",
+          "local_file_sha256": "c9772f3934822dd2690629d6fde06322b6cc767464a858844d9443bd6e7f6bf5",
+          "local_file_bytes": 489781
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_68611fc6e72c5e38",
+    "name": "동국대학교",
+    "logo_image": "/school-logos/0000100.jpg",
+    "public_school_code": "0000100",
+    "website_url": "https://www.dongguk.edu",
+    "admission_url": "http://ipsi.dongguk.edu",
+    "talent_profile": {
+      "source_profile_id": "university_bible_68611fc6e72c5e38",
+      "definition_kind": "talent",
+      "title": "화쟁형 인재",
+      "points": [
+        "창조적 지식인",
+        "도덕적 지도자",
+        "진취적 도전자"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.dongguk.edu/page/75",
+        "title": "동국대학교 교육목적 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_859f4e7acc3d8c"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "partially_reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.dongguk.edu/upload/file/20260414170527Q47RDF.PDF",
+          "title": "동국대학교 공식 입학자료 dongguk-guide",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\dongguk-guide.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "2dafaeb0191632515d77acbdb35bf8dd1c893cf1c746d715f2b004270e246993",
+          "local_file_bytes": 25986671
+        },
+        {
+          "url": "https://ipsi.dongguk.edu/",
+          "title": "동국대학교 공식 입학자료 dongguk",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\dongguk.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "f1bae1c545ba6b6689ac5fff79512adb50340e8fdd02caf76708f03fa4fdd441",
+          "local_file_bytes": 43244
+        },
+        {
+          "url": "https://ipsi.dongguk.edu/admission/html/rolling/guide.asp",
+          "title": "동국대학교 공식 입학자료 dongguk-current",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\dongguk-current.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "27290378b1ca60743eac28d02bc37870904678341ab49b615cfe4ad26ef2d143",
+          "local_file_bytes": 38466
+        },
+        {
+          "url": "https://ipsi.dongguk.edu/upload/file/20260715140521FRWQXB.PDF",
+          "title": "동국대학교 공식 입학자료 dongguk-final",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\dongguk-final.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "b0000028ed9b6fcfe8112bec045afa2fb33c34f82e777f2465a2c5d57002243a",
+          "local_file_bytes": 22578997
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음.",
+        "서울캠퍼스 공식2027 가이드북을 검증했으며 WISE캠퍼스 최종요강 세부는 미확인"
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_f29d1e8048711290",
+    "name": "동덕여자대학교",
+    "logo_image": "/school-logos/0000102.gif",
+    "public_school_code": "0000102",
+    "website_url": "https://www.dongduk.ac.kr",
+    "admission_url": "https://ipsi.dongduk.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_f29d1e8048711290",
+      "definition_kind": "talent",
+      "title": "ARETE형 인재",
+      "points": [
+        "배려하는 지성인",
+        "창조하는 감성인",
+        "융복합형 전문인",
+        "참여하는 사회인",
+        "소통하는 세계인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.dongduk.ac.kr/www/contents/kor-eduidea.do",
+        "title": "동덕여자대학교 교육이념의 체계도",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_fc1e7f2f2ab245"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.dongduk.ac.kr/afile/fileDownloadById/26062628313eQw1L",
+          "title": "동덕여자대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/dongduk-pdf.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "92a58b62214206cf53e7597902faf5d0042716c6f3064148d3f22f359d661d10",
+          "local_file_bytes": 3648180
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_2b00e71be3a5ebcd",
+    "name": "삼육대학교",
+    "logo_image": "/school-logos/0000116.jpg",
+    "public_school_code": "0000116",
+    "website_url": "https://www.syu.ac.kr",
+    "admission_url": "http://ipsi.syu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_2b00e71be3a5ebcd",
+      "definition_kind": "talent",
+      "title": "Mission·Vision·Passion을 갖춘 전인적 MVP 인재",
+      "points": [
+        "정직한 교양인",
+        "창의적 지식인",
+        "실천적 봉사인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.syu.ac.kr/teacher/department-introduction/introduction-to-culture/university-introduction/",
+        "title": "삼육대학교 교양교육원 · 교양교육원 소개의 MVP 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": "2025-05-26",
+        "id": "src_c76bd7053a9b2d"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.syu.ac.kr/upload_data/mojib/RF(0)_260828113341.pdf",
+          "title": "삼육대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "note": "PDF56쪽 면접평가 안내",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/3.txt",
+          "local_file_sha256": "bd2ff767f8d0955565637483132a447b0383d28b0b25202797a326101307292b",
+          "local_file_bytes": 216014
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_e41c384366a60705",
+    "name": "상명대학교",
+    "logo_image": "/school-logos/0000117.gif",
+    "public_school_code": "0000117",
+    "website_url": "https://www.smu.ac.kr",
+    "admission_url": "https://admission.smu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_e41c384366a60705",
+      "definition_kind": "talent",
+      "title": "감동을 주는 혁신형 인재",
+      "points": [
+        "전문지식 탐구역량",
+        "창의적 문제해결 역량",
+        "융복합 역량",
+        "다양성 존중 역량",
+        "윤리 실천 역량"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.smu.ac.kr/ko/intro/talent.do",
+        "title": "상명대학교 역사·상징 · 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_ee20f63b8efeba"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.smu.ac.kr/bbs/fileview.php?bbsid=seoul_mojib&file_seq=8555",
+          "title": "상명대학교 공식 입학자료 smu-seoul",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\smu-seoul.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+          "local_file_bytes": 2
+        },
+        {
+          "url": "https://admission.smu.ac.kr/bbs/fileview.php?bbsid=chunan_mojib&file_seq=8571",
+          "title": "상명대학교 공식 입학자료 smu-cheonan",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\smu-cheonan.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+          "local_file_bytes": 2
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000255108&fileSn=1",
+          "title": "상명대학교 공식 입학자료 baro-상명대학교 (서울캠퍼스)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\baro-상명대학교 (서울캠퍼스).pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "058c91be4d83b9e2eeee16d9147f4997bbff259408a0c708deafb0a314f340da",
+          "local_file_bytes": 10278340
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000242868&fileSn=1",
+          "title": "상명대학교 공식 입학자료 baro-상명대학교 (천안캠퍼스)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\baro-상명대학교 (천안캠퍼스).pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "1b4335f330f4418e34cc96253c4a9bc6c6fbb35989969293a1cda12d337fcbdc",
+          "local_file_bytes": 9279732
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_1a139ef99cb3babb",
+    "name": "서강대학교",
+    "logo_image": "/school-logos/0000120.gif",
+    "public_school_code": "0000120",
+    "website_url": "https://www.sogang.ac.kr",
+    "admission_url": "https://admission.sogang.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_1a139ef99cb3babb",
+      "definition_kind": "talent",
+      "title": "창의적 지성·봉사적 인성·통합적 영성을 갖춘 전인",
+      "points": [
+        "창의적 지성을 갖춘 인재",
+        "봉사적 인성을 갖춘 인재",
+        "통합적 영성을 갖춘 인재"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://scc.sogang.ac.kr/wholeperson/wp02_008.html",
+        "title": "서강대학교 전인교육원 · 서강 교육 이념·인재상·교양교육과정 연계도",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_3a943ab7626c96"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000255100&fileSn=1",
+          "title": "서강대학교 2027학년도 수시모집요강(2026.05.29, 대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/qa/primary-3.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "42139581c71681f9c783e55853d13b1a7a2a2220558e49cf6c98d29557317ef1",
+          "local_file_bytes": 813529
+        },
+        {
+          "url": "https://admission.sogang.ac.kr/",
+          "title": "공식자료 확인시도: sogang",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "fetch failed"
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_4fac62464e34ac2b",
+    "name": "서경대학교",
+    "logo_image": "/school-logos/0000121.jpg",
+    "public_school_code": "0000121",
+    "website_url": "https://www.skuniv.ac.kr",
+    "admission_url": "http://go.skuniv.ac.kr/#main",
+    "talent_profile": {
+      "source_profile_id": "university_bible_4fac62464e34ac2b",
+      "definition_kind": "talent",
+      "title": "CREOS형 인재",
+      "points": [
+        "창의성",
+        "책임감",
+        "전문성",
+        "봉사",
+        "자기효능감"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.skuniv.ac.kr/vision",
+        "title": "서경대학교 서경비전2030 · 인재상 및 핵심역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_92e1b8a6a02c7f"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://go.skuniv.ac.kr/index.php?mid=rolling_admission_guide",
+          "title": "서경대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/4.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "3274032f5882fe5514ca6a2f11c98b3a31058375e1140d722e21c905975ff0f5",
+          "local_file_bytes": 93453
+        },
+        {
+          "url": "https://go.skuniv.ac.kr/?module=file&act=procFileDownload&file_srl=228910&sid=232224e4f8021af627d5546ed93f1ef2&module_srl=210030",
+          "title": "서경대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "note": "Not PDF <!DOCTYPE html>\n<html lang=\"ko\">\n<head>\n<!-- META -->\n<meta charset=\"utf-8\">\n<me"
+        },
+        {
+          "url": "https://go.skuniv.ac.kr/files/attach/binaries/210030/881/226/7364450e8d5f510e0c6fd4ea5cc0dabe",
+          "title": "서경대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/4.txt",
+          "note": "PDF35~36쪽 군사학과 특별전형",
+          "local_file_sha256": "82caedeab4916c2e8afa79f857d6a4cde290bb193fecacc96ae21218e55774a7",
+          "local_file_bytes": 219338
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_60007b4df6bb867a",
+    "name": "서울과학기술대학교",
+    "logo_image": "/school-logos/0000036.gif",
+    "public_school_code": "0000036",
+    "website_url": "https://www.seoultech.ac.kr",
+    "admission_url": "http://admission.seoultech.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_60007b4df6bb867a",
+      "definition_kind": "talent",
+      "title": "EPiC 인재상",
+      "points": [
+        "윤리적 인재",
+        "실천적 인재",
+        "창의적 인재"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://iihe.seoultech.ac.kr/intro/goal",
+        "title": "서울과학기술대학교 교육혁신원 설립목적",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_171e860a8737e8"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "기존 대표 홈페이지 URL은 접속 실패하여 현재 대학 교육혁신원 공식 본문으로 대체 확인."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.seoultech.ac.kr/",
+          "title": "서울과학기술대학교 공식 입학자료 seoultech",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\seoultech.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "bdd7e92f0e05df8d7e251aa4720626be1a864e2aafe9b80e6c9d5ed1071ac1ff",
+          "local_file_bytes": 1319
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000243124&fileSn=1",
+          "title": "서울과학기술대학교 2027학년도 수시모집요강 (대교협 대학제공 원본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "C:\\Users\\MaYunsong\\Documents\\각자의답\\output\\interview-details-2027-2026-11-01\\qa\\primary-4.pdf",
+          "note": "대학이 대교협에 제공한 공식 2027 수시모집요강 원문 확인",
+          "local_file_sha256": "82f9506ec9229d9e02fe3817ee8c50a9ec8f2f689175815d3ebba2819480ed4e",
+          "local_file_bytes": 13269625
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_170ece487f34804d",
+    "name": "서울교육대학교",
+    "logo_image": "/school-logos/0000255.jpg",
+    "public_school_code": "0000255",
+    "website_url": "https://www.snue.ac.kr",
+    "admission_url": "http://admission.snue.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_170ece487f34804d",
+      "definition_kind": "education_goal",
+      "title": "초등교원 양성을 위한 교육목표",
+      "points": [
+        "국가와 사회를 위한 헌신",
+        "민주적 능력과 태도",
+        "인격과 교육애",
+        "아동에 대한 이해",
+        "교과와 교수학습능력",
+        "진지한 연구자세",
+        "교직의 사명과 전문성"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.snue.ac.kr/snue/cm/cntnts/cntntsView.do?cntntsId=1121&mi=1316",
+        "title": "서울교육대학교 학교소개 · 교육이념",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_385f43d2231d89"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.snue.ac.kr/pdfjs-2.12.313-dist/web/2027학년도_수시모집요강.pdf",
+          "title": "서울교육대학교 2027학년도 수시모집 신입생 모집요강(2026.5)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/snue-pdf.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "60f9069ffcc13a64b8b286949cbb097042b5d5b366ffa5f6f639aa22a0fb2410",
+          "local_file_bytes": 2250112
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_dd4300e7468ec465",
+    "name": "서울기독대학교",
+    "logo_image": "/school-logos/0000098.jpg",
+    "public_school_code": "0000098",
+    "website_url": "https://www.scu.ac.kr",
+    "admission_url": "https://admission.scu.ac.kr/main",
+    "talent_profile": {
+      "source_profile_id": "university_bible_dd4300e7468ec465",
+      "definition_kind": "talent",
+      "title": "기독교 정신에 기반한 창의적 글로벌 리더(C2-GPS)",
+      "points": [
+        "섬김역량",
+        "창의역량",
+        "소통역량",
+        "글로벌역량"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.scu.ac.kr/study/undergraduate/basic",
+        "title": "서울기독대학교 공통 기초교양학부 · 인재상 및 SCU 핵심역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_0e35cfbfe21af3"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.scu.ac.kr/api/file?path=entrance-guideline-files&filename=20260803_131623_703_c38f1d02.pdf",
+          "title": "서울기독대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "note": "PDF15쪽(인쇄13쪽) 면접고사",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/5.txt",
+          "local_file_sha256": "59fa8c10f703b021fb49d6ce740b09dbc57c1ecc941d48b59cc5af733c2ea293",
+          "local_file_bytes": 127324
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_84e40c965cf842a3",
+    "name": "서울대학교",
+    "logo_image": "/school-logos/0000019.gif",
+    "public_school_code": "0000019",
+    "website_url": "https://www.snu.ac.kr",
+    "admission_url": "http://admission.snu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_84e40c965cf842a3",
+      "definition_kind": "core_competencies",
+      "title": "학부대학 공통 핵심역량",
+      "points": [
+        "도전 혁신",
+        "사회 공헌",
+        "문제 해결",
+        "의사 소통"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.snu.ac.kr/brochure/ko/initiatives/",
+        "title": "서울대학교 공식 브로슈어 · 교육 및 학부대학 공통 핵심역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_62e08023fb248c"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.snu.ac.kr/webdata/admission/files/2027susi.pdf",
+          "title": "서울대학교 공식 입학자료 snu",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\snu.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "aff402a9364f5f56b812f2e7ca8829b1881b88b78823e4613e90c8379eeb1a19",
+          "local_file_bytes": 1883389
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_854beb619660d235",
+    "name": "서울시립대학교",
+    "logo_image": "/school-logos/0000040.gif",
+    "public_school_code": "0000040",
+    "website_url": "https://www.uos.ac.kr",
+    "admission_url": "http://admission.uos.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_854beb619660d235",
+      "definition_kind": "talent",
+      "title": "UOS 인재상",
+      "points": [
+        "학업역량",
+        "잠재역량",
+        "사회역량"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://admission.uos.ac.kr/admissionNew/html/susi/total.do",
+        "title": "서울시립대학교 입학처 · UOS 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_10b9c6fbb97042"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "원본 프로필에 schoolReferenceId가 없어 대학명으로 연결"
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://file.uos.ac.kr/upload/admission/2027%ED%95%99%EB%85%84%EB%8F%84%20%EC%88%98%EC%8B%9C%EB%AA%A8%EC%A7%91%20%EC%8B%A0%EC%9E%85%EC%83%9D%20%EB%AA%A8%EC%A7%91%EC%9A%94%EA%B0%95_260831.pdf",
+          "title": "서울시립대학교 2027학년도 수시모집 신입생 모집요강(2026.08.31 수정)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/uos.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "e7c88c470663d53adad1b30a67d339a571eda8ee98e179a56e7ba132ecfc8050",
+          "local_file_bytes": 1932470
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_b6abc82e31329cea",
+    "name": "서울여자대학교",
+    "logo_image": "/school-logos/0000126.png",
+    "public_school_code": "0000126",
+    "website_url": "https://www.swu.ac.kr",
+    "admission_url": "http://admission.swu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_b6abc82e31329cea",
+      "definition_kind": "talent",
+      "title": "사회적 가치를 선도하는 PLUS형 인재",
+      "points": [
+        "공감하는 전문성",
+        "열린 협력",
+        "공동체의 확장"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.swu.ac.kr/swu/780/subview.do",
+        "title": "서울여자대학교 중장기 발전계획 교육목표와 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_3ab2862072b9af"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.swu.ac.kr/bbs/board.php?bo_table=flashpaper&sca=%EC%88%98%EC%8B%9C&sub_ck=1",
+          "title": "서울여자대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/6.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "60ac00dc6ea071ac986032281ec6a01ae529fa6d6768e0c42dad4f33d122ca27",
+          "local_file_bytes": 45332
+        },
+        {
+          "url": "https://admission.swu.ac.kr/data_new/file/flashpaper/3530441950_QWEkLXsC_afd192bd1ed533958883e87936630143e98821cc.pdf",
+          "title": "서울여자대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "note": "PDF51쪽 면접평가 기준 및 방법",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/6.txt",
+          "local_file_sha256": "da61164f4038cd61a4ffbf323b559984f1af71f902d0768a236028640f1ae626",
+          "local_file_bytes": 467115
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_1ed81fdf5a27697f",
+    "name": "서울한영대학교",
+    "logo_image": "/school-logos/0000205.jpg",
+    "public_school_code": "0000205",
+    "website_url": "https://www.shyu.ac.kr",
+    "admission_url": "http://ipsi.shyu.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_1ed81fdf5a27697f",
+      "definition_kind": "talent",
+      "title": "융합형 창의인·소통형 영성인·섬김형 치유인",
+      "points": [
+        "융합형 창의인",
+        "소통형 영성인",
+        "섬김형 치유인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.shyu.ac.kr/fro_end/html/dep_01/1310.php",
+        "title": "서울한영대학교 이념·상징 · 교육이념과 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_bda62b50392717"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.shyu.ac.kr/fro_end/html/dep_01/1300.php",
+          "title": "서울한영대학교 공식 입학자료 shyu",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\shyu.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "88659ccb440879bf8dfa0799ed24a522cf26654bfaefcb77620f7900f2722b3e",
+          "local_file_bytes": 16585
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000256911&fileSn=1",
+          "title": "서울한영대학교 공식 입학자료 baro-서울한영대학교",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\baro-서울한영대학교.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "bad8ffb9e44db868f57e9f5c53301028cfa1fd02acba82415faf9dfd5b298eb0",
+          "local_file_bytes": 210761
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_66624e0a828c2bfa",
+    "name": "성공회대학교",
+    "logo_image": "/school-logos/0000132.jpg",
+    "public_school_code": "0000132",
+    "website_url": "https://www.skhu.ac.kr",
+    "admission_url": "http://enter.skhu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_66624e0a828c2bfa",
+      "definition_kind": "talent",
+      "title": "인권·평화·생태·민주의 가치를 실천하는 시민",
+      "points": [
+        "가치역량",
+        "대안역량",
+        "실천역량"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.skhu.ac.kr/skhu/839/subview.do",
+        "title": "성공회대학교 비전과 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_9ebf7bd3096e2e"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000257627&fileSn=1",
+          "title": "성공회대학교 2027학년도 수시모집요강(대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-7.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "8095c7e53d1330e8feec98906c54fbb9bf940a22dfe098dc268c4024a30a90bb",
+          "local_file_bytes": 1492337
+        },
+        {
+          "url": "https://enter.skhu.ac.kr/viewer/enter/6/fileDown1/fileDownload.do",
+          "title": "공식자료 확인시도: skhu-pdf",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_d7e7c88a52a9eb2c",
+    "name": "성균관대학교",
+    "logo_image": "/school-logos/0000133.jpg",
+    "public_school_code": "0000133",
+    "website_url": "https://www.skku.edu",
+    "admission_url": "http://admission.skku.edu/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_d7e7c88a52a9eb2c",
+      "definition_kind": "talent",
+      "title": "교양인·전문가·리더",
+      "points": [
+        "글로벌",
+        "자기주도성",
+        "기업가정신",
+        "융합",
+        "시민의식"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.skku.edu/skku/edu/challenge/challenge_07.do",
+        "title": "성균관대학교 교무팀 · 학생성공역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_d7519cf3e51489"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.skku.edu/upload/guide/20260529115520H43SMR.pdf",
+          "title": "성균관대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/7.txt",
+          "note": "PDF34~35쪽",
+          "local_file_sha256": "d1b014ceb093cdea9a0c127d125fd970b838c99a6a5eecd3b0d901ab86877c0f",
+          "local_file_bytes": 269398
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_c595f7cc8171e151",
+    "name": "성신여자대학교",
+    "logo_image": "/school-logos/0000136.jpg",
+    "public_school_code": "0000136",
+    "website_url": "https://www.sungshin.ac.kr",
+    "admission_url": "http://ipsi.sungshin.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_c595f7cc8171e151",
+      "definition_kind": "talent",
+      "title": "자율적 실천인·전인적 교양인·창조적 전문인",
+      "points": [
+        "자율적 실천인",
+        "전인적 교양인",
+        "창조적 전문인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://ipsi.sungshin.ac.kr/guide/junhyung1.php",
+        "title": "성신여자대학교 입학처 · 학생부종합전형 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_4994933306c35b"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.sungshin.ac.kr/bbs/fileview.php?bbsid=guideline&file_seq=2871",
+          "title": "성신여자대학교 공식 입학자료 sungshin",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\sungshin.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "local_file_bytes": 0
+        },
+        {
+          "url": "https://ipsi.sungshin.ac.kr/bbs/filedown.php?bbsid=guideline&file_seq=2871",
+          "title": "성신여자대학교 공식 입학자료 sungshin-dl",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\sungshin-dl.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "local_file_bytes": 0
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000242955&fileSn=1",
+          "title": "성신여자대학교 공식 입학자료 baro-성신여자대학교",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\baro-성신여자대학교.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "52a7bcae7ed37a7ab4e8806d8eaa94ea7e8690f2c3f8187cfd99121aa26f351a",
+          "local_file_bytes": 7226792
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_a936dda31bbbeb71",
+    "name": "세종대학교",
+    "logo_image": "/school-logos/0000138.gif",
+    "public_school_code": "0000138",
+    "website_url": "https://www.sejong.ac.kr",
+    "admission_url": "http://ipsi.sejong.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_a936dda31bbbeb71",
+      "definition_kind": "talent",
+      "title": "세종형 인재",
+      "points": [
+        "창의융합·논리비판적 사고",
+        "도전·혁신",
+        "소통·공동체의식"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.sejong.ac.kr/kor/intro/education-vision.do",
+        "title": "세종대학교 · 교육비전",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_b8bf30f18fabc2"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.sejong.ac.kr/cms/etcResourceDown.do?site=$cms$JYBwzsQ&key=$cms$MoUwVg9gdg5g+gVSgSwG4gE4GdkBcCecAogIYYA2hAggCYC2yWO0cA4gK7I0jnJQhY4AJgAMQgOwA6AA40AZkA",
+          "title": "2027학년도 세종대학교 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/sejong-pdf.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "26b549486387221cd032fbbc0a78a4501ea15a2c4533dd88602a5ba06fe16cbe",
+          "local_file_bytes": 5842592
+        }
+      ],
+      "notes": [
+        "국방 관련 특별전형은 일반학생부면접과 별도 조건이 있어 세종인재의 적용범위로 혼합하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_c7c76d1a4c9d719d",
+    "name": "숙명여자대학교",
+    "logo_image": "/school-logos/0000141.gif",
+    "public_school_code": "0000141",
+    "website_url": "https://www.sookmyung.ac.kr/",
+    "admission_url": "http://admission.sookmyung.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_c7c76d1a4c9d719d",
+      "definition_kind": "talent",
+      "title": "지덕체를 갖춘 미래형 글로벌인재",
+      "points": [
+        "자기주도적 성장",
+        "창의적 문제해결",
+        "협력적 소통",
+        "글로벌 시민"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.sookmyung.ac.kr/kr/intro/core-competence.do",
+        "title": "숙명여자대학교 · 인재상 및 핵심역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_520e4716b65b51"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "http://admission.sookmyung.ac.kr",
+          "title": "숙명여자대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/8.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "81e3569cec33ce850404dfe87aa9cfe0149583cd8d0db881fdfbb80432c4968e",
+          "local_file_bytes": 771
+        },
+        {
+          "url": "https://admission.sookmyung.ac.kr/admission/html/main/main.asp",
+          "title": "숙명여자대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/8-more.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "b89f7a5d19f8db5ce670ff4981dd1fa06d15399a3e44d2ded7493fb0fc1a0ea7",
+          "local_file_bytes": 41167
+        },
+        {
+          "url": "https://admission.sookmyung.ac.kr/admission/html/rolling/guide.asp",
+          "title": "숙명여자대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/8-final.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "f5471f849a0dac215b36a74bd60068b6fbbec1fd4fa1c7823843f4c4f55d22e5",
+          "local_file_bytes": 35764
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000257529&fileSn=1",
+          "title": "숙명여자대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/8-baro.txt",
+          "note": "PDF19·21·46·50~51쪽(인쇄15·17·42·46~47쪽)",
+          "local_file_sha256": "096672ef63eaee2852e507da29e1b2a214b1f548a3c32f0b2fcd7fd672f43c53",
+          "local_file_bytes": 305929
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_d99c2148b6f16ccd",
+    "name": "숭실대학교",
+    "logo_image": "/school-logos/0000143.jpg",
+    "public_school_code": "0000143",
+    "website_url": "https://www.ssu.ac.kr",
+    "admission_url": "https://admission.ssu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_d99c2148b6f16ccd",
+      "definition_kind": "talent",
+      "title": "미래를 개척하는 글로벌 창의 리더",
+      "points": [
+        "창조적 지식인",
+        "균형적 교양인",
+        "혁신적 세계인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://rule.ssu.ac.kr/lmxsrv/law/lawFullContent.do?SEQ=84&SEQ_HISTORY=2520",
+        "title": "숭실대학교 헌장 제3조 인재상(2026-01-29 개정)",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_8928345b44a62c"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.ssu.ac.kr/upload/SSU%281%29_260617194254.pdf",
+          "title": "숭실대학교 공식 입학자료 ssu",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\ssu.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "9da21d6db66fd558545714cb8f4e23bf003fa208b3b610f7d929fe25e609294b",
+          "local_file_bytes": 3203
+        },
+        {
+          "url": "https://iphak.ssu.ac.kr/upload/SSU%281%29_260531163433.pdf",
+          "title": "숭실대학교 공식 입학자료 ssu-alt",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\ssu-alt.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "9da21d6db66fd558545714cb8f4e23bf003fa208b3b610f7d929fe25e609294b",
+          "local_file_bytes": 3203
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000257930&fileSn=1",
+          "title": "숭실대학교 공식 입학자료 baro-숭실대학교",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\baro-숭실대학교.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "a55712f168cc86e3451039056c3eb9710d97a1d1e2d4eaa5a782dc9cf8260019",
+          "local_file_bytes": 2998196
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_1ed9296bd2a05ea3",
+    "name": "이화여자대학교",
+    "logo_image": "/school-logos/0000163.gif",
+    "public_school_code": "0000163",
+    "website_url": "https://www.ewha.ac.kr",
+    "admission_url": "http://admission.ewha.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_1ed9296bd2a05ea3",
+      "definition_kind": "talent",
+      "title": "THE 인재",
+      "points": [
+        "주도하는 인재",
+        "지혜로운 인재",
+        "실천하는 인재"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.ewha.ac.kr/ewha/intro/talent.do",
+        "title": "이화여자대학교 · 인재상 및 핵심역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_4a1c52c34b50b6"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.ewha.ac.kr/upload/GUIDES/20260907134642BHLTER.pdf",
+          "title": "이화여자대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/ewha.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "7f0fa26d9d0bf39141f7e1387197bd4a9af1843873db559aef0f6b2800914e83",
+          "local_file_bytes": 1805400
+        }
+      ],
+      "notes": [
+        "평가요소 명칭만 공식확인. 소요시간·위원수·요소별비율 추가 자료 필요."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_c08e4b9a9a57b73b",
+    "name": "장로회신학대학교",
+    "logo_image": "/school-logos/0000170.gif",
+    "public_school_code": "0000170",
+    "website_url": "https://www.puts.ac.kr",
+    "admission_url": "http://www.puts.ac.kr/ipsi/db/db_admission_v1/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_c08e4b9a9a57b73b",
+      "definition_kind": "talent",
+      "title": "경건한 신앙인·겸손한 지식인·열정적 실천인",
+      "points": [
+        "경건한 신앙인",
+        "겸손한 지식인",
+        "열정적 실천인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.puts.ac.kr/www/main/kor/_Sub/sub-01-03-02-01.asp",
+        "title": "장로회신학대학교 · PUTS 인재상 및 핵심역량 6Cs",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_69f7b66f0c9cd4"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.puts.ac.kr/ipsi/db/db_admission_v1/sub.asp?m1=1&m2=1&m3=1",
+          "title": "장로회신학대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/9.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "5ee0788f0332e470c7d0f7fb03f8f9af4d435843a433f292b573a31593ea895b",
+          "local_file_bytes": 27102
+        },
+        {
+          "url": "https://www.puts.ac.kr/main/iphak_annae_db/yogang/2027_susi.pdf",
+          "title": "장로회신학대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "note": "PDF21~22쪽",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/9.txt",
+          "local_file_sha256": "db9611c31b6dc1dfd68b1c0fe49522c7e3db6be6a2b052fd0c6e6cc300dd17a6",
+          "local_file_bytes": 145896
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_794d7b89a10f736c",
+    "name": "중앙대학교",
+    "logo_image": "/school-logos/0000175.gif",
+    "public_school_code": "0000175",
+    "website_url": "https://www.cau.ac.kr",
+    "admission_url": "http://admission.cau.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_794d7b89a10f736c",
+      "definition_kind": "talent",
+      "title": "i-Creator",
+      "points": [
+        "세계시민적 중앙人",
+        "변화주도적 중앙人",
+        "미래지향적 중앙人",
+        "문화포용적 중앙人"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.cau.ac.kr/cms/FR_CON/index.do?MENU_ID=1630",
+        "title": "중앙대학교 교육이념 및 목적: 교육목적 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_f882588902f8ea"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.cau.ac.kr/",
+          "title": "중앙대학교 공식 입학자료 cau",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\cau.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "e74bd42741dbd2169058f6d41998635818cfa1be251595a192318f31d25139de",
+          "local_file_bytes": 1389
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000257306&fileSn=1",
+          "title": "중앙대학교 (서울캠퍼스) 2027학년도 수시모집요강 (대교협 대학제공 원본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "C:\\Users\\MaYunsong\\Documents\\각자의답\\output\\interview-details-2027-2026-11-01\\qa\\primary-7.pdf",
+          "note": "대학이 대교협에 제공한 공식 2027 수시모집요강 원문 확인",
+          "local_file_sha256": "45b5cf7d8dc8863d3f81aa0546262034bda8e1e0e01b90265ceefd8d4f952014",
+          "local_file_bytes": 46592162
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_caf7e914c3a6697c",
+    "name": "총신대학교",
+    "logo_image": "/school-logos/0000180.png",
+    "public_school_code": "0000180",
+    "website_url": "https://www.chongshin.ac.kr",
+    "admission_url": "http://admission.chongshin.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_caf7e914c3a6697c",
+      "definition_kind": "talent",
+      "title": "경건한 인성인·창조적 지성인·글로컬 실천인",
+      "points": [
+        "경건한 인성인",
+        "창조적 지성인",
+        "글로컬 실천인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.csu.ac.kr/?m1=page&menu_id=883",
+        "title": "총신대학교 · 인재상 및 핵심역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_aef0b4d8d6ce32"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000256593&fileSn=1",
+          "title": "총신대학교 2027학년도 수시모집요강(대교협 대학제출 스캔PDF)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-10-retry.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "1335ab80e01d04ae009543921f6958d4c78834edeb44684e04c2110f1ee6a2af",
+          "local_file_bytes": 17816620
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000256593&fileSn=1",
+          "title": "공식자료 확인시도: baro-10",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "Command failed: curl.exe -L --fail --silent --show-error --max-time 45 --output output/interview-details-2027-2026-11-01/source-a/baro-10.pdf https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000256593&fileSn=1\ncurl: (28) Operation timed out after 45006 milliseconds with 12111856 out of 17816620 bytes received"
+        }
+      ],
+      "notes": [
+        "PDF텍스트레이어 없음. PDF2~3,25~28쪽 이미지로 목차·전형구분·구술면접 표를 직접 열람."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_eaa3cffd29f5415a",
+    "name": "추계예술대학교",
+    "logo_image": "/school-logos/0000181.jpg",
+    "public_school_code": "0000181",
+    "website_url": "https://www.chugye.ac.kr",
+    "admission_url": "http://www.chugye.ac.kr/mbs/ipsi/index.jsp",
+    "talent_profile": {
+      "source_profile_id": "university_bible_eaa3cffd29f5415a",
+      "definition_kind": "talent",
+      "title": "CUfA Artist · 창의적·세계적·선도적 예술인",
+      "points": [
+        "창의적 예술인",
+        "세계적 예술인",
+        "선도적 예술인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.chugye.ac.kr/mbs/university/subview.jsp?id=university_010200000000",
+        "title": "추계예술대학교 · 교육목표 체계도",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_b50cc3b91b4d0a"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://enter.chugye.ac.kr/BoardView.do?menuSeq=114&dataSeq=218&idx=1649162878",
+          "title": "추계예술대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/10.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "6b35de477ca4fd2e375499d53ec0b81dd60b123e803ea6c00c3a68e3cbe4a15a",
+          "local_file_bytes": 25658
+        },
+        {
+          "url": "https://enter.chugye.ac.kr/file/fileDownLoad.do;jsessionid=7190082695AB5FDB22C1B4462DAA318F?seq=1755684628",
+          "title": "추계예술대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "note": "Not PDF ��\u0011ࡱ\u001a�\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000>\u0000\u0003\u0000��\t\u0000\u0006\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\u0000\u0000\u0000\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0010\u0000\u0000�\u0003\u0000\u0000\u0001\u0000\u0000\u0000����\u0000\u0000\u0000\u0000\u0003\u0000\u0000\u0000"
+        },
+        {
+          "url": "https://enter.chugye.ac.kr/file/fileDownLoad.do?seq=1755685703",
+          "title": "추계예술대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/10.txt",
+          "note": "PDF14쪽(인쇄12쪽) 미래인재전형",
+          "local_file_sha256": "b20553f0a77f033bef8564d660f2fefe95bf28c396a47e8338d4808efcdf6972",
+          "local_file_bytes": 100671
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_e103e9d447079522",
+    "name": "한국성서대학교",
+    "logo_image": "/school-logos/0000191.gif",
+    "public_school_code": "0000191",
+    "website_url": "https://www.bible.ac.kr",
+    "admission_url": "http://ipsi.bible.ac.kr/index.aspx",
+    "talent_profile": {
+      "source_profile_id": "university_bible_e103e9d447079522",
+      "definition_kind": "talent",
+      "title": "성서인·전문인·사회인",
+      "points": [
+        "말씀에 거하는 성서인",
+        "복음을 위한 전문인",
+        "화합과 관용의 사회인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.bible.ac.kr/ko/intro/ideology1",
+        "title": "한국성서대학교 · 교육이념과 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_9c8bb1c102a7b4"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "기존 첫 라벨 말씀에 기하는 성서인의 오기를 공식 본문에 맞게 말씀에 거하는 성서인으로 정정."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.bible.ac.kr/throughout/outline.aspx",
+          "title": "한국성서대학교 공식 입학자료 bible",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\bible.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "d51136d51c15f64a43cecb13ac345ea6cb816502b8d3f0a0b5a57eefb1ad94b4",
+          "local_file_bytes": 12758
+        },
+        {
+          "url": "https://ipsi.bible.ac.kr/file/throughout2027.pdf",
+          "title": "한국성서대학교 공식 입학자료 bible-pdf",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\bible-pdf.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "9548d61fe540b2f6395b94c8921d62e3bdaf0b0421923c3474c0e501b1e8a1d0",
+          "local_file_bytes": 556297
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_48c21babe9214203",
+    "name": "한국외국어대학교",
+    "logo_image": "/school-logos/0000192.gif",
+    "public_school_code": "0000192",
+    "website_url": "https://www.hufs.ac.kr",
+    "admission_url": "http://adms.hufs.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_48c21babe9214203",
+      "definition_kind": "talent",
+      "title": "미래시대를 선도하는 글로벌 창의융합 인재",
+      "points": [
+        "자주적 탐구인",
+        "국제적 한국인",
+        "독창적 전문인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.hufs.ac.kr/hufs/11120/subview.do",
+        "title": "한국외국어대학교 · 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_406d380d8890ea"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000257112&fileSn=1",
+          "title": "한국외국어대학교 2027학년도 수시모집요강(대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/qa/primary-8.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "22a0bc5971ce98441cd2536d3992d4b5791275bdca83518596dae4bccab74a61",
+          "local_file_bytes": 2201312
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_f1315d9c83ebb02a",
+    "name": "한국체육대학교",
+    "logo_image": "/school-logos/0000032.jpg",
+    "public_school_code": "0000032",
+    "website_url": "https://www.knsu.ac.kr/",
+    "admission_url": "http://www.knsu.ac.kr/ipsi",
+    "talent_profile": {
+      "source_profile_id": "university_bible_f1315d9c83ebb02a",
+      "definition_kind": "talent",
+      "title": "스포츠로 세상을 연결하는 스포츠혁신리더",
+      "points": [
+        "진리인",
+        "봉사인",
+        "창조인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.knsu.ac.kr/knsu/info/type-of-talent001.do",
+        "title": "한국체육대학교 · 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_84288b660675aa"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "http://www.knsu.ac.kr/ipsi",
+          "title": "한국체육대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/11.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "8474b0fe21ce5c1bc9d6abb7c7b36515f05573cf645b67b469d24a1b9e2e8386",
+          "local_file_bytes": 45875
+        },
+        {
+          "url": "https://www.knsu.ac.kr/cms/etcResourceDown.do?key=%24cms%24NIOQygqgTADFDsBnAroglgOgA4BMBmQA&site=%24cms%24JYBwzsQ",
+          "title": "한국체육대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/11.txt",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "840674b09a2f2b0aaf9a2cbac2299fcb52fe5bf3bf92ea3b99265023ba6604b7",
+          "local_file_bytes": 368219
+        },
+        {
+          "url": "https://www.knsu.ac.kr/cms/etcResourceDown.do?key=%24cms%24NIOQygqgTADFDsBnAroglgOgA4BMBmQA&site=%24cms%24JYBwzsQ",
+          "title": "한국체육대학교2027 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/11.txt",
+          "note": "PDF35·37·40·84쪽 면접평가",
+          "local_file_sha256": "840674b09a2f2b0aaf9a2cbac2299fcb52fe5bf3bf92ea3b99265023ba6604b7",
+          "local_file_bytes": 368219
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_773d4913d4213b86",
+    "name": "한양대학교",
+    "logo_image": "/school-logos/0000203.jpg",
+    "public_school_code": "0000203",
+    "website_url": "https://www.hanyang.ac.kr",
+    "admission_url": "http://go.hanyang.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_773d4913d4213b86",
+      "definition_kind": "talent",
+      "title": "교양인·전문인·실용인·세계인·봉사인",
+      "points": [
+        "교양인",
+        "전문인",
+        "실용인",
+        "세계인",
+        "봉사인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://site.hanyang.ac.kr/web/academic/-31",
+        "title": "한양대학교 서울 학사안내 · 교육과정 개편철학 및 전략",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_32104f690bd0e5"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://go.hanyang.ac.kr/resources/upload_data/mojib/20260818042807559_.pdf",
+          "title": "한양대학교 공식 입학자료 hanyang",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\hanyang.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "3be6649b73d597a6502950e17e0871943ce7c12a45cbd6194a6ec3ecad40a230",
+          "local_file_bytes": 1756325
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_c736609f2879bf29",
+    "name": "강원대학교",
+    "logo_image": "/school-logos/0000003.jpg",
+    "public_school_code": "0000003",
+    "website_url": "https://www.kangwon.ac.kr",
+    "admission_url": "https://admission.kangwon.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_c736609f2879bf29",
+      "definition_kind": "talent",
+      "title": "실사구시형 창의·협동 인재",
+      "points": [
+        "미래",
+        "인성",
+        "창의",
+        "협동",
+        "실천"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://faculty.kangwon.ac.kr/theme/cookie/mobile/sub1_2.php",
+        "title": "강원대학교 · 교육목표 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_d233b380972fdc"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "partially_reviewed",
+      "sources": [
+        {
+          "url": "https://www.kangwon.ac.kr/admission/cmmn/download.do?path=extn%2FipsiGuide&dn=20260910100745525.pdf",
+          "title": "2027학년도 강원대학교 수시모집요강-춘천캠퍼스·삼척(도계포함)캠퍼스",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/kangwon.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "4c88cb8f851d16ec5d0f0398b14c9515755815d92037dbfe525e376a2fdbc67c",
+          "local_file_bytes": 3078536
+        },
+        {
+          "url": "https://www.kangwon.ac.kr/admission/cmmn/download.do?path=extn%2FipsiGuide&dn=20260910100745525.pdf",
+          "title": "공식자료 확인시도: kangwon",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        }
+      ],
+      "notes": [
+        "통합대학 강릉·원주캠퍼스는 별도 요강 확인 필요."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_2c2a9c7869ea2c24",
+    "name": "한림대학교",
+    "logo_image": "/school-logos/0000198.png",
+    "public_school_code": "0000198",
+    "website_url": "https://www.hallym.ac.kr",
+    "admission_url": "https://admission.hallym.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_2c2a9c7869ea2c24",
+      "definition_kind": "talent",
+      "title": "인류 보편의 가치를 실천하는 창의적 선진인재",
+      "points": [
+        "융합적 인재",
+        "자기주도적 인재",
+        "창의적 인재",
+        "실용적 인재",
+        "조화로운 인재"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.hallym.ac.kr/hallym/401/subview.do",
+        "title": "한림대학교 · 교육이념 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_2ca42d7c7a15e3"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.hallym.ac.kr/",
+          "title": "한림대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/12.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "9f7f762689bba2b7406c5503b48296cd4736f058a540be919be78b6cefd128d3",
+          "local_file_bytes": 947
+        },
+        {
+          "url": "https://www.hallym.ac.kr/pdfView/admission/16/141/fileDownload.do",
+          "title": "한림대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        },
+        {
+          "url": "https://ethics.hallym.ac.kr/bbs/admission/957/230175/download.do",
+          "title": "한림대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000256533&fileSn=1",
+          "title": "한림대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/12-baro.txt",
+          "note": "PDF68·93쪽 체육특기자",
+          "local_file_sha256": "6599316adccab9a39d7d8edc04f49d872951033247b3083f645541ee386535c0",
+          "local_file_bytes": 424850
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_620cadfe9779f492",
+    "name": "가천대학교",
+    "logo_image": "/school-logos/0000063.jpg",
+    "public_school_code": "0000063",
+    "website_url": "https://www.gachon.ac.kr",
+    "admission_url": "https://admission.gachon.ac.kr/admission/html/main/main.asp",
+    "talent_profile": {
+      "source_profile_id": "university_bible_620cadfe9779f492",
+      "definition_kind": "education_goal",
+      "title": "미래를 지향하는 지성인·나눔에 동참하는 실천인·최고를 추구하는 전문인",
+      "points": [
+        "미래를 지향하는 지성인",
+        "나눔에 동참하는 실천인",
+        "최고를 추구하는 전문인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.gachon.ac.kr/kor/810/subview.do",
+        "title": "가천대학교 · 교육이념·교육목적·교육목표",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_234df92f955880"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.gachon.ac.kr/upload/BBS0021/20260901154909TB3M9B.PDF",
+          "title": "가천대학교 공식 입학자료 gachon",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\gachon.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "432c236f5388ce265b1e1eae4f73faed43122c69e85be88cfc55bc30f3972178",
+          "local_file_bytes": 3556784
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_626386850dfa841a",
+    "name": "가톨릭대학교",
+    "logo_image": "/school-logos/0000046.jpg",
+    "public_school_code": "0000046",
+    "website_url": "https://www.catholic.ac.kr",
+    "admission_url": "https://ipsi.catholic.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_626386850dfa841a",
+      "definition_kind": "talent",
+      "title": "인성과 창의성을 갖춘 윤리적 리더",
+      "points": [
+        "자기관리",
+        "공동체",
+        "문제해결",
+        "혁신"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.catholic.ac.kr/ko/about/educational_philosophy.do",
+        "title": "가톨릭대학교 · 교육이념과 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_1d6a9c5b6dfa9a"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.catholic.ac.kr/file/download.do?sfn=20260612090132470_2027%ed%95%99%eb%85%84%eb%8f%84+%ea%b0%80%ed%86%a8%eb%a6%ad%eb%8c%80%ed%95%99%ea%b5%90_%ec%88%98%ec%8b%9c%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95(%ec%b5%9c%ec%a2%85).pdf&ofn=2027%ed%95%99%eb%85%84%eb%8f%84+%ea%b0%80%ed%86%a8%eb%a6%ad%eb%8c%80%ed%95%99%ea%b5%90_%ec%88%98%ec%8b%9c%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95(%ec%b5%9c%ec%a2%85).pdf",
+          "title": "2027학년도 가톨릭대학교 수시모집요강(최종)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/catholic-pdf.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "959133a876c07ec003a6c52e62f814e0a4731dacf98d9bb89b07e21af15f921d",
+          "local_file_bytes": 1509265
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_c5addc0cc14c7dd3",
+    "name": "경기대학교",
+    "logo_image": "/school-logos/0000056.gif",
+    "public_school_code": "0000056",
+    "website_url": "https://www.kyonggi.ac.kr",
+    "admission_url": "http://enter.kyonggi.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_c5addc0cc14c7dd3",
+      "definition_kind": "talent",
+      "title": "미래 글로벌 공동체를 선도할 ALL BARUN 참 인재",
+      "points": [
+        "창의융합",
+        "자기계발",
+        "시민의식",
+        "소통",
+        "협업"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://enter.kyonggi.ac.kr/ajaxfile/CMN_SVC/FileView.do?CONTENTS_NO=1&GBN=X12&MENU_NO=140&SITE_NO=2&TYPE_CODE=C0601",
+        "title": "경기대학교 · 2027학년도 정시 모집요강 2쪽 / 대학 비전·인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_677f68d9207416"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "기존 동적 다운로드 URL은 현재 전형결과 PDF를 반환하여 현행 인재상 자료 URL로 교체. 자기개발 표기를 현행 자료의 자기계발로 수정.",
+        "현재 PDF 도식의 자기계발 표기를 직접 확인. 정시 일정 데이터를 가져온 것이 아니라 대학 공통 인재상 정의만 인용."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "http://enter.kyonggi.ac.kr",
+          "title": "경기대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/13.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "05f1c41f451ddd17df1d4deb8b3b8612c5932e011b0500dd30af4c65406b7eaf",
+          "local_file_bytes": 1094
+        },
+        {
+          "url": "https://enter.kyonggi.ac.kr/cms/FR_BBS_CON/BoardView.do?BBS_SEQ=4366&BOARD_SEQ=1&CONTENTS_NO=3&MENU_ID=210&SITE_NO=2",
+          "title": "경기대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/13-more.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "7b2506ed15dc415389dc58124ecbed3e2a1dbfefc09aded05554c3168c427791",
+          "local_file_bytes": 85277
+        },
+        {
+          "url": "https://enter.kyonggi.ac.kr/ajaxfile/FR_SVC/FileDown.do?GBN=X01&BOARD_SEQ=1&SITE_NO=2&BBS_SEQ=4366&FILE_SEQ=25",
+          "title": "경기대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/13.pdf",
+          "note": "PDF53쪽(인쇄51쪽) 학생부종합 면접평가 방법 (이미지형PDF 렌더링 시각검증)",
+          "local_file_sha256": "5201a49a824b24e6e428148c116a31d49ea5c88b60760d6f7c328c8cfa47e30e",
+          "local_file_bytes": 9953995
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_55691d423c9fc3b8",
+    "name": "단국대학교",
+    "logo_image": "/school-logos/0000082.gif",
+    "public_school_code": "0000082",
+    "website_url": "https://www.dankook.ac.kr",
+    "admission_url": "http://ipsi.dankook.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_55691d423c9fc3b8",
+      "definition_kind": "talent",
+      "title": "능동·혁신·헌신의 D³ 인재",
+      "points": [
+        "능동",
+        "혁신",
+        "헌신"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://cms.dankook.ac.kr/web/innovation/%EC%82%AC%EC%97%85%EB%8B%A8%EC%9E%A5-%EC%9D%B8%EC%82%AC%EB%A7%90",
+        "title": "단국대학교 대학혁신사업단 · 사업단장 인사말",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_5a411c9666785a"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "원래 이미지 중심의 비교과 페이지 대신 현재 인재상을 본문에 명시한 공식 자료로 교차확인."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.dankook.ac.kr/jukjeon/doumi/mojip.html?bbsid=juk_paper&ctg_cd=01",
+          "title": "단국대학교 공식 입학자료 dankook",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\dankook.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "c953ffa9277f4207f50bf0c7a9df905f6000bacbaa17db2d2a5742236bd2b98a",
+          "local_file_bytes": 27637
+        },
+        {
+          "url": "https://ipsi.dankook.ac.kr/bbs/filedown.php?bbsid=juk_paper&file_seq=6869",
+          "title": "단국대학교 공식 입학자료 dankook-pdf",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\dankook-pdf.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "98d37a12f58ddc8d0d901a6284e0fee0a4ec275d383b4c7a7ebcb5aa347719cb",
+          "local_file_bytes": 8002892
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_c5df05e96da614e9",
+    "name": "명지대학교",
+    "logo_image": "/school-logos/0000109.gif",
+    "public_school_code": "0000109",
+    "website_url": "https://www.mju.ac.kr",
+    "admission_url": "http://iphak.mju.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_c5df05e96da614e9",
+      "definition_kind": "talent",
+      "title": "명(明)·지(知)·인(人) 인재상",
+      "points": [
+        "명(明) — 배움의 실천",
+        "지(知) — 자기주도적 성장",
+        "인(人) — 어우름과 배려"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.mju.ac.kr/mjukr/172/subview.do",
+        "title": "명지대학교 · 인재상/핵심역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_2dc830aaa16688"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "기존 세 인재상은 유지. 현행 페이지는 별도 AI 시대 대응 역량도 제시하므로 전형별 채점요소로 혼합하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000243030&fileSn=1",
+          "title": "명지대학교 2027학년도 수시모집요강(대교협 자연캠퍼스 제출본, 본문 양캠퍼스 포함)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/mju-baro.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "66be3871cd081e400b80b7e5948d363bdb1fff78d8d6e6667bfff493ddc987e0",
+          "local_file_bytes": 990246
+        },
+        {
+          "url": "https://iphak.mju.ac.kr/images/mojib/20260720164633_2.pdf",
+          "title": "공식자료 확인시도: mju-pdf",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "Command failed: curl.exe -L --fail --silent --show-error --max-time 150 --output output/interview-details-2027-2026-11-01/source-a/mju-pdf.pdf https://iphak.mju.ac.kr/images/mojib/20260720164633_2.pdf\ncurl: (28) Failed to connect to iphak.mju.ac.kr:443 after 21282 ms: Could not connect to server"
+        }
+      ],
+      "notes": [
+        "현재 inventory는교과면접/명지인재면접만 포함."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_9e37a5e849bf275e",
+    "name": "아주대학교",
+    "logo_image": "/school-logos/0000146.jpg",
+    "public_school_code": "0000146",
+    "website_url": "https://www.ajou.ac.kr/",
+    "admission_url": "https://www.iajou.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_9e37a5e849bf275e",
+      "definition_kind": "talent",
+      "title": "다산(茶山)형 인재",
+      "points": [
+        "감수성",
+        "소통력",
+        "창의성",
+        "사고력",
+        "개방성"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.ajou.ac.kr/kr/intro/objective.do",
+        "title": "아주대학교 · 교육목표/인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_8654347a60b451"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.iajou.ac.kr/_common/new_download_file.php?menu=mojib&m_no=80&field=m_pdf",
+          "title": "아주대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/14.txt",
+          "note": "PDF67쪽",
+          "local_file_sha256": "ae83ba14f6a206ee1bec287c4c0962a29a4b5c116cdb422283095b433afd5774",
+          "local_file_bytes": 420106
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_5ddd3a74a6619f42",
+    "name": "한경국립대학교",
+    "logo_image": "/school-logos/0000037.png",
+    "public_school_code": "0000037",
+    "website_url": "https://www.hknu.ac.kr",
+    "admission_url": "http://ipsi.hknu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_5ddd3a74a6619f42",
+      "definition_kind": "talent",
+      "title": "HKNU 인재상",
+      "points": [
+        "도전하는 지성인",
+        "소통하는 사회인",
+        "융합형 전문인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://ipsi.hknu.ac.kr/student/talent.php",
+        "title": "한경국립대학교 입학처 · 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_cac882dec85e65"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.hknu.ac.kr/upload_data/mojib/20260623192023_0.pdf",
+          "title": "한경국립대학교 공식 입학자료 hknu",
+          "academic_year": null,
+          "status": "unavailable",
+          "note": "<urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1144)>"
+        },
+        {
+          "url": "http://ipsi.hknu.ac.kr/upload_data/mojib/20260623192023_0.pdf",
+          "title": "한경국립대학교 공식 입학자료 hknu-http",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\hknu-http.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "456596a9c7e28a413ad93609caf022a0cec92d0f63d7a44447794c2de21ce1c0",
+          "local_file_bytes": 28156714
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_85b07f768405765d",
+    "name": "한국공학대학교",
+    "logo_image": "/school-logos/0000247.png",
+    "public_school_code": "0000247",
+    "website_url": "https://www.tukorea.ac.kr",
+    "admission_url": "http://iphak.tukorea.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_85b07f768405765d",
+      "definition_kind": "talent",
+      "title": "창의형 지식인·실천형 전문가·진취적 세계인",
+      "points": [
+        "창의형 지식인",
+        "실천형 전문가",
+        "진취적 세계인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.tukorea.ac.kr/tukorea/1065/subview.do",
+        "title": "한국공학대학교 · 건학이념 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_72339daf569538"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000242981&fileSn=1",
+          "title": "한국공학대학교 2027학년도 신입생 수시모집요강(대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-15.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "a332adba2bc34081a7177cf2933ec2b4fc0d7128acff719d9ea2ffa62ab40559",
+          "local_file_bytes": 714199
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_46b6ffc9cc5526d6",
+    "name": "한국항공대학교",
+    "logo_image": "/school-logos/0000194.png",
+    "public_school_code": "0000194",
+    "website_url": "https://www.kau.ac.kr",
+    "admission_url": "http://ibhak.kau.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_46b6ffc9cc5526d6",
+      "definition_kind": "talent",
+      "title": "창의적·실용적·지도적 인재",
+      "points": [
+        "창의적 인재",
+        "실용적 인재",
+        "지도적 인재"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://kau.ac.kr/doc/aboutkau/rules/5-1-34.pdf",
+        "title": "한국항공대학교 · 교과과정 편성 및 운영 규정 별표 2",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": "2026-02-09",
+        "id": "src_de988c22a34064"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ibhak.kau.ac.kr/upload/GUIDES/20260813105041002.pdf",
+          "title": "한국항공대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/15.txt",
+          "note": "PDF53·56쪽 면접고사 평가 기준",
+          "local_file_sha256": "0a879dda2a9e639099e93a4285f9d5d1e9981b6b61261a5ea3036698d3834fd0",
+          "local_file_bytes": 228555
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_e5c2a821abbe2dea",
+    "name": "경상국립대학교",
+    "logo_image": "/school-logos/0000007.jpg",
+    "public_school_code": "0000007",
+    "website_url": "https://www.gnu.ac.kr",
+    "admission_url": "https://new.gnu.ac.kr/enter/main.do",
+    "talent_profile": {
+      "source_profile_id": "university_bible_e5c2a821abbe2dea",
+      "definition_kind": "talent",
+      "title": "미래사회를 선도하는 혁신과 상생의 개척인",
+      "points": [
+        "혁신과 상생의 개척인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.gnu.ac.kr/main/cm/cntnts/cntntsView.do?cntntsId=5376&mi=11072",
+        "title": "경상국립대학교 · 이념/비전",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_4b281a883c0f4a"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.gnu.ac.kr/new/na/ntt/selectNttInfo.do?mi=4934&bbsId=1941&nttSn=8244582",
+          "title": "경상국립대학교 공식 입학자료 gnu",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\gnu.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "7bfae14c3789fae871b434e1bbc98ca19e1de00970c66d5f15b638545e00fbae",
+          "local_file_bytes": 67337
+        },
+        {
+          "url": "https://www.gnu.ac.kr/common/nttFileDownload.do?fileKey=b8c4d962b1ec0c2efd600fd69c0da634",
+          "title": "경상국립대학교 공식 입학자료 gnu-pdf",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\gnu-pdf.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "b1a7c4782ea69070af408f3002b307306b764ac578c5be8399f9afede173a107",
+          "local_file_bytes": 1708767
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_2ed8234fdbbbf2d9",
+    "name": "국립창원대학교",
+    "logo_image": "/school-logos/0000028.jpg",
+    "public_school_code": "0000028",
+    "website_url": "https://www.changwon.ac.kr",
+    "admission_url": "http://ipsi.changwon.ac.kr/ipsi",
+    "talent_profile": {
+      "source_profile_id": "university_bible_2ed8234fdbbbf2d9",
+      "definition_kind": "talent",
+      "title": "인성·창의성·전문성을 갖춘 글로컬 인재",
+      "points": [
+        "창의성과 기본에 충실한 민주시민",
+        "자기주도적 지역선도 인재",
+        "성숙한 공동체 시민",
+        "실용적 지성을 갖춘 전문인"
+      ],
+      "academic_year": null,
+      "verification_status": "source_unreachable",
+      "checked_at": "2026-10-13",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.changwon.ac.kr/common/nttPdfView.do?fileKey=121c679e64effc05dd7bcd316dd2f532&rs=&rs=6899f317dfe00f2af7491d65bc47458a",
+        "title": "국립창원대학교 · 대학요람 대학본부 교육이념·인재상",
+        "checked_at": null,
+        "last_successful_check": "2026-10-13",
+        "published_at": null,
+        "id": "src_1e9984c0e2a779"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "이번 재조회만으로 현재 원문 정의를 확정하지 못함. 이전 확인일을 오늘로 변경하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.changwon.ac.kr/common/nttFileDownload.do?fileKey=99aa557fa29430b949fa4eba748e1829",
+          "title": "2027학년도 국립창원대학교 창원캠퍼스 수시모집요강(2026.7)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/changwon.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "cb1cd35b605899edfc48aeca7ec2e80fbe5e6e51b840b7314cd31b213fc8ac0b",
+          "local_file_bytes": 3135557
+        }
+      ],
+      "notes": [
+        "면접관수 미명시."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_ae8c4f590328eb84",
+    "name": "진주교육대학교",
+    "logo_image": "/school-logos/0000260.jpg",
+    "public_school_code": "0000260",
+    "website_url": "https://www.cue.ac.kr",
+    "admission_url": "http://enter.cue.ac.kr/enter",
+    "talent_profile": {
+      "source_profile_id": "university_bible_ae8c4f590328eb84",
+      "definition_kind": "talent",
+      "title": "교육경쟁력·시민역량·미래가치를 갖춘 교사",
+      "points": [
+        "교육경쟁력을 지닌 교사",
+        "시민역량을 갖춘 교사",
+        "미래가치를 공유하는 교사"
+      ],
+      "academic_year": null,
+      "verification_status": "content_not_confirmed",
+      "checked_at": "2026-10-13",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.cue.ac.kr/attach/CONTENTS/PDF/ContentMgr/PDFViewer/2025/8/nGLfKnGQJVtqn8CJ.PDF",
+        "title": "진주교육대학교 · 2026학년도 수시모집요강 인재상",
+        "checked_at": null,
+        "last_successful_check": "2026-10-13",
+        "published_at": "2025-05",
+        "id": "src_1567bf6cc4b9e0"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "이번 재조회만으로 현재 원문 정의를 확정하지 못함. 이전 확인일을 오늘로 변경하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.cue.ac.kr/enter/CMS/Contents/Contents.do?mCode=MN017",
+          "title": "진주교육대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/16.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "c0ecd5a4f7c0c2e632adfb3142f33f60ae718f0f6caed79cf24ff81bf3163b53",
+          "local_file_bytes": 31298
+        },
+        {
+          "url": "https://www.cue.ac.kr/attach/CONTENTS/PDF/ContentMgr/PDFViewer/2026/5/D8U5SCbxuLpSO5e0.PDF",
+          "title": "진주교육대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/16.txt",
+          "note": "PDF15~17쪽(인쇄9~11쪽) 심층면접",
+          "local_file_sha256": "6a535a0a4417b9542358f502da5d971f970e56b48257976148c79dcd451131ed",
+          "local_file_bytes": 156676
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_fe422a25a8428020",
+    "name": "한동대학교",
+    "logo_image": "/school-logos/0000196.gif",
+    "public_school_code": "0000196",
+    "website_url": "https://www.handong.edu",
+    "admission_url": "http://admissions.handong.edu",
+    "talent_profile": {
+      "source_profile_id": "university_bible_fe422a25a8428020",
+      "definition_kind": "education_goal",
+      "title": "세상을 변화시키는 글로벌 리더 양성",
+      "points": [
+        "기독교 신앙에 기초한 교육",
+        "학문적 탁월성",
+        "전인교육"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.handong.edu/kor/about/vision/V2035/",
+        "title": "한동대학교 · Vision 2035",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_7f000dd54b5d88"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "구 Vision 2025의 工자형 인재상을 현행 Vision 2035의 공식 교육 사명과 구분. 이번 항목은 현행 교육목표이며 특정 학과 고유 인재상이 아님."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admissions.handong.edu/ext/bbs/download.dcp?id=16162",
+          "title": "한동대학교 공식 입학자료 handong",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\handong.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "ad82dea5b7cd41a53b6f16162bc1ff6908e253c03833e539678331b34de2f385",
+          "local_file_bytes": 8805097
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_46c1c78ed7ea900c",
+    "name": "광주교육대학교",
+    "logo_image": "/school-logos/0000252.jpg",
+    "public_school_code": "0000252",
+    "website_url": "https://www.gnue.ac.kr",
+    "admission_url": "http://entrance.gnue.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_46c1c78ed7ea900c",
+      "definition_kind": "education_goal",
+      "title": "교육목표",
+      "points": [
+        "민주시민의 자세",
+        "교육자의 사명감",
+        "자주적·창의적 탐구",
+        "교과교육의 전문성",
+        "사회봉사"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.gnue.ac.kr/index.9is?contentUid=ff8080815bf1bf8b015bf5df8d26007b",
+        "title": "광주교육대학교 · 교육목표/목적",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_a2b3dd6c111d04"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.gnue.ac.kr/groups/www/download/entrance_2027_susi_01.hwp",
+          "title": "2027학년도 광주교육대학교 수시모집요강(HWP, 변경사항 붉은색 표기)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/gnue-hwp.hwp",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "9269118bcb2321221580b9ff35a306b432f06b720ad6765a002dc6fa4fd2b19e",
+          "local_file_bytes": 945152
+        }
+      ],
+      "notes": [
+        "공식2027 전형명 유지."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_8c7b4084da218f0a",
+    "name": "전남대학교",
+    "logo_image": "/school-logos/0000023.jpg",
+    "public_school_code": "0000023",
+    "website_url": "https://www.chonnam.ac.kr",
+    "admission_url": "http://admission.jnu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_8c7b4084da218f0a",
+      "definition_kind": "talent",
+      "title": "지역과 미래를 선도하는 창의 융합 인재",
+      "points": [
+        "창의융합",
+        "문제해결",
+        "인문문화",
+        "자기주도",
+        "소통협력",
+        "공동체"
+      ],
+      "academic_year": null,
+      "verification_status": "content_not_confirmed",
+      "checked_at": "2026-10-13",
+      "source": {
+        "kind": "official_university",
+        "url": "https://aisw.jnu.ac.kr/bbs/aisw/64/828336/download.do",
+        "title": "전남대학교 · 2026학년도 대학생활안내 — 대학 인재상 및 핵심역량",
+        "checked_at": null,
+        "last_successful_check": "2026-10-13",
+        "published_at": "2026-02",
+        "id": "src_e606a1a963aa74"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "이번 재조회만으로 현재 원문 정의를 확정하지 못함. 이전 확인일을 오늘로 변경하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.jnu.ac.kr/Data/tmfiles/admission/doc/2027/2027-susi-0827.pdf",
+          "title": "전남대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "note": "PDF53~54쪽 면접평가",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/17.txt",
+          "local_file_sha256": "9e60c15f6469fbe800b5dfc0c1e7f9621ca0cb04bd0a8ecaea878367202e4588",
+          "local_file_bytes": 449841
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_f2469a4f062b4841",
+    "name": "조선대학교",
+    "logo_image": "/school-logos/0000172.gif",
+    "public_school_code": "0000172",
+    "website_url": "https://www.chosun.ac.kr",
+    "admission_url": "http://i.chosun.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_f2469a4f062b4841",
+      "definition_kind": "talent",
+      "title": "함께형 인재",
+      "points": [
+        "자기주도",
+        "창의융합",
+        "배려봉사"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://public.chosun.ac.kr/biomed/2863/subview.do",
+        "title": "조선대학교 의생명과학부 · 교육목적 및 목표 (대학 공통 인재상 인용)",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": "2023-02",
+        "id": "src_75aaaf98cbf679"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "대학 공통이라는 명시 범위의 함께형/세 덕목만 연결. 이 페이지의 학과 고유 정의와 분리함."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://i.chosun.ac.kr/main/menu?gc=1039SNIC",
+          "title": "조선대학교 공식 입학자료 chosun",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\chosun.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "47575cd371aa0e5af45411f78f775433c219d3c4968dce7fe23b13b33182fb3e",
+          "local_file_bytes": 39868
+        },
+        {
+          "url": "https://i.chosun.ac.kr/r/VU8Q7BKSxKew",
+          "title": "조선대학교 공식 입학자료 chosun-pdf",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\chosun-pdf.pdf",
+          "note": "이미지 PDF를 직접 렌더링하여 원문 시각 확인: PDF 54,81쪽",
+          "local_file_sha256": "2e3d6b6d3073c1f4c4bdaa1e3f6e87e100319919bf7e0819899dc3ffcfc9efb1",
+          "local_file_bytes": 26209455
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_92b8b488a8485202",
+    "name": "경북대학교",
+    "logo_image": "/school-logos/0000005.gif",
+    "public_school_code": "0000005",
+    "website_url": "https://www.knu.ac.kr",
+    "admission_url": "http://ipsi1.knu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_92b8b488a8485202",
+      "definition_kind": "talent",
+      "title": "글로벌 창의인재 첨성인",
+      "points": [
+        "창의",
+        "융합",
+        "비판",
+        "탐색",
+        "소통",
+        "책임"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.knu.ac.kr/wbbs/wbbs/contents/index.action?menu_idx=&menu_url=intro%2Fabout03",
+        "title": "경북대학교 · 교육목표 — 비전·인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_ba843db3f08bc5"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000242989&fileSn=1",
+          "title": "경북대학교 2027학년도 수시모집요강(2026.9.2 수정, 대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-18.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "a5db97a046f3be810d40721d3fca1b0367be29cc5f44c06462f2fa56e73a4162",
+          "local_file_bytes": 2184021
+        },
+        {
+          "url": "https://ipsi1.knu.ac.kr/upload_data/mojib/20260904091056_32.pdf",
+          "title": "공식자료 확인시도: knu-pdf",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_2012cb23efad2397",
+    "name": "계명대학교",
+    "logo_image": "/school-logos/0000068.jpg",
+    "public_school_code": "0000068",
+    "website_url": "https://www.kmu.ac.kr",
+    "admission_url": "http://www.gokmu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_2012cb23efad2397",
+      "definition_kind": "talent",
+      "title": "빛을 전하는 FACE 인재",
+      "points": [
+        "도전적 개척정신",
+        "윤리적 봉사정신",
+        "국제적 문화감각",
+        "창의적 전문성"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://liberal.kmu.ac.kr/liberal/8221/subview.do",
+        "title": "계명대학교 Tabula Rasa College · 교육목표",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_6e8804d93b361b"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "연결 실패한 기존 학과 페이지를 대학 공통 인재상을 명시한 현행 공식 교양대학 페이지로 교체."
+      ]
+    },
+    "official_review": {
+      "status": "partially_reviewed",
+      "sources": [
+        {
+          "url": "https://www.gokmu.ac.kr/bbs/filedown.php?bbsid=paper&file_seq=4151&save_file_nm=paper_20260901145852_673.pdf",
+          "title": "계명대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/18.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "local_file_bytes": 0
+        },
+        {
+          "url": "https://www.gokmu.ac.kr/service/board.htm?bbsid=notice&mode=view&bltn_seq=85088",
+          "title": "계명대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/18-more.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "27b9438791329c44dd49101bdf471e90311e648ab65e506e70ba6bdebfd8f22c",
+          "local_file_bytes": 24299
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000243040&fileSn=1",
+          "title": "계명대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/qa/primary-1.txt",
+          "note": "PDF24쪽 학생부종합 의예과 면접",
+          "local_file_sha256": "fb8aa074cb268c049d29009230bcd3e29882767433b6ff904d567a0b1f319d9f",
+          "local_file_bytes": 302409
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_8aa35857f2ad2c40",
+    "name": "대구교육대학교",
+    "logo_image": "/school-logos/0000253.gif",
+    "public_school_code": "0000253",
+    "website_url": "https://www.dnue.ac.kr",
+    "admission_url": "https://admission.dnue.ac.kr/ipsi/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_8aa35857f2ad2c40",
+      "definition_kind": "education_goal",
+      "title": "교육목표",
+      "points": [
+        "헌신",
+        "유능",
+        "실천",
+        "창의"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.dnue.ac.kr/kor/CMS/Contents/Contents.do?mCode=MN047",
+        "title": "대구교육대학교 · 교육비전",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_49c7e0b7e65f90"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "원본 프로필에 없던 창의 목표를 현행 공식 네 목표와 일치하도록 보완."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.dnue.ac.kr/ipsi/CMS/Board/Board.do?mCode=MN019",
+          "title": "대구교육대학교 공식 입학자료 dnue",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\dnue.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "7f14ea39a0390f4a06eeeab8ab16b397891e9e75efa229ac7fc783a56ab42d61",
+          "local_file_bytes": 38764
+        },
+        {
+          "url": "https://webbook.dnue.ac.kr/view/6672cfd4-9c1c-418f-bde7-900e412a9ab0",
+          "title": "대구교육대학교 공식 입학자료 dnue-webbook",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\dnue-webbook.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "fb8ddbe4b1799dbe93b2dc7557eb630969cc353626d763de529190b6a7456b75",
+          "local_file_bytes": 2155
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000257979&fileSn=1",
+          "title": "대구교육대학교 공식 입학자료 baro-대구교육대학교",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\baro-대구교육대학교.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "9c275af49acea6f366b914de4e2c2c119b7b3bd5d61be085d56c2acbf86387a2",
+          "local_file_bytes": 7106159
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_5f8efbed7e6da113",
+    "name": "국립한밭대학교",
+    "logo_image": "/school-logos/0000039.gif",
+    "public_school_code": "0000039",
+    "website_url": "https://www.hanbat.ac.kr",
+    "admission_url": "https://admission.hanbat.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_5f8efbed7e6da113",
+      "definition_kind": "talent",
+      "title": "기본이 강한 글로컬 리더",
+      "points": [
+        "인성윤리",
+        "의사소통",
+        "실용전문",
+        "문제해결",
+        "글로벌",
+        "리더십"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://goodedu.hanbat.ac.kr/menu.es?mid=a10402000000",
+        "title": "국립한밭대학교 교육성과센터 · 핵심역량 소개",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_9058b944ff4054"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.hanbat.ac.kr/thumbnail/dataDetail/IPSI1_202607280528144761.pdf",
+          "title": "국립한밭대학교 2027학년도 신입생 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/hanbat-pdf.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "7d52ef0119d531c27a0e9a9cdf9a86389822d6d4d6093d432ccf877874ac6fd2",
+          "local_file_bytes": 5565199
+        }
+      ],
+      "notes": [
+        "요청3항목 수치 미명시, 최종선발 면접30%와 구분."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_3164ccc738b1776e",
+    "name": "을지대학교",
+    "logo_image": "/school-logos/0000161.jpg",
+    "public_school_code": "0000161",
+    "website_url": "https://www.eulji.ac.kr",
+    "admission_url": "http://ipsi.eulji.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_3164ccc738b1776e",
+      "definition_kind": "education_goal",
+      "title": "교육목표",
+      "points": [
+        "성숙한 사회인",
+        "우수한 보건의료인",
+        "국가·지역사회에 봉사",
+        "미래 사회 준비"
+      ],
+      "academic_year": 2027,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.adiga.kr/ucp/uvt/uni/univDetailIntro.do?menuId=PCUVTINF2000&searchSyr=2027&unvCd=0000161",
+        "title": "한국대학교육협의회 어디가 · 을지대학교 2027 대학소개 — 교육목표",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_b87f9f8b2f73a0"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.eulji.ac.kr/?menuno=2685",
+          "title": "을지대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "note": "fetch failed"
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000242939&fileSn=1",
+          "title": "을지대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/qa/eulji-0.txt",
+          "note": "PDF42~43쪽 농어촌·기회균형 의과대학 인성면접",
+          "local_file_sha256": "eb009240ad57935108656ae2bd9efc6565ef778078c397ac12c447259c1270fe",
+          "local_file_bytes": 290950
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_18ed556e19147f72",
+    "name": "충남대학교",
+    "logo_image": "/school-logos/0000029.jpg",
+    "public_school_code": "0000029",
+    "website_url": "https://www.cnu.ac.kr",
+    "admission_url": "http://ipsi.cnu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_18ed556e19147f72",
+      "definition_kind": "talent",
+      "title": "미래혁신주도형 STRONG 창의인재",
+      "points": [
+        "창의",
+        "개발",
+        "봉사"
+      ],
+      "academic_year": null,
+      "verification_status": "source_unreachable",
+      "checked_at": "2026-10-13",
+      "source": {
+        "kind": "official_university",
+        "url": "https://plus.cnu.ac.kr/Upl/kr/70y/28.pdf",
+        "title": "충남대학교 · 비전 2030 중장기 발전계획 — 대학 인재상",
+        "checked_at": null,
+        "last_successful_check": "2026-10-13",
+        "published_at": null,
+        "id": "src_db0242026ef94d"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "이번 재조회만으로 현재 원문 정의를 확정하지 못함. 이전 확인일을 오늘로 변경하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.cnu.ac.kr/_prog/_board/common/download.php?code=notice_faculty&ntt_no=2025704&atch_no=2",
+          "title": "충남대학교 공식 입학자료 cnu",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\cnu.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "4a08bd251560d0dfddf035900ae71b0594ba3cd5a82d8e3835eccb674555dbfa",
+          "local_file_bytes": 1452353
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_932cc4d23c32588a",
+    "name": "국립부경대학교",
+    "logo_image": "/school-logos/0000013.gif",
+    "public_school_code": "0000013",
+    "website_url": "https://www.pknu.ac.kr",
+    "admission_url": "http://iphak.pknu.ac.kr",
+    "talent_profile": null,
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000243308&fileSn=1",
+          "title": "국립부경대학교 2027학년도 수시 신입생 모집요강(대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-20.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "d4725c4586f9dae47554d0f313348bbb5a6636c6b9719b69d175b48f2e3e4177",
+          "local_file_bytes": 847559
+        }
+      ],
+      "notes": [
+        "수시 전형표·전체본문에 면접 운영 없음."
+      ]
+    },
+    "admission_scope_status": "official_no_interview_in_current_scope"
+  },
+  {
+    "id": "bible_6ad8e2bf4ed32543",
+    "name": "국립한국해양대학교",
+    "logo_image": "/school-logos/0000033.png",
+    "public_school_code": "0000033",
+    "website_url": "https://www.kmou.ac.kr",
+    "admission_url": "https://www.kmou.ac.kr/ipsi/main.do",
+    "talent_profile": {
+      "source_profile_id": "university_bible_6ad8e2bf4ed32543",
+      "definition_kind": "talent",
+      "title": "해양·글로벌·창의형·공익 인재",
+      "points": [
+        "해양 인재",
+        "글로벌 인재",
+        "창의형 인재",
+        "공익 인재"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.kmou.ac.kr/cle/main.do",
+        "title": "국립한국해양대학교 교양교육원 · 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_6b8c394bdba4e3"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.kmou.ac.kr/ipsi/na/ntt/selectNttInfo.do?nttSn=10375127&mi=3310",
+          "title": "국립한국해양대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/20.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "56b412902400ebe3839dd4e5db480cf36a8cd9f376df90c3d6d5a0b7a6417924",
+          "local_file_bytes": 59579
+        },
+        {
+          "url": "https://www.kmou.ac.kr/common/nttFileDownload.do?fileKey=fde5939f8268c0be66b87f117e9ed6ae",
+          "title": "국립한국해양대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "note": "Not PDF ��\u0011ࡱ\u001a�\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000>\u0000\u0003\u0000��\t\u0000\u0006\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\f\u0000\u0000\u0000\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0010\u0000\u0000v\u0003\u0000\u0000\u0001\u0000\u0000\u0000����\u0000\u0000\u0000\u0000\u0003\u0000\u0000\u0000"
+        },
+        {
+          "url": "https://www.kmou.ac.kr/common/nttFileDownload.do?fileKey=5a2cdfd8966391f902866c9f905543e2",
+          "title": "국립한국해양대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/20.txt",
+          "note": "PDF16~17쪽 체육특기자",
+          "local_file_sha256": "96cfb181e865230172255f29daf91ecf022fd11de1dde8fa3fab3ce6f7fa89a7",
+          "local_file_bytes": 163291
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_aad965d2e5df3235",
+    "name": "동아대학교",
+    "logo_image": "/school-logos/0000105.gif",
+    "public_school_code": "0000105",
+    "website_url": "https://www.donga.ac.kr",
+    "admission_url": "http://ent.donga.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_aad965d2e5df3235",
+      "definition_kind": "talent",
+      "title": "도전하고 소통하는 창의인재",
+      "points": [
+        "도전",
+        "글로컬",
+        "인성",
+        "소통",
+        "창의",
+        "전문성"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://donga.ac.kr/about/intro/vision",
+        "title": "동아대학교 · 교육목표 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_ff2c3dcc9366c4"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ent.donga.ac.kr/admission/html/rolling/guide.asp",
+          "title": "동아대학교 공식 입학자료 donga",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\donga.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "5990b4bae6e89bec9ac8d45d94acbb82a50af4eb2ff0b8d5b082f7f8a107e3d0",
+          "local_file_bytes": 36689
+        },
+        {
+          "url": "https://ent.donga.ac.kr/upload/BBS0021/20260827163527S5RCTH.PDF",
+          "title": "동아대학교 공식 입학자료 donga-pdf",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\donga-pdf.pdf",
+          "note": "이미지 PDF를 직접 렌더링하여 원문 시각 확인: PDF 40,48,50,52,54,55쪽",
+          "local_file_sha256": "e9ebf27d5fec0f928e43d2274cca819941074dfc46a6a356524721b782b10bb0",
+          "local_file_bytes": 17162904
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_abfb932b1d89ca5b",
+    "name": "부산대학교",
+    "logo_image": "/school-logos/0000014.gif",
+    "public_school_code": "0000014",
+    "website_url": "https://www.pusan.ac.kr",
+    "admission_url": "http://go.pusan.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_abfb932b1d89ca5b",
+      "definition_kind": "talent",
+      "title": "창조적 지성과 바른 인성을 겸비한 효원인",
+      "points": [
+        "창의적 탐구",
+        "자유롭고 혁신적인 도전",
+        "바른 인성과 공동체 의식"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.pusan.ac.kr/kor/CMS/Contents/Contents.do?mCode=MN150",
+        "title": "부산대학교 · 교육이념",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_9e860fc63c8942"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000257099&fileSn=1",
+          "title": "부산대학교 2027학년도 수시모집요강(부산·양산·밀양·연제캠퍼스, 대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-21.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "ae41cad182c584c04d570f079bec2f9050554490c3b212f5a2aefd0e58d82d2d",
+          "local_file_bytes": 2369699
+        },
+        {
+          "url": "https://go.pusan.ac.kr/down/mojib/RF%280%29_260611154120.pdf",
+          "title": "공식자료 확인시도: pusan",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        }
+      ],
+      "notes": [
+        "연제캠퍼스 초등교육은3인위원·조당25분 제시문집단면접(PDF103)으로 일반 학생부면접과 분리. 현재 inventory에 연제 모집단위 없음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_387049c1c9750c5f",
+    "name": "울산대학교",
+    "logo_image": "/school-logos/0000158.gif",
+    "public_school_code": "0000158",
+    "website_url": "https://www.ulsan.ac.kr",
+    "admission_url": "https://www.ulsan.ac.kr/iphak",
+    "talent_profile": {
+      "source_profile_id": "university_bible_387049c1c9750c5f",
+      "definition_kind": "education_goal",
+      "title": "울산대학교 학부 교육목표",
+      "points": [
+        "창조적 탐구인",
+        "자주적 지성인",
+        "유능한 직능인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.ulsan.ac.kr/kor/CMS/Contents/Contents.do?mCode=MN025",
+        "title": "울산대학교 · 교육목적/인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_179798f20175ae"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://iphak.ulsan.ac.kr/main/9",
+          "title": "울산대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/21.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "131419bd1815a726be65cbf8d3784b81cfc1f2a98d25c432b113e0ae17b9498b",
+          "local_file_bytes": 60259
+        },
+        {
+          "url": "https://iphak.ulsan.ac.kr/board/download.do?no=753",
+          "title": "울산대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        },
+        {
+          "url": "https://iphak.ulsan.ac.kr/upload/board/2026/06/01/fca3a6f8-16d3-409a-93ec-23c829990b23.pdf",
+          "title": "울산대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/21.txt",
+          "note": "PDF43쪽 실기실적형 면접고사",
+          "local_file_sha256": "db968885714ea098094326fc333078857dfe0469ee6ffc643f747452e702c28a",
+          "local_file_bytes": 189873
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_45d41d6942c3e6ac",
+    "name": "인천대학교",
+    "logo_image": "/school-logos/0002660.gif",
+    "public_school_code": "0002660",
+    "website_url": "https://www.inu.ac.kr ",
+    "admission_url": "https://admission.inu.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_45d41d6942c3e6ac",
+      "definition_kind": "talent",
+      "title": "창의혁신에 도전하는 소통형 인재",
+      "points": [
+        "지식탐구",
+        "의사소통",
+        "창의융합",
+        "도전창조",
+        "협업인성",
+        "문제해결"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.inu.ac.kr/inu/717/subview.do",
+        "title": "인천대학교 · 대학비전 및 교육목표",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_f5a7f855046413"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://admission.inu.ac.kr/submenu.do?menuurl=7dcKmGI5ZvQB9F1mAEBAGg%3d%3d&",
+          "title": "인천대학교 공식 입학자료 inu",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\inu.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "f5f4a54a42a0125b5277e763938cde52352a8e3717eb51af3a38ba7c87f27f78",
+          "local_file_bytes": 47401
+        },
+        {
+          "url": "https://admission.inu.ac.kr/file/download.do?sfn=20260826092629801_2027%ed%95%99%eb%85%84%eb%8f%84+%ec%9d%b8%ec%b2%9c%eb%8c%80%ed%95%99%ea%b5%90+%ec%88%98%ec%8b%9c%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95+(1).pdf&ofn=2027%ed%95%99%eb%85%84%eb%8f%84+%ec%9d%b8%ec%b2%9c%eb%8c%80%ed%95%99%ea%b5%90+%ec%88%98%ec%8b%9c%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95+(1).pdf",
+          "title": "인천대학교 공식 입학자료 inu-pdf",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\inu-pdf.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "cfd45df86e94cc372a25c57dcd743765fce1490ea4d500018f41fdf1e134466f",
+          "local_file_bytes": 12578420
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_cb9a087b06648704",
+    "name": "인하대학교",
+    "logo_image": "/school-logos/0000169.jpg",
+    "public_school_code": "0000169",
+    "website_url": "https://www.inha.ac.kr",
+    "admission_url": "http://admission.inha.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_cb9a087b06648704",
+      "definition_kind": "talent",
+      "title": "인하대학교 참(眞)인재",
+      "points": [
+        "자기형성人",
+        "창의도전人",
+        "나눔실천人"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.inha.ac.kr/kr/933/subview.do",
+        "title": "인하대학교 · 창학이념과 교육목표",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_3af1319fa942c3"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000242994&fileSn=1",
+          "title": "2027학년도 인하대학교 수시모집요강(대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/qa/primary-6.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "a0b2ee1ead9e22359a11c8fd3cfc352fa3345b9ff9ac9f63d62142a7b74d0e98",
+          "local_file_bytes": 5298456
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_48567d0846e19d8e",
+    "name": "전북대학교",
+    "logo_image": "/school-logos/0000025.png",
+    "public_school_code": "0000025",
+    "website_url": "https://www.jbnu.ac.kr",
+    "admission_url": "http://enter.jbnu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_48567d0846e19d8e",
+      "definition_kind": "education_goal",
+      "title": "전북대학교 대학헌장 교육목표",
+      "points": [
+        "더불어 함께 사는 교양인",
+        "자유와 정의를 구현하는 지성인",
+        "진리를 탐구하는 창조적 전문인",
+        "전통을 계승하고 지역의 세계화를 추구하는 문화인",
+        "인류공영에 기여하는 세계인"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.jbnu.ac.kr/web/intro/university/sub03.do",
+        "title": "전북대학교 · 대학헌장 제1장 제2조",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_e93996978932d9"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://enter.jbnu.ac.kr/submenu.do?menuurl=iRpJZN81uYxYKEjgpdzo4Q%3d%3d&amp",
+          "title": "전북대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/22.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "aedb4b94366801d3aa83d94694a6e7b628e0d6d64d55f9f966b290ffd44f5f93",
+          "local_file_bytes": 48200
+        },
+        {
+          "url": "https://enter.jbnu.ac.kr/file/download.do?sfn=20260813043538639_%ec%a0%84%eb%b6%81%eb%8c%80%ed%95%99%ea%b5%90+2027%ed%95%99%eb%85%84%eb%8f%84+%eb%8c%80%ec%9e%85%ec%a0%84%ed%98%95+%ec%88%98%ec%8b%9c+%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95(%ec%95%88)_26%eb%85%84+8%ec%9b%94+%ec%88%98%ec%a0%95.pdf&ofn=%ec%a0%84%eb%b6%81%eb%8c%80%ed%95%99%ea%b5%90+2027%ed%95%99%eb%85%84%eb%8f%84+%eb%8c%80%ec%9e%85%ec%a0%84%ed%98%95+%ec%88%98%ec%8b%9c+%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95(%ec%95%88)_26%eb%85%84+8%ec%9b%94+%ec%88%98%ec%a0%95.pdf",
+          "title": "전북대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "note": "PDF48쪽 특성화고졸재직자 면접",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/22.txt",
+          "local_file_sha256": "f330a2d8dae8747129bdcca1d3070fc55ad57dc6ff55fe09c9e90ddfed3e6d0b",
+          "local_file_bytes": 486481
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_287ef2fa3defa01f",
+    "name": "전주교육대학교",
+    "logo_image": "/school-logos/0000258.jpg",
+    "public_school_code": "0000258",
+    "website_url": "https://www.jnue.kr",
+    "admission_url": "http://enter.jnue.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_287ef2fa3defa01f",
+      "definition_kind": "education_goal",
+      "title": "전주교육대학교 교육이념·목적·목표",
+      "points": [
+        "미래를 제시하는 지도자",
+        "올바른 교직관과 교육 전문성",
+        "문화에 자긍심을 지닌 세계 시민"
+      ],
+      "academic_year": null,
+      "verification_status": "content_not_confirmed",
+      "checked_at": "2026-10-13",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.jnue.kr/portal/jnue/contents/contents_view.do?menuId=M0023000200010000",
+        "title": "전주교육대학교 · 교육이념·목적·목표",
+        "checked_at": null,
+        "last_successful_check": "2026-10-13",
+        "published_at": null,
+        "id": "src_14e2e3a0467b75"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "이번 재조회만으로 현재 원문 정의를 확정하지 못함. 이전 확인일을 오늘로 변경하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.jnue.kr/portal/enter/bbs/view.do?menuId=M0007000200000000&boardSeq=15716",
+          "title": "전주교육대학교 공식 입학자료 jnue",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\jnue.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "0947569a6b9949fb11ef307d3d5d67a6e53d60dedfcd07e33fe3b875813164ef",
+          "local_file_bytes": 43146
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000257927&fileSn=1",
+          "title": "전주교육대학교 공식 입학자료 baro-전주교육대학교",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\baro-전주교육대학교.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "4f9113d7443f86ac79c5a0748e15854462f8ab80a569ffe262b8cb9718a41560",
+          "local_file_bytes": 600005
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_3c219ed4246dcbe5",
+    "name": "제주대학교",
+    "logo_image": "/school-logos/0000027.jpg",
+    "public_school_code": "0000027",
+    "website_url": "https://www.jejunu.ac.kr",
+    "admission_url": "http://ibsi.jejunu.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_3c219ed4246dcbe5",
+      "definition_kind": "talent",
+      "title": "소통하고 도전하며 포용하는 글로컬 리더",
+      "points": [
+        "소통",
+        "도전",
+        "포용"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://jejunu.ac.kr/schoolinfo/univinfo/vission/3.htm",
+        "title": "제주대학교 · 비전과 목표 · 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_f42705ab0e1510"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000243121&fileSn=1",
+          "title": "제주대학교 2027학년도 수시 신입생 모집요강(대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-23.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "14bdcaf2817484a6119c9dabc8abfae736f6da8c006ec74b4aba4a91209d2d2e",
+          "local_file_bytes": 2955862
+        },
+        {
+          "url": "https://ibsi.jejunu.ac.kr/files/ibsi/menu/202605/fe5841687a2ba425a8a186244b7ef143.pdf",
+          "title": "공식자료 확인시도: jeju",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        }
+      ],
+      "notes": [
+        "일반학생 면접은 사범대학·초등교육학부·수의예과·간호학과·약학과에 한정. 지역인재는 글로벌자율학부 제외, 지역의사는 의예과."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_c605ba6ea254c4b6",
+    "name": "국립공주대학교",
+    "logo_image": "/school-logos/0000008.gif",
+    "public_school_code": "0000008",
+    "website_url": "https://www.kongju.ac.kr",
+    "admission_url": "http://ipsi.kongju.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_c605ba6ea254c4b6",
+      "definition_kind": "education_goal",
+      "title": "국립공주대학교 교육목표",
+      "points": [
+        "지식·사고·인성을 함께 기르는 교육",
+        "이론과 융복합 기술의 탐구",
+        "배움과 지식의 사회 환원"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.kongju.ac.kr/KNU/16570/subview.do",
+        "title": "국립공주대학교 · 교육목표 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_d99d6571e07d05"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "이번 재조회만으로 현재 원문 정의를 확정하지 못함. 이전 확인일을 오늘로 변경하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.kongju.ac.kr/kor/56/pdfViewer/CAT006",
+          "title": "국립공주대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/23.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "d3d42e167e1649ae59499753065c17a7366939d8c7d79a6ae7daeff8e5183ef7",
+          "local_file_bytes": 46067
+        },
+        {
+          "url": "https://ipsi.kongju.ac.kr/attach/44a038e6d069249324e35d9e6f1998b6/13055e35ba7465cb478c5b4be490c5a8",
+          "title": "국립공주대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/23.txt",
+          "note": "PDF34쪽 일반전형 면접 평가",
+          "local_file_sha256": "dc50e16b552c79a5822cfa004f89eee315509e88b4e896746e8a9a830a90c0ad",
+          "local_file_bytes": 492214
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_33afd7125737c781",
+    "name": "순천향대학교",
+    "logo_image": "/school-logos/0000142.png",
+    "public_school_code": "0000142",
+    "website_url": "https://www.sch.ac.kr",
+    "admission_url": "https://ipsi.sch.ac.kr",
+    "talent_profile": {
+      "source_profile_id": "university_bible_33afd7125737c781",
+      "definition_kind": "talent",
+      "title": "순천향대학교 인재상",
+      "points": [
+        "소통하는 공감인재",
+        "융합하는 창의인재",
+        "공헌하는 글로벌인재"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://inno.sch.ac.kr/pages/65d58f759deeed883e0c97d4",
+        "title": "순천향대학교 AI교육혁신연구센터 · SCH 비전-교육목표-인재상 및 핵심역량",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_344501acd9ba86"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://ipsi.sch.ac.kr/file/download.do?sfn=20260914043109478_2027%ed%95%99%eb%85%84%eb%8f%84+%ec%8b%a0%ec%9e%85%ed%95%99+%ec%88%98%ec%8b%9c%eb%aa%a8%ec%a7%91+%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95.pdf&ofn=2027%ed%95%99%eb%85%84%eb%8f%84+%ec%8b%a0%ec%9e%85%ed%95%99+%ec%88%98%ec%8b%9c%eb%aa%a8%ec%a7%91+%eb%aa%a8%ec%a7%91%ec%9a%94%ea%b0%95.pdf",
+          "title": "순천향대학교 공식 입학자료 sch",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\sch.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "bebd179298f4c734a68dce486be9b2ff2ec80bd76095ba49e8b940baa777cb34",
+          "local_file_bytes": 825177
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_b3e19565a6e48e12",
+    "name": "한국기술교육대학교",
+    "logo_image": "/school-logos/0000189.jpg",
+    "public_school_code": "0000189",
+    "website_url": "https://www.koreatech.ac.kr",
+    "admission_url": "https://ipsi.koreatech.ac.kr/main.do",
+    "talent_profile": {
+      "source_profile_id": "university_bible_b3e19565a6e48e12",
+      "definition_kind": "talent",
+      "title": "기술과 사람을 잇는 다담형 인재",
+      "points": [
+        "창의융합형",
+        "도전지향형",
+        "현장실무형 인재",
+        "나우리형 인재"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.koreatech.ac.kr/menu.es?mid=a10101010000",
+        "title": "한국기술교육대학교 · 교육목표 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_264ad04f7903d1"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000255080&fileSn=1",
+          "title": "한국기술교육대학교 2027 수시모집요강(대교협 대학제출본)",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/baro-24-retry.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "25f6f65a011317d52e6d210103cabe1d749fa8284d6a26e4c71debd312c09f2d",
+          "local_file_bytes": 15262103
+        },
+        {
+          "url": "https://www.koreatech.ac.kr/menuDownload.es?sid=a4&mid=0101010100&file_seq=248",
+          "title": "공식자료 확인시도: koreatech-pdf",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "The operation was aborted due to timeout"
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000255080&fileSn=1",
+          "title": "공식자료 확인시도: baro-24",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "Command failed: curl.exe -L --fail --silent --show-error --max-time 45 --output output/interview-details-2027-2026-11-01/source-a/baro-24.pdf https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000255080&fileSn=1\ncurl: (28) Operation timed out after 45006 milliseconds with 11140348 out of 15262103 bytes received"
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_1452eb910cdbd18d",
+    "name": "국립한국교통대학교",
+    "logo_image": "/school-logos/0000034.gif",
+    "public_school_code": "0000034",
+    "website_url": "https://www.ut.ac.kr",
+    "admission_url": "http://www.ut.ac.kr/ipsi.do",
+    "talent_profile": {
+      "source_profile_id": "university_bible_1452eb910cdbd18d",
+      "definition_kind": "talent",
+      "title": "국립한국교통대학교 공통 인재상",
+      "points": [
+        "창조적 전문가",
+        "전인적 교양인",
+        "글로벌 리더"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.ut.ac.kr/ipsi/sub04_02.do",
+        "title": "국립한국교통대학교 입학처 · 전형안내",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_e760251063eb6a"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "http://www.ut.ac.kr",
+          "title": "국립한국교통대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/24.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "5aa7b114da51c8236dc216802e004de8c4bcd491a452f0238f74ed77ad451bd4",
+          "local_file_bytes": 133270
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000243055&fileSn=1",
+          "title": "국립한국교통대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/qa/primary-2.txt",
+          "note": "PDF52쪽(인쇄50쪽) 평생학습자 면접",
+          "local_file_sha256": "434c32daa71ce345d3b3bc057ed77a7331e5a595d0ebe757226ede294f7a384f",
+          "local_file_bytes": 315706
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_060e9c0b6f0415fd",
+    "name": "청주교육대학교",
+    "logo_image": "/school-logos/0000261.gif",
+    "public_school_code": "0000261",
+    "website_url": "https://www.cje.ac.kr",
+    "admission_url": "https://www.cje.ac.kr/ipsi/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_060e9c0b6f0415fd",
+      "definition_kind": "talent",
+      "title": "청주교육대학교 인재상",
+      "points": [
+        "인성을 갖춘 교육 실천가",
+        "창의적인 교육 전문가",
+        "시야가 넓은 교육 지도자"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.cje.ac.kr/web/content.do?menu_cd=000044",
+        "title": "청주교육대학교 · 대학 발전 비전 및 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_0eb8940a992a53"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.cje.ac.kr/ipsi/web/board/brdList.do?menu_cd=000048",
+          "title": "청주교육대학교 공식 입학자료 cje",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\cje.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "ae69353d406ac8a681ae2f42c6b5d878f0b2d3cc97e9e9041404422cfde39cee",
+          "local_file_bytes": 54814
+        },
+        {
+          "url": "https://www.cje.ac.kr/ipsi/web/board/brdDetail.do?menu_cd=000048&num=92343",
+          "title": "청주교육대학교 공식 입학자료 cje-current",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\cje-current.html",
+          "note": "입학처/뷰어는 열었으나 2027 수시 면접 세부 원문이 아직 확인되지 않음",
+          "local_file_sha256": "62c932fc481dd02b45dc284baaa54aa697beb0f0bef4ebbf29f4adb1498b572c",
+          "local_file_bytes": 9593
+        },
+        {
+          "url": "https://www.adiga.kr/cmm/com/file/fileDown.do?fileId=00000000000000256420&fileSn=1",
+          "title": "청주교육대학교 공식 입학자료 baro-청주교육대학교",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output\\interview-details-2027-2026-11-01\\source-c\\baro-청주교육대학교.pdf",
+          "note": "공식 PDF 원문 텍스트 확인",
+          "local_file_sha256": "db6917f0c11f4c328665a5c93b687facb75fd97f5f5cfb414fbdf6a3e78422d1",
+          "local_file_bytes": 779046
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_655f71ef96b70f0e",
+    "name": "한국교원대학교",
+    "logo_image": "/school-logos/0000031.jpg",
+    "public_school_code": "0000031",
+    "website_url": "https://www.knue.ac.kr",
+    "admission_url": "https://www.knue.ac.kr/ipsi_intro/index.jsp",
+    "talent_profile": {
+      "source_profile_id": "university_bible_655f71ef96b70f0e",
+      "definition_kind": "talent",
+      "title": "한국교원대학교 인재상",
+      "points": [
+        "교육전문가",
+        "창의적 혁신가",
+        "공감적 리더"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.knue.ac.kr/www/contents.do?key=384",
+        "title": "한국교원대학교 · KNUE's Vision",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_74f4b698580cd3"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.knue.ac.kr/site/ipsi/file/cts1802_pdf02.pdf",
+          "title": "한국교원대학교 2027학년도 수시 신입생 모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/knue-pdf.pdf",
+          "note": "공식 본문을 실제 열람하여 면접 운영·평가 항목을 대조함.",
+          "local_file_sha256": "b4ce810b24f1b0057b21141af0d3365c35ba0f9445baeedf1a0c4eca96eb67af",
+          "local_file_bytes": 3377366
+        }
+      ],
+      "notes": [
+        "교과 지역인재전형은 면접 없음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_bf8b2f07903ddb3a",
+    "name": "광주과학기술원",
+    "logo_image": "/school-logos/bf8b2f07903d.ico",
+    "public_school_code": "0000381",
+    "website_url": null,
+    "admission_url": "https://admission.gist.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_bf8b2f07903ddb3a",
+      "definition_kind": "core_competency",
+      "title": "GIST 3C1P 인재상",
+      "points": [
+        "의사소통",
+        "협동",
+        "창의",
+        "문제해결"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.gist.ac.kr/kr/html/sub05/051102.html",
+        "title": "GIST · 무한도전 / 3C1P 프로그램",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_5490e28268b03f"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "기존 달력 URL 대신 현재 3C1P 정의를 본문으로 제공하는 공식 프로그램 페이지를 연결. 대학 공통 핵심역량으로 구분."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.gist.ac.kr/uadm/html/sub02/0205.html",
+          "title": "광주과학기술원 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/25.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "cf3fa67ec9eae19b7527a5550ca8c7849c0da8eb43f2fccd9cbc2c713c5ed625",
+          "local_file_bytes": 36045
+        },
+        {
+          "url": "https://www.gist.ac.kr/module/pdf_viewer/web/viewer.html?id=sqfortm6tm7o0mkxkgtqpnurromtdu",
+          "title": "광주과학기술원 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/25-more.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "37ecf4cc848ca1447361f3ae44fa088442d2bcf2f450f8449e434a07a702b210",
+          "local_file_bytes": 20125
+        },
+        {
+          "url": "https://www.gist.ac.kr/_prog/download/?file_id=sqfortm6tm7o0mkxkgtqpnurromtdu",
+          "title": "광주과학기술원 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/25.pdf",
+          "note": "PDF44쪽(이미지형 원문 렌더 검증) (이미지형PDF 렌더링 시각검증)",
+          "local_file_sha256": "a27465144c03ae79c45681964ea1bb203815dffa9bda18950009399333cd71cc",
+          "local_file_bytes": 12346855
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_de1e42bb7f179b37",
+    "name": "대구경북과학기술원",
+    "logo_image": "/school-logos/0000382.png",
+    "public_school_code": "0000382",
+    "website_url": "https://www.dgist.ac.kr/",
+    "admission_url": "https://www.dgist.ac.kr/adm/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_de1e42bb7f179b37",
+      "definition_kind": "talent",
+      "title": "DGIST 4C 인재상",
+      "points": [
+        "창의",
+        "도전",
+        "협력",
+        "배려"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://www.dgist.ac.kr/kor/sub01_02_01.do",
+        "title": "DGIST · VISION · 3대 교육철학과 4대 인재상",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_6b300f4ef1d19e"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://www.dgist.ac.kr/prog/mtcltnData/adm/sub04_05/list.do",
+          "title": "대구경북과학기술원 공식 입학자료 dgist",
+          "academic_year": null,
+          "status": "unavailable",
+          "note": "<urlopen error [WinError 10054] 현재 연결은 원격 호스트에 의해 강제로 끊겼습니다>"
+        },
+        {
+          "url": "https://dgist.ac.kr/thumbnail/mtcltnData/MD_20260429133944989Qt90.pdf",
+          "title": "DGIST 2027학년도 학부 신입생 모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "C:\\Users\\MaYunsong\\Documents\\각자의답\\output\\interview-details-2027-2026-11-01\\qa\\dgist-official.pdf",
+          "note": "공식 입학자료 상세 mtcltnDataNo=73의 첨부 원본. 이미지 PDF1,25,30쪽 직접 렌더링하여 시각 검증",
+          "local_file_sha256": "9e9496317e9cb8db6e35a327008131f57fe34ff51a8da193f11a943011edc8b4",
+          "local_file_bytes": 100597115
+        }
+      ],
+      "notes": [
+        "null 항목은 공식 수치를 확인하지 못했다는 뜻이며 면접 미실시를 뜻하지 않음."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_6cc29bbe9eca95d3",
+    "name": "울산과학기술원",
+    "logo_image": "/school-logos/6cc29bbe9eca.png",
+    "public_school_code": "0000250",
+    "website_url": null,
+    "admission_url": "https://adm-u.unist.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_6cc29bbe9eca95d3",
+      "definition_kind": "talent",
+      "title": "UNIST PIONEERS 인재상",
+      "points": [
+        "지적 탐구자",
+        "담대한 도전자",
+        "따뜻한 공헌자"
+      ],
+      "academic_year": null,
+      "verification_status": "verified_current_official",
+      "checked_at": "2026-11-01",
+      "source": {
+        "kind": "official_university",
+        "url": "https://adm-u.unist.ac.kr/admission/introduction/unist-overview.do",
+        "title": "UNIST 학부입학 · 한눈에 보는 UNIST",
+        "checked_at": "2026-11-01",
+        "last_successful_check": "2026-11-01",
+        "published_at": null,
+        "id": "src_7355b253e1b88c"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "partially_reviewed",
+      "sources": [
+        {
+          "url": "https://adm-u.unist.ac.kr/admission/community/rolling-admissions.do?articleNo=311169&mode=view",
+          "title": "2027학년도 학부 수시모집 탐구우수전형 면접평가 사전 안내(2026.10.23)",
+          "academic_year": 2027,
+          "status": "read",
+          "note": "공지본문5.면접평가 진행절차 실제열람."
+        },
+        {
+          "url": "https://adm-u.unist.ac.kr/admission/guide/admissions-process.do?mode=download&articleNo=105830&attachNo=591638",
+          "title": "2027학년도 학부 신입생 모집요강PDF",
+          "academic_year": 2027,
+          "status": "unavailable",
+          "note": "반복다운로드 타임아웃/서버연결종료로 완전PDF와 본문확보실패."
+        },
+        {
+          "url": "https://adm-u.unist.ac.kr/admission/guide/admissions-process.do",
+          "title": "UNIST 수시모집 전형안내",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-a/unist.html",
+          "note": "탐구우수전형·그릿인재전형 목차 및2027모집요강PDF 링크 확인. 세부본문은PDF접근실패.",
+          "local_file_sha256": "fa4029ebcd3f812e709d2022e1254d97918f0ad5228cd8caadf486261e8d8f47",
+          "local_file_bytes": 39718
+        }
+      ],
+      "notes": [
+        "탐구우수전형 공식사전공지까지 부분확인. 그릿인재전형의 운영수치·학과범위는확인하지못함."
+      ]
+    },
+    "admission_scope_status": null
+  },
+  {
+    "id": "bible_bb75e830036e5b4d",
+    "name": "포항공과대학교",
+    "logo_image": "/school-logos/0000188.jpg",
+    "public_school_code": "0000188",
+    "website_url": "https://www.postech.ac.kr",
+    "admission_url": "https://adm-u.postech.ac.kr/",
+    "talent_profile": {
+      "source_profile_id": "university_bible_bb75e830036e5b4d",
+      "definition_kind": "talent",
+      "title": "POSTECH 학생선발 인재상",
+      "points": [
+        "과학공학계의 글로벌 리더"
+      ],
+      "academic_year": 2027,
+      "verification_status": "source_unreachable",
+      "checked_at": "2026-10-13",
+      "source": {
+        "kind": "official_university",
+        "url": "https://adm-u.postech.ac.kr/wp-content/uploads/2025/05/2027%ED%95%99%EB%85%84%EB%8F%84_POSTECH_%EB%AA%A8%EC%A7%91%EC%9A%94%EA%B0%95_web.pdf",
+        "title": "POSTECH · 2027학년도 모집요강 · 05. 인재상(인쇄 9쪽)",
+        "checked_at": null,
+        "last_successful_check": "2026-10-13",
+        "published_at": null,
+        "id": "src_db61be914893e5"
+      },
+      "notes": [
+        "대학 공통 정의. 학과 고유 인재상 또는 해당 전형의 면접 평가기준을 뜻하지 않음.",
+        "이번 재조회만으로 현재 원문 정의를 확정하지 못함. 이전 확인일을 오늘로 변경하지 않음."
+      ]
+    },
+    "official_review": {
+      "status": "reviewed",
+      "sources": [
+        {
+          "url": "https://adm-u.postech.ac.kr/entrance-exam/guide/",
+          "title": "포항공과대학교 공식 입학처/모집요강 확인 경로",
+          "academic_year": null,
+          "status": "unavailable",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/26.html",
+          "note": "공식 페이지 접근. 요강 세부정보 검수는 아래 실제 읽은 문서 출처를 따름.",
+          "local_file_sha256": "00cab6be14541bbe46a7a4d324db31048d7fee4324834f3f2cd96165b1a689df",
+          "local_file_bytes": 160600
+        },
+        {
+          "url": "https://adm-u.postech.ac.kr/wp-content/uploads/2025/05/2027%ED%95%99%EB%85%84%EB%8F%84_POSTECH_%EB%AA%A8%EC%A7%91%EC%9A%94%EA%B0%95_web.pdf",
+          "title": "포항공과대학교 2027학년도 수시모집요강",
+          "academic_year": 2027,
+          "status": "read",
+          "local_path": "output/interview-details-2027-2026-11-01/source-b/26.txt",
+          "note": "PDF29쪽",
+          "local_file_sha256": "a5fc5f1bb46209406245574443811394faa3aa3e6ff1a915d9d0f3e4ba0b0838",
+          "local_file_bytes": 120804
+        }
+      ],
+      "notes": []
+    },
+    "admission_scope_status": null
+  }
+]

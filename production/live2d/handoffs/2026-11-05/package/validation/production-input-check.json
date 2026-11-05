@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "status": "current-artwork-handoff-files-verified",
+  "checkedAt": "2026-11-04T16:32:31.818Z",
+  "scope": "Existing production file hashes, original recorded PSD round-trip evidence, role/count/name/reference checks and motion catalogue hashes; not a new PSD app import, rig, SDK load or device test.",
+  "speakers": [
+    {
+      "speakerId": "interviewer-1",
+      "canvas": {
+        "width": 1672,
+        "height": 941,
+        "dpi": 72,
+        "colorMode": "RGB",
+        "bitsPerChannel": 8,
+        "profile": "sRGB"
+      },
+      "partPngs": 37,
+      "artLayers": 35,
+      "referenceLayers": [
+        "Approved_Master_Reference",
+        "Mouth_Open_Reference"
+      ],
+      "referencesExcludedFromImport": true,
+      "recordedLayerRoundTripEvidencePreserved": true,
+      "actualPsdApplicationImportTested": false,
+      "outputs": [
+        {
+          "path": "public/live2d/production/interviewer-1/artwork_master.psd",
+          "bytes": 4049637,
+          "sha256": "7b83f4d2d4d56eda28c7f4ed439d9afbbda84968d528b2128d025d88dd76df26",
+          "rasterLayers": 37,
+          "currentFileMatchesPreservedRoundTripEvidence": true,
+          "currentHeaderPsdV1Rgb8": true
+        },
+        {
+          "path": "public/live2d/production/interviewer-1/cubism_import.psd",
+          "bytes": 2781349,
+          "sha256": "3f747bf1c4e1655a4ef3b89cb36656714639d6284750684c117def294eb662cb",
+          "rasterLayers": 35,
+          "currentFileMatchesPreservedRoundTripEvidence": true,
+          "currentHeaderPsdV1Rgb8": true
+        }
+      ]
+    },
+    {
+      "speakerId": "interviewer-2",
+      "canvas": {
+        "width": 1672,
+        "height": 941,
+        "dpi": 72,
+        "colorMode": "RGB",
+        "bitsPerChannel": 8,
+        "profile": "sRGB"
+      },
+      "partPngs": 37,
+      "artLayers": 35,
+      "referenceLayers": [
+        "Approved_Master_Reference",
+        "Mouth_Open_Reference"
+      ],
+      "referencesExcludedFromImport": true,
+      "recordedLayerRoundTripEvidencePreserved": true,
+      "actualPsdApplicationImportTested": false,
+      "outputs": [
+        {
+          "path": "public/live2d/production/interviewer-2/artwork_master.psd",
+          "bytes": 4281847,
+          "sha256": "0884bc920a4b63cea182dc01650a5d9a5a345b8ff56fe8952e9c1faaebc36d9b",
+          "rasterLayers": 37,
+          "currentFileMatchesPreservedRoundTripEvidence": true,
+          "currentHeaderPsdV1Rgb8": true
+        },
+        {
+          "path": "public/live2d/production/interviewer-2/cubism_import.psd",
+          "bytes": 2950223,
+          "sha256": "2a5c319d9f1ce6f3c4daad3218ee4903e72b65c49044f2e1b2149937c263fbc6",
+          "rasterLayers": 35,
+          "currentFileMatchesPreservedRoundTripEvidence": true,
+          "currentHeaderPsdV1Rgb8": true
+        }
+      ]
+    }
+  ],
+  "motions": {
+    "motion3": 12,
+    "exp3": 6,
+    "status": "authored-curves-awaiting-dedicated-models",
+    "modelLoadTested": false,
+    "runtimePlaybackTested": false,
+    "handGestureEnabled": false
+  },
+  "sceneStatus": "blocked",
+  "targetFlags": {
+    "currentHandOff": true,
+    "assetValidationPassed": false,
+    "artworkFinal": false,
+    "actualRigCreated": false,
+    "moc3Exported": false,
+    "modelLoadVerified": false,
+    "motionSyncVerified": false,
+    "runtimeQAComplete": false,
+    "expoDeviceVerified": false,
+    "performance30FpsMeasured": false,
+    "releaseReady": false
+  },
+  "missingRequiredFinalDeliverables": [
+    "Dedicated .cmo3 rig sources",
+    ".can3 motion authoring sources",
+    ".moc3 exports",
+    ".model3.json model packages",
+    "Texture atlases",
+    "Dedicated .motionsync3.json mappings",
+    "Required final physics/settings as applicable",
+    "Verified room/desk/chair/foreground separation and occlusion",
+    "Licensed Core execution combination",
+    "Actual Korean CLOVA output lip-sync QA",
+    "Web and Expo device QA with camera/recording/transcription/gaze analysis",
+    "Measured lower-bound-device 30FPS/memory/thermal/battery results"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "Type": "Live2D Expression",
+  "FadeInTime": 0.45,
+  "FadeOutTime": 0.55,
+  "Parameters": [
+    {
+      "Id": "ParamBrowLY",
+      "Value": 0.025,
+      "Blend": "Overwrite"
+    },
+    {
+      "Id": "ParamBrowRY",
+      "Value": 0.025,
+      "Blend": "Overwrite"
+    },
+    {
+      "Id": "ParamBrowLAngle",
+      "Value": -0.018,
+      "Blend": "Overwrite"
+    },
+    {
+      "Id": "ParamBrowRAngle",
+      "Value": -0.018,
+      "Blend": "Overwrite"
+    },
+    {
+      "Id": "ParamEyeLSmile",
+      "Value": 0,
+      "Blend": "Overwrite"
+    },
+    {
+      "Id": "ParamEyeRSmile",
+      "Value": 0,
+      "Blend": "Overwrite"
+    }
+  ]
+}
