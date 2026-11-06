@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { TextDecoder } from 'node:util';
 import type { RequestContext } from '../auth/request-identity';
+import { validatePdfStructure, PdfStructureError } from './pdf-structure';
 import {
   privateObjectKinds, type ObjectAdmission, type ObjectRegistration, type ObjectStorageProvider,
   type PrivateObjectKind, type PrivateObjectRepository, type PrivateObjectScope, type PrivateObjectSelector,
@@ -74,17 +75,20 @@ const mime: Record<PrivateObjectKind, string> = {
 };
 /** Container checks only. Content/source QA, analysis codecs and signed review
  * authority remain in their existing layers; bytes are never normalized. */
-function validateFormat(kind: PrivateObjectKind, bytes: Buffer) {
+async function validateFormat(kind: PrivateObjectKind, bytes: Buffer) {
   try {
     if (kind === 'source-pdf') {
-      if (!bytes.subarray(0, 5).equals(Buffer.from('%PDF-')) || !bytes.subarray(Math.max(0, bytes.length - 1024)).includes(Buffer.from('%%EOF'))) throw new Error();
+      await validatePdfStructure(bytes);
     } else if (kind === 'audio') {
       if (bytes.length < 44 || bytes.toString('ascii', 0, 4) !== 'RIFF' || bytes.toString('ascii', 8, 12) !== 'WAVE' || bytes.readUInt32LE(4) + 8 !== bytes.length) throw new Error();
     } else {
       const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
       if (!text.length || kind !== 'source-markdown' && JSON.parse(text) === undefined) throw new Error();
     }
-  } catch { throw new PrivateObjectError('OBJECT_INPUT_INVALID'); }
+  } catch (error) {
+    if (error instanceof PdfStructureError && error.code === 'PDF_VALIDATION_BUSY') throw new PrivateObjectError('OBJECT_BUSY');
+    throw new PrivateObjectError('OBJECT_INPUT_INVALID');
+  }
 }
 
 export interface PrivateObjectServiceOptions {
@@ -151,14 +155,14 @@ export function createPrivateObjectService(options: PrivateObjectServiceOptions)
       await repository.expire(context, value.receiptId); throw new PrivateObjectError('OBJECT_EXPIRED');
     }
   }
-  function checkBytes(value: { expectedSize: number; expectedSha256: string; kind: PrivateObjectKind }, bytes: Buffer) {
+  async function checkBytes(value: { expectedSize: number; expectedSha256: string; kind: PrivateObjectKind }, bytes: Buffer) {
     if (!Buffer.isBuffer(bytes) || bytes.length !== value.expectedSize || bytes.length > maxBytes || sha(bytes) !== value.expectedSha256) throw new PrivateObjectError('OBJECT_INTEGRITY_FAILED');
-    validateFormat(value.kind, bytes);
+    await validateFormat(value.kind, bytes);
   }
   async function checkedRead(ref: StorageObjectRef, expected: { expectedSize: number; expectedSha256: string; kind: PrivateObjectKind }, signal?: AbortSignal) {
     if (expected.expectedSize > maxBytes) throw new PrivateObjectError('OBJECT_INPUT_INVALID');
     const bytes = await transfer(abortSignal => provider.read(ref, { maxBytes, timeoutMs, signal: abortSignal }), signal);
-    checkBytes(expected, bytes); return bytes;
+    await checkBytes(expected, bytes); return bytes;
   }
   async function unchanged(context: RequestContext, original: ObjectRegistration) {
     const current = await receipt(context, original.receiptId);
@@ -203,7 +207,7 @@ export function createPrivateObjectService(options: PrivateObjectServiceOptions)
       issuedInternal(capability, final, { idempotencyKey: input.idempotencyKey }); return final;
     },
     async upload(context: RequestContext, id: string, bytes: Buffer, capability?: InternalObjectCapability) {
-      const existing = await receipt(context, id); await mutationAuthority(existing, capability); await live(context, existing); checkBytes(existing, bytes);
+      const existing = await receipt(context, id); await mutationAuthority(existing, capability); await live(context, existing); await checkBytes(existing, bytes);
       if (existing.state === 'verified') return existing;
       if (existing.state === 'verifying') throw new PrivateObjectError('OBJECT_STATE_CONFLICT');
       const pending = await repository.beginUpload(context, id, existing.revision);

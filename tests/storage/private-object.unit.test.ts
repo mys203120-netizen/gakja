@@ -4,7 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { createRequestIdentityBoundary, type RequestContext } from '../../server/auth/request-identity';
 import { createInternalObjectCapability, createPrivateObjectService, PrivateObjectError } from '../../server/storage/private-object-service';
 import type { ObjectAdmission, ObjectRegistration, PrivateObjectRepository, ObjectStorageProvider, StorageObjectRef, PrivateObjectKind, VerifiedPrivateObject } from '../../server/storage/private-object-ports';
-import { rawHash, syntheticBytes } from './fixtures';
+import { validatePdfStructure, PdfStructureError } from '../../server/storage/pdf-structure';
+import { rawHash, syntheticBytes, syntheticPdf, syntheticTwoPagePdf, syntheticEncryptedPdf } from './fixtures';
 
 /** Explicit in-memory fault tests. Actual PostgreSQL + Supabase Storage API
  * integration is a separately invoked file and is never replaced by these. */
@@ -161,4 +162,26 @@ test('unit concurrency is bounded and abort releases slots without returning unv
   const control = new AbortController(), first = f.service.read(f.context, { objectId: done.objectId }, { signal: control.signal }); await entry;
   await assert.rejects(f.service.read(f.context, { objectId: done.objectId }), code('OBJECT_BUSY')); control.abort(); await assert.rejects(first, code('OBJECT_PROVIDER_UNAVAILABLE'));
   f.setReadHook(undefined); assert.deepEqual(await f.service.read(f.context, { objectId: done.objectId }), syntheticBytes['source-pdf']());
+});
+test('unit PDF magic and EOF without a valid document cannot be uploaded or marked verified', async () => {
+  const f = await fixture(), bytes = Buffer.from('%PDF-1.7\nnot-a-document\n%%EOF\n'), input = f.admission('source-pdf', bytes), accepted = await f.service.admitStudent(f.context, input);
+  await assert.rejects(f.service.upload(f.context, accepted.receiptId, bytes), code('OBJECT_INPUT_INVALID')); assert.equal(f.calls.upload, 0);
+  await assert.rejects(validatePdfStructure(Buffer.from('%PDF-junk\n%%EOF')), error => error instanceof PdfStructureError && error.code === 'PDF_FORMAT_INVALID');
+});
+test('unit password-protected PDF is rejected by the existing PDF.js parser without requesting or logging a password', async () => {
+  await assert.rejects(validatePdfStructure(syntheticEncryptedPdf()), error => error instanceof PdfStructureError && error.code === 'PDF_ENCRYPTION_UNSUPPORTED');
+});
+test('unit actual PDF page-tree opening obeys the explicit page limit and preserves original bytes', async () => {
+  const bytes = syntheticTwoPagePdf(), before = rawHash(bytes); assert.equal(await validatePdfStructure(syntheticPdf()), 1);
+  assert.equal(await validatePdfStructure(bytes), 2); await assert.rejects(validatePdfStructure(bytes, { maxPages: 1 }), error => error instanceof PdfStructureError && error.code === 'PDF_PAGE_LIMIT');
+  assert.equal(rawHash(bytes), before);
+});
+test('unit process-wide PDF worker bound rejects excess work before allocation and releases slots', async () => {
+  const bytes = syntheticPdf(), first = validatePdfStructure(bytes), second = validatePdfStructure(bytes);
+  await assert.rejects(validatePdfStructure(bytes), error => error instanceof PdfStructureError && error.code === 'PDF_VALIDATION_BUSY');
+  assert.deepEqual(await Promise.all([first, second]), [1, 1]); assert.equal(await validatePdfStructure(bytes), 1);
+});
+test('unit PDF worker timeout terminates parsing and releases its bounded worker slot', async () => {
+  await assert.rejects(validatePdfStructure(syntheticPdf(), { timeoutMs: 1 }), error => error instanceof PdfStructureError && error.code === 'PDF_PARSE_TIMEOUT');
+  assert.equal(await validatePdfStructure(syntheticPdf()), 1);
 });

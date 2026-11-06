@@ -255,7 +255,7 @@ test('actual signed JWT to A/B DB authority to Storage-backed HTTP audio preserv
   const service = f.httpService(); service.server.listen(0, '127.0.0.1'); await once(service.server, 'listening'); t.after(() => service.close());
   const address = service.server.address(); assert.ok(address && typeof address === 'object'); const base = `http://127.0.0.1:${address.port}`;
   const request = async (who: Who, headers: Record<string, string> = {}) => fetch(`${base}/api/audio/${audioId}`, { headers: { Authorization: `Bearer ${await f.token(who)}`, Connection: 'close', ...headers } });
-  f.calls.read = 0; const normal = await request('a'); assert.equal(normal.status, 200); assert.deepEqual(Buffer.from(await normal.arrayBuffer()), value.bytes); assert.match(normal.headers.get('cache-control')!, /private, no-store/u);
+  f.calls.read = 0; const normal = await request('a'); assert.equal(normal.status, 200); assert.equal(normal.headers.get('content-type'), 'audio/wav'); assert.deepEqual(Buffer.from(await normal.arrayBuffer()), value.bytes); assert.match(normal.headers.get('cache-control')!, /private, no-store/u);
   const before = f.calls.read; const cross = await request('b'); assert.equal(cross.status, 404); await cross.arrayBuffer(); assert.equal(f.calls.read, before);
   const range = await request('a', { Range: 'bytes=0-2' }); assert.equal(range.status, 416); await range.arrayBuffer(); assert.equal(f.calls.read, before);
   await f.service.cancel(value.selected, value.done.receiptId, value.cap); const cancelled = await request('a'); assert.equal(cancelled.status, 404); await cancelled.arrayBuffer(); assert.equal(f.calls.read, before);

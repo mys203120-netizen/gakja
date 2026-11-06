@@ -15,6 +15,7 @@ export interface AudioAccessBinding extends ResourceBinding {
   /** Optional C-only digest of the exact verified object binding. Existing
    * domain/audio IDs stay unchanged; in-flight reads include this frozen pin. */
   objectIdentity?: string;
+  contentType?: 'audio/mpeg' | 'audio/wav';
 }
 /** Trusted metadata is resolved before any session recovery, private bytes or
  * provider operation. This is an injected server composition, never a DTO. */
@@ -115,10 +116,12 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
   };
   const audioAccess = async (context: AuthenticatedContext, id: string) => {
     const found = await resources().audioBinding(context, id);
-    if (!found || found.resourceId !== id || found.objectIdentity !== undefined && !/^[a-f0-9]{64}$/u.test(found.objectIdentity)) throw notFound();
+    if (!found || found.resourceId !== id || found.objectIdentity !== undefined && !/^[a-f0-9]{64}$/u.test(found.objectIdentity) ||
+      found.contentType !== undefined && !['audio/mpeg','audio/wav'].includes(found.contentType)) throw notFound();
     const binding = Object.freeze({ ownerId: found.ownerId, studentId: found.studentId, applicationTargetId: found.applicationTargetId,
       supportTargetId: found.supportTargetId, ...(found.sourceRevision === undefined ? {} : { sourceRevision: found.sourceRevision }), resourceId: found.resourceId,
-      ...(found.objectIdentity === undefined ? {} : { objectIdentity: found.objectIdentity }) });
+      ...(found.objectIdentity === undefined ? {} : { objectIdentity: found.objectIdentity }),
+      ...(found.contentType === undefined ? {} : { contentType: found.contentType }) });
     checkBinding(context, binding);
     return { context: identity.selectScope(context, binding) as AuthenticatedContext, binding };
   };
@@ -149,7 +152,7 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
         const current = await refresh(scoped, binding), latest = await audioAccess(current, id);
         if (JSON.stringify(latest.binding) !== JSON.stringify(binding) || !bytes) throw notFound();
         await refresh(latest.context, binding);
-        res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Content-Length': bytes.length, 'Cache-Control': 'private, no-store', Vary: 'Authorization, Cookie', 'X-Content-Type-Options': 'nosniff' }); return void res.end(bytes);
+        res.writeHead(200, { 'Content-Type': binding.contentType ?? 'audio/mpeg', 'Content-Length': bytes.length, 'Cache-Control': 'private, no-store', Vary: 'Authorization, Cookie', 'X-Content-Type-Options': 'nosniff' }); return void res.end(bytes);
       }
       const match = sessionPattern.exec(url.pathname);
       if (match) {

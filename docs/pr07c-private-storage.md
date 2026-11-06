@@ -38,7 +38,7 @@ stateDiagram-v2
 
 일반 request 역할은 B 객체 INSERT 권한을 C migration에서 회수하며 원장 직접 DML·검증 완료 함수 실행도 허용하지 않는다. 좁은 등록/전이 함수는 명시적으로 주입한 trusted mapping pool에서만 실행한다. 함수와 TS adapter는 현재 A principal/account/revision/grant와 scope를 다시 검사한다. mapping credential 자체는 신뢰한 서버 권한이며 일반 SQL 사용자에게 제공하지 않는다. SET LOCAL은 여전히 인증이 아닌 backend 문맥 전달이다.
 
-사용자 제출은 PDF만 허용한다. MD/JSON/분석/음성/bundle은 서버 발급의 finite kind/idempotency/object capability와 현재 검사 callback이 필요하다. 내부 읽기는 명시 object 목록과 만료·현재 job 권한을 확인한다. 이는 평가 검수 승인과 별개이며 객체 저장으로 질문/A/B 승인이나 OCR·분석 진실성을 발급하지 않는다.
+사용자 제출은 PDF만 허용한다. PDF는 기존 pdfjs 의존성으로 별도 Worker에서 구조/페이지를 열어 검사하고 암호화된 입력을 거부한다. 최대256페이지, Worker V8 heap128MiB·5초와 프로세스 내 동시 Worker2개 상한을 둔다. 이는 전체 프로세스 RSS 한도나 생기부 내용 검수 보장이 아니다. MD/JSON/분석/음성/bundle은 서버 발급의 finite kind/idempotency/object capability와 현재 검사 callback이 필요하다. 내부 읽기는 명시 object 목록과 만료·현재 job 권한을 확인한다. 이는 평가 검수 승인과 별개이며 객체 저장으로 질문/A/B 승인이나 OCR·분석 진실성을 발급하지 않는다.
 
 실제 업로드 API 성공·클라이언트 완료 알림만으로 확정하지 않는다. staging 전체 bytes를 size/raw SHA 및 파일 container 형식과 대조하고, 별도 final key에 no-upsert copy한 뒤 **최종 읽기 대상의 전체 bytes도 재검증**한다. 그 뒤 DB의 조건부 전이로 확정한다. copy 성공 뒤 DB 실패는 verifying+고정 refs로 추적하며 재시도에서 실제 final bytes를 확인한다. DB 확정 후 응답 유실은 같은 receipt를 재조회한다. 동시 완료·취소는 revision/CAS와 tombstone으로 조정한다. DB와 Storage API를 하나의 원자 transaction으로 표현하지 않는다.
 
@@ -52,13 +52,13 @@ stateDiagram-v2
 
 기본은 앱 proxy이며 provider 직접 download URL을 제품 reader로 반환하지 않는다. 기본 한도는 객체16MiB, 동시 transfer4개, timeout15초다. 메모리 Buffer 한도 안에서 전체 검증 후 전달하고 임시 파일·부분 스트리밍·Range·reader cache는 사용하지 않는다. provider도 별도 bytes/concurrency/timeout/redirect 제한을 둔다. 승인되지 않은 host/bucket/key, traversal, 로컬 경로를 따라가지 않는다.
 
-기존 service audio의 singleflight는 C에서 exact object identity digest를 optional metadata로 추가한다. digest는 owner/student/common 또는 target/source/ref/hash/revision/object ID를 포함한다. 기존 audio ID나 서명 payload를 바꾸지 않으며, 응답 전 최신 audio binding 조회에서도 현재 객체 pin/상태를 대조한다. Range는416으로 거부한다. 응답의 private/no-store와 인증 후 거부를 유지한다. 이미 전달된 bytes의 회수나 마지막 검사 이후 모든 철회의 원자 차단은 보장하지 않는다.
+기존 service audio의 singleflight는 C에서 exact object identity digest를 optional metadata로 추가한다. digest는 owner/student/common 또는 target/source/ref/hash/revision/object ID를 포함한다. 기존 audio ID나 서명 payload를 바꾸지 않으며, 응답 전 최신 audio binding 조회에서도 현재 객체 pin/상태를 대조한다. C의 합성 음성은 WAV 형식이며 optional MIME metadata로 audio/wav를 응답한다. 기존 local MP3와 C 미연결 요청의 audio/mpeg 동작은 유지하고 transcode하지 않는다. D에서 기존 MP3를 이관하려면 별도의 형식/MIME 지원·원본 bytes 비교가 필요하다. Range는416으로 거부한다. 응답의 private/no-store와 인증 후 거부를 유지한다. 이미 전달된 bytes의 회수나 마지막 검사 이후 모든 철회의 원자 차단은 보장하지 않는다.
 
 ## Provider와 URL 계약
 
 공식 Supabase Storage REST API를 fetch로 호출하며 새 SDK 의존성은 추가하지 않는다. CI는 Supabase `storage-api:v1.89.12` manifest digest `8526956cb462e9f7d392e9848ec77133b2769982ed614e9753cc687e8e4339a6`를 고정한다. 내부 file backend를 쓰는 **실제 Storage API 서비스**이며 직접 파일을 읽는 mock과 구분한다. provider용 PostgreSQL17.11은 앱 DB와 다른 container라 provider migration/역할이 앱 역할을 오염시키지 않는다.
 
-앱 JWT는 기존 jose의 명시 issuer/audience/key 신뢰를 사용한다. 격리 Storage의 service/anon JWT는 run 전용 secret으로 별도 생성한다. service credential은 서버 내부 전용이고 이 연결의 성공을 Storage 사용자 RLS 성공으로 표시하지 않는다. Supabase의 `owner_id`와 내부 owner는 같다고 가정하지 않는다. anonymous/public/list를 실제 API에서 거부하고 앱 owner 격리는 A/B/원장과 별도로 시험한다. `storage.objects`/`storage.buckets`의 upload/delete 흉내 SQL DML은 사용하지 않는다.
+앱 JWT는 기존 jose의 명시 issuer/audience/key 신뢰를 사용한다. 격리 Storage의 service/anon JWT는 run 전용 secret으로 별도 생성한다. 선택한 self-host 버전은 로컬 API JWT와 URL 서명에 동일한 HS256 legacy fallback test secret을 쓰며 앱 A의 ES256 신뢰와는 별개다. 현재 hosted 환경의 독립 Storage signing-key 구성과 동일한 시험으로 취급하지 않는다. service credential은 서버 내부 전용이고 이 연결의 성공을 Storage 사용자 RLS 성공으로 표시하지 않는다. Supabase의 `owner_id`와 내부 owner는 같다고 가정하지 않는다. anonymous/public/list를 실제 API에서 거부하고 앱 owner 격리는 A/B/원장과 별도로 시험한다. `storage.objects`/`storage.buckets`의 upload/delete 흉내 SQL DML은 사용하지 않는다.
 
 signed download는 발급 권한과 링크 소유 접근을 구분한다. 짧은 TTL의 실제 만료 전/후를 로컬 origin API에서 시험하며 grant 철회가 이미 발급된 직접 URL을 즉시 취소한다고 주장하지 않는다. hosted Supabase 문서는 Storage URL signing key를 Auth key와 구분하고, 만료/철회 뒤 CDN cache가 남을 수 있다고 설명한다. 이 격리 origin 시험은 hosted signing-key/CDN 검증이 아니다.
 

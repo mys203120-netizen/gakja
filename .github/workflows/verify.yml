@@ -97,6 +97,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - run: npm run test:storage-unit
       - name: Verify actual private Supabase Storage and PostgreSQL
         run: node scripts/run-pr07c-storage-tests.mjs
       - name: Retain redacted Storage verification reports
