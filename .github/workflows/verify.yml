@@ -26,3 +26,62 @@ jobs:
       - run: npm run lint
       - run: npm run test:portable
       - run: npm run build
+  db-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PR07B_TEST_DISPOSABLE: '1'
+      PR07B_TEST_RUN_ID: ci_${{ github.run_id }}_${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Start owned disposable PostgreSQL 17.11
+        shell: bash
+        run: |
+          db_password=$(openssl rand -hex 24)
+          echo "::add-mask::$db_password"
+          container_name="pr07b-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          container_id=$(docker run --detach --name "$container_name" \
+            --label "gakja.pr07b.run=$PR07B_TEST_RUN_ID" \
+            --tmpfs /var/lib/postgresql/data:rw \
+            --env POSTGRES_USER=pr07b_admin --env POSTGRES_DB=pr07b_admin_ci \
+            --env POSTGRES_PASSWORD="$db_password" --publish 127.0.0.1::5432 postgres:17.11)
+          echo "PR07B_TEST_CONTAINER_ID=$container_id" >> "$GITHUB_ENV"
+          ready=0
+          for attempt in $(seq 1 40); do
+            if docker exec "$container_id" pg_isready -U pr07b_admin -d pr07b_admin_ci >/dev/null; then ready=1; break; fi
+            sleep 2
+          done
+          test "$ready" = 1
+          # This container was created above with this run's ownership label.
+          # Mark its freshly initialized DB before handing it to the strict runner.
+          docker exec "$container_id" psql -X -v ON_ERROR_STOP=1 -U pr07b_admin -d pr07b_admin_ci \
+            -c "CREATE TABLE public.pr07b_disposable_marker(run_id text PRIMARY KEY, marker text NOT NULL)" \
+            -c "INSERT INTO public.pr07b_disposable_marker VALUES('$PR07B_TEST_RUN_ID','gakja-pr07b-disposable-only')"
+          host_port=$(docker port "$container_id" 5432/tcp)
+          host_port=${host_port##*:}
+          echo "PR07B_TEST_BOOTSTRAP_URL=postgresql://pr07b_admin:$db_password@127.0.0.1:$host_port/pr07b_admin_ci" >> "$GITHUB_ENV"
+          image_digest=$(docker image inspect postgres:17.11 --format '{{.Id}}')
+          echo "PR07B_TEST_POSTGRES_IMAGE_DIGEST=$image_digest" >> "$GITHUB_ENV"
+      - run: npm run test:db-isolation
+      - name: Retain redacted database verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr07b-db-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/pr07b/db-*/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Remove only owned disposable PostgreSQL
+        if: always()
+        shell: bash
+        run: |
+          if test -n "${PR07B_TEST_CONTAINER_ID:-}"; then
+            marker=$(docker inspect "$PR07B_TEST_CONTAINER_ID" --format '{{ index .Config.Labels "gakja.pr07b.run" }}')
+            test "$marker" = "$PR07B_TEST_RUN_ID"
+            docker rm --force "$PR07B_TEST_CONTAINER_ID"
+          fi

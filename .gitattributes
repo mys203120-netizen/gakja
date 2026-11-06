@@ -24,3 +24,6 @@ packages/contracts/domain-v1/generated.schemas.json -text
 "/각자의답_MD/12. 학생용_IA및UX_정밀설계_v1.2.md" -text
 "/각자의답_MD/2027_면접바이블_내용정리_v1.0.md" -text
 "/각자의답_MD/2027_면접바이블_대학별정리_v1.0.md" -text
+
+# Migration checksums use exact SQL bytes on Windows and Linux.
+/db/**/*.sql -text

@@ -1,5 +1,19 @@
 # 청사진 v2 기준 구현 기록
 
+## 2026-11-06 PR07-B 격리 DB 단계
+
+PR07-A는 `dfeb203`에서 구현·재현·해당 SHA CI를 완료했다(전체1482/portable1283). 실제 Auth/운영 mapping과 다사용자 운영은 미연결 상태다. B는 `pr07b-db-rls.md`의 관계·제한 역할/RLS·DB resolver와 합성 격리 시험을 구현한다. 실제 버전·역할·시험 수·commit/CI 판정은 Git 제외 `artifacts/pr07b/` 실행 보고를 따른다.
+
+| B 관문 | 범위 |
+|---|---|
+| 관계·권한 계약 | issuer/subject→account/owner·학생·개인 지원처·source pin·자원/불변 version/pointer/object/legacy의 복합 FK와 역할 경계 |
+| 격리 DB 검증 | 실제 제한 PostgreSQL 역할·정상/교차/RLS·pool·철회·A HTTP/WSS/worker 통합. 최종 실행 기록으로 판정 |
+| 운영 연계 조건 | 실제 제공자 신뢰·등록/철회 책임·운영 mapping 미공급, 미완료 |
+| 운영 적용·writer/출시 | 이번 범위 밖. DB/Auth 설정·학생 적재·Storage·면접/평가 writer·W0 실계정 API 미착수 |
+
+A의 service 기본 거부·retained entry와 runtime-v1/local writer·정본/ID/hash를 보존한다. G0/W0 코드 통합 완료와 W0 실제 브라우저 QA 미검증, G1/PR04·평가 승인0/대기35의 별도 관문도 유지한다.
+
+
 ## 2026-11-06 PR07-A 요청 경계 업데이트
 
 G0 원격 재현과 W0 코드 통합은 `c60f3ce`에서 완료됐으며, 실제 브라우저 확대·편집·키보드 QA는 미검증이다. 이전 PR06 완료 기록의 G0/W0 미완료 표시는 당시 기준의 이력이다. 현재 PR07-A 구현은 `pr07a-request-identity.md`를 따른다.

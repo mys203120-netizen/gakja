@@ -40,7 +40,9 @@
     "build": "next build --webpack",
     "prepare:live2d-sdk": "node scripts/setup-live2d-sdk.mjs",
     "verify:live2d": "node scripts/verify-live2d-assets.mjs --report artifacts/live2d-asset-check.json",
-    "service:realtime": "node --import tsx scripts/run-service-realtime.mjs"
+    "service:realtime": "node --import tsx scripts/run-service-realtime.mjs",
+    "test:db-isolation": "node scripts/run-pr07b-db-tests.mjs",
+    "test:db-local": "node scripts/run-pr07b-local-db.mjs"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-kr": "^5.3.1",
@@ -55,6 +57,7 @@
     "onnxruntime-web": "^1.31.1",
     "openai": "^7.47.0",
     "pdfjs-dist": "^6.4.299",
+    "pg": "8.23.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "ws": "^8.22.1",
@@ -63,6 +66,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.6",
+    "@types/pg": "8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/ws": "^8.18.2",
