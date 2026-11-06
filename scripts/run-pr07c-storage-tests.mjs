@@ -25,7 +25,7 @@ const report = { version: 'pr07c-owned-official-storage-run-v1', runId, output, 
   operatingInputsUsed: false, actualStudentDataTransferred: false, storageImage, postgresImage, providerBackend: 'official Supabase Storage REST API / internal file backend',
   sourceCommit: (await execute('git', ['rev-parse', 'HEAD'])).stdout.trim(),
   sourceStatus: (await execute('git', ['status', '--porcelain=v1', '-uall'])).stdout.trim(), resources: [], cleanup: [] };
-let networkId, apiUrl, serviceKey, bucket, keyPrefix, controlBucket, createdBucket = false, createdControlBucket = false;
+let networkId, storageContainerId, apiUrl, serviceKey, bucket, keyPrefix, controlBucket, createdBucket = false, createdControlBucket = false;
 const controlBytes = Buffer.from('PR07C unrelated synthetic control object');
 const containers = [];
 async function docker(args) { return (await execute('docker', args, { windowsHide: true, timeout: 240_000, maxBuffer: 8_000_000 })).stdout.trim(); }
@@ -50,14 +50,16 @@ async function pgReady(id, database) {
   throw new Error('PR07C_OWNED_POSTGRES_NOT_READY');
 }
 async function port(id, value) { const result = await docker(['port', id, value]); const matched = result.match(/^127\.0\.0\.1:(\d+)$/u); if (!matched) throw new Error('PR07C_LOOPBACK_PORT_REQUIRED'); return matched[1]; }
-async function api(route, init = {}) {
-  return fetch(apiUrl + route, { ...init, redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(10_000),
+async function api(route, init = {}, timeoutMs = 10_000) {
+  return fetch(apiUrl + route, { ...init, redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(timeoutMs),
     headers: { Authorization: 'Bearer ' + serviceKey, 'Content-Type': 'application/json', ...init.headers } });
 }
 try {
   await docker(['info', '--format', '{{.ServerVersion}}']);
   // create rejects an existing name; this command never adopts it.
-  networkId = await docker(['network', 'create', '--internal', '--label', 'gakja.pr07c.run=' + runId, 'pr07c-' + runId]);
+  // An internal Docker network disables host port publication. Use an owned
+  // bridge with explicit loopback-only published ports for the host test driver.
+  networkId = await docker(['network', 'create', '--label', 'gakja.pr07c.run=' + runId, 'pr07c-' + runId]);
   report.resources.push({ type: 'network', id: networkId });
   const database = 'pr07c_admin_' + randomBytes(8).toString('hex');
   const appDb = await ownContainer('pr07c-' + runId + '-appdb', ['--network-alias', 'app-db', '--tmpfs', '/var/lib/postgresql/data:rw',
@@ -66,6 +68,9 @@ try {
     '-e', 'POSTGRES_DB=postgres', '-e', 'POSTGRES_USER=postgres', '-e', 'POSTGRES_PASSWORD=' + storagePassword, postgresImage]);
   await pgReady(appDb, database); await pgReady(storageDb, 'postgres');
   await containerMarker(appDb); await containerMarker(storageDb);
+  report.appPgImageId = await docker(['inspect', appDb, '--format', '{{.Image}}']);
+  report.providerPgImageId = await docker(['inspect', storageDb, '--format', '{{.Image}}']);
+  report.hostBinding = '127.0.0.1 only; owned bridge, provider DB has no published port';
   const appPort = await port(appDb, '5432/tcp');
   const bootstrapUrl = `postgresql://postgres:${adminPassword}@127.0.0.1:${appPort}/${database}`;
   const marker = new pg.Client({ connectionString: bootstrapUrl }); await marker.connect();
@@ -88,10 +93,12 @@ try {
   secrets.push(settings.S3_PROTOCOL_ACCESS_KEY_SECRET);
   const storage = await ownContainer('pr07c-' + runId + '-storage', ['--network-alias', 'storage', '--tmpfs', '/var/lib/storage:rw,mode=1777',
     ...Object.entries(settings).flatMap(([name, value]) => ['-e', name + '=' + value]), '-p', '127.0.0.1::5000', storageImage]);
+  storageContainerId = storage;
   apiUrl = 'http://127.0.0.1:' + await port(storage, '5000/tcp');
   let healthy = false;
-  for (let attempt = 0; attempt < 120; attempt++) {
-    try { const response = await api('/bucket'); if (response.ok) { await response.body?.cancel(); healthy = true; break; } await response.body?.cancel(); }
+  const readinessDeadline = Date.now() + 90_000;
+  while (Date.now() < readinessDeadline) {
+    try { const response = await api('/bucket', {}, 2_000); if (response.ok) { await response.body?.cancel(); healthy = true; break; } await response.body?.cancel(); }
     catch { /* actual API/migrations are not ready */ }
     await new Promise(resolve => setTimeout(resolve, 500));
   }
@@ -118,6 +125,7 @@ try {
   const command = ['scripts/run-pr07c-db-tests.mjs'];
   const child = spawn(process.execPath, command, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env,
     PR07C_TEST_DISPOSABLE: '1', PR07C_TEST_RUN_ID: runId, PR07C_TEST_BOOTSTRAP_URL: bootstrapUrl, PR07C_TEST_OUTPUT: output,
+    PR07C_TEST_POSTGRES_IMAGE_DIGEST: report.appPgImageId,
     PR07C_TEST_WITH_STORAGE: '1', PR07C_TEST_STORAGE_API_URL: apiUrl, PR07C_TEST_STORAGE_SERVICE_KEY: serviceKey,
     PR07C_TEST_STORAGE_ANON_KEY: anonKey, PR07C_TEST_BUCKET: bucket, PR07C_TEST_KEY_PREFIX: keyPrefix, PR07C_TEST_STORAGE_IMAGE: storageImage } });
   let log = ''; child.stdout.on('data', value => { log += value; }); child.stderr.on('data', value => { log += value; });
@@ -168,10 +176,8 @@ try {
   for (const id of [...containers].reverse()) {
     try {
       await containerMarker(id);
-      if (id === containers.at(-1)) {
-        const logs = await execute('docker', ['logs', id], { windowsHide: true, maxBuffer: 8_000_000 }).then(result => result.stdout + result.stderr).catch(() => '');
-        await writeFile(path.join(output, 'provider-server.log'), redact(logs));
-      }
+      const logs = await execute('docker', ['logs', id], { windowsHide: true, maxBuffer: 8_000_000 }).then(result => result.stdout + result.stderr).catch(() => '');
+      await writeFile(path.join(output, id === storageContainerId ? 'provider-server.log' : 'postgres-' + id + '.log'), redact(logs));
       await docker(['rm', '--force', id]); report.cleanup.push({ type: 'container', id, own: true, removed: true });
     } catch (error) { report.cleanup.push({ type: 'container', id, error: redact(error.message) }); process.exitCode = 1; }
   }

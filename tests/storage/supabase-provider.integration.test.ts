@@ -5,6 +5,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createSupabaseObjectProvider, ObjectProviderError } from '../../server/storage/supabase-object-provider';
 import type { StorageObjectRef } from '../../server/storage/private-object-ports';
+import { syntheticPdf, syntheticWav } from './fixtures';
 
 function required(name: string) { const value = process.env['PR07C_TEST_' + name]; if (!value) throw new Error('PR07C_REAL_STORAGE_ENVIRONMENT_REQUIRED'); return value; }
 const apiUrl = required('STORAGE_API_URL'), bucket = required('BUCKET'), keyPrefix = required('KEY_PREFIX');
@@ -32,14 +33,11 @@ test.after(async () => {
 });
 
 test('real official API preserves PDF, UTF8 markdown/JSON, WAV and review bundle bytes through upload/read/copy/delete', async () => {
-  const wav = Buffer.alloc(48); wav.write('RIFF'); wav.writeUInt32LE(40, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16);
-  wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(8000, 24); wav.writeUInt32LE(16000, 28);
-  wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(4, 40);
   const fixtures = [
-    ['pdf', 'application/pdf', Buffer.from('%PDF-1.4\r\n1 0 obj<</Type/Catalog>>endobj\r\n%%EOF\r\n')],
+    ['pdf', 'application/pdf', syntheticPdf()],
     ['markdown', 'text/markdown', Buffer.from('# 합성 문서🙂\r\n\r\n| 표 | 원문 |\r\n|---|---|\r\n| A | 보존 |\r\n')],
     ['json', 'application/json', Buffer.from('{"z":"한글🙂","nullable":null,"a":1}\r\n')],
-    ['wav', 'audio/wav', wav],
+    ['wav', 'audio/wav', syntheticWav()],
     ['bundle', 'application/json', Buffer.from('{"review":"synthetic-only","approved":false,"notes":"검수 아님🙂"}\n')],
   ] as const;
   for (const [kind, contentType, bytes] of fixtures) {
