@@ -1,5 +1,19 @@
 # 청사진 v2 기준 구현 기록
 
+## 2026-11-06 PR07-C 비공개 객체 단계
+
+PR07-B는 `858401c`에서 격리 DB·회귀·해당 SHA CI를 완료했다. C는 `pr07c-private-storage.md`의 C1(reader)과 C2(접수/실제 검증/확정/취소)를 구분한다. B metadata 행은 업로드 완료가 아니며 새 원장·typed object 관계와 서버 할당 refs를 통해 검증한 객체만 reader로 전달한다. 실제 코드 SHA·새 설치·시험 수·CI·보호 원본 비교는 Git 제외 `artifacts/pr07c/final-report.json`의 실행 증거로 판정한다.
+
+| C 관문 | 판정 범위 |
+|---|---|
+| C1 reader | A/B 현재 권한→verified object binding→실제 Storage bytes/size/raw SHA→권한·상태/ref 재검사 |
+| C2 객체 등록 | 멱등 접수·staging upload·별도 final bytes 검증·CAS 확정·취소/deadline·cleanup 재시도 |
+| 격리 재현 | 명시 mock/실제 PostgreSQL/공식 Supabase Storage API·최종 SHA CI를 각각 기록 |
+| 운영 연계 | 실제 provider/Auth/mapping·bucket/credential·등록/삭제 책임 미공급, 미완료 |
+| hosted CDN·학생 이관·writer | 실제 시험/전환 범위 밖. D shadow와 E/F writer의 별도 관문 유지 |
+
+기존 정본·ID/hash·활성 pointer·local/runtime-v1·A/B 승인·held-F와 service 기본 거부/변경503을 보존한다. W0 실제 브라우저 QA·G1 장치/상용 미디어·PR04 의미 품질, 평가 승인0/대기35는 계속 별도 미완료다.
+
 ## 2026-11-06 PR07-B 격리 DB 단계
 
 PR07-A는 `dfeb203`에서 구현·재현·해당 SHA CI를 완료했다(전체1482/portable1283). 실제 Auth/운영 mapping과 다사용자 운영은 미연결 상태다. B는 `pr07b-db-rls.md`의 관계·제한 역할/RLS·DB resolver와 합성 격리 시험을 구현한다. 실제 버전·역할·시험 수·commit/CI 판정은 Git 제외 `artifacts/pr07b/` 실행 보고를 따른다.

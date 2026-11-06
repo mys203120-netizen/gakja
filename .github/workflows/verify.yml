@@ -85,3 +85,25 @@ jobs:
             test "$marker" = "$PR07B_TEST_RUN_ID"
             docker rm --force "$PR07B_TEST_CONTAINER_ID"
           fi
+  storage-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PR07C_TEST_RUN_ID: ci_${{ github.run_id }}_${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify actual private Supabase Storage and PostgreSQL
+        run: node scripts/run-pr07c-storage-tests.mjs
+      - name: Retain redacted Storage verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr07c-storage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/pr07c/storage-*/
+          if-no-files-found: ignore
+          retention-days: 14

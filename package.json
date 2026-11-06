@@ -42,7 +42,11 @@
     "verify:live2d": "node scripts/verify-live2d-assets.mjs --report artifacts/live2d-asset-check.json",
     "service:realtime": "node --import tsx scripts/run-service-realtime.mjs",
     "test:db-isolation": "node scripts/run-pr07b-db-tests.mjs",
-    "test:db-local": "node scripts/run-pr07b-local-db.mjs"
+    "test:db-local": "node scripts/run-pr07b-local-db.mjs",
+    "test:storage": "node scripts/run-pr07c-storage-tests.mjs",
+    "test:storage-db": "node scripts/run-pr07c-db-tests.mjs",
+    "test:storage-db-local": "node scripts/run-pr07c-local-db.mjs",
+    "test:storage-unit": "tsx --test tests/storage/*.unit.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-kr": "^5.3.1",

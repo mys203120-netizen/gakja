@@ -10,7 +10,12 @@ export interface SessionAccessBinding extends ResourceBinding {
   sessionId: string;
   contextSnapshotSha256: string;
 }
-export interface AudioAccessBinding extends ResourceBinding { resourceId: string }
+export interface AudioAccessBinding extends ResourceBinding {
+  resourceId: string;
+  /** Optional C-only digest of the exact verified object binding. Existing
+   * domain/audio IDs stay unchanged; in-flight reads include this frozen pin. */
+  objectIdentity?: string;
+}
 /** Trusted metadata is resolved before any session recovery, private bytes or
  * provider operation. This is an injected server composition, never a DTO. */
 export interface ServiceRequestResources {
@@ -109,9 +114,11 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
     return { context: identity.selectScope(context, binding) as AuthenticatedContext, binding };
   };
   const audioAccess = async (context: AuthenticatedContext, id: string) => {
-    const found = await resources().audioBinding(context, id); if (!found || found.resourceId !== id) throw notFound();
+    const found = await resources().audioBinding(context, id);
+    if (!found || found.resourceId !== id || found.objectIdentity !== undefined && !/^[a-f0-9]{64}$/u.test(found.objectIdentity)) throw notFound();
     const binding = Object.freeze({ ownerId: found.ownerId, studentId: found.studentId, applicationTargetId: found.applicationTargetId,
-      supportTargetId: found.supportTargetId, ...(found.sourceRevision === undefined ? {} : { sourceRevision: found.sourceRevision }), resourceId: found.resourceId });
+      supportTargetId: found.supportTargetId, ...(found.sourceRevision === undefined ? {} : { sourceRevision: found.sourceRevision }), resourceId: found.resourceId,
+      ...(found.objectIdentity === undefined ? {} : { objectIdentity: found.objectIdentity }) });
     checkBinding(context, binding);
     return { context: identity.selectScope(context, binding) as AuthenticatedContext, binding };
   };
@@ -132,6 +139,8 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
         await refresh(current); return send(res, 200, value);
       }
       if (req.method === 'GET' && url.pathname.startsWith('/api/audio/')) {
+        // Private audio is verified as one complete object before delivery.
+        if (req.headers.range !== undefined) throw new RequestAccessError(416, 'INVALID_REQUEST');
         const id = url.pathname.slice('/api/audio/'.length);
         if (!id || !/^[A-Za-z0-9._-]+$/u.test(id) || id === '.' || id === '..') throw notFound();
         const access = await audioAccess(context, id), binding = access.binding;
