@@ -1,3 +1,4 @@
+import { assertLocalInternalExecution } from './internal-execution';
 import { verify } from 'node:crypto';
 import { z } from 'zod';
 import type { InterviewContext } from './data/load-interview-context';
@@ -72,6 +73,7 @@ export async function supplyReviewedSessionEvaluation(options: {
   root?: string; trustedPublicKey?: string; enqueue?: boolean; model?: string; currentRegistry?: QuestionEvaluationSpecRegistry; sessions?: SessionStore;
   jobs?: EvaluationRepository; reviews?: ReviewRepository; revisions?: EvaluationRevisionRepository;
 }) {
+  assertLocalInternalExecution();
   const { context, session } = options, root = options.root ?? process.cwd(), reviews = options.reviews ?? createLocalReviewRepository(root);
   const latest = options.currentRegistry ?? (options.root ? await loadBankScopeRegistry(root, options.trustedPublicKey, reviews) ?? undefined : context.evaluationScopeRegistry);
   if ((latest?.contentSha256 ?? null) !== options.proposal.registrySha256) throw new Error('EVALUATION_SPEC_REVISION_CHANGED');

@@ -6,6 +6,6 @@ for (const file of manifest.files) if (!files.includes(file)) throw new Error(`U
 const portable = files.filter(file => !manifest.files.includes(file));
 console.log(`Portable suite: ${portable.length} files. ${manifest.files.length} private-fixture suites require separate npm test release verification.`);
 console.log(`Private fixture manifest: tests/private-fixture-suites.json`);
-const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', '--test-concurrency=4', ...portable.map(file => `tests/${file}`)], { stdio: 'inherit', windowsHide: true });
+const result = spawnSync(process.execPath, ['--import', 'tsx', '--import', './tests/local-composition.mjs', '--test', '--test-concurrency=4', ...portable.map(file => `tests/${file}`)], { stdio: 'inherit', windowsHide: true });
 if (result.error) throw result.error;
 process.exitCode = result.status ?? 1;

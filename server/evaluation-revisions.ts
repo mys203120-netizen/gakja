@@ -1,3 +1,4 @@
+import { assertLocalInternalExecution } from './internal-execution';
 /** Append-only reviewed-result references. Original sessions/contexts/results are
  * never rewritten; reads recheck exact frozen input and current review authority. */
 import { z } from 'zod';
@@ -76,6 +77,7 @@ async function validateReference(record: ReviewedEvaluationRevisionReference, se
   return { job, jobs, isAuthorized };
 }
 export async function appendReviewedEvaluationRevision(options: AppendReviewedEvaluationRevisionOptions): Promise<ReviewedEvaluationRevisionReference> {
+  assertLocalInternalExecution();
   const { originalSession: session } = options, ownerId = session.runtime?.owner.id; if (!ownerId) throw new Error('REVIEWED_EVALUATION_OWNER_REQUIRED');
   const body = referenceBodySchema.parse({ version: 'reviewed-evaluation-revision-reference-v1', ownerId, sessionId: session.id,
     sessionFrozenInputSha256: options.sessionFrozenInputSha256, sessionQuestionAnswerSha256: knowledgeSessionQuestionAnswerHash(session),
@@ -105,6 +107,7 @@ export async function loadReviewedEvaluationRevision(options: StorageOptions & {
 /** Retry the exact authorized reviewed revision, never the original session's
  * unreviewed job. A pending/review-wait/completed view has no retry side effect. */
 export async function retryReviewedEvaluationRevision(options: StorageOptions & { session: InterviewSession; ownerId: string }): Promise<ReviewedEvaluationRevisionView | null> {
+  assertLocalInternalExecution();
   const view = await loadReviewedEvaluationRevision(options);
   if (!view || view.status !== 'failed') return view;
   await stores(options).jobs.retry(view.jobId);

@@ -71,6 +71,10 @@ function openBrowser(url) {
 }
 
 try {
+  if (process.env.NODE_ENV === 'production' ||
+      process.env.INTERVIEW_EXECUTION_MODE && process.env.INTERVIEW_EXECUTION_MODE !== 'local-development') {
+    throw new Error('이 로컬 런처는 운영 인증 모드에서 사용할 수 없습니다.');
+  }
   if (Number(process.versions.node.split('.')[0]) < 22) throw new Error('Node.js 22 이상 LTS 버전이 필요합니다: https://nodejs.org');
   const lock = path.join(root, 'package-lock.json');
   const stamp = path.join(root, 'node_modules', '.interview-dependency-hash');
@@ -89,6 +93,13 @@ try {
     console.log('.env.local을 만들었습니다. 실제 API 키를 입력한 후 서버를 다시 시작해 주세요.');
   }
   config({ path: path.join(root, '.env.local'), quiet: true });
+  // This launcher is the explicit, single-owner local composition. It cannot
+  // turn an operational service configuration into a development identity.
+  if (process.env.NODE_ENV === 'production' ||
+      process.env.INTERVIEW_EXECUTION_MODE && process.env.INTERVIEW_EXECUTION_MODE !== 'local-development') {
+    throw new Error('이 로컬 런처는 운영 인증 모드에서 사용할 수 없습니다.');
+  }
+  process.env.INTERVIEW_EXECUTION_MODE = 'local-development';
   const web = Number(process.env.WEB_PORT || 3000);
   const realtime = Number(process.env.REALTIME_PORT || 3001);
   if (![web,realtime].every(p=>Number.isInteger(p)&&p>=1024&&p<=65535) || web===realtime) throw new Error('WEB_PORT와 REALTIME_PORT는 서로 다른 1024~65535 포트여야 합니다.');

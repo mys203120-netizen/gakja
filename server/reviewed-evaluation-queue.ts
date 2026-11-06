@@ -1,3 +1,4 @@
+import { assertLocalInternalExecution } from './internal-execution';
 /** Provider-free preparation of a separately reviewed evaluation job. HTTP
  * supply/read paths must not import the worker's live evaluation provider. */
 import type { InterviewContext } from './data/load-interview-context';
@@ -41,6 +42,7 @@ function assertReviewedKnowledgeDerivation(context: InterviewContext, base: Inte
  * session, question contract, transcript or already stored evaluation result. */
 export async function enqueueReviewedKnowledgeEvaluation(context: InterviewContext, original: InterviewSession,
   options: { jobs?: EvaluationRepository; sessions?: SessionStore; model?: string; now?: number } = {}) {
+  assertLocalInternalExecution();
   if (!original.runtime || original.status === 'active' || !context.approvedKnowledge) throw new Error('APPROVED_KNOWLEDGE_ENDED_CONTEXT_REQUIRED');
   parseApprovedKnowledgeBundle(context.approvedKnowledge);
   if (context.manifest.rulesVersion !== original.runtime.engineVersion) throw new Error('EVALUATION_CONTEXT_VERSION_CHANGED');

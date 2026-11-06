@@ -1,3 +1,4 @@
+import { assertLocalInternalExecution } from '../server/internal-execution';
 import dotenv from 'dotenv';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
@@ -28,6 +29,7 @@ import { loadReviewedEvaluationRevision } from '../server/evaluation-revisions';
 export async function prepareEvaluationScopesCli(args: string[], root = process.cwd(), dependencies: {
   context?: InterviewContext; bank?: PreparedQuestionBank; trustedPublicKey?: string; sessions?: SessionStore; jobs?: EvaluationRepository; reviews?: ReviewRepository; revisions?: EvaluationRevisionRepository;
 } = {}) {
+  assertLocalInternalExecution();
   const [command, ...flags] = args;
   if (!['stage', 'validate', 'publish', 'stage-ended', 'prepare-ended', 'supply-ended', 'coverage'].includes(command)) throw new Error('EVALUATION_SCOPE_COMMAND_REQUIRED:stage|validate|publish|prepare-ended|supply-ended|coverage');
   const values = new Map<string, string>(), allowed = new Set(['--output', '--reviewed-input', '--reviewer', '--receipt', '--expected-current', '--session-input', '--context-input', '--session-id', '--proposal-input']);

@@ -1,3 +1,4 @@
+import { assertLocalInternalExecution } from '../server/internal-execution';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -31,6 +32,7 @@ function validateArguments(args: string[]) {
 }
 
 export async function prepareApprovedKnowledgeCli(args: string[], root = process.cwd(), reviews: ReviewRepository = createLocalReviewRepository(root)) {
+  assertLocalInternalExecution();
   validateArguments(args);
   const inputPath = value(args, '--reviewed-input'), reviewer = value(args, '--reviewer');
   if (!inputPath || !reviewer) throw new Error('APPROVED_KNOWLEDGE_REVIEWED_INPUT_AND_REVIEWER_REQUIRED');

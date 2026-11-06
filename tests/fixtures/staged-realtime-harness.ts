@@ -55,7 +55,7 @@ export async function startStagedFixture(options: { evaluationWorker?: boolean }
     assert.ok(inputs.some(input => input.endsWith('tests/fixtures/staged-realtime-providers.ts')));
     assert.ok(!inputs.some(input => /(?:^|\/)server\/(?:providers\/(?:openai|clova-tts|clova-stt|answer-reaction|realtime-core|single-core-runtime|approved-restatement)|data\/prepared-question-bank)\.ts$/u.test(input)), 'All external provider/core boundaries must be replaced before launching');
     const port = await unusedPort(), webPort = await unusedPort(), controlPort = await unusedPort(), stagedPort = await unusedPort(), token = randomUUID();
-    const environment: NodeJS.ProcessEnv = { NODE_ENV: 'test' };
+    const environment: NodeJS.ProcessEnv = { INTERVIEW_EXECUTION_MODE: 'local-development', NODE_ENV: 'test' };
     for (const name of ['SystemRoot', 'PATH', 'Path', 'COMSPEC', 'TEMP', 'TMP', 'USERPROFILE']) if (process.env[name]) environment[name] = process.env[name]!;
     Object.assign(environment, { REALTIME_PORT: String(port), WEB_PORT: String(webPort), RECOVERY_TEST_CONTROL_PORT: String(controlPort), STAGED_TEST_CONTROL_PORT: String(stagedPort), RECOVERY_TEST_TOKEN: token, OPENAI_API_KEY: 'synthetic-test-only', CLOVA_SPEECH_SECRET_KEY: 'synthetic-test-only', CLOVA_VOICE_CLIENT_ID: 'synthetic-test-only', CLOVA_VOICE_CLIENT_SECRET: 'synthetic-test-only' });
     child = spawn(process.execPath, [outfile], { cwd: directory, env: environment, stdio: 'pipe', windowsHide: true });

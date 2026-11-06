@@ -1,3 +1,6 @@
+import { createRequestIdentityBoundary, resolveExecutionMode } from "./auth/request-identity";
+import { trustedJwtVerifierFromEnv } from "./auth/jose-jwt-verifier";
+import { createServiceRealtimeServer } from "./request-realtime-server";
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local", quiet: true });
 import http, { type IncomingMessage, type ServerResponse } from "node:http";
@@ -54,6 +57,8 @@ import { singleCoreCandidateDecisionSchema } from './providers/single-core-contr
 import { SubmissionWorkRegistry } from './submission-work';
 import { TurnWorkError, runTurnWorkStage, type TurnWorkContext } from './turn-work';
 
+/** Only this explicit composition may touch the legacy single-student writer. */
+function startLocalRealtimeServer() {
 const port = Number(process.env.REALTIME_PORT ?? 3001);
 const webPort = Number(process.env.WEB_PORT ?? 3000);
 const workspaceId = createHash("sha256").update(path.resolve(process.cwd()).toLowerCase()).digest("hex").slice(0, 16);
@@ -84,6 +89,7 @@ const allowedOrigins = new Set([`http://localhost:${webPort}`, `http://127.0.0.1
 const contextPromise = loadInterviewContext();
 // Explicit local development boundary, not a commercial authentication implementation.
 const owner = localDevelopmentOwner();
+const localRequestContext = Object.freeze({ mode: 'local-development' as const, ownerId: owner.id });
 const pinnedContexts = new Map<string, Awaited<typeof contextPromise>>();
 const audioOwners = new Map<string, string>();
 const loadingSessions = new Map<string, Promise<InterviewSession>>();
@@ -196,7 +202,10 @@ async function findSession(id: string) {
   loadingSessions.set(id, loading);
   try { return await loading; } finally { loadingSessions.delete(id); }
 }
-function save(session: InterviewSession) { return saveSessionSnapshot(session, store); }
+function save(session: InterviewSession) {
+  assertSessionOwner(session, localRequestContext.ownerId);
+  return saveSessionSnapshot(session, store);
+}
 type JournalTurn = { questionText: string | null; acknowledgement: string | null; interviewerId: string | null; sourceTurnId?: string | null };
 const journalTurns = new Map<string, Map<string, JournalTurn>>();
 const journalId = (kind: string, ...parts: string[]) => `${kind}:${createHash("sha256").update(parts.join("\u0000")).digest("hex")}`;
@@ -1450,3 +1459,19 @@ function shutdown() {
 }
 process.once("SIGINT", shutdown);
 process.once("SIGTERM", shutdown);
+
+}
+
+// A production web build does not enable local identity. Service is the default
+// even without NODE_ENV, and starts no local context/recovery/cache work.
+const executionMode = resolveExecutionMode();
+if (executionMode === 'local-development') startLocalRealtimeServer();
+else {
+  const port = Number(process.env.REALTIME_PORT ?? 3001);
+  const identity = createRequestIdentityBoundary({ mode: 'service', verifier: trustedJwtVerifierFromEnv() });
+  const service = createServiceRealtimeServer({ identity, webPort: Number(process.env.WEB_PORT ?? 3000) });
+  service.server.listen(port, '127.0.0.1', () => console.log(`Interview service boundary: http://127.0.0.1:${port}`));
+  service.server.on('error', () => { process.exitCode = 1; });
+  const shutdown = () => { void service.close(); };
+  process.once('SIGINT', shutdown); process.once('SIGTERM', shutdown);
+}

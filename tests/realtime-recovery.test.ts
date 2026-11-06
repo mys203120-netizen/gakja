@@ -56,7 +56,7 @@ async function startFixture() {
     assert.ok(inputs.some(input => input.endsWith("tests/fixtures/realtime-providers.ts")), "Synthetic providers must be present before starting the child");
     assert.ok(!inputs.some(input => /(?:^|\/)server\/(?:providers\/(?:openai|clova-tts|clova-stt|answer-reaction|realtime-core|single-core-runtime|approved-restatement)|data\/prepared-question-bank)\.ts$/u.test(input)), "Live provider/core/bank implementations must never enter the explicit recovery fixture bundle");
     const port = await unusedPort(), webPort = await unusedPort(), controlPort = await unusedPort(), token = randomUUID();
-    const environment: NodeJS.ProcessEnv = { NODE_ENV: "test" };
+    const environment: NodeJS.ProcessEnv = { INTERVIEW_EXECUTION_MODE: 'local-development', NODE_ENV: "test" };
     for (const name of ["SystemRoot", "PATH", "Path", "COMSPEC", "TEMP", "TMP", "USERPROFILE"]) if (process.env[name]) environment[name] = process.env[name]!;
     Object.assign(environment, { REALTIME_PORT: String(port), WEB_PORT: String(webPort), RECOVERY_TEST_CONTROL_PORT: String(controlPort), RECOVERY_TEST_TOKEN: token, OPENAI_API_KEY: "synthetic-test-only", CLOVA_SPEECH_SECRET_KEY: "synthetic-test-only", CLOVA_VOICE_CLIENT_ID: "synthetic-test-only", CLOVA_VOICE_CLIENT_SECRET: "synthetic-test-only" });
     // No .env.local in this owned temporary CWD; dotenv cannot read the real secret file.

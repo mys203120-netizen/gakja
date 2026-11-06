@@ -31,7 +31,7 @@ test('actual HTTP/socket flow pins preparation, persists next results, closes wi
     let controlPort = 0;
     const launch = async () => {
       controlPort = await port();
-      const env: NodeJS.ProcessEnv = { NODE_ENV: 'test', REALTIME_PORT: String(realPort), WEB_PORT: String(webPort), RECOVERY_TEST_CONTROL_PORT: String(controlPort), RECOVERY_TEST_TOKEN: 'explicit-synthetic-token', OPENAI_API_KEY: 'synthetic-test-only', CLOVA_SPEECH_SECRET_KEY: 'synthetic-only', CLOVA_VOICE_CLIENT_ID: 'synthetic-only', CLOVA_VOICE_CLIENT_SECRET: 'synthetic-only', LOCAL_INTERVIEW_OWNER_ID: 'owner-runtime-fixture' };
+      const env: NodeJS.ProcessEnv = { INTERVIEW_EXECUTION_MODE: 'local-development', NODE_ENV: 'test', REALTIME_PORT: String(realPort), WEB_PORT: String(webPort), RECOVERY_TEST_CONTROL_PORT: String(controlPort), RECOVERY_TEST_TOKEN: 'explicit-synthetic-token', OPENAI_API_KEY: 'synthetic-test-only', CLOVA_SPEECH_SECRET_KEY: 'synthetic-only', CLOVA_VOICE_CLIENT_ID: 'synthetic-only', CLOVA_VOICE_CLIENT_SECRET: 'synthetic-only', LOCAL_INTERVIEW_OWNER_ID: 'owner-runtime-fixture' };
       for (const name of ['SystemRoot', 'PATH', 'Path', 'COMSPEC', 'TEMP', 'TMP', 'USERPROFILE']) if (process.env[name]) env[name] = process.env[name];
       child = spawn(process.execPath, [outfile], { cwd: directory, env, windowsHide: true, stdio: 'pipe' }); child.stdout.resume(); child.stderr.on('data', value => { diagnostic = (diagnostic + String(value)).slice(-4000); });
       await poll(() => fetch(`${base}/api/health`), row => row.ok);
