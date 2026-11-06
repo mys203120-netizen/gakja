@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
-import { createRequestIdentityBoundary, RequestAccessError, type AuthenticatedRequestContext, type PrincipalVerifier } from '../../server/auth/request-identity';
+import { createRequestIdentityBoundary, RequestAccessError, type AuthenticatedRequestContext, type PrincipalVerifier, type RequestContext } from '../../server/auth/request-identity';
 import { createTrustedJwtVerifier } from '../../server/auth/jose-jwt-verifier';
 import { createPostgresAccountResolver, createPostgresRequestAuthority, createPostgresTestResources, createPostgresWorkerBindingResolver } from '../../server/db/postgres-authority';
 import { createPostgresObjectRepository } from '../../server/db/postgres-object-repository';
@@ -93,14 +93,17 @@ async function fixture() {
     await service.upload(selected, accepted.receiptId, bytes, cap); const done = await service.complete(selected, accepted.receiptId, cap);
     return { selected, input, cap, done, bytes };
   }
-  function httpService(hooks: { afterAudio?: () => Promise<void>; binding?: () => void } = {}) {
+  function httpService(hooks: { afterAudio?: () => Promise<void>; binding?: () => void; refreshed?: () => void } = {}) {
     const synthetic = createPostgresTestResources(authority, { async readStatus() { return { review: 'review_required', score: null }; }, async readSession() { return null; }, async readAudio() { calls.syntheticAudio++; throw new Error('SYNTHETIC_AUDIO_MUST_NOT_RUN'); } });
     const storage = withPrivateObjectAudio(synthetic, service, identity);
     const resources = { ...storage,
       async audioBinding(...args: Parameters<typeof storage.audioBinding>) { const value = await storage.audioBinding(...args); hooks.binding?.(); return value; },
       async readAudio(...args: Parameters<typeof storage.readAudio>) { const value = await storage.readAudio(...args); await hooks.afterAudio?.(); return value; },
     };
-    return createServiceRealtimeServer({ identity, resources, environment: 'test', now });
+    // Observe only the handler's actual preflight revalidation. Repository and
+    // metadata composition continue to use the original minted boundary.
+    const serviceIdentity = { ...identity, async revalidate(context: RequestContext) { const value = await identity.revalidate(context); hooks.refreshed?.(); return value; } };
+    return createServiceRealtimeServer({ identity: serviceIdentity, resources, environment: 'test', now });
   }
   return { now, context, token, admission, capability, verified, repository, authority, identity, service, provider, actual, calls, httpService,
     hookRead(value: typeof afterRead) { afterRead = value; }, hookCopy(value: typeof beforeCopy) { beforeCopy = value; }, advance(ms: number) { clock += ms; } };
@@ -266,14 +269,14 @@ test('actual HTTP singleflight rechecks object identity after a verified body aw
   const f = await fixture(), input = f.admission('a', 'audio', 'target'), value = await f.verified('a', input), audioId = `race-${randomUUID()}.wav`;
   await pools.mapping.query('INSERT INTO gakja.audio_bindings(owner_id,resource_id,student_id,application_target_id,support_target_id,source_present,source_revision,content_sha256) VALUES($1,$2,$3,$4,$5,false,NULL,$6)', ['owner-a', audioId, 'student-a', 'app-a', 'domain-track', rawHash(value.bytes)]);
   await f.repository.linkAudio(value.selected, value.done.receiptId, audioId);
-  let release!: () => void, entered!: () => void, secondBinding!: () => void, bindings = 0;
-  const held = new Promise<void>(resolve => { release = resolve; }), ready = new Promise<void>(resolve => { entered = resolve; }), joined = new Promise<void>(resolve => { secondBinding = resolve; });
-  const service = f.httpService({ async afterAudio() { entered(); await held; }, binding() { if (++bindings === 2) secondBinding(); } });
+  let release!: () => void, entered!: () => void, secondPreflight!: () => void, refreshes = 0;
+  const held = new Promise<void>(resolve => { release = resolve; }), ready = new Promise<void>(resolve => { entered = resolve; }), joined = new Promise<void>(resolve => { secondPreflight = resolve; });
+  const service = f.httpService({ async afterAudio() { entered(); await held; }, refreshed() { if (++refreshes === 2) secondPreflight(); } });
   service.server.listen(0, '127.0.0.1'); await once(service.server, 'listening'); t.after(() => { release(); return service.close(); });
   const address = service.server.address(); assert.ok(address && typeof address === 'object'); const base = `http://127.0.0.1:${address.port}`;
   const token = await f.token('a'); const request = () => fetch(`${base}/api/audio/${audioId}`, { headers: { Authorization: `Bearer ${token}`, Connection: 'close' } });
   f.calls.read = 0; const first = request(); await ready; const second = request(); await joined;
-  // The second real DB binding completed; drain its continuation into the
+  // The second handler's real DB preflight completed; drain its continuation into the
   // already pending flight before revoking the object registration.
   await new Promise<void>(resolve => setImmediate(resolve)); assert.equal(f.calls.read, 1);
   try { await f.service.cancel(value.selected, value.done.receiptId, value.cap); } finally { release(); }

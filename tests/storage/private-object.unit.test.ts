@@ -5,7 +5,7 @@ import { createRequestIdentityBoundary, type RequestContext } from '../../server
 import { createInternalObjectCapability, createPrivateObjectService, PrivateObjectError } from '../../server/storage/private-object-service';
 import type { ObjectAdmission, ObjectRegistration, PrivateObjectRepository, ObjectStorageProvider, StorageObjectRef, PrivateObjectKind, VerifiedPrivateObject } from '../../server/storage/private-object-ports';
 import { validatePdfStructure, PdfStructureError } from '../../server/storage/pdf-structure';
-import { rawHash, syntheticBytes, syntheticPdf, syntheticTwoPagePdf, syntheticEncryptedPdf } from './fixtures';
+import { rawHash, syntheticBytes, syntheticPdf, syntheticTwoPagePdf, syntheticEncryptedPdf, syntheticEmptyPasswordPdf } from './fixtures';
 
 /** Explicit in-memory fault tests. Actual PostgreSQL + Supabase Storage API
  * integration is a separately invoked file and is never replaced by these. */
@@ -170,6 +170,15 @@ test('unit PDF magic and EOF without a valid document cannot be uploaded or mark
 });
 test('unit password-protected PDF is rejected by the existing PDF.js parser without requesting or logging a password', async () => {
   await assert.rejects(validatePdfStructure(syntheticEncryptedPdf()), error => error instanceof PdfStructureError && error.code === 'PDF_ENCRYPTION_UNSUPPORTED');
+});
+test('unit encrypted PDF that opens with an empty password is still explicitly refused', async () => {
+  const bytes = syntheticEmptyPasswordPdf(), { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const loading = getDocument({ data: Uint8Array.from(bytes), verbosity: 0 });
+  try {
+    const document = await loading.promise; assert.equal(document.numPages, 1);
+    assert.equal(Reflect.get((await document.getMetadata()).info, 'EncryptFilterName'), 'Standard');
+  } finally { await loading.destroy(); }
+  await assert.rejects(validatePdfStructure(bytes), error => error instanceof PdfStructureError && error.code === 'PDF_ENCRYPTION_UNSUPPORTED');
 });
 test('unit actual PDF page-tree opening obeys the explicit page limit and preserves original bytes', async () => {
   const bytes = syntheticTwoPagePdf(), before = rawHash(bytes); assert.equal(await validatePdfStructure(syntheticPdf()), 1);

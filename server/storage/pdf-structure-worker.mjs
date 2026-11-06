@@ -7,10 +7,14 @@ let loading;
 try {
   const bytes = new Uint8Array(workerData.bytes);
   loading = getDocument({ data: bytes, useSystemFonts: false, disableFontFace: true,
-    isEvalSupported: false, isOffscreenCanvasSupported: false, isImageDecoderSupported: false,
+    isOffscreenCanvasSupported: false, isImageDecoderSupported: false,
     stopAtErrors: true, maxImageSize: 0, verbosity: 0 });
   const document = await loading.promise;
-  if (!Number.isInteger(document.numPages) || document.numPages < 1 || document.numPages > workerData.maxPages) {
+  const metadata = await document.getMetadata();
+  if (!metadata.info || !Object.hasOwn(metadata.info, 'EncryptFilterName')) throw new Error();
+  if (metadata.info?.EncryptFilterName != null) {
+    parentPort.postMessage({ valid: false, reason: 'PDF_ENCRYPTION_UNSUPPORTED' });
+  } else if (!Number.isInteger(document.numPages) || document.numPages < 1 || document.numPages > workerData.maxPages) {
     parentPort.postMessage({ valid: false, reason: 'PDF_PAGE_LIMIT' });
   } else {
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {

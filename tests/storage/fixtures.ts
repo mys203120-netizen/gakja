@@ -36,6 +36,26 @@ export function syntheticEncryptedPdf() {
     `<< /Filter /Standard /V 1 /R 2 /O <${'00'.repeat(32)}> /U <${'00'.repeat(32)}> /P -4 >>`],
   `/Encrypt 4 0 R /ID [<${'11'.repeat(16)}> <${'11'.repeat(16)}>]`);
 }
+/** Legacy PDF Standard Security R2 with an empty user password. Fixture-only
+ * RC4/MD5 reproduce that file format; they are not application crypto choices. */
+export function syntheticEmptyPasswordPdf() {
+  const padding = Buffer.from('28bf4e5e4e758a4164004e56fffa01082e2e00b6d0683e802f0ca9fe6453697a', 'hex');
+  function rc4(key: Buffer, input: Buffer) {
+    const state = Array.from({ length: 256 }, (_, index) => index); let j = 0;
+    for (let i = 0; i < 256; i++) { j = (j + state[i] + key[i % key.length]) % 256; [state[i], state[j]] = [state[j], state[i]]; }
+    const output = Buffer.alloc(input.length); let i = 0; j = 0;
+    for (let index = 0; index < input.length; index++) { i = (i + 1) % 256; j = (j + state[i]) % 256; [state[i], state[j]] = [state[j], state[i]]; output[index] = input[index] ^ state[(state[i] + state[j]) % 256]; }
+    return output;
+  }
+  const fileId = Buffer.alloc(16, 0x11), permission = Buffer.alloc(4); permission.writeInt32LE(-4);
+  const owner = rc4(createHash('md5').update(padding).digest().subarray(0, 5), padding);
+  const encryptionKey = createHash('md5').update(Buffer.concat([padding, owner, permission, fileId])).digest().subarray(0, 5);
+  const user = rc4(encryptionKey, padding);
+  return controlledPdf(['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] >>',
+    `<< /Filter /Standard /V 1 /R 2 /O <${owner.toString('hex')}> /U <${user.toString('hex')}> /P -4 >>`],
+  `/Encrypt 4 0 R /ID [<${fileId.toString('hex')}> <${fileId.toString('hex')}>]`);
+}
 export const syntheticBytes: Record<PrivateObjectKind, () => Buffer> = {
   'source-pdf': syntheticPdf,
   'source-markdown': () => Buffer.from('# 합성 원문🙂\r\n첫째 줄\r\n둘째 줄\n', 'utf8'),
