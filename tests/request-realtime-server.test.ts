@@ -263,4 +263,3 @@ test('unconfigured operational service refuses before resources even with a loca
   for (const route of ['/api/status', '/api/audio/private.mp3', `/api/sessions/${ids.a}`]) assert.equal((await fetch(base + route)).status, 503);
   assert.equal(calls.count, 0);
 });
-
