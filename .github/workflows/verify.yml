@@ -53,7 +53,7 @@ jobs:
           echo "PR07B_TEST_CONTAINER_ID=$container_id" >> "$GITHUB_ENV"
           ready=0
           for attempt in $(seq 1 40); do
-            if docker exec "$container_id" pg_isready -U pr07b_admin -d pr07b_admin_ci >/dev/null; then ready=1; break; fi
+            if docker exec "$container_id" pg_isready -h 127.0.0.1 -U pr07b_admin -d pr07b_admin_ci >/dev/null; then ready=1; break; fi
             sleep 2
           done
           test "$ready" = 1
