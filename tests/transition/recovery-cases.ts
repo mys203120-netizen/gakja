@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import type { Pool } from 'pg';
 import type { AuthenticatedRequestContext } from '../../server/auth/request-identity';
 import type { ObjectStorageProvider } from '../../server/storage/private-object-ports';
-import { captureRecoveryArchive, restoreRecoveryArchive, createRestoredObjectProvider, type RecoveryLocation } from '../../server/transition/recovery';
+import { captureRecoveryArchive, restoreRecoveryArchive, createRestoredObjectProvider, verifyRecoveryArchive, type RecoveryLocation } from '../../server/transition/recovery';
 import type { TransitionOperatorAction, TransitionOperatorCapability, TransitionRepository } from '../../server/transition/transition-ports';
 
 export interface RestoredReadEvidence {
@@ -30,8 +31,8 @@ const policy = { maxMetadataBytes: 128 * 1024 * 1024, maxObjectBytes: 16 * 1024 
 const hash = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 type Row = Record<string, unknown>;
 interface Metadata {
-  version: string; objects: unknown[]; tables: Record<string, Row[]>;
-  transition: { state: string; generation: string; fence: string }; checkpointExportedAt: string;
+  version: string; scope: Record<string,unknown>; objects: unknown[]; tables: Record<string, Row[]>;
+  transition: { transition_id: string; state: string; generation: string; fence: string }; checkpointExportedAt: string;
   tableManifest: {table:string;rows:number;sha256:string;preservedSha256:string}[];
   gEvidence: Record<string, unknown[]>;
 }
@@ -127,14 +128,33 @@ export async function runIntegratedRecoveryCases(input: IntegratedRecoveryInput)
   for(const row of evidence.receipts){assert.equal(row.replay,true);assert.equal(row.restoredResultJson,row.originalResultJson);}
   assert.ok(evidence.results.length>0);for(const row of evidence.results)assert.equal(row.restoredJson,row.originalJson);
   assert.ok(evidence.freshWriteRejections>0);assert.equal(evidence.freshProviderCalls,0);assert.equal(evidence.workerClaims,0);
-  const report={version:'pr07g-integrated-recovery-evidence-v1',status:'passed',startedAt,completedAt:new Date().toISOString(),elapsedMs:performance.now()-phaseStart,
+  const output=path.resolve(input.output);assert.ok(output.startsWith(path.resolve('artifacts/pr07g')+path.sep));
+  const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+  // These ignored artifacts contain the actual public synthetic archive, not
+  // a reconstructed object count. Re-read validation makes the durable file's
+  // bytes and manifest independently inspectable after owned resources close.
+  const archiveText=JSON.stringify(archive)+'\n';
+  await writeFile(path.join(output,'recovery-archive.json'),archiveText);
+  const archiveBytes=await readFile(path.join(output,'recovery-archive.json'));
+  assert.equal(hash(archiveBytes),hash(archiveText));verifyRecoveryArchive(JSON.parse(archiveBytes.toString('utf8')),policy);
+  const archiveFile={file:'recovery-archive.json',sha256:hash(archiveBytes),bytes:archiveBytes.length};
+  const manifest={version:'pr07g-recovery-manifest-v1',sourceCommit,scope:metadata.scope,
+    checkpoint:{exportedAt:metadata.checkpointExportedAt,transitionId:metadata.transition.transition_id,state:metadata.transition.state,generation:metadata.transition.generation,fence:metadata.transition.fence},
+    metadataSha256:exported.metadataSha256,manifestSha256:archive.manifestSha256,archive:archiveFile,
+    objects:reexport.locations,tableProofs,gEvidenceSummary:Object.entries(metadata.gEvidence).map(([table,rows])=>({table,rows:rows.length})),
+    canonicalTextAndObjectBytes:'Exact originals retained in recovery-archive.json; physical references are mapped separately.',
+    restoredState:'read-only-recovery',operatingInputsUsed:false,actualStudentDataTransferred:false};
+  const manifestText=JSON.stringify(manifest,null,2)+'\n';
+  await writeFile(path.join(output,'recovery-manifest.json'),manifestText);
+  const manifestBytes=await readFile(path.join(output,'recovery-manifest.json'));assert.equal(hash(manifestBytes),hash(manifestText));
+  const manifestFile={file:'recovery-manifest.json',sha256:hash(manifestBytes),bytes:manifestBytes.length};
+  const report={version:'pr07g-integrated-recovery-evidence-v1',status:'passed',sourceCommit,artifacts:{archive:archiveFile,manifest:manifestFile},startedAt,completedAt:new Date().toISOString(),elapsedMs:performance.now()-phaseStart,
     restoreMeasurement:restored.measurement,approvedRtoTarget:null,approvedRpoTarget:null,checkpointExportedAt:metadata.checkpointExportedAt,
     rpoEvidence:'Every committed row at the frozen checkpoint and every verified object was preserved. Post-freeze fresh writes are rejected; no time SLA is asserted.',
     objects:archive.objects.length,bytes:archive.objects.reduce((sum,o)=>sum+o.sizeBytes,0),metadataSha256:exported.metadataSha256,manifestSha256:archive.manifestSha256,
     tableProofs,readOnlyOperationalChanges:{sessionOuterWriter:'read-only; generation incremented; token replaced',evaluationOuterWriter:'read-only; fence incremented',oldGrants:'inactive',oldLeases:'cleared; lease fence incremented',transitionAssociation:'explicit new transition ID; original session ID/generation/time retained',serviceInputAssociation:'explicit new transition ID; original plan/evidence/operator audit bytes retained'},
     originalSignedAndDomainTextChanged:false,logicalStorageRefsChanged:false,missingObjectRejected:true,tamperedObjectRejected:true,interruptedRestoreUnpublished:true,resumedCopyReverified:true,
     physicalLocatorMapping:true,restoredService:evidence,backupOperatingPolicy:{encryption:'not supplied; operating gate blocked',accessAndRetention:'not supplied; operating gate blocked',privateKeysOrCredentialsArchived:false}};
-  const output=path.resolve(input.output);assert.ok(output.startsWith(path.resolve('artifacts/pr07g')+path.sep));
   await writeFile(path.join(output,'integrated-recovery.json'),JSON.stringify(report,null,2)+'\n');
   return report;
 }

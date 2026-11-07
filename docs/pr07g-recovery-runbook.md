@@ -4,6 +4,8 @@
 
 ## 동결과 내보내기
 
+격리 runner는 검증한 실제 `recovery-archive.json`을 저장한 뒤 다시 읽어 검증하고, 객체별 logical/physical ref·size/hash와 48개 테이블·G8 근거를 `recovery-manifest.json`에 남긴다. 검증 보고서는 두 파일의 SHA-256과 크기를 연결한다. 원본 metadata/signed TEXT를 요약 보고서에서 재구성하지 않는다. 이 파일은 공개 합성 fixture의 실행 artifact이며 운영 백업의 접근·암호화·보관 승인을 대신하지 않는다.
+
 1. 해당 범위의 유효 operator로 freeze하고 영수증/generation/fence를 확인한다. 신규 HTTP/WSS/provider/worker를 막고 기존 operation을 fence한다. 대기 작업이 새 generation을 자동 채택하지 않는다.
 2. DB receipt/revision/write facts/session binding으로 durable 쓰기가 **전혀 없음을** 증명한 경우에만 rollback-empty를 확정하고 동일 local fence lock에서 checkpoint를 복원한다. 불명확한 응답은 receipt 조회로 해결하고 local fallback하지 않는다.
 3. 쓰기 이후에는 frozen을 유지하고 exportRecovery/captureRecoveryArchive를 실행한다. C verified metadata/audio/Storage bytes, D run/artifact/alias/dependency/pointer/history, E session/context/pins와 9 child collections, F 14 tables, G 8 evidence collections를 포함한다.
