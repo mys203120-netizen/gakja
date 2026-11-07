@@ -1,3 +1,4 @@
+import { artifactBankScopeRegistryReader, isShadowRead, throwIfShadowReadFailure } from '../repositories/artifact-read';
 import { createHash } from "node:crypto";
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -15,7 +16,7 @@ import type { ApprovedKnowledgeBundle } from './approved-knowledge';
 import { compileEvaluationScopePolicy, type EvaluationScopePolicy } from '../policy/evaluation-scope-policy';
 import { loadBankScopeRegistry, type BankEvaluationScopeRegistry } from './evaluation-scope-registry';
 import { decodeStudentObjectiveCandidate } from '../contracts/question-domain-codecs';
-import { emptyReadScope, assertReadOwner, type AnalysisReadOptions } from '../repositories/analysis-read-ports';
+import { emptyReadScope, assertReadOwner, storedProvenance, type AnalysisReadOptions } from '../repositories/analysis-read-ports';
 import { createLocalReadRepositories } from '../repositories/local-read-repositories';
 export { normalizeTrack } from "./school-context";
 
@@ -104,6 +105,7 @@ export async function loadInterviewContextAt(root: string, options: InterviewCon
   const purpose = options.purpose ?? 'runtime-context';
   assertReadOwner(repositories, scope);
   const readOptions = { repositories, scope, purpose };
+  if(repositories.kind==='shadow' && options.writeManifest!==false)throw new Error('SHADOW_READ_ONLY_MANIFEST_REQUIRED');
   const { inputs, missing } = await repositories.source.readConfiguredInputs({ scope, purpose });
   for (const { role, path } of missing) errors.push(`필수 자료 없음: ${path}${role === "preparedStudent" ? " (npm run prepare:context 실행 필요)" : ""}`);
   const text = (role: string) => inputs.find(entry => entry.role === role)?.bytes?.toString("utf8") ?? "";
@@ -139,8 +141,8 @@ export async function loadInterviewContextAt(root: string, options: InterviewCon
     }
   } catch { errors.push("학생부 추출 캐시가 손상되었습니다. npm run prepare:context로 다시 준비하세요."); }
   if (interviewConfig.maxFollowUps < 0 || interviewConfig.maxFollowUps > 2) errors.push("꼬리질문 상한은 0~2 범위여야 합니다.");
-  const questionReferences = await loadBookQuestionReferences(root).catch(() => null);
-  const questionStrategies = questionReferences ? await loadQuestionStrategyCatalog(questionReferences, { root }).catch(() => null) : null;
+  const questionReferences = await loadBookQuestionReferences(root,readOptions).catch(error => { throwIfShadowReadFailure(error,readOptions);return null; });
+  const questionStrategies = questionReferences ? await loadQuestionStrategyCatalog(questionReferences, { root,readOptions }).catch(error => { throwIfShadowReadFailure(error,readOptions);return null; }) : null;
   let interviewerPolicy: InterviewerPolicyPack | null = null;
   try { interviewerPolicy = await compileInterviewerPolicy(root, { inputs }); }
   catch (error) { errors.push(error instanceof Error ? error.message : '면접 운영 규칙의 정본을 확인하지 못했습니다.'); }
@@ -208,7 +210,7 @@ export async function loadInterviewContextAt(root: string, options: InterviewCon
       // constructing this context. The manifest hashes the first exact bytes.
       if (!await repositories.analysis.currentPointerUnchanged({ scope, purpose, captured: snapshot.pointer })) throw new Error('FULL_ANALYSIS_MANIFEST_REVISION_CHANGED');
       if (!await repositories.analysis.analysisDocumentUnchanged({ scope, purpose, captured: snapshot.document })) throw new Error('FULL_ANALYSIS_MANIFEST_REVISION_CHANGED');
-      manifest.files.push({ role: 'fullStudentAnalysis', path: snapshot.document.path.replace(/\\/gu, '/'), sha256: digest(snapshot.document.bytes) });
+      manifest.files.push({ role: 'fullStudentAnalysis', path: storedProvenance(snapshot.document).replace(/\\/gu, '/'), sha256: digest(snapshot.document.bytes) });
       Object.assign(manifest.recordIds, { studentId: full.common.studentId, recordRevision: full.common.recordRevision, studentAnalysisRevision: full.common.revision, targetAnalysisRevision: full.target.revision, commonAnalysisContentSha256: full.common.contentSha256, targetAnalysisContentSha256: full.target.contentSha256, admissionProfileRevision: full.target.profileRevision });
       manifest.evidenceIds = runtimeEvidence.map(evidence => evidence.id);
       Object.assign(manifest.recordIds, { evidenceProjectionVersion: 'analysis-and-explicit-legacy-range-v1', verifiedLegacySupplementCount: String(supplement.length) });
@@ -216,17 +218,18 @@ export async function loadInterviewContextAt(root: string, options: InterviewCon
       manifest.selectionNotes.push('전 페이지 원문 revision과 활동·학업 공통 분석 및 지원처별 준비 우선도·구체 목표를 참조; 과거 17개 발췌와 기존 회차는 변경하지 않음', '전 페이지 추출·인용 일치와 독립 의미 검수 완료는 구분; 분석의 누락·제외·미확인 범위 보존');
       manifest.selectionNotes.push(`동일한 명시적 legacy activity ID와 좌표 포함 관계가 모두 검증된 원문 ${supplement.length}개만 보완 근거로 재연결; 의미 추측 병합이나 전체 분석 완료를 뜻하지 않음`);
     }
-  } catch (error) { errors.push(error instanceof Error ? error.message : 'FULL_STUDENT_ANALYSIS_INVALID'); }
+  } catch (error) { throwIfShadowReadFailure(error,readOptions);errors.push(error instanceof Error ? error.message : 'FULL_STUDENT_ANALYSIS_INVALID'); }
   context.preparedActivities = context.studentAnalysis ? projectPreparedActivities(context, context.studentAnalysis) : await loadPreparedActivities(context, root, undefined, readOptions);
   context.studentObjectives = createStudentObjectiveCandidates(context, context.preparedActivities).map(decodeStudentObjectiveCandidate);
   context.studentTrajectory = buildStudentTrajectory(context);
   context.evaluationScopePolicy = compileEvaluationScopePolicy(context);
-  try { context.evaluationScopeRegistry = await loadBankScopeRegistry(root) ?? undefined; }
-  catch { errors.push('평가 범위 승인 자료를 확인하지 못했습니다.'); }
+  try { context.evaluationScopeRegistry = await loadBankScopeRegistry(root,undefined,isShadowRead(readOptions)?artifactBankScopeRegistryReader(root,readOptions):undefined) ?? undefined; }
+  catch (error) { throwIfShadowReadFailure(error,readOptions);errors.push('평가 범위 승인 자료를 확인하지 못했습니다.'); }
   if (options.writeManifest !== false) {
     await mkdir(dirname(resolve(root, interviewConfig.files.sourceManifest)), { recursive: true });
     await writeFile(resolve(root, interviewConfig.files.sourceManifest), JSON.stringify(manifest, null, 2), "utf8");
   }
+  await repositories.assertSnapshotUnchanged?.();
   return context;
 }
 

@@ -136,8 +136,14 @@ export function createPostgresObjectRepository(options: {
         expectedSize:input.expectedSize,expectedSha256:input.expectedSha256,idempotencyKey:input.idempotencyKey,
         bucket,keyPrefix,expiresInSeconds:ttl };
       const value = await mutate(selected,'SELECT gakja.storage_admit($1::jsonb) value',[JSON.stringify(payload)],registration);
-      if (!value) throw invalid(); return value;
+      if (!value) throw invalid();
+      if (input.mediaType !== undefined && value.mediaType !== input.mediaType) {
+        const formatted = await mutate(selected,'SELECT gakja.storage_set_media_type($1::uuid,$2::bigint,$3::text) value',[value.receiptId,value.revision,input.mediaType],registration);
+        if (!formatted) throw invalid(); return formatted;
+      }
+      return value;
     },
+    setMediaType: (context,id,revision,mediaType) => mutate(context,'SELECT gakja.storage_set_media_type($1::uuid,$2::bigint,$3::text) value',[id,revision,mediaType],registration),
     getReceipt: (context,id) => uuid.test(id) ? read(context,'SELECT gakja.storage_get_receipt($1::uuid) value',[id],registration) : Promise.resolve(null),
     getVerified: (context,input) => uuid.test(input.objectId) ? read(context,'SELECT gakja.storage_get_verified($1::uuid,$2::text) value',[input.objectId,input.scope ?? null],verified) : Promise.resolve(null),
     beginUpload: (context,id,revision) => transition(context,id,revision,'uploading'),

@@ -1,3 +1,5 @@
+import type { AnalysisReadOptions } from '../repositories/analysis-read-ports';
+import { readDependency } from '../repositories/artifact-read';
 import { createHash, randomUUID } from 'node:crypto';
 import { appendFile, mkdir, open, readFile, rename, truncate, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -55,6 +57,7 @@ export interface QuestionStrategyCatalog {
 export interface StrategyBatchItem { questionId: string; question: string; existingOperations: StrategyOperation[]; primaryFunctions: string[]; sourceContext: string; precedingQuestionIds: string[] }
 export interface StrategyBatchRequest { model: string; store: false; reasoning: { effort: 'none' }; max_output_tokens: number; instructions: string; input: string }
 export interface QuestionStrategyOptions {
+  readOptions?: AnalysisReadOptions;
   root?: string; model?: string; runLive?: boolean; batchSize?: number; concurrency?: number;
   requestBatch?: (request: StrategyBatchRequest, items: readonly StrategyBatchItem[]) => Promise<unknown>;
   onProgress?: (progress: { ready: number; restricted: number; pending: number; total: number; providerCalls: number }) => void;
@@ -109,10 +112,10 @@ export function parseStrategyResponseText(text: string): { output: unknown; igno
   throw new Error('STRATEGY_RESPONSE_JSON_INCOMPLETE');
 }
 function safeRelative(root: string, relative: string) { const file = path.resolve(root, relative), resolved = path.relative(root, file); if (!resolved || resolved.startsWith('..') || path.isAbsolute(resolved)) throw new Error('STRATEGY_SOURCE_PATH_INVALID'); return file; }
-async function sourceTexts(corpus: BookQuestionCorpus, root: string) {
+async function sourceTexts(corpus: BookQuestionCorpus, root: string, readOptions: AnalysisReadOptions = {}) {
   const result = new Map<string, string>();
   const digests = new Map(corpus.sourceHashes.map(source => [source.path, source.sha256]));
-  for (const source of corpus.sourceHashes) { const bytes = await readFile(safeRelative(root, source.path)); if (hash(bytes) !== source.sha256) throw new Error('STRATEGY_SOURCE_HASH_CHANGED'); result.set(source.path, bytes.toString('utf8')); }
+  for (const source of corpus.sourceHashes) { safeRelative(root, source.path); const bytes = (await readDependency(root, source.path, 'book-source', readOptions))!.bytes; if (hash(bytes) !== source.sha256) throw new Error('STRATEGY_SOURCE_HASH_CHANGED'); result.set(source.path, bytes.toString('utf8')); }
   for (const question of corpus.questions) if (digests.get(question.source.path) !== question.source.sha256 || result.get(question.source.path)?.slice(question.source.startOffset, question.source.endOffset) !== question.rawText) throw new Error('STRATEGY_SOURCE_SPAN_CHANGED');
   return result;
 }
@@ -188,10 +191,10 @@ export function buildQuestionStrategyCatalog(corpus: BookQuestionCorpus, records
 }
 function paths(root: string, key: string) { const directory = path.resolve(root, 'data/prepared/question-strategies'); return { directory, snapshot: path.join(directory, `${key}.json`), journal: path.join(directory, `${key}.jsonl`), lock: path.join(directory, `${key}.lock`) }; }
 async function saveSnapshot(file: string, catalog: QuestionStrategyCatalog) { const temporary = `${file}.${randomUUID()}.tmp`; try { await writeFile(temporary, JSON.stringify(catalog, null, 2), { mode: 0o600, flag: 'wx' }); await rename(temporary, file); } finally { await unlink(temporary).catch(() => {}); } }
-async function recoverRecords(corpus: BookQuestionCorpus, root: string, identity: ReturnType<typeof questionStrategyIdentity>): Promise<QuestionStrategyRecord[]> {
+async function recoverRecords(corpus: BookQuestionCorpus, root: string, identity: ReturnType<typeof questionStrategyIdentity>, readOptions: AnalysisReadOptions = {}): Promise<QuestionStrategyRecord[]> {
   const files = paths(root, identity.key), valid = new Map<string, QuestionStrategyRecord>(), questions = new Map(corpus.questions.map(q => [q.id, q]));
-  try { const saved = JSON.parse(await readFile(files.snapshot, 'utf8')) as QuestionStrategyCatalog; if (saved.key === identity.key && saved.contentSha256 === catalogContentHash(saved)) for (const record of saved.records) valid.set(record.questionId, record); } catch (error) { if (!(error instanceof SyntaxError) && !(error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT')) throw error; }
-  try { const journal = await readFile(files.journal, 'utf8'), lines = journal.split('\n'); for (let index = 0; index < lines.length; index++) { if (!lines[index].trim()) continue; try { const saved = JSON.parse(lines[index]) as { key: string; records: QuestionStrategyRecord[] }; if (saved.key !== identity.key || !Array.isArray(saved.records)) throw new Error('STRATEGY_JOURNAL_IDENTITY_INVALID'); saved.records.forEach(record => valid.set(record.questionId, record)); } catch (error) { if (!(error instanceof SyntaxError) || index !== lines.length - 1 || journal.endsWith('\n')) throw error; } } } catch (error) { if (!(error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT')) throw error; }
+  try { const saved = JSON.parse((await readDependency(root, path.relative(root,files.snapshot), 'strategy-snapshot', readOptions))!.bytes.toString('utf8')) as QuestionStrategyCatalog; if (saved.key === identity.key && saved.contentSha256 === catalogContentHash(saved)) for (const record of saved.records) valid.set(record.questionId, record); } catch (error) { if (!(error instanceof SyntaxError) && !(error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT')) throw error; }
+  try { const journal = (await readDependency(root, path.relative(root,files.journal), 'strategy-journal', readOptions))!.bytes.toString('utf8'), lines = journal.split('\n'); for (let index = 0; index < lines.length; index++) { if (!lines[index].trim()) continue; try { const saved = JSON.parse(lines[index]) as { key: string; records: QuestionStrategyRecord[] }; if (saved.key !== identity.key || !Array.isArray(saved.records)) throw new Error('STRATEGY_JOURNAL_IDENTITY_INVALID'); saved.records.forEach(record => valid.set(record.questionId, record)); } catch (error) { if (!(error instanceof SyntaxError) || index !== lines.length - 1 || journal.endsWith('\n')) throw error; } } } catch (error) { if (!(error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT')) throw error; }
   return [...valid.values()].filter(record => { const question = questions.get(record.questionId); return question && record.sourceSha256 === question.source.sha256 && record.questionSha256 === hash(question.rawText); });
 }
 async function repairTornJournalTail(file: string) {
@@ -201,10 +204,10 @@ async function repairTornJournalTail(file: string) {
   try { JSON.parse(tail); await appendFile(file, '\n', { mode: 0o600 }); }
   catch (error) { if (!(error instanceof SyntaxError)) throw error; await writeFile(`${file}.torn-${randomUUID()}`, tail, { flag: 'wx', mode: 0o600 }); await truncate(file, Buffer.byteLength(text.slice(0, lastNewline + 1))); }
 }
-export async function loadQuestionStrategyCatalog(corpus: BookQuestionCorpus, options: Pick<QuestionStrategyOptions, 'root' | 'model'> = {}): Promise<QuestionStrategyCatalog | null> {
+export async function loadQuestionStrategyCatalog(corpus: BookQuestionCorpus, options: Pick<QuestionStrategyOptions, 'root' | 'model' | 'readOptions'> = {}): Promise<QuestionStrategyCatalog | null> {
   const root = path.resolve(options.root ?? process.cwd()), identity = questionStrategyIdentity(corpus, options);
-  const records = await recoverRecords(corpus, root, identity); if (!records.length) return null;
-  const sources = await sourceTexts(corpus, root);
+  const records = await recoverRecords(corpus, root, identity, options.readOptions); if (!records.length) return null;
+  const sources = await sourceTexts(corpus, root, options.readOptions);
   const items = new Map(buildStrategyBatchItems(corpus, sources, corpus.questions).map(item => [item.questionId, item]));
     const checked = records.map(record => { const question = corpus.questions.find(q => q.id === record.questionId)!; return record.status === 'ready' ? { ...finalizeStrategyProfile(record.profile, question, items.get(question.id)!, sources.get(question.source.path)!, corpus), ...(record.normalization ? { normalization: record.normalization } : {}) } : initialRecord(question); });
   return buildQuestionStrategyCatalog(corpus, checked, options);

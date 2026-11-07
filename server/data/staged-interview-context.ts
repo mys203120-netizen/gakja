@@ -4,7 +4,7 @@ import { loadStagedFullStudentAnalysisSnapshot } from './full-student-analysis';
 import { projectPreparedActivities } from './prepared-activities';
 import { buildStudentTrajectory, createStudentObjectiveCandidates } from '../question-objective';
 import { verifyStudentSourceText } from './verify-student-source';
-import { emptyReadScope, assertReadOwner } from '../repositories/analysis-read-ports';
+import { emptyReadScope, assertReadOwner, storedProvenance } from '../repositories/analysis-read-ports';
 import { createLocalReadRepositories } from '../repositories/local-read-repositories';
 
 const sha = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
@@ -42,7 +42,7 @@ export async function loadStagedInterviewContextAt(root: string, revisionPath: s
   context.studentAnalysis = staged.common; context.targetAnalysis = staged.target;
   context.student = { ...originalStudent, studentId: staged.common.studentId, recordRevision: staged.common.recordRevision, analysisRevision: staged.common.revision, evidence, schemaVersion: 'full-record-analysis-evidence-v1', extractionStatus: staged.common.coverage.needsReviewSourceCount ? 'full_document_extracted_partially_structured' : 'full_document_source_bound_structure', limitations: [...staged.common.limitations] };
   if (!await repositories.analysis.analysisDocumentUnchanged({ scope, purpose, captured: snapshot.document })) throw new Error('FULL_ANALYSIS_MANIFEST_REVISION_CHANGED');
-  const analysisPath = snapshot.document.path.replace(/\\/gu, '/'), analysisBytes = snapshot.document.bytes;
+  const analysisPath = storedProvenance(snapshot.document).replace(/\\/gu, '/'), analysisBytes = snapshot.document.bytes;
   const envelope = snapshot.document.value;
   if (envelope.common.contentSha256 !== staged.common.contentSha256 || envelope.target.contentSha256 !== staged.target.contentSha256 || sha(JSON.stringify(envelope.evidence)) !== sha(JSON.stringify(staged.evidence))) throw new Error('FULL_ANALYSIS_MANIFEST_REVISION_CHANGED');
   context.manifest.files = context.manifest.files.filter(file => file.role !== 'fullStudentAnalysis');
@@ -53,5 +53,6 @@ export async function loadStagedInterviewContextAt(root: string, revisionPath: s
   context.preparedActivities = projectPreparedActivities(context, staged.common);
   context.studentObjectives = createStudentObjectiveCandidates(context, context.preparedActivities);
   context.studentTrajectory = buildStudentTrajectory(context);
+  await repositories.assertSnapshotUnchanged?.();
   return { context, staged };
 }

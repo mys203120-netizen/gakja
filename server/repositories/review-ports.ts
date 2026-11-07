@@ -15,3 +15,4 @@ export interface ReviewRepository {
   writeEvaluationContext(contentSha256: string, content: string, options?: { encoding?: 'utf8' }): Promise<void>;
   evaluationContextPath(contentSha256: string): string;
 }
+export type BankScopeRegistryReader = Pick<ReviewRepository, 'readRegistryPointer' | 'readRegistryRevision'>;

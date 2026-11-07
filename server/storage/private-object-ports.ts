@@ -12,7 +12,7 @@ export interface ObjectStorageProvider {
   remove(ref: StorageObjectRef, options?: { signal?: AbortSignal }): Promise<void>;
 }
 
-export const privateObjectKinds = ['source-pdf', 'source-markdown', 'source-json', 'analysis-json', 'audio', 'review-bundle'] as const;
+export const privateObjectKinds = ['source-pdf', 'source-markdown', 'source-json', 'analysis-json', 'audio', 'review-bundle', 'source-image', 'review-journal'] as const;
 export type PrivateObjectKind = typeof privateObjectKinds[number];
 export type PrivateObjectScope =
   | { readonly kind: 'common'; readonly ownerId: string; readonly studentId: string }
@@ -30,6 +30,8 @@ export interface ObjectAdmission {
   /** Existing authoritative codec hash, if applicable. Never recomputed here. */
   domainSha256?: string | null;
   idempotencyKey: string;
+  /** Expected format, independently checked against the complete bytes. */
+  mediaType?: 'audio/mpeg' | 'audio/wav' | 'image/png' | 'image/jpeg';
 }
 export interface ObjectRegistration {
   receiptId: string;
@@ -38,6 +40,7 @@ export interface ObjectRegistration {
   kind: PrivateObjectKind;
   sourceRevision?: string | null;
   domainSha256?: string | null;
+  mediaType?: 'audio/mpeg' | 'audio/wav' | 'image/png' | 'image/jpeg';
   state: ObjectRegistrationState;
   revision: string;
   expectedSize: number;
@@ -56,6 +59,7 @@ export interface VerifiedPrivateObject {
   kind: PrivateObjectKind;
   sourceRevision?: string | null;
   domainSha256?: string | null;
+  mediaType?: 'audio/mpeg' | 'audio/wav' | 'image/png' | 'image/jpeg';
   revision: string;
   ref: StorageObjectRef;
   sizeBytes: number;
@@ -67,6 +71,8 @@ export interface VerifiedPrivateObject {
  * use narrow server-only registration functions, never arbitrary request DML. */
 export interface PrivateObjectRepository {
   admit(context: RequestContext, input: ObjectAdmission): Promise<ObjectRegistration>;
+  /** D-only metadata CAS; old C implementations remain read-compatible. */
+  setMediaType?(context: RequestContext, receiptId: string, revision: string, mediaType: NonNullable<ObjectAdmission['mediaType']>): Promise<ObjectRegistration | null>;
   getReceipt(context: RequestContext, receiptId: string): Promise<ObjectRegistration | null>;
   getVerified(context: RequestContext, selector: PrivateObjectSelector): Promise<VerifiedPrivateObject | null>;
   /** CAS transitions; null means the receipt changed concurrently. A verifying

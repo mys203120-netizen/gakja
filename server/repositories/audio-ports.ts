@@ -18,6 +18,7 @@ export interface AudioRepository {
   read(request: AudioReadRequest): Promise<Buffer>;
   publish(request: AudioPublishRequest): Promise<void>;
 }
+export type AudioReader = Pick<AudioRepository, 'ownerId' | 'read'>;
 export function assertAudioOwner(repository: AudioRepository, scope: AudioScope): void {
   if (!scope.ownerId || scope.ownerId !== repository.ownerId) throw new Error('AUDIO_REPOSITORY_OWNER_MISMATCH');
 }

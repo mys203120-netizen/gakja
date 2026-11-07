@@ -1,5 +1,6 @@
+import type { AnalysisReadOptions } from '../repositories/analysis-read-ports';
+import { readDependency, throwIfShadowReadFailure } from '../repositories/artifact-read';
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { InterviewContext } from './load-interview-context';
 import type { FullStudentAnalysis, TargetStudentAnalysis } from './full-student-analysis';
@@ -19,7 +20,7 @@ export class QuestionReviewAuthorityScope {
   private readonly reads = new Map<string, number>();
   private serializationCount = 0;
   readonly root: string;
-  constructor(readonly context: InterviewContext, root: string) { this.root = path.resolve(root); }
+  constructor(readonly context: InterviewContext, root: string, readonly readOptions: AnalysisReadOptions = {}) { this.root = path.resolve(root); }
   matches(context: InterviewContext, root: string) { return this.context === context && this.root === path.resolve(root); }
   text(value: unknown): string | undefined {
     if (!value || typeof value !== 'object') return JSON.stringify(value);
@@ -34,14 +35,14 @@ export class QuestionReviewAuthorityScope {
     const absolute = path.resolve(file), previous = this.envelopes.get(absolute); if (previous) return previous;
     const pending = (async () => {
       this.reads.set(absolute, (this.reads.get(absolute) ?? 0) + 1);
-      try { const bytes = await readFile(absolute); return { envelope: JSON.parse(bytes.toString('utf8')) as Envelope, fileSha256: sha(bytes) }; }
-      catch { return null; }
+      try { const bytes = (await readDependency(this.root, path.relative(this.root,absolute), 'review-parent-envelope', this.readOptions))!.bytes; return { envelope: JSON.parse(bytes.toString('utf8')) as Envelope, fileSha256: sha(bytes) }; }
+      catch (error) { throwIfShadowReadFailure(error,this.readOptions);return null; }
     })();
     this.envelopes.set(absolute, pending); return pending;
   }
   diagnostics() { return { fileReads: Object.fromEntries(this.reads), totalFileReads: [...this.reads.values()].reduce((sum, value) => sum + value, 0), serializedObjects: this.serializationCount }; }
 }
-export function createQuestionReviewAuthorityScope(context: InterviewContext, root = process.cwd()) { return new QuestionReviewAuthorityScope(context, root); }
+export function createQuestionReviewAuthorityScope(context: InterviewContext, root = process.cwd(), readOptions: AnalysisReadOptions = {}) { return new QuestionReviewAuthorityScope(context, root, readOptions); }
 export interface QuestionReviewAuthority {
   kind: 'current_target_review' | 'unchanged_objective_ancestor_review';
   objectiveId: string; questionSha256: string; reviewModel: string; reviewArtifactSha256: string;
@@ -82,7 +83,7 @@ export async function resolveQuestionReviewAuthority(context: InterviewContext, 
     if (!loaded || loaded.fileSha256 !== manifest.sha256) return null;
     envelope = loaded.envelope;
     if (envelope.target.contentSha256 !== current.contentSha256 || !scope.bodyMatches(envelope.target) || !scope.bodyMatches(envelope.common) || envelope.common.contentSha256 !== context.studentAnalysis?.contentSha256 || !/^[a-f0-9]{64}$/u.test(envelope.common.revision)) return null;
-  } catch { return null; }
+  } catch (error) { throwIfShadowReadFailure(error,scope.readOptions);return null; }
   const commonBytes = scope.text(envelope.common), evidenceBytes = scope.text(envelope.evidence), objectiveBytes = scope.text(objective);
   const commonDirectory = path.resolve(base, envelope.common.revision);
   const queue = [{ target: envelope.target, chain: [{ revision: current.revision, contentSha256: current.contentSha256 }] }];
@@ -107,7 +108,7 @@ export async function resolveQuestionReviewAuthority(context: InterviewContext, 
           if (previous.target.revision !== parent.parentRevision || previous.target.contentSha256 !== parent.parentContentSha256 || !scope.bodyMatches(previous.target) || scope.text(previous.common) !== commonBytes || scope.text(previous.evidence) !== evidenceBytes || scope.text(previous.target.objectives.find(row => row.id === objectiveId)) !== objectiveBytes) continue;
           queue.push({ target: previous.target, chain: [...chain, { revision: previous.target.revision, contentSha256: previous.target.contentSha256 }] });
           break;
-        } catch { /* Missing, changed or unrelated parent cannot grant approval. */ }
+        } catch (error) { throwIfShadowReadFailure(error,scope.readOptions); /* Missing, changed or unrelated parent cannot grant approval. */ }
       }
     }
   }

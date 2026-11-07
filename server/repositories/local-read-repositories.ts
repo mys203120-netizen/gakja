@@ -4,7 +4,7 @@ import path from 'node:path';
 import { interviewConfig } from '../../interview.config';
 import { localDevelopmentOwner } from '../session-runtime';
 import type { FullRecordSource, AnalysisQAManifest } from '../data/full-student-analysis';
-import { assertReadOwner, type ReadRepositories, type ScopedRead, type StoredFile, type StoredJson,
+import { assertReadOwner, storedProvenance, type ReadRepositories, type ScopedRead, type StoredFile, type StoredJson,
   type AnalysisPointer, type FullRecordPointer, type AnalysisPayload, type ConfiguredSourceRead } from './analysis-read-ports';
 
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
@@ -92,7 +92,7 @@ export function createLocalReadRepositories(root: string): ReadRepositories {
       },
       async analysisDocumentUnchanged(request) {
         scope(request);
-        return (await readFile(analysisFile(request.captured.path, 'current'))).equals(request.captured.bytes);
+        return (await readFile(analysisFile(storedProvenance(request.captured), 'current'))).equals(request.captured.bytes);
       },
     },
   };

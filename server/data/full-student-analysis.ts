@@ -5,7 +5,7 @@ import { z } from 'zod';
 import type { InterviewContext, StudentEvidence } from './load-interview-context';
 import type { StudentObjectiveCandidate } from '../question-objective';
 import { primaryFunctions } from '../protocol';
-import { assertReadOwner, emptyReadScope, type AnalysisReadOptions, type FullRecordPointer, type ReadScope } from '../repositories/analysis-read-ports';
+import { assertReadOwner, emptyReadScope, storedProvenance, type AnalysisReadOptions, type FullRecordPointer, type ReadScope } from '../repositories/analysis-read-ports';
 import { createLocalReadRepositories } from '../repositories/local-read-repositories';
 
 export const FULL_ANALYSIS_VERSION = 'full-student-analysis-v1';
@@ -355,6 +355,7 @@ export async function loadFullRecordSnapshot(root: string, expectedPdfSha256?: s
   if (!snapshot) return null;
   const source = validateFullRecord(snapshot.document.value, snapshot.pointer.value, expectedPdfSha256);
   assertSourceReadPins(source, queryScope);
+  await repositories.assertSnapshotUnchanged?.();
   return { source, pointer: snapshot.pointer, document: snapshot.document };
 }
 /** Compatibility signature: the second argument is a PDF hash, not a revision. */
@@ -617,6 +618,7 @@ export async function loadFullStudentAnalysisSnapshot(context: InterviewContext,
   if (v2) await verifyAnalysisSourceReview(root, result.common.sourceReview, { repositories, scope: reviewScope, purpose });
   if (v2) await verifyObjectiveSourceReview(result, source, root, { repositories, scope: reviewScope, purpose });
   assertAnalysisReadPins(result, source, scope);
+  await repositories.assertSnapshotUnchanged?.();
   return { analysis: { common: result.common, target: result.target, evidence: result.evidence }, source, document, pointer: pointerDocument };
 }
 export async function loadFullStudentAnalysis(context: InterviewContext, root = process.cwd(), options: AnalysisReadOptions = {}): Promise<ReturnType<typeof materializeFullStudentAnalysis> | null> {
@@ -678,12 +680,13 @@ export async function loadStagedFullStudentAnalysisSnapshot(context: InterviewCo
   decodeFullAnalysisPreservingOrder(payload.common); decodeTargetAnalysisPreservingOrder(payload.target);
   if (payload.common.schemaVersion !== FULL_ANALYSIS_VERSION_V2 || payload.common.codecVersion !== STUDENT_ANALYSIS_CODEC_VERSION || payload.target.schemaVersion !== FULL_ANALYSIS_VERSION_V2 || payload.target.codecVersion !== STUDENT_ANALYSIS_CODEC_VERSION || payload.sourceRevision !== source.revision || payload.sourceContentSha256 !== source.contentSha256 || payload.target.profileRevision !== profileRevision(context) || payload.target.supportTargetId !== targetIdentity(context) || payload.common.identityBase !== fullAnalysisIdentity(context, source, payload.common.model) || payload.common.revision !== hash(JSON.stringify({ identityBase: payload.common.identityBase, inputSha256: payload.common.inputSha256 }))) throw new Error('FULL_ANALYSIS_STALE');
   const reviewScope = resolvedAnalysisReadScope(payload, queryScope);
-  const qaDocument = await repositories.analysis.readQaManifest({ scope: reviewScope, purpose, analysisReference: document.path }), manifest = verifiedBody(qaDocument.value);
+  const qaDocument = await repositories.analysis.readQaManifest({ scope: reviewScope, purpose, analysisReference: storedProvenance(document) }), manifest = verifiedBody(qaDocument.value);
   if (JSON.stringify(manifest) !== JSON.stringify(analysisQAManifest(payload, source, manifest.parentPointerSha256))) throw new Error('FULL_ANALYSIS_QA_MANIFEST_INVALID');
   await verifyAnalysisSourceReview(root, payload.common.sourceReview, { repositories, scope: reviewScope, purpose });
   await verifyObjectiveSourceReview(payload, source, root, { repositories, scope: reviewScope, purpose });
   assertAnalysisReadPins(payload, source, scope);
-  return { analysis: { common: payload.common, target: payload.target, evidence: payload.evidence, revisionPath: document.path, manifestPath: qaDocument.path, manifest }, source, document, qaDocument };
+  await repositories.assertSnapshotUnchanged?.();
+  return { analysis: { common: payload.common, target: payload.target, evidence: payload.evidence, revisionPath: storedProvenance(document), manifestPath: storedProvenance(qaDocument), manifest }, source, document, qaDocument };
 }
 export async function loadStagedFullStudentAnalysis(context: InterviewContext, revisionPath: string, root = process.cwd(), options: AnalysisReadOptions = {}) {
   return (await loadStagedFullStudentAnalysisSnapshot(context, revisionPath, root, options)).analysis;

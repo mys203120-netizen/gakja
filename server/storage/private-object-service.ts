@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { TextDecoder } from 'node:util';
 import type { RequestContext } from '../auth/request-identity';
 import { validatePdfStructure, PdfStructureError } from './pdf-structure';
+import { inspectAudioFormat, inspectImageFormat } from './media-format';
 import {
   privateObjectKinds, type ObjectAdmission, type ObjectRegistration, type ObjectStorageProvider,
   type PrivateObjectKind, type PrivateObjectRepository, type PrivateObjectScope, type PrivateObjectSelector,
@@ -18,7 +19,7 @@ const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 const nonempty = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value === value.trim();
 const hash = /^[a-f0-9]{64}$/u;
 const terminal = (value: ObjectRegistration) => ['cancelled', 'rejected', 'expired'].includes(value.state);
-const sameOptional = (left: object, right: object, key: 'sourceRevision' | 'domainSha256') =>
+const sameOptional = (left: object, right: object, key: 'sourceRevision' | 'domainSha256' | 'mediaType') =>
   Object.hasOwn(left, key) === Object.hasOwn(right, key) && Reflect.get(left, key) === Reflect.get(right, key);
 function sameScope(left: PrivateObjectScope, right: PrivateObjectScope) {
   return left.kind === right.kind && left.ownerId === right.ownerId && left.studentId === right.studentId &&
@@ -29,13 +30,13 @@ function sameVerified(left: VerifiedPrivateObject, right: VerifiedPrivateObject)
   return left.receiptId === right.receiptId && left.objectId === right.objectId && sameScope(left.scope, right.scope) &&
     left.kind === right.kind && left.revision === right.revision && sameRef(left.ref, right.ref) &&
     left.sizeBytes === right.sizeBytes && left.contentSha256 === right.contentSha256 &&
-    sameOptional(left, right, 'sourceRevision') && sameOptional(left, right, 'domainSha256');
+    sameOptional(left, right, 'sourceRevision') && sameOptional(left, right, 'domainSha256') && sameOptional(left,right,'mediaType');
 }
 function sameRegistration(left: ObjectRegistration, right: ObjectRegistration) {
   return left.receiptId === right.receiptId && left.objectId === right.objectId && sameScope(left.scope, right.scope) &&
     left.kind === right.kind && left.revision === right.revision && left.state === right.state && left.expiresAt === right.expiresAt &&
     left.expectedSize === right.expectedSize && left.expectedSha256 === right.expectedSha256 && sameRef(left.stagingRef, right.stagingRef) &&
-    sameRef(left.finalRef, right.finalRef) && sameOptional(left, right, 'sourceRevision') && sameOptional(left, right, 'domainSha256');
+    sameRef(left.finalRef, right.finalRef) && sameOptional(left, right, 'sourceRevision') && sameOptional(left, right, 'domainSha256') && sameOptional(left,right,'mediaType');
 }
 
 /** Finite server-issued object authority. This is not an Auth role or an
@@ -71,19 +72,25 @@ export function createInternalObjectCapability(authority: InternalAuthority): In
 
 const mime: Record<PrivateObjectKind, string> = {
   'source-pdf': 'application/pdf', 'source-markdown': 'text/markdown; charset=utf-8', 'source-json': 'application/json',
-  'analysis-json': 'application/json', audio: 'audio/wav', 'review-bundle': 'application/json',
+  'analysis-json': 'application/json', audio: 'audio/wav', 'review-bundle': 'application/json', 'source-image':'image/png', 'review-journal':'application/x-ndjson',
 };
 /** Container checks only. Content/source QA, analysis codecs and signed review
  * authority remain in their existing layers; bytes are never normalized. */
-async function validateFormat(kind: PrivateObjectKind, bytes: Buffer) {
+async function validateFormat(kind: PrivateObjectKind, bytes: Buffer, mediaType?: ObjectAdmission['mediaType']) {
   try {
     if (kind === 'source-pdf') {
       await validatePdfStructure(bytes);
     } else if (kind === 'audio') {
-      if (bytes.length < 44 || bytes.toString('ascii', 0, 4) !== 'RIFF' || bytes.toString('ascii', 8, 12) !== 'WAVE' || bytes.readUInt32LE(4) + 8 !== bytes.length) throw new Error();
+      if (inspectAudioFormat(bytes).mediaType !== (mediaType ?? 'audio/wav')) throw new Error();
+    } else if (kind === 'source-image') {
+      if (!mediaType || inspectImageFormat(bytes).mediaType !== mediaType) throw new Error();
     } else {
       const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-      if (!text.length || kind !== 'source-markdown' && JSON.parse(text) === undefined) throw new Error();
+      if (!text.length) throw new Error();
+      if(kind==='review-journal') {
+        const rows=text.split(/\r?\n/u).filter(row=>row.trim().length>0);
+        if(!rows.length)throw new Error();for(const row of rows)JSON.parse(row);
+      } else if(kind!=='source-markdown'&&JSON.parse(text)===undefined)throw new Error();
     }
   } catch (error) {
     if (error instanceof PdfStructureError && error.code === 'PDF_VALIDATION_BUSY') throw new PrivateObjectError('OBJECT_BUSY');
@@ -137,11 +144,16 @@ export function createPrivateObjectService(options: PrivateObjectServiceOptions)
     if (receipt.kind !== 'source-pdf') await internal(capability, receipt, { objectId: receipt.objectId });
   }
   function validateAdmission(input: ObjectAdmission) {
-    const allowed = ['kind', 'scope', 'studentId', 'sourceRevision', 'expectedSize', 'expectedSha256', 'domainSha256', 'idempotencyKey'];
+    const allowed = ['kind', 'scope', 'studentId', 'sourceRevision', 'expectedSize', 'expectedSha256', 'domainSha256', 'idempotencyKey', 'mediaType'];
     if (!input || Object.keys(input).some(key => !allowed.includes(key)) || !privateObjectKinds.includes(input.kind) || !['common', 'target'].includes(input.scope) || !nonempty(input.studentId) ||
       !nonempty(input.idempotencyKey) || input.idempotencyKey.length > 128 || !Number.isSafeInteger(input.expectedSize) || input.expectedSize < 1 || input.expectedSize > maxBytes ||
       !hash.test(input.expectedSha256) || Object.hasOwn(input, 'sourceRevision') && input.sourceRevision !== null && !nonempty(input.sourceRevision) ||
       Object.hasOwn(input, 'domainSha256') && input.domainSha256 !== null && !hash.test(input.domainSha256 ?? '')) throw new PrivateObjectError('OBJECT_INPUT_INVALID');
+    if (Object.hasOwn(input,'mediaType') &&
+      !(input.kind==='audio'?['audio/wav','audio/mpeg']:input.kind==='source-image'?['image/png','image/jpeg']:[]).includes(input.mediaType ?? '')) {
+      throw new PrivateObjectError('OBJECT_INPUT_INVALID');
+    }
+    if (input.kind==='source-image'&&!input.mediaType) throw new PrivateObjectError('OBJECT_INPUT_INVALID');
   }
   async function receipt(context: RequestContext, id: string) {
     if (!nonempty(id)) throw new PrivateObjectError('OBJECT_NOT_FOUND');
@@ -155,11 +167,11 @@ export function createPrivateObjectService(options: PrivateObjectServiceOptions)
       await repository.expire(context, value.receiptId); throw new PrivateObjectError('OBJECT_EXPIRED');
     }
   }
-  async function checkBytes(value: { expectedSize: number; expectedSha256: string; kind: PrivateObjectKind }, bytes: Buffer) {
+  async function checkBytes(value: { expectedSize: number; expectedSha256: string; kind: PrivateObjectKind; mediaType?:ObjectAdmission['mediaType'] }, bytes: Buffer) {
     if (!Buffer.isBuffer(bytes) || bytes.length !== value.expectedSize || bytes.length > maxBytes || sha(bytes) !== value.expectedSha256) throw new PrivateObjectError('OBJECT_INTEGRITY_FAILED');
-    await validateFormat(value.kind, bytes);
+    await validateFormat(value.kind, bytes, value.mediaType);
   }
-  async function checkedRead(ref: StorageObjectRef, expected: { expectedSize: number; expectedSha256: string; kind: PrivateObjectKind }, signal?: AbortSignal) {
+  async function checkedRead(ref: StorageObjectRef, expected: { expectedSize: number; expectedSha256: string; kind: PrivateObjectKind; mediaType?:ObjectAdmission['mediaType'] }, signal?: AbortSignal) {
     if (expected.expectedSize > maxBytes) throw new PrivateObjectError('OBJECT_INPUT_INVALID');
     const bytes = await transfer(abortSignal => provider.read(ref, { maxBytes, timeoutMs, signal: abortSignal }), signal);
     await checkBytes(expected, bytes); return bytes;
@@ -175,7 +187,7 @@ export function createPrivateObjectService(options: PrivateObjectServiceOptions)
     if (!value) throw new PrivateObjectError('OBJECT_NOT_FOUND');
     const binding = structuredClone(value);
     if (capability) await internal(capability, binding, { objectId: binding.objectId });
-    const bytes = await checkedRead(binding.ref, { kind: binding.kind, expectedSize: binding.sizeBytes, expectedSha256: binding.contentSha256 }, request.signal);
+    const bytes = await checkedRead(binding.ref, { kind: binding.kind, expectedSize: binding.sizeBytes, expectedSha256: binding.contentSha256, mediaType:binding.mediaType }, request.signal);
     const current = await repository.getVerified(context, selector);
     if (!current || !sameVerified(binding, current)) throw new PrivateObjectError('OBJECT_STATE_CONFLICT');
     if (capability) await internal(capability, current, { objectId: current.objectId });
@@ -185,6 +197,17 @@ export function createPrivateObjectService(options: PrivateObjectServiceOptions)
       issuedInternal(capability, final, { objectId: final.objectId });
     }
     return bytes;
+  }
+  async function audioMetadata(context: RequestContext, id: string) {
+    const selected = await repository.audioObject(context,id);
+    if (!selected) return null;
+    const binding = await repository.getVerified(context,selected);
+    if (!binding||binding.kind!=='audio') return null;
+    const contentType=binding.mediaType??'audio/wav';
+    if(contentType!=='audio/wav'&&contentType!=='audio/mpeg') throw new PrivateObjectError('OBJECT_STATE_CONFLICT');
+    return {contentType,objectIdentity:sha(Buffer.from(JSON.stringify([binding.receiptId,binding.objectId,binding.scope,
+      Object.hasOwn(binding,'sourceRevision'),binding.sourceRevision??null,Object.hasOwn(binding,'domainSha256'),binding.domainSha256??null,
+      Object.hasOwn(binding,'mediaType'),binding.mediaType??null,binding.revision,binding.ref,binding.sizeBytes,binding.contentSha256])))};
   }
   return Object.freeze({
     limits: Object.freeze({ maxBytes, maxConcurrentTransfers: concurrency, timeoutMs, cache: false, range: false, temporaryFiles: false }),
@@ -212,7 +235,7 @@ export function createPrivateObjectService(options: PrivateObjectServiceOptions)
       if (existing.state === 'verifying') throw new PrivateObjectError('OBJECT_STATE_CONFLICT');
       const pending = await repository.beginUpload(context, id, existing.revision);
       if (!pending) throw new PrivateObjectError('OBJECT_STATE_CONFLICT');
-      try { await transfer(signal => provider.upload(pending.stagingRef, bytes, { contentType: mime[pending.kind], signal })); }
+      try { await transfer(signal => provider.upload(pending.stagingRef, bytes, { contentType: pending.mediaType ?? mime[pending.kind], signal })); }
       catch (error) {
         // An upload response can be lost, or a no-upsert retry can conflict.
         // Existing bytes must independently match the exact receipt to recover.
@@ -285,19 +308,8 @@ export function createPrivateObjectService(options: PrivateObjectServiceOptions)
       if (!capability || !internalAuthorities.has(capability)) throw new PrivateObjectError('OBJECT_INTERNAL_AUTHORITY_REQUIRED');
       return read(context, selector, request, capability);
     },
-    async audioIdentity(context: RequestContext, id: string) {
-      const selected = await repository.audioObject(context, id);
-      if (!selected) return null;
-      const binding = await repository.getVerified(context, selected);
-      if (!binding || binding.kind !== 'audio') return null;
-      // Only this digest crosses the generic audio metadata seam. The opaque
-      // provider ref stays server-side, while scope/presence/version/hash pins
-      // distinguish pending flights and the handler's final binding recheck.
-      return sha(Buffer.from(JSON.stringify([binding.receiptId, binding.objectId, binding.scope,
-        Object.hasOwn(binding, 'sourceRevision'), binding.sourceRevision ?? null,
-        Object.hasOwn(binding, 'domainSha256'), binding.domainSha256 ?? null,
-        binding.revision, binding.ref, binding.sizeBytes, binding.contentSha256])));
-    },
+    audioMetadata,
+    async audioIdentity(context: RequestContext, id: string) {return (await audioMetadata(context,id))?.objectIdentity??null;},
     async readAudio(context: RequestContext, id: string) {
       const selected = await repository.audioObject(context, id);
       if (!selected) return null;

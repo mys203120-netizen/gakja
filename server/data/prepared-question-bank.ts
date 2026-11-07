@@ -1,3 +1,5 @@
+import type { AnalysisReadOptions } from '../repositories/analysis-read-ports';
+import { throwIfShadowReadFailure } from '../repositories/artifact-read';
 import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { interviewConfig } from '../../interview.config';
@@ -16,9 +18,9 @@ import { questionSelectionScope, selectionEligibility, sessionPlanFromPool, slot
 import { createQuestionReviewAuthorityScope, resolveQuestionReviewAuthority, type QuestionReviewAuthorityScope } from './question-review-authority';
 import { decodePreparedMainCandidate } from '../contracts/question-domain-codecs';
 import { emptyReadScope } from '../repositories/analysis-read-ports';
-import type { QuestionBankRepository, QuestionBankScope, QuestionBankPurpose } from '../repositories/question-bank-ports';
+import type { QuestionBankRepository, QuestionBankReader, QuestionBankScope, QuestionBankPurpose } from '../repositories/question-bank-ports';
 import { createLocalQuestionBankRepository } from '../repositories/local-question-bank-repository';
-import type { AudioRepository } from '../repositories/audio-ports';
+import type { AudioRepository, AudioReader } from '../repositories/audio-ports';
 import { createLocalAudioRepository } from '../repositories/local-audio-repository';
 
 export const QUESTION_BANK_POLICY_VERSION = 'prepared-q0-objective-pool-v2';
@@ -93,7 +95,8 @@ export interface QuestionBankProviders {
   synthesize(text: string, voice: VoiceSettings, role: BankRole): Promise<{ audioUrl: string; bytes: Buffer }>;
 }
 export interface BankOptions { root?: string; plan?: InterviewPlan; environment?: Environment;
-  bankRepository?: QuestionBankRepository; audioRepository?: AudioRepository; scope?: Partial<QuestionBankScope> }
+  bankRepository?: QuestionBankRepository; audioRepository?: AudioRepository; scope?: Partial<QuestionBankScope>;
+  readOnly?: { bank: QuestionBankReader; audio: AudioReader }; readOptions?: AnalysisReadOptions }
 export interface PrepareQuestionBankOptions extends BankOptions {
   concurrency?: 1 | 2;
   /** Explicit per-command cost cap; an incomplete pool remains unavailable at runtime. */
@@ -158,8 +161,10 @@ export function questionBankIdentity(context: InterviewContext, options: Pick<Ba
 }
 
 function bankStorage(context: InterviewContext, identity: { key: string; sourceFingerprint: string }, options: BankOptions, purpose: QuestionBankPurpose, contentSha256: string | null = null) {
+  if(options.readOnly&&options.readOptions?.repositories?.kind!=='shadow' || options.readOptions?.repositories?.kind==='shadow'&&!options.readOnly)throw new Error('SHADOW_BANK_READER_REQUIRED');
   const root = path.resolve(options.root ?? process.cwd()), bankRepository = options.bankRepository ?? createLocalQuestionBankRepository(root), audioRepository = options.audioRepository ?? createLocalAudioRepository(root);
-  const scope: QuestionBankScope = { ...emptyReadScope(bankRepository.ownerId), studentId: context.student.studentId ?? context.studentAnalysis?.studentId ?? null,
+  const bankReader=options.readOnly?.bank ?? bankRepository,audioReader=options.readOnly?.audio ?? audioRepository;
+  const scope: QuestionBankScope = { ...emptyReadScope(bankReader.ownerId), studentId: context.student.studentId ?? context.studentAnalysis?.studentId ?? null,
     supportTargetId: context.targetAnalysis?.supportTargetId ?? context.school?.interview?.id ?? null, pdfSha256: context.student.pdfSha256 ?? null,
     recordRevision: context.student.recordRevision ?? context.studentAnalysis?.recordRevision ?? null, sourceContentSha256: context.studentAnalysis?.sourceContentSha256 ?? null,
     commonRevision: context.studentAnalysis?.revision ?? context.student.analysisRevision ?? null, targetRevision: context.targetAnalysis?.revision ?? null,
@@ -169,8 +174,8 @@ function bankStorage(context: InterviewContext, identity: { key: string; sourceF
     if (key === 'bankContentSha256' && scope[key] === null) scope[key] = supplied;
     else if (scope[key] === null || scope[key] !== supplied) throw new Error('QUESTION_BANK_READ_SCOPE_MISMATCH');
   }
-  if (!scope.ownerId || scope.ownerId !== bankRepository.ownerId || scope.ownerId !== audioRepository.ownerId) throw new Error('QUESTION_BANK_REPOSITORY_OWNER_MISMATCH');
-  return { root, bankRepository, audioRepository, scope, request: { scope, purpose } };
+  if (!scope.ownerId || scope.ownerId !== bankReader.ownerId || scope.ownerId !== audioReader.ownerId) throw new Error('QUESTION_BANK_REPOSITORY_OWNER_MISMATCH');
+  return { root, bankRepository, audioRepository, bankReader, audioReader, readOptions: options.readOptions, scope, request: { scope, purpose } };
 }
 type BankStorage = ReturnType<typeof bankStorage>;
 function matchesRequestedBank(value: PreparedQuestionBank, storage: BankStorage) {
@@ -200,6 +205,7 @@ function roleFor(slot: InterviewPlanSlot): BankRole { return slot.interviewerId 
 /** Disk reads, hashes and deterministic validators only; never a model, speech or network call. */
 export interface PreparedCandidateDiagnostic { valid: boolean; gate: string; failureCode: string | null }
 async function validCandidate(value: PreparedMainCandidate, context: InterviewContext, identity: ReturnType<typeof questionBankIdentity>, slot: InterviewPlanSlot, previous: PreparedMainCandidate[], storage: BankStorage, diagnose?: (value: PreparedCandidateDiagnostic) => void, authorityScope?: QuestionReviewAuthorityScope): Promise<boolean> {
+  authorityScope ??= createQuestionReviewAuthorityScope(context,storage.root,storage.readOptions);
   let gate = 'CANDIDATE_IDENTITY', valid = false, failureCode: string | null = null;
   try {
     gate = 'CURRENT_DOMAIN_CODEC';
@@ -265,10 +271,11 @@ async function validCandidate(value: PreparedMainCandidate, context: InterviewCo
     gate = 'VOICE_AND_AUDIO_IDENTITY';
     if (fingerprint(value.voiceSettings) !== fingerprint(voice) || value.speechHash !== speechAudioCacheId(value.draft.questionText, voice) || value.questionAudioUrl !== `/api/audio/${value.speechHash}`) return false;
     gate = 'DURABLE_AUDIO_BYTES';
-    const bytes = await storage.audioRepository.read({ id: value.speechHash, scope: storage.scope, purpose: 'question-bank-validation' });
+    const bytes = await storage.audioReader.read({ id: value.speechHash, scope: storage.scope, purpose: 'question-bank-validation' });
     valid = bytes.length > 0 && sha256(bytes) === value.audioSha256;
     return valid;
   } catch (error) {
+    throwIfShadowReadFailure(error, storage.readOptions);
     failureCode = error && typeof error === 'object' && 'code' in error && /^[A-Z0-9_]+$/u.test(String(error.code)) ? String(error.code) : error instanceof Error && /^[A-Z0-9_]+$/u.test(error.message) ? error.message : error instanceof Error ? error.name : 'CANDIDATE_VALIDATION_FAILED';
     return false;
   } finally { try { diagnose?.({ valid, gate, failureCode }); } catch { /* Read-only diagnostics cannot change approval. */ } }
@@ -302,9 +309,9 @@ export function createPreparedQuestionReviewSession(context: InterviewContext, p
 
 export async function loadQuestionBank(context: InterviewContext, options: BankOptions = {}): Promise<PreparedQuestionBank | null> {
   const identity = questionBankIdentity(context, options), storage = bankStorage(context, identity, options, 'current'), root = storage.root;
-  const authorityScope = createQuestionReviewAuthorityScope(context, root);
-  const activitiesContentSha256 = (await loadPreparedActivities(context, root))?.contentSha256 ?? null;
-  const bank = await storage.bankRepository.readReady(storage.request);
+  const authorityScope = createQuestionReviewAuthorityScope(context, root, options.readOptions);
+  const activitiesContentSha256 = (await loadPreparedActivities(context, root, undefined, options.readOptions))?.contentSha256 ?? null;
+  const bank = await storage.bankReader.readReady(storage.request);
   try {
     if (!bank || !matchesRequestedBank(bank, storage) || bank.status !== 'ready' || !matchesIdentity(bank, identity) || bank.activitiesContentSha256 !== activitiesContentSha256 || bank.slots.length !== identity.plan.slots.length) return null;
     const { contentSha256, ...content } = bank;
@@ -318,16 +325,17 @@ export async function loadQuestionBank(context: InterviewContext, options: BankO
       if (row.candidates[0]) previous.push(row.candidates[0]);
     }
     if (!previous.length) return null;
+    await options.readOptions?.repositories?.assertSnapshotUnchanged?.();
     return structuredClone(bank);
-  } catch { return null; }
+  } catch (error) { throwIfShadowReadFailure(error, options.readOptions);return null; }
 }
 
 /** Resume against the immutable context/voice/model snapshot, not today's environment. */
 export async function loadQuestionBankByPinnedPlan(context: InterviewContext, plan: InterviewPlan, options: Omit<BankOptions, 'plan' | 'environment'> = {}): Promise<PreparedQuestionBank | null> {
   if (!plan.poolKey || !/^[a-f0-9]{64}$/u.test(plan.poolKey) || !plan.poolContentSha256) return null;
   const storage = bankStorage(context, { key: plan.poolKey, sourceFingerprint: sourceFingerprintForContext(context) }, options, 'pinned', plan.poolContentSha256), root = storage.root;
-  const authorityScope = createQuestionReviewAuthorityScope(context, root);
-  const bank = await storage.bankRepository.readReady(storage.request);
+  const authorityScope = createQuestionReviewAuthorityScope(context, root, options.readOptions);
+  const bank = await storage.bankReader.readReady(storage.request);
   try {
     if (!bank || !matchesRequestedBank(bank, storage) || bank.schemaVersion !== QUESTION_BANK_POLICY_VERSION || bank.status !== 'ready' || bank.key !== plan.poolKey || bank.contentSha256 !== plan.poolContentSha256 || bank.rulesVersion !== context.manifest.rulesVersion || fingerprint(bank.target) !== fingerprint(context.target) || bank.sourceFingerprint !== sourceFingerprintForContext(context)) return null;
     const { contentSha256, ...content } = bank;
@@ -342,8 +350,9 @@ export async function loadQuestionBankByPinnedPlan(context: InterviewContext, pl
       if (row.candidates[0]) previous.push(row.candidates[0]);
     }
     if (!previous.length) return null;
+    await options.readOptions?.repositories?.assertSnapshotUnchanged?.();
     return structuredClone(bank);
-  } catch { return null; }
+  } catch (error) { throwIfShadowReadFailure(error, options.readOptions);return null; }
 }
 
 export interface QuestionBankPreparationSummary {
@@ -363,8 +372,8 @@ export async function loadQuestionBankPreparationSummary(context: InterviewConte
   const identity = questionBankIdentity(context, options), storage = bankStorage(context, identity, options, 'preparation-summary'), root = storage.root;
   const ready = await loadQuestionBank(context, { ...options, bankRepository: storage.bankRepository, audioRepository: storage.audioRepository });
   if (!ready && storage.scope.bankContentSha256 !== null) throw new Error('QUESTION_BANK_READ_SCOPE_MISMATCH');
-  const old = ready ?? await storage.bankRepository.readPartial(storage.request);
-  const activitiesHash = (await loadPreparedActivities(context, root))?.contentSha256 ?? null;
+  const old = ready ?? await storage.bankReader.readPartial(storage.request);
+  const activitiesHash = (await loadPreparedActivities(context, root, undefined, options.readOptions))?.contentSha256 ?? null;
   const value = old && matchesIdentity(old, identity) && old.activitiesContentSha256 === activitiesHash ? old : null;
   const summary: QuestionBankPreparationSummary = { status: ready ? 'ready' : value ? 'preparing' : 'absent', independentObjectives: identity.plan.slots.length, candidateCapacity: identity.plan.slots.length * variantsPerObjective(identity.plan), attemptedObjectives: 0, approvedObjectives: 0, availableApprovedCount: 0, quarantinedObjectives: 0, pendingObjectives: identity.plan.slots.length, quarantines: [] };
   const previous: PreparedMainCandidate[] = [];
@@ -401,6 +410,7 @@ export async function createQuestionBankProductionProviders(): Promise<QuestionB
 }
 
 export async function prepareQuestionBank(context: InterviewContext, options: PrepareQuestionBankOptions = {}): Promise<PreparedQuestionBank> {
+  if(options.readOnly)throw new Error('SHADOW_READ_ONLY_BANK');
   if (options.maxNewCandidates !== undefined && (!Number.isSafeInteger(options.maxNewCandidates) || options.maxNewCandidates < 0)) throw new Error('질문 준비 예산은 0 이상의 정수여야 합니다.');
   const identity = questionBankIdentity(context, options), storage = bankStorage(context, identity, options, 'preparation'), root = storage.root;
   const composedOptions = { ...options, bankRepository: storage.bankRepository, audioRepository: storage.audioRepository };
@@ -412,16 +422,16 @@ export async function prepareQuestionBank(context: InterviewContext, options: Pr
   const operationKey = `${root}:${identity.key}`, pending = preparing.get(operationKey);
   if (pending) return pending;
   const operation = (async () => {
-    const activitiesContentSha256 = (await loadPreparedActivities(context, root))?.contentSha256 ?? null;
+    const activitiesContentSha256 = (await loadPreparedActivities(context, root, undefined, options.readOptions))?.contentSha256 ?? null;
     if (!options.providers && !activitiesContentSha256) throw new Error('질문 은행 준비 전에 검증된 활동 구조화 캐시를 준비해야 합니다.');
     if (!options.providers && !identity.questionReferenceDigest) throw new Error('질문 은행 준비 전에 검증된 면접 질문 참고 자료를 준비해야 합니다.');
     if (!options.providers && !context.questionReferences?.analysis?.coverage.complete) throw new Error('질문 은행 준비 전에 전체 질문 후보의 분석 결과와 누락 없는 처리 현황을 확인해야 합니다.');
     if (!options.providers && (!context.interviewerPolicy || !context.questionStrategies?.coverage.complete)) throw new Error('질문 은행 준비 전에 실행 정책과 전체 질문 전략의 출처 검증을 완료해야 합니다.');
     const providers = options.providers ?? await createQuestionBankProductionProviders(), limit = options.concurrency ?? 2;
     if (limit !== 1 && limit !== 2) throw new Error('질문 은행 동시 준비 수는 1 또는 2여야 합니다.');
-    const old = await storage.bankRepository.readPartial(storage.request) ?? await storage.bankRepository.readReady(storage.request);
+    const old = await storage.bankReader.readPartial(storage.request) ?? await storage.bankReader.readReady(storage.request);
     const resumable = old && ['preparing', 'ready'].includes(old.status) && matchesIdentity(old, identity) && old.activitiesContentSha256 === activitiesContentSha256 ? old : null;
-    const donorValue = options.reuseFromBankKey ? await storage.bankRepository.readReady({ purpose: 'donor-reuse', scope: { ...emptyReadScope(storage.scope.ownerId),
+    const donorValue = options.reuseFromBankKey ? await storage.bankReader.readReady({ purpose: 'donor-reuse', scope: { ...emptyReadScope(storage.scope.ownerId),
       studentId: storage.scope.studentId, supportTargetId: storage.scope.supportTargetId, bankKey: options.reuseFromBankKey, bankContentSha256: null, sourceFingerprint: null } }) : null;
     const donor = donorValue && donorValue.schemaVersion === QUESTION_BANK_POLICY_VERSION && donorValue.status === 'ready' && donorValue.key === options.reuseFromBankKey && donorValue.rulesVersion === context.manifest.rulesVersion && donorValue.questionModel === identity.questionModel && fingerprint(donorValue.voices) === fingerprint(identity.voices) && fingerprint(donorValue.target) === fingerprint(identity.target) && (() => { const { contentSha256, ...body } = donorValue; return contentSha256 === fingerprint(body); })() ? donorValue : null;
     if (options.reuseFromBankKey && !donor) throw new Error('기존 질문 은행의 불변 리비전과 문장·모델·음성 계약을 확인하지 못했습니다.');
@@ -517,7 +527,7 @@ export async function prepareQuestionBank(context: InterviewContext, options: Pr
     const failed = results.find(result => result.status === 'rejected');
     if (failed?.status === 'rejected') throw failed.reason;
     if (fingerprint(questionBankIdentity(context, options)) !== fingerprint(identity)) throw new Error('질문 은행 준비 중 원천 또는 음성 설정이 변경되었습니다.');
-    if (((await loadPreparedActivities(context, root))?.contentSha256 ?? null) !== activitiesContentSha256) throw new Error('질문 은행 준비 중 활동 구조화 캐시가 변경되었습니다.');
+    if (((await loadPreparedActivities(context, root, undefined, options.readOptions))?.contentSha256 ?? null) !== activitiesContentSha256) throw new Error('질문 은행 준비 중 활동 구조화 캐시가 변경되었습니다.');
     if (!partial.slots.some(row => row.candidates.length)) throw new QuestionPoolUnavailableError();
     const complete = { ...partial, status: 'ready' as const, completedAt: new Date().toISOString() };
     const bank: PreparedQuestionBank = { ...complete, contentSha256: fingerprint(complete) };

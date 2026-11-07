@@ -1,5 +1,7 @@
+import type { AnalysisReadOptions } from '../repositories/analysis-read-ports';
+import { readDependency, throwIfShadowReadFailure } from '../repositories/artifact-read';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { interviewReferenceFiles } from '../../interview-files.mjs';
 import { loadQuestionReferenceAnalysis, QUESTION_REFERENCE_ANALYSIS_POLICY, type QuestionReferenceAnalysisCoverage, type QuestionReferenceAnalysisRow, type QuestionReferenceReviewedRow } from './question-reference-analysis';
@@ -49,7 +51,7 @@ export interface BookQuestionExample {
   restrictions?: QuestionReferenceReviewedRow['restrictions'];
   source: Pick<BookQuestionSource, 'path' | 'sha256' | 'pdfPage' | 'startLine' | 'endLine'>;
 }
-type CorpusOptions = { root?: string; sourcePaths?: [string, string]; figuresDirectory?: string };
+type CorpusOptions = { root?: string; sourcePaths?: [string, string]; figuresDirectory?: string; readOptions?: AnalysisReadOptions };
 type QuestionSection = { provenance: Provenance; kind: BookQuestionReference['questionKind']; passageRequired: boolean };
 const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 const normalized = (value: string) => value.normalize('NFC').replace(/\s+/gu, ' ').trim();
@@ -160,7 +162,7 @@ export function extractBookQuestions(text: string, sourcePath: string, documentK
 }
 
 function configured(options: CorpusOptions = {}) {
-  return { root: path.resolve(options.root ?? process.cwd()), sourcePaths: options.sourcePaths ?? [interviewReferenceFiles.bookContentMd, interviewReferenceFiles.bookUniversityMd] as [string, string], figuresDirectory: options.figuresDirectory ?? interviewReferenceFiles.bookFiguresDirectory };
+  return { root: path.resolve(options.root ?? process.cwd()), sourcePaths: options.sourcePaths ?? [interviewReferenceFiles.bookContentMd, interviewReferenceFiles.bookUniversityMd] as [string, string], figuresDirectory: options.figuresDirectory ?? interviewReferenceFiles.bookFiguresDirectory, readOptions: options.readOptions };
 }
 /** Old absolute links are document provenance only, never filesystem read paths. */
 function isRelocatedFigureLink(value: string, relative: string) {
@@ -171,17 +173,17 @@ function isRelocatedFigureLink(value: string, relative: string) {
 }
 async function preservedFigureBindings(settings: ReturnType<typeof configured>, sources: SourceFile[]): Promise<BookQuestionCorpus | null> {
   try {
-    const corpus = JSON.parse(await readFile(path.resolve(settings.root, interviewReferenceFiles.preparedQuestionReferences), 'utf8')) as BookQuestionCorpus;
+    const corpus = JSON.parse((await readDependency(settings.root, interviewReferenceFiles.preparedQuestionReferences, 'book-corpus', settings.readOptions))!.bytes.toString('utf8')) as BookQuestionCorpus;
     if (corpus.schemaVersion !== BOOK_QUESTION_CORPUS_VERSION || corpus.policyVersion !== BOOK_QUESTION_SELECTION_POLICY ||
       corpus.figuresDirectory !== settings.figuresDirectory || !Array.isArray(corpus.figures) ||
       JSON.stringify(corpus.sourceHashes) !== JSON.stringify(sources) || contentDigest(corpus) !== corpus.digest) return null;
     return corpus;
-  } catch { return null; }
+  } catch (error) { throwIfShadowReadFailure(error,settings.readOptions);return null; }
 }
 async function sourceInputs(options: CorpusOptions = {}) {
   const settings = configured(options);
   const files = await Promise.all(settings.sourcePaths.map(async (sourcePath, index) => {
-    const text = await readFile(path.resolve(settings.root, sourcePath), 'utf8');
+    const text = (await readDependency(settings.root, sourcePath, 'book-source', settings.readOptions))!.bytes.toString('utf8');
     return { text, source: { path: sourcePath, sha256: digest(text), lineCount: linesOf(text).length, documentKind: index === 0 ? 'preparation' as const : 'university' as const } };
   }));
   let preservedBindings: Promise<BookQuestionCorpus | null> | undefined;
@@ -196,7 +198,7 @@ async function sourceInputs(options: CorpusOptions = {}) {
     const relocated = value !== canonical && value !== relative;
     const invalidLink = () => new Error(`참고 그림 경로를 현재 figures 폴더로 갱신해야 합니다: ${file.source.path}:${line.number}`);
     if (relocated && !isRelocatedFigureLink(value, relative)) throw invalidLink();
-    const bytes = await readFile(resolved).catch(() => null);
+    const bytes = await readDependency(settings.root, relative, 'book-figure', settings.readOptions, true).then(file=>file?.bytes??null).catch(error=>{throwIfShadowReadFailure(error,settings.readOptions);return null;});
     const figure = { sourcePath: file.source.path, sourceLine: line.number, path: relative, sha256: bytes ? digest(bytes) : null, exists: Boolean(bytes) };
     // A relocated link needs the exact preserved source and image binding. The
     // normal verifiedCache path still validates the entire semantic corpus.
@@ -241,11 +243,11 @@ function contentDigest(value: Omit<BookQuestionCorpus, 'digest'> | BookQuestionC
 }
 async function verifiedCache(inputs: Awaited<ReturnType<typeof sourceInputs>>, expected?: Omit<BookQuestionCorpus, 'digest'>): Promise<BookQuestionCorpus | null> {
   try {
-    const corpus = JSON.parse(await readFile(path.resolve(inputs.root, interviewReferenceFiles.preparedQuestionReferences), 'utf8')) as BookQuestionCorpus;
+    const corpus = JSON.parse((await readDependency(inputs.root, interviewReferenceFiles.preparedQuestionReferences, 'book-corpus', inputs.readOptions))!.bytes.toString('utf8')) as BookQuestionCorpus;
     if (corpus.schemaVersion !== BOOK_QUESTION_CORPUS_VERSION || corpus.policyVersion !== BOOK_QUESTION_SELECTION_POLICY || !Number.isFinite(Date.parse(corpus.generatedAt))) return null;
     const body = expected ?? await analyzedCatalogBody(inputs, corpus.generatedAt);
     return contentDigest(body) === corpus.digest && contentDigest(corpus) === corpus.digest ? corpus : null;
-  } catch { return null; }
+  } catch (error) { throwIfShadowReadFailure(error,inputs.readOptions);return null; }
 }
 
 /** Semantic review, not an arbitrary ID list or a keyword screen, determines how a source can be used. */
@@ -261,13 +263,13 @@ export function bookQuestionReferenceUsage(question: BookQuestionReference): Boo
 async function analyzedCatalogBody(inputs: Awaited<ReturnType<typeof sourceInputs>>, generatedAt: string): Promise<Omit<BookQuestionCorpus, 'digest'>> {
   const body = catalogBody(inputs, generatedAt);
   const raw: BookQuestionCorpus = { ...body, digest: contentDigest(body) };
-  const modelAnalysis = await loadQuestionReferenceAnalysis(raw, { root: inputs.root });
+  const modelAnalysis = await loadQuestionReferenceAnalysis(raw, { root: inputs.root, readOptions: inputs.readOptions });
   if (!modelAnalysis) {
     body.questions = body.questions.map(question => ({ ...question, eligibility: 'pending', screeningFlags: [...question.exclusions] }));
     body.counts = { ...body.counts, screeningFlagsByReason: body.counts.excludedByReason, excludedByReason: {}, eligibleQuestions: 0, excludedQuestions: 0, analyzedQuestions: 0, pendingAnalysisQuestions: body.questions.length };
     return body;
   }
-  const analysis = await applyQuestionReferenceAdjudications(raw, modelAnalysis, { root: inputs.root });
+  const analysis = await applyQuestionReferenceAdjudications(raw, modelAnalysis, { root: inputs.root, readOptions: inputs.readOptions });
   const rows = new Map(analysis.rows.map(row => [row.questionId, row]));
   body.questions = body.questions.map(question => {
     const analyzed = { ...question, screeningFlags: [...question.exclusions], analysis: rows.get(question.id) };
@@ -292,8 +294,8 @@ async function analyzedCatalogBody(inputs: Awaited<ReturnType<typeof sourceInput
 }
 
 /** Rebuild the source projection locally before accepting the cache. No provider calls. */
-export async function loadBookQuestionReferences(root = process.cwd()): Promise<BookQuestionCorpus | null> {
-  try { return await verifiedCache(await sourceInputs({ root })); } catch { return null; }
+export async function loadBookQuestionReferences(root = process.cwd(), readOptions: AnalysisReadOptions = {}): Promise<BookQuestionCorpus | null> {
+  try { return await verifiedCache(await sourceInputs({ root, readOptions })); } catch (error) { throwIfShadowReadFailure(error,readOptions);return null; }
 }
 
 /** Return questions only; administrative source prose, figures, answers and university labels never enter the runtime prompt. */

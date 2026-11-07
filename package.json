@@ -46,7 +46,12 @@
     "test:storage": "node scripts/run-pr07c-storage-tests.mjs",
     "test:storage-db": "node scripts/run-pr07c-db-tests.mjs",
     "test:storage-db-local": "node scripts/run-pr07c-local-db.mjs",
-    "test:storage-unit": "tsx --test tests/storage/*.unit.test.ts"
+    "test:storage-unit": "tsx --test tests/storage/*.unit.test.ts",
+    "shadow": "tsx scripts/run-read-shadow.ts",
+    "test:shadow-unit": "tsx --test tests/shadow/*.unit.test.ts",
+    "test:shadow": "node scripts/run-pr07d-storage-tests.mjs",
+    "test:shadow-db": "node scripts/run-pr07d-db-tests.mjs",
+    "test:shadow-db-local": "node scripts/run-pr07d-local-db.mjs"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-kr": "^5.3.1",

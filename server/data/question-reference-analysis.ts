@@ -1,3 +1,5 @@
+import type { AnalysisReadOptions } from '../repositories/analysis-read-ports';
+import { readDependency, isShadowRead, isConfirmedAbsence } from '../repositories/artifact-read';
 import { createHash, randomUUID } from 'node:crypto';
 import { appendFile, mkdir, open, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -49,7 +51,7 @@ export interface QuestionReferenceAnalysis {
   key: string; sourceFingerprint: string; model: string; createdAt: string; updatedAt: string;
   rows: QuestionReferenceAnalysisRow[]; coverage: QuestionReferenceAnalysisCoverage; contentSha256: string;
 }
-export interface QuestionReferenceAnalysisOptions { root?: string; model?: string }
+export interface QuestionReferenceAnalysisOptions { root?: string; model?: string; readOptions?: AnalysisReadOptions }
 export interface QuestionReferenceBatchRequest {
   model: string; store: false; reasoning: { effort: 'low' }; max_output_tokens: number; instructions: string; input: string;
 }
@@ -130,12 +132,12 @@ async function atomicJson(file: string, value: unknown) {
   try { await writeFile(temporary, JSON.stringify(value, null, 2), { mode: 0o600, flag: 'wx' }); await rename(temporary, file); }
   finally { await unlink(temporary).catch(() => {}); }
 }
-async function verifyCorpusSourceBytes(corpus: CorpusInput, root: string) {
+async function verifyCorpusSourceBytes(corpus: CorpusInput, root: string, readOptions: AnalysisReadOptions = {}) {
   const sources = new Map<string, { text: string; sha256: string }>();
   for (const source of corpus.sourceHashes) {
     const file = path.resolve(root, source.path), relative = path.relative(path.resolve(root), file);
     if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('SOURCE_PATH_ESCAPES_WORKSPACE');
-    const bytes = await readFile(file);
+    const bytes = (await readDependency(root, source.path, 'book-source', readOptions))!.bytes;
     if (sha256(bytes) !== source.sha256) throw new Error('REFERENCE_SOURCE_BYTES_CHANGED');
     sources.set(source.path, { text: bytes.toString('utf8'), sha256: source.sha256 });
   }
@@ -284,19 +286,19 @@ export function questionReferenceAnalysisCoverage(corpus: CorpusInput, rowsOrAna
   return { total: corpus.questions.length, reviewed, pending: pendingIds.length, complete: exactAccounting && pendingIds.length === 0, byCategory, pendingIds, exactAccounting: exactAccounting && ids.size === corpus.questions.length && reviewed + pendingIds.length === corpus.questions.length };
 }
 
-async function recoverRows(corpus: CorpusInput, root: string, identity: ReturnType<typeof questionReferenceAnalysisIdentity>) {
+async function recoverRows(corpus: CorpusInput, root: string, identity: ReturnType<typeof questionReferenceAnalysisIdentity>, readOptions: AnalysisReadOptions = {}) {
   const files = analysisPaths(root, identity.key), rows = new Map(corpus.questions.map(question => [question.id, pendingRow(question) as QuestionReferenceAnalysisRow]));
   const questionById = new Map(corpus.questions.map(question => [question.id, question]));
   let createdAt = new Date().toISOString(), updatedAt = createdAt, restored = false, needsNewline = false;
   try {
-    const snapshot = JSON.parse(await readFile(files.snapshot, 'utf8')) as QuestionReferenceAnalysis;
+    const snapshot = JSON.parse((await readDependency(root, path.relative(root,files.snapshot), 'book-analysis-snapshot', readOptions))!.bytes.toString('utf8')) as QuestionReferenceAnalysis;
     if (snapshot.schemaVersion === QUESTION_REFERENCE_ANALYSIS_VERSION && snapshot.policyVersion === QUESTION_REFERENCE_ANALYSIS_POLICY && snapshot.key === identity.key && snapshot.sourceFingerprint === identity.sourceFingerprint && snapshot.model === identity.model && analysisContentHash(snapshot) === snapshot.contentSha256) {
       createdAt = snapshot.createdAt; updatedAt = snapshot.updatedAt; restored = true;
       for (const row of snapshot.rows) { const question = questionById.get(row.questionId); if (question && validStoredRow(row, question)) rows.set(row.questionId, row); }
     }
-  } catch { /* A valid journal can recover a missing or interrupted snapshot. */ }
+  } catch (error) { if(isShadowRead(readOptions) && !(error instanceof SyntaxError) && !isConfirmedAbsence(error))throw error; /* A valid journal can recover a missing or interrupted snapshot. */ }
   try {
-    const journal = await readFile(files.journal, 'utf8');
+    const journal = (await readDependency(root, path.relative(root,files.journal), 'book-analysis-journal', readOptions))!.bytes.toString('utf8');
     needsNewline = journal.length > 0 && !journal.endsWith('\n');
     for (const line of journal.split('\n')) {
       if (!line.trim()) continue;
@@ -310,7 +312,7 @@ async function recoverRows(corpus: CorpusInput, root: string, identity: ReturnTy
         }
       } catch { /* Only fully written, source-bound journal records can recover. */ }
     }
-  } catch { /* The first run has no journal. */ }
+  } catch (error) { if(isShadowRead(readOptions) && !(error instanceof SyntaxError) && !isConfirmedAbsence(error))throw error; /* The first run has no journal. */ }
   return { files, rows, createdAt, updatedAt, needsNewline };
 }
 function snapshot(corpus: CorpusInput, rows: Map<string, QuestionReferenceAnalysisRow>, identity: ReturnType<typeof questionReferenceAnalysisIdentity>, createdAt: string, updatedAt = new Date().toISOString()): QuestionReferenceAnalysis {
@@ -320,8 +322,8 @@ function snapshot(corpus: CorpusInput, rows: Map<string, QuestionReferenceAnalys
 }
 export async function loadQuestionReferenceAnalysis(corpus: CorpusInput, options: QuestionReferenceAnalysisOptions = {}): Promise<QuestionReferenceAnalysis | null> {
   const root = path.resolve(options.root ?? process.cwd());
-  await verifyCorpusSourceBytes(corpus, root);
-  const identity = questionReferenceAnalysisIdentity(corpus, options), recovered = await recoverRows(corpus, root, identity);
+  await verifyCorpusSourceBytes(corpus, root, options.readOptions);
+  const identity = questionReferenceAnalysisIdentity(corpus, options), recovered = await recoverRows(corpus, root, identity, options.readOptions);
   return [...recovered.rows.values()].some(row => row.status === 'reviewed' || row.failureCode !== 'NOT_REVIEWED') ? snapshot(corpus, recovered.rows, identity, recovered.createdAt, recovered.updatedAt) : null;
 }
 const running = new Map<string, Promise<QuestionReferenceAnalysis>>();

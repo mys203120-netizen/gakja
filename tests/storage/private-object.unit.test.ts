@@ -5,7 +5,7 @@ import { createRequestIdentityBoundary, type RequestContext } from '../../server
 import { createInternalObjectCapability, createPrivateObjectService, PrivateObjectError } from '../../server/storage/private-object-service';
 import type { ObjectAdmission, ObjectRegistration, PrivateObjectRepository, ObjectStorageProvider, StorageObjectRef, PrivateObjectKind, VerifiedPrivateObject } from '../../server/storage/private-object-ports';
 import { validatePdfStructure, PdfStructureError } from '../../server/storage/pdf-structure';
-import { rawHash, syntheticBytes, syntheticPdf, syntheticTwoPagePdf, syntheticEncryptedPdf, syntheticEmptyPasswordPdf } from './fixtures';
+import { rawHash, syntheticBytes, cFixtureBytes, syntheticPdf, syntheticTwoPagePdf, syntheticEncryptedPdf, syntheticEmptyPasswordPdf } from './fixtures';
 
 /** Explicit in-memory fault tests. Actual PostgreSQL + Supabase Storage API
  * integration is a separately invoked file and is never replaced by these. */
@@ -70,11 +70,11 @@ async function fixture(limits: { maxBytes?: number; maxConcurrentTransfers?: num
     async audioObject() { return null; },
   };
   const service = createPrivateObjectService({ repository, provider, now: () => clock, ...limits });
-  const admission = (kind: PrivateObjectKind = 'source-pdf', bytes = syntheticBytes[kind]()): ObjectAdmission => ({ kind, scope: 'common', studentId: 'student-a', expectedSize: bytes.length, expectedSha256: rawHash(bytes), idempotencyKey: randomUUID() });
+  const admission = (kind: PrivateObjectKind = 'source-pdf', bytes = cFixtureBytes(kind)): ObjectAdmission => ({ kind, scope: 'common', studentId: 'student-a', expectedSize: bytes.length, expectedSha256: rawHash(bytes), idempotencyKey: randomUUID() });
   const cap = (input: ObjectAdmission, objectId?: string, current: () => Promise<boolean> = async () => true) => createInternalObjectCapability({ scope: input.scope === 'common' ?
     { kind: 'common', ownerId: 'owner-a', studentId: input.studentId } : { kind: 'target', ownerId: 'owner-a', studentId: input.studentId, applicationTargetId: 'app-a', supportTargetId: 'profile-a' },
     ...(Object.hasOwn(input, 'sourceRevision') ? { sourceRevision: input.sourceRevision } : {}), kinds: [input.kind], idempotencyKeys: [input.idempotencyKey], objectIds: objectId ? [objectId] : [], expiresAt: clock + 600_000, checkCurrent: current });
-  async function verified(input = admission(), bytes = syntheticBytes[input.kind]()) {
+  async function verified(input = admission(), bytes = cFixtureBytes(input.kind)) {
     const accepted = input.kind === 'source-pdf' ? await service.admitStudent(context, input) : await service.admitGenerated(context, input, cap(input));
     const capability = input.kind === 'source-pdf' ? undefined : cap(input, accepted.objectId);
     await service.upload(context, accepted.receiptId, bytes, capability); const done = await service.complete(context, accepted.receiptId, capability); return { done, input, capability };
@@ -95,7 +95,7 @@ test('unit student admission is PDF-only and bounds/hash/source inputs fail befo
 test('unit all supported synthetic formats preserve exact raw bytes including CRLF/emoji/key order and optional pin presence', async () => {
   const f = await fixture();
   for (const kind of Object.keys(syntheticBytes) as PrivateObjectKind[]) {
-    const bytes = syntheticBytes[kind](), input = f.admission(kind, bytes); if (kind === 'source-json') { input.sourceRevision = null; input.domainSha256 = 'd'.repeat(64); }
+    const bytes = cFixtureBytes(kind), input = f.admission(kind, bytes); if (kind === 'source-json') { input.sourceRevision = null; input.domainSha256 = 'd'.repeat(64); }
     const { done } = await f.verified(input, bytes); assert.deepEqual(await f.service.read(f.context, { objectId: done.objectId }), bytes);
     assert.equal(Object.hasOwn(done, 'sourceRevision'), kind === 'source-json'); if (kind === 'source-json') assert.notEqual(done.domainSha256, done.actualSha256);
   }

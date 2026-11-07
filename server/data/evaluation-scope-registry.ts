@@ -7,7 +7,7 @@ import type { InterviewSession, QuestionDraft, RecordedTurn } from '../protocol'
 import { APPROVED_KNOWLEDGE_VERSION, approvedKnowledgePacketSchema, assertKnowledgeSpan, freezeKnowledge, knowledgeHash, parseApprovedKnowledgeBundle } from './approved-knowledge';
 import { localDevelopmentOwner } from '../session-runtime';
 import { compileEvaluationScopePolicy } from '../policy/evaluation-scope-policy';
-import type { ReviewRepository } from '../repositories/review-ports';
+import type { ReviewRepository, BankScopeRegistryReader } from '../repositories/review-ports';
 import { createLocalReviewRepository } from '../repositories/local-review-repository';
 
 export const BANK_SCOPE_REGISTRY_VERSION = 'question-evaluation-specs-v2';
@@ -113,7 +113,7 @@ export function validateBankScopeReview(input: unknown, context: InterviewContex
 }
 
 export async function loadBankScopeRegistry(root = process.cwd(), trustedPublicKey = process.env.EVALUATION_SCOPE_REVIEW_PUBLIC_KEY,
-  reviews: ReviewRepository = createLocalReviewRepository(root)): Promise<BankEvaluationScopeRegistry | null> {
+  reviews: BankScopeRegistryReader = createLocalReviewRepository(root)): Promise<BankEvaluationScopeRegistry | null> {
   let pointer: { contentSha256: string };
   try { pointer = JSON.parse(await reviews.readRegistryPointer()); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw new Error('BANK_SCOPE_REGISTRY_POINTER_INVALID', { cause: error }); }

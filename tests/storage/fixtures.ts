@@ -56,7 +56,7 @@ export function syntheticEmptyPasswordPdf() {
     `<< /Filter /Standard /V 1 /R 2 /O <${owner.toString('hex')}> /U <${user.toString('hex')}> /P -4 >>`],
   `/Encrypt 4 0 R /ID [<${fileId.toString('hex')}> <${fileId.toString('hex')}>]`);
 }
-export const syntheticBytes: Record<PrivateObjectKind, () => Buffer> = {
+export const syntheticBytes: Record<Exclude<PrivateObjectKind, 'source-image' | 'review-journal'>, () => Buffer> = {
   'source-pdf': syntheticPdf,
   'source-markdown': () => Buffer.from('# 합성 원문🙂\r\n첫째 줄\r\n둘째 줄\n', 'utf8'),
   'source-json': () => Buffer.from('{"z":"합성🙂","nullable":null,"a":1}\r\n', 'utf8'),
@@ -64,3 +64,9 @@ export const syntheticBytes: Record<PrivateObjectKind, () => Buffer> = {
   audio: syntheticWav,
   'review-bundle': () => Buffer.from('{"kind":"synthetic-review-bundle","approved":false,"z":"🙂","a":null}\r\n', 'utf8'),
 };
+
+/** C regression fixtures intentionally retain the six original C kinds. */
+export function cFixtureBytes(kind: PrivateObjectKind): Buffer {
+  if (kind === 'source-image' || kind === 'review-journal') throw new Error('D_EXTENDED_FIXTURE_REQUIRED');
+  return syntheticBytes[kind]();
+}

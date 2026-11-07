@@ -16,3 +16,5 @@ export interface QuestionBankRepository {
   publishReady(request: QuestionBankRequest & { value: PreparedQuestionBank }): Promise<void>;
   removePartial(request: QuestionBankRequest): Promise<void>;
 }
+/** Read-only D composition must not invent successful write methods. */
+export type QuestionBankReader = Pick<QuestionBankRepository, 'ownerId' | 'readReady' | 'readPartial'>;

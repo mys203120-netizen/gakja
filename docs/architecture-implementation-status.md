@@ -1,5 +1,20 @@
 # 청사진 v2 기준 구현 기록
 
+## 2026-11-07 PR07-D 읽기 이관·shadow 단계
+
+C의 정확한 `3204e83`에서 별도 기능 브랜치를 시작했다. [D 계약·실행 경로](pr07d-read-shadow.md)는 inventory/귀속(D1), C lifecycle 기반 격리 적재·typed reader의 실제 caller 연결(D2), 독립 C baseline/후보 비교(D3)를 구분한다. 기존 local이 세션·답변·평가의 유일 writer다. 시작/최종 SHA·새 설치·고유 실행 로그·CI와 보호 자료의 전후 증거는 Git 제외 `artifacts/pr07d/final-report.json`을 따른다. 명령 예시나 이전 C 통과 수를 D 성공 증거로 사용하지 않는다.
+
+| D 관문 | 판정 범위 |
+|---|---|
+| 구현 | source/analysis/context/bank/audio, book/그림·QA·검수/조상·registry 의존 reader; typed locator·version/legacy/source pin·C receipt 및 generation; 별도0003·CLI·회귀 |
+| 합성 통합 | 독립 exact-C checkout/프로세스와 실제 PostgreSQL/고정 공식 Storage API의 정상 두 계정·거부/장애. 최종 SHA CI로 판정 |
+| private 비교 | 불변 복사본의 inventory·독립 local codec/도메인 비교와 원본1665·credential1·공개17·기존평가31 보존을 실행 증거로 판정. 실제 Storage 경로는 별도 |
+| private 실제 Storage | Windows Docker 엔진이 없어 미검증. private 자료를 원격 CI/hosted bucket으로 보내지 않음 |
+| 운영 읽기 이관 | 미완료: 운영 귀속/Auth/provider/bucket·관리 책임과 운영 검증 미공급 |
+| E 인계 | 별도 세션 writer 변경: 실제 귀속·단일 writer 선택·CAS/멱등·응답 유실·경합·역보존/롤백 기준 필요. F/G writer·제한 전환은 포함하지 않음 |
+
+기존 정본·ID·UTF-16·hash·active pointer와 B/C migration/checkpoint, A retained entry/기본 차단을 보존한다. 질문승인35/평가규격승인0/대기35 및 `sessionEvaluationReady=false`를 유지한다. W0 실계정/브라우저 QA·G1 장치/상용 미디어·PR04 의미 품질·G4 identity/OCR와 C의 hosted CDN/signing-key/실제2시간 만료는 별도 미완료다.
+
 ## 2026-11-06 PR07-C 비공개 객체 단계
 
 PR07-B는 `858401c`에서 격리 DB·회귀·해당 SHA CI를 완료했다. C는 `pr07c-private-storage.md`의 C1(reader)과 C2(접수/실제 검증/확정/취소)를 구분한다. B metadata 행은 업로드 완료가 아니며 새 원장·typed object 관계와 서버 할당 refs를 통해 검증한 객체만 reader로 전달한다. 실제 코드 SHA·새 설치·시험 수·CI·보호 원본 비교는 Git 제외 `artifacts/pr07c/final-report.json`의 실행 증거로 판정한다.

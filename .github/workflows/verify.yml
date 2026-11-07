@@ -108,3 +108,29 @@ jobs:
           path: artifacts/pr07c/storage-*/
           if-no-files-found: ignore
           retention-days: 14
+  read-shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PR07D_TEST_RUN_ID: ci_${{ github.run_id }}_${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify shadow plan, media and reader units
+        run: npm run test:shadow-unit
+      - name: Verify official Storage shadow with independent C baseline
+        run: node scripts/run-pr07d-storage-tests.mjs
+      - name: Retain redacted shadow reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr07d-shadow-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/pr07d/storage-*/
+          if-no-files-found: ignore
+          retention-days: 14

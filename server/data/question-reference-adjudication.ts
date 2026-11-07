@@ -1,5 +1,6 @@
+import type { AnalysisReadOptions } from '../repositories/analysis-read-ports';
+import { readDependency } from '../repositories/artifact-read';
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
 import type { BookQuestionCorpus } from './book-question-reference';
@@ -46,10 +47,10 @@ const sha256 = (value: string | Buffer) => createHash('sha256').update(value).di
 const contentHash = (value: QuestionReferenceAdjudicatedAnalysis | Omit<QuestionReferenceAdjudicatedAnalysis, 'contentSha256'>) => sha256(JSON.stringify({ ...value, createdAt: undefined, updatedAt: undefined, contentSha256: undefined }));
 
 /** Apply only source-evidenced corrections. Never rewrite the model journal or discard other rows. */
-export async function applyQuestionReferenceAdjudications(corpus: CorpusInput, analysis: QuestionReferenceAnalysis, options: { root?: string } = {}): Promise<QuestionReferenceAdjudicatedAnalysis> {
+export async function applyQuestionReferenceAdjudications(corpus: CorpusInput, analysis: QuestionReferenceAnalysis, options: { root?: string; readOptions?: AnalysisReadOptions } = {}): Promise<QuestionReferenceAdjudicatedAnalysis> {
   const root = path.resolve(options.root ?? process.cwd());
   let bytes: Buffer;
-  try { bytes = await readFile(path.resolve(root, QUESTION_REFERENCE_ADJUDICATION_FILE)); }
+  try { bytes = (await readDependency(root, QUESTION_REFERENCE_ADJUDICATION_FILE, 'book-adjudications', options.readOptions))!.bytes; }
   catch (error) {
     if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return analysis;
     throw error;
@@ -82,7 +83,7 @@ export async function applyQuestionReferenceAdjudications(corpus: CorpusInput, a
     if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) fail('SOURCE_PATH_ESCAPE');
     let reading = sourceReads.get(entry.evidence.sourcePath);
     if (!reading) {
-      reading = readFile(file).then(source => ({ text: source.toString('utf8'), sha256: sha256(source) }));
+      reading = readDependency(root, question.source.path, 'book-source', options.readOptions).then(stored => ({ text: stored!.bytes.toString('utf8'), sha256: sha256(stored!.bytes) }));
       sourceReads.set(entry.evidence.sourcePath, reading);
     }
     const source = await reading.catch(() => { throw new QuestionReferenceAdjudicationError('STALE_SOURCE', entry.questionId); });

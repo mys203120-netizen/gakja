@@ -15,7 +15,7 @@ import { createSupabaseObjectProvider } from '../../server/storage/supabase-obje
 import { withPrivateObjectAudio } from '../../server/storage/service-object-audio';
 import type { ObjectAdmission, ObjectStorageProvider, PrivateObjectKind, PrivateObjectScope, StorageObjectRef, PrivateObjectRepository } from '../../server/storage/private-object-ports';
 import { closePools, testPools } from './storage-test-database';
-import { rawHash, syntheticBytes } from './fixtures';
+import { rawHash, syntheticBytes, cFixtureBytes } from './fixtures';
 
 /** This file requires real PostgreSQL and the official Supabase Storage API.
  * No missing-service skip or file-backed mock is permitted. Fault hooks wrap
@@ -55,7 +55,7 @@ async function fixture() {
     const authenticated = await identity.authenticate(`Bearer ${await token(who)}`);
     return identity.selectScope(authenticated, { applicationTargetId: app }) as AuthenticatedRequestContext;
   }
-  function admission(who: Who, kind: PrivateObjectKind = 'source-pdf', scope: 'common' | 'target' = 'common', bytes = syntheticBytes[kind]()): ObjectAdmission {
+  function admission(who: Who, kind: PrivateObjectKind = 'source-pdf', scope: 'common' | 'target' = 'common', bytes = cFixtureBytes(kind)): ObjectAdmission {
     return { kind, scope, studentId: `student-${who}`, expectedSize: bytes.length, expectedSha256: rawHash(bytes), idempotencyKey: randomUUID(),
       ...(who === 'b' ? { sourceRevision: null } : who === 'c' ? { sourceRevision: 'source-r1' } : {}) };
   }
@@ -86,7 +86,7 @@ async function fixture() {
       },
     });
   }
-  async function verified(who: Who, input = admission(who), bytes = syntheticBytes[input.kind]()) {
+  async function verified(who: Who, input = admission(who), bytes = cFixtureBytes(input.kind)) {
     const selected = await context(who);
     const accepted = input.kind === 'source-pdf' ? await service.admitStudent(selected, input) : await service.admitGenerated(selected, input, capability(selected, input));
     const cap = input.kind === 'source-pdf' ? undefined : capability(selected, input, accepted.objectId);
@@ -124,7 +124,7 @@ test('actual A/B common and target registrations return exact Storage API bytes 
 test('actual generated MD/JSON/analysis/WAV/bundle formats retain raw bytes and existing domain hash without granting approval', async () => {
   const f = await fixture();
   for (const kind of ['source-markdown', 'source-json', 'analysis-json', 'audio', 'review-bundle'] as const) {
-    const input = f.admission('a', kind, kind === 'audio' ? 'target' : 'common'); if (kind === 'analysis-json') input.domainSha256 = snapshotHash(JSON.parse(syntheticBytes[kind]().toString('utf8')));
+    const input = f.admission('a', kind, kind === 'audio' ? 'target' : 'common'); if (kind === 'analysis-json') input.domainSha256 = snapshotHash(JSON.parse(cFixtureBytes(kind).toString('utf8')));
     const value = await f.verified('a', input); assert.deepEqual(await f.service.read(value.selected, { objectId: value.done.objectId }), value.bytes);
     assert.equal(value.done.actualSha256, rawHash(value.bytes)); if (kind === 'analysis-json') assert.notEqual(value.done.domainSha256, value.done.actualSha256);
   }

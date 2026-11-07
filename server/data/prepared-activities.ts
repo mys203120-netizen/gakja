@@ -1,5 +1,6 @@
+import { readDependency, isShadowRead } from '../repositories/artifact-read';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 import type { InterviewContext, StudentEvidence } from './load-interview-context';
@@ -212,13 +213,15 @@ export async function loadPreparedActivities(context: InterviewContext, root = p
         }))return null;
       }
       return projectPreparedActivities(context, verified.common);
-    } catch { return null; }
+    } catch (error) { if(isShadowRead(options))throw error;return null; }
   }
   try {
-    const [json, markdown] = await Promise.all([readFile(resolve(root, ACTIVITIES_JSON_PATH), 'utf8'), readFile(resolve(root, ACTIVITIES_MARKDOWN_PATH), 'utf8')]);
+    const [jsonFile, markdownFile] = await Promise.all([readDependency(root, ACTIVITIES_JSON_PATH, 'prepared-activities-json', options, true), readDependency(root, ACTIVITIES_MARKDOWN_PATH, 'prepared-activities-markdown', options, true)]);
+    if (!jsonFile || !markdownFile) return null;
+    const json=jsonFile.bytes.toString('utf8'),markdown=markdownFile.bytes.toString('utf8');
     const cache: unknown = JSON.parse(json);
     return validateStored(cache, context, expectedModel) && hash(markdown) === cache.markdownSha256 ? cache : null;
-  } catch { return null; }
+  } catch (error) { if(isShadowRead(options))throw error;return null; }
 }
 /** Markdown is staged first; JSON is the final commit record. A partial pair fails runtime validation. */
 export async function savePreparedActivities(cache: PreparedActivities, context: InterviewContext, root = process.cwd()) {

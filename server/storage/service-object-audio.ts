@@ -13,8 +13,8 @@ export function withPrivateObjectAudio(resources: ServiceRequestResources, objec
       if (!found) return null;
       identity.assertResource(context, found);
       const selected = identity.selectScope(context, found);
-      const objectIdentity = await objects.audioIdentity(selected, id);
-      return objectIdentity ? { ...found, objectIdentity, contentType: 'audio/wav' as const } : null;
+      const metadata = await objects.audioMetadata(selected, id);
+      return metadata ? { ...found, ...metadata } : null;
     },
     async readAudio(context: AuthenticatedRequestContext, binding: AudioAccessBinding) {
       return objects.readAudio(context, binding.resourceId);
