@@ -3,6 +3,10 @@ import { randomBytes } from 'node:crypto';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { InterviewSession } from './protocol';
 import { createRequestIdentityBoundary, RequestAccessError, type RequestContext, type ResourceBinding } from './auth/request-identity';
+import type { ServiceSessionMutations } from './session-writer/service-session-mutations';
+import { SessionCommandError } from './session-writer/session-command-ports';
+import { SessionDomainError } from './session-lifecycle';
+import { TurnWorkError } from './turn-work';
 
 type IdentityBoundary = ReturnType<typeof createRequestIdentityBoundary>;
 type AuthenticatedContext = Extract<RequestContext, { mode: 'authenticated' }>;
@@ -30,6 +34,9 @@ export interface ServiceRequestResources {
 export interface ServiceRealtimeOptions {
   identity?: IdentityBoundary;
   resources?: ServiceRequestResources;
+  /** E only: a trusted, explicitly isolated mutation composition. Default
+   * service and production requests retain the existing mutation503 boundary. */
+  sessionMutations?: ServiceSessionMutations;
   environment?: 'operational' | 'test';
   webPort?: number;
   allowedOrigins?: readonly string[];
@@ -38,7 +45,7 @@ export interface ServiceRealtimeOptions {
   ticketLifetimeMs?: number;
   accessCheckIntervalMs?: number;
 }
-const sessionPattern = /^\/api\/sessions\/([0-9a-f-]{36})(?:\/(next|answer-candidate|end|closing|retry-evaluation|timings|events|realtime-ticket))?$/u;
+const sessionPattern = /^\/api\/sessions\/([0-9a-f-]{36})(?:\/(next|answer|answer-candidate|capture-start|capture-finish|recover|context|end|closing|retry-evaluation|timings|events|commands|realtime-ticket))?$/u;
 const unavailable = () => new RequestAccessError(503, 'AUTHENTICATED_STORAGE_UNAVAILABLE');
 const notFound = () => new RequestAccessError(404, 'RESOURCE_NOT_FOUND');
 function send(res: ServerResponse, status: number, value: unknown) {
@@ -46,9 +53,9 @@ function send(res: ServerResponse, status: number, value: unknown) {
   res.end(JSON.stringify(value));
 }
 function fail(res: ServerResponse, error: unknown) {
-  const known = error instanceof RequestAccessError;
+  const known = error instanceof RequestAccessError || error instanceof SessionCommandError || error instanceof SessionDomainError || error instanceof TurnWorkError;
   const status = known ? error.status : 503;
-  send(res, status, { error: status === 404 ? '요청한 자료를 찾을 수 없습니다.' : status === 401 ? '인증을 확인해 주세요.' : '요청을 처리할 수 없습니다.', code: known ? error.code : 'REQUEST_DEPENDENCY_UNAVAILABLE' });
+  send(res, status, { error: status === 404 ? '요청한 자료를 찾을 수 없습니다.' : status === 401 ? '인증을 확인해 주세요.' : '요청을 처리할 수 없습니다.', code: known ? error.code ?? 'SESSION_DOMAIN_CONFLICT' : 'REQUEST_DEPENDENCY_UNAVAILABLE' });
 }
 async function body(req: IncomingMessage) {
   const chunks: Buffer[] = []; let size = 0;
@@ -85,6 +92,11 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
   const resources = () => {
     if (!options.resources || options.resources.kind === 'synthetic' && (options.environment !== 'test' || process.env.NODE_ENV === 'production')) throw unavailable();
     return options.resources;
+  };
+  const mutations = () => {
+    if (!options.sessionMutations || options.sessionMutations.kind !== 'isolated-db-session-writer' ||
+      options.environment !== 'test' || process.env.NODE_ENV === 'production') throw unavailable();
+    return options.sessionMutations;
   };
   const singleFlight = async <T>(key: string, operation: () => Promise<T>): Promise<T> => {
     const existing = flights.get(key); if (existing) return existing as Promise<T>;
@@ -135,6 +147,10 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
       guard(req); const url = new URL(req.url ?? '/', 'http://localhost');
       if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, { app: 'each-answer-interview', ok: true, mode: 'service' });
       const context = await authenticate(req, url);
+      if (req.method === 'POST' && url.pathname === '/api/sessions' && options.sessionMutations) {
+        const current = await refresh(context), value = await mutations().create(current, await body(req));
+        await refresh(current); return send(res, 201, value);
+      }
       if (req.method === 'GET' && url.pathname === '/api/status') {
         if (!context.scope) return send(res, 200, { authenticated: true, selectionRequired: true });
         const current = await refresh(context);
@@ -157,6 +173,18 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
       const match = sessionPattern.exec(url.pathname);
       if (match) {
         const access = await sessionAccess(context, match[1]);
+        if (req.method === 'GET' && options.sessionMutations && (!match[2] || match[2] === 'context')) {
+          const current = await refresh(access.context, access.binding);
+          const value = match[2] === 'context' ? await mutations().context(current, access.binding) : await mutations().read(current, access.binding);
+          const checked = await refresh(current, access.binding), latest = await sessionAccess(checked, match[1]);
+          if (JSON.stringify(latest.binding) !== JSON.stringify(access.binding)) throw notFound();
+          return send(res, 200, value);
+        }
+        if (req.method === 'GET' && match[2] === 'commands' && options.sessionMutations) {
+          const current = await refresh(access.context, access.binding);
+          const value = await mutations().receipt(current, access.binding, { key: url.searchParams.get('key') ?? '', inputSha256: url.searchParams.get('inputSha256') ?? '' });
+          await refresh(current, access.binding); return send(res, 200, value);
+        }
         if (req.method === 'GET' && !match[2]) {
           const scoped = await refresh(access.context, access.binding);
           const saved = await singleFlight(flightKey(scoped, 'session', match[1], access.binding), () => resources().readSession(scoped, access.binding));
@@ -175,6 +203,11 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
           if (tickets.size >= 1024) throw new RequestAccessError(503, 'REALTIME_TICKET_LIMIT');
           tickets.set(ticket, { context: current, binding: access.binding, expiresAt });
           return send(res, 200, { ticket, expiresAt, sessionId: match[1], credential: 'single-use-session-ticket' });
+        }
+        if (req.method === 'POST' && match[2] && options.sessionMutations) {
+          const current = await refresh(access.context, access.binding);
+          const value = await mutations().command(current, access.binding, match[2], await body(req));
+          await refresh(current, access.binding); return send(res, match[2] === 'end' ? 202 : 200, value);
         }
         if (req.method === 'POST') throw unavailable();
       }
@@ -198,21 +231,42 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
   });
   wss.on('connection', (ws: WebSocket, access: { context: AuthenticatedContext; binding: SessionAccessBinding }) => {
     sockets.add(ws); let context = access.context, queue = Promise.resolve();
+    let writerGeneration: string | undefined, connectionToken: string | undefined;
     const close = () => ws.close(1008, 'Access is no longer valid');
+    const commandFailure = (error: unknown) => {
+      if (!options.sessionMutations) { close(); return; }
+      const known = error instanceof RequestAccessError || error instanceof SessionCommandError || error instanceof SessionDomainError || error instanceof TurnWorkError;
+      const status = known ? error.status : 503, code = known ? error.code ?? 'SESSION_DOMAIN_CONFLICT' : 'REQUEST_DEPENDENCY_UNAVAILABLE';
+      if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'error', status, code }));
+      if ([401, 403, 404, 413].includes(status) || code === 'SESSION_STALE_SOCKET') close();
+    };
     const check = async () => {
       context = await refresh(context, access.binding);
       const current = await sessionAccess(context, access.binding.sessionId);
       if (JSON.stringify(current.binding) !== JSON.stringify(access.binding)) throw notFound();
       context = await refresh(current.context, access.binding);
+      if (writerGeneration !== undefined) await mutations().assertSocketCurrent(context, access.binding, writerGeneration);
     };
     const expire = setTimeout(close, Math.min(2_147_483_647, Math.max(1, context.principal.expiresAt - now())));
     const timer = setInterval(() => { queue = queue.then(check).catch(close); }, checkInterval);
     expire.unref(); timer.unref();
-    ws.send(JSON.stringify({ type: 'ready', sessionId: access.binding.sessionId, readOnly: true }));
+    if (options.sessionMutations) {
+      queue = queue.then(async () => {
+        await check(); const connected = await mutations().connect(context, access.binding);
+        writerGeneration = connected.writerGeneration; connectionToken = connected.connectionToken;
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'ready', sessionId: access.binding.sessionId, readOnly: false, writerGeneration }));
+      }).catch(close);
+    } else ws.send(JSON.stringify({ type: 'ready', sessionId: access.binding.sessionId, readOnly: true }));
     ws.on('message', (data, binary) => {
       // Audio persistence is unsupported here. Reject bytes without a remote
       // lookup per chunk; the bounded timer and expiry still close the socket.
       if (binary) {
+        if (options.sessionMutations) {
+          queue = queue.then(async () => {
+            await check(); if (writerGeneration === undefined) throw unavailable();
+            await mutations().audio(context, access.binding, writerGeneration, Buffer.from(data as Buffer), connectionToken!);
+          }).catch(commandFailure); return;
+        }
         if (now() >= context.principal.expiresAt) close();
         else if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'error', code: 'AUTHENTICATED_STORAGE_UNAVAILABLE' }));
         return;
@@ -222,12 +276,22 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
         let message: unknown; try { message = JSON.parse(data.toString()); } catch { close(); return; }
         if (!message || typeof message !== 'object' || Array.isArray(message)) { close(); return; }
         const value = message as Record<string, unknown>;
+        if (options.sessionMutations && value.type !== 'ping') {
+          if (writerGeneration === undefined) throw unavailable();
+          const response = await mutations().socket(context, access.binding, writerGeneration, value, connectionToken!);
+          await check(); if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(response)); return;
+        }
         if (Object.keys(value).some(key => !['type', 'sessionId'].includes(key)) || value.sessionId !== undefined && value.sessionId !== access.binding.sessionId) { close(); return; }
         if (value.type === 'ping') ws.send(JSON.stringify({ type: 'pong', sessionId: access.binding.sessionId }));
         else ws.send(JSON.stringify({ type: 'error', code: 'AUTHENTICATED_STORAGE_UNAVAILABLE' }));
-      }).catch(close);
+      }).catch(commandFailure);
     });
-    ws.on('close', () => { clearTimeout(expire); clearInterval(timer); sockets.delete(ws); });
+    ws.on('close', () => {
+      clearTimeout(expire); clearInterval(timer); sockets.delete(ws);
+      if (writerGeneration !== undefined && options.sessionMutations) {
+        queue = queue.then(() => mutations().disconnect(context, access.binding, writerGeneration!, connectionToken!)).catch(() => {});
+      }
+    });
     ws.on('error', close);
   });
   const close = async () => { tickets.clear(); for (const ws of sockets) ws.terminate(); await new Promise<void>(resolve => wss.close(() => resolve())); await new Promise<void>(resolve => server.close(() => resolve())); };

@@ -1,3 +1,7 @@
+import { createSessionClosingPreparer } from './session-closing';
+import { createSessionEndDrainer, type SessionEndCaptureDrain } from './session-end-drain';
+import { acceptSessionEndRequest, finalizeSessionEndState, createInterviewSession, answerMetrics, observeFinalizedAnswer, applySessionClientEvent, sessionEndCaptureScopeSchema, evaluationInputFrozen } from './session-lifecycle';
+import { createSessionTurnPreparer, type PreparedWork, type AcknowledgementReady } from './session-turn-preparer';
 import { createRequestIdentityBoundary, resolveExecutionMode } from "./auth/request-identity";
 import { trustedJwtVerifierFromEnv } from "./auth/jose-jwt-verifier";
 import { createServiceRealtimeServer } from "./request-realtime-server";
@@ -25,18 +29,11 @@ import { runRealtimeCore } from './providers/realtime-core';
 import { approvedRestatement } from './providers/approved-restatement';
 import { approvedAudioReplay } from './providers/approved-audio-replay';
 import { createLocalSessionStore } from "./storage/local-session-store";
-import { actualEvaluativeQuestion, mayReplayQuestion, concatenateStreamTranscript, finalizeCapturedTurnForEnd, IdempotentTurnOperations, isFinalizedAnswer, mayAskClarification, mergeTranscriptObservation, nextPosition, nextRequestSchema, safeProviderError, streamRequestSchema, type InterviewSession, type RecordedTurn, type QuestionDraft } from "./protocol";
-import { observeAnswerSubmission } from "./answer-submission";
-import { calculateSpeechMetrics } from "../lib/interview/speech-metrics";
-import { observeSpeechHabits } from "../lib/interview/speech-habits";
-import { createInterviewPlan, currentPlanSlot, mayAskFollowUp, sessionMainQuestionTarget } from "./interview-planner";
-import { summarizeSessionLatency } from "./session-latency";
-import { recordQuestionPresentation } from './question-presentation';
+import { mayReplayQuestion, concatenateStreamTranscript, finalizeCapturedTurnForEnd, IdempotentTurnOperations, isFinalizedAnswer, mayAskClarification, mergeTranscriptObservation, nextRequestSchema, safeProviderError, streamRequestSchema, type InterviewSession, type RecordedTurn, type QuestionDraft } from "./protocol";
+import { createInterviewPlan, mayAskFollowUp } from "./interview-planner";
 import { publicServiceError, serviceDisplayMessage } from "../lib/interview/service-errors";
-import type { AnswerReaction } from "./providers/answer-reaction";
-import { answerContextTrace } from './providers/answer-context';
-import { bindQuestionContractToTurn, assertQuestionContractIntegrity } from './question-objective';
-import { buildConversationLedger, conversationLedgerTrace } from './conversation-ledger';
+import { bindQuestionContractToTurn } from './question-objective';
+import { buildConversationLedger } from './conversation-ledger';
 import { QuestionPreparationError, QuestionValidationError } from './providers/question-grounding';
 import type { SpeechSynthesisSettings } from "./providers/speech-audio-cache";
 import { defaultConversationLogger, type ConversationEvent, type ConversationAppendResult } from "./storage/conversation-log";
@@ -51,11 +48,8 @@ import { assertSingleCoreCandidateBinding, classifySingleCoreAnswerCandidate, SI
 import { answerCandidateRequestSchema, assertCandidateSource, assertCaptureConfirmed, assertCaptureMayStart, capturePart, transcriptHash, type AnswerCandidateState } from './answer-candidate-state';
 import { realtimeCoreModel, runtimeFactReviewModel } from './providers/realtime-model';
 import { clientConversationEventSchema, type ClientPlaybackEvent } from '../lib/interview/client-event-contract';
-import { deliveredFollowUpCount } from './follow-up-count';
-import { assertRepairProof, createRepairContract } from './providers/repair-contract';
-import { singleCoreCandidateDecisionSchema } from './providers/single-core-contract';
 import { SubmissionWorkRegistry } from './submission-work';
-import { TurnWorkError, runTurnWorkStage, type TurnWorkContext } from './turn-work';
+import { TurnWorkError, type TurnWorkContext } from './turn-work';
 
 /** Only this explicit composition may touch the legacy single-student writer. */
 function startLocalRealtimeServer() {
@@ -74,16 +68,10 @@ function observeSessionUsage(session: InterviewSession, stage: 'core' | 'review'
 const nextOperations = new IdempotentTurnOperations<PersistedNextResult>();
 const endOperations = new IdempotentTurnOperations<void>();
 const closingOperations = new IdempotentTurnOperations<ClosingUtterance>();
-const evaluationInputFrozen = (session: InterviewSession) => Boolean(session.runtime?.evaluationJob || session.runtime?.evaluationInputFrozenAt);
 const candidateFlights = new Map<string, Promise<AnswerCandidateState>>();
 const submissionWork = new SubmissionWorkRegistry(interviewConfig.turnWaitTimeoutMs);
 const streams = new Map<string, Set<ClovaSpeechStream>>();
-type EndCaptureDrain = {
-  turnId: string; answerId: string; captureRevision?: number;
-  receipt: Promise<void>; markFinishReceived: () => void;
-  finishForEnd: () => Promise<void>;
-};
-const endCaptureDrains = new Map<ClovaSpeechStream, EndCaptureDrain>();
+const endCaptureDrains = new Map<ClovaSpeechStream, SessionEndCaptureDrain>();
 const connections = new Map<string, Set<WebSocket>>();
 const allowedOrigins = new Set([`http://localhost:${webPort}`, `http://127.0.0.1:${webPort}`, `http://localhost:${port}`, `http://127.0.0.1:${port}`]);
 const contextPromise = loadInterviewContext();
@@ -93,19 +81,7 @@ const localRequestContext = Object.freeze({ mode: 'local-development' as const, 
 const pinnedContexts = new Map<string, Awaited<typeof contextPromise>>();
 const audioOwners = new Map<string, string>();
 const loadingSessions = new Map<string, Promise<InterviewSession>>();
-type AcknowledgementReady = { type: "acknowledgement_ready"; turnId: string; acknowledgement: string; acknowledgementAudioUrl: string; interviewerId: string };
 const progressListeners = new Map<string, Set<(event: AcknowledgementReady) => void>>();
-type PreparedWork = {
-  id: string; sourceTurnId?: string; reaction?: AnswerReaction;
-  position: NonNullable<ReturnType<typeof nextPosition>>;
-  interviewerId: string; speaker: string; role: "primary" | "secondary";
-  acknowledgement: string | null; acknowledgementQuote: string | null;
-  draft?: QuestionDraft; draftPromise?: Promise<QuestionDraft>; llmMs?: number;
-  cachedQuestionAudioUrl?: string; cachedVoiceSettings?: SpeechSynthesisSettings;
-  coreTimings?: Record<string, number>; bankKey?: string; candidateId?: string;
-  selectionTrace?: QuestionDraft['selectionTrace'];
-  cachedAcknowledgementAudioUrl?: string; cachedAcknowledgementSettings?: SpeechSynthesisSettings;
-};
 const preparedDrafts = new Map<string, PreparedWork>();
 type Warmup = { id: string; ownerId: string; snapshotSha256: string; session: InterviewSession; createdAt: number; consumed: boolean; bankContentSha256: string; promise: Promise<RecordedTurn> };
 const preparations = new Map<string, Warmup>();
@@ -240,54 +216,8 @@ function canonicalJournalTurn(session: InterviewSession, turnId: string): Journa
   return journalTurns.get(session.id)?.get(turnId) ?? null;
 }
 function applyClientEvent(session: InterviewSession, event: z.infer<typeof clientConversationEventSchema>) {
-  const canonical = event.turnId ? canonicalJournalTurn(session, event.turnId) : null;
-  if (event.turnId && !canonical) throw new HttpError(409, "이 면접의 대화 턴을 확인할 수 없습니다.");
-  const payload = event.payload && typeof event.payload === "object" ? event.payload as Record<string, unknown> : {};
-  const frozen = evaluationInputFrozen(session);
-  if (!frozen && typeof payload.elapsedMs === 'number' && Number.isFinite(payload.elapsedMs) && payload.elapsedMs >= 0 && payload.elapsedMs <= 86_400_000) session.elapsedMs = Math.max(session.elapsedMs, payload.elapsedMs);
-  const isClosing = event.turnId === (session.runtime?.closingUtterance ?? closingOperations.get(session.id))?.id;
-  const isOpening = event.turnId === session.runtime?.opening?.questionTurnId && (event.type === 'acknowledgement_playing' || event.type === 'audio_ended' && payload.role === 'acknowledgement');
-  const pendingOperation = Object.values(session.runtime?.operations ?? {}).find(operation => (operation.prepared as PreparedWork | undefined)?.id === event.turnId);
-  if (!frozen && pendingOperation && event.type === 'acknowledgement_playing') pendingOperation.acknowledgementDelivery = { ...pendingOperation.acknowledgementDelivery, startedAt: new Date().toISOString() };
-  if (!frozen && pendingOperation && event.type === 'audio_ended' && payload.role === 'acknowledgement') pendingOperation.acknowledgementDelivery = { ...pendingOperation.acknowledgementDelivery, completedAt: new Date().toISOString() };
-  let type = "phase.changed", role: string | undefined;
-  let details: Record<string, unknown> = { phase: event.phase ?? null, clientAtMs: event.atMs, clockId: event.clockId ?? null, observedBy: "browser-event", ...(frozen ? { lateAfterEvaluationFreeze: true, evaluationInputMutated: false } : {}) };
-  if (event.type === "acknowledgement_playing" || event.type === "question_playing") {
-    role = isClosing ? 'closing' : isOpening ? 'opening' : event.type === "acknowledgement_playing" ? "acknowledgement" : "question";
-    const text = role === "acknowledgement" || role === 'closing' || role === 'opening' ? canonical?.acknowledgement : canonical?.questionText;
-    if (!event.turnId || !text) throw new HttpError(409, "실제로 준비한 면접관 발화를 확인할 수 없습니다.");
-    type = "playback.started";
-    details = { ...details, text, interviewerId: canonical?.interviewerId ?? null, sourceTurnId: canonical?.sourceTurnId ?? null };
-    if (isClosing && !frozen) session.runtime!.closingDelivery = { ...session.runtime!.closingDelivery, startedAt: new Date().toISOString() };
-    if (isOpening) { if (!frozen) { session.runtime!.opening!.delivery = { ...session.runtime!.opening!.delivery, startedAt: new Date().toISOString() }; session.hasGreeted = true; } details.utteranceId = session.runtime!.opening!.id; }
-  } else if (event.type === "audio_ended") {
-    if (!event.turnId) throw new HttpError(409, "재생한 면접관 발화의 턴을 확인할 수 없습니다.");
-    type = "playback.ended";
-    role = isClosing ? 'closing' : isOpening ? 'opening' : payload.role === "question" || payload.role === "acknowledgement" ? payload.role : undefined;
-    details = { ...details, text: role === "question" ? canonical?.questionText : role === "acknowledgement" || role === 'closing' || role === 'opening' ? canonical?.acknowledgement : null, interviewerId: canonical?.interviewerId ?? null };
-    if (isClosing && !frozen) session.runtime!.closingDelivery = { ...session.runtime!.closingDelivery, completedAt: new Date().toISOString() };
-    if (isOpening) { if (!frozen) session.runtime!.opening!.delivery = { ...session.runtime!.opening!.delivery, completedAt: new Date().toISOString() }; details.utteranceId = session.runtime!.opening!.id; }
-  } else if (event.type === "client_error") {
-    type = "error";
-    details = { ...details, source: "client", message: typeof payload.message === "string" ? payload.message.slice(0, 400) : "클라이언트 오류가 관찰되었습니다." };
-  }
-  if (!isClosing && !frozen) {
-    recordQuestionPresentation(session, event, session.turns.find(turn => turn.id === event.turnId));
-    if (session.runtime && event.type === 'question_playing') {
-      const shown = session.turns.find(turn => turn.id === event.turnId);
-      if (shown?.questionKind === 'follow_up') session.followUpCountByMainQuestion[shown.parentMainQuestionId] = deliveredFollowUpCount(session, shown.parentMainQuestionId);
-    }
-    if (session.runtime && event.type === 'audio_ended' && payload.role === 'question' && !session.runtime.firstEvaluationDelivery) {
-      const presented = session.questionPresentations?.find(row => row.turnId === event.turnId);
-      if (presented?.questionKind === 'main' && presented.startedAtMs !== null && presented.completedAtMs !== null && presented.completedAtMs >= presented.startedAtMs && !presented.interrupted && !presented.errorCodes?.length && presented.clockId) {
-        session.runtime.firstEvaluationDelivery = { eventId: journalId('first-evaluation-normal-delivery', session.id, presented.turnId), turnId: presented.turnId, observedAt: new Date().toISOString(), clockId: presented.clockId, status: 'normal_delivery_observed', entitlementLedgerImplemented: false };
-        void journal(session, { eventId: session.runtime.firstEvaluationDelivery.eventId, type: 'session.first_evaluation_delivered', actor: 'server', turnId: presented.turnId, payload: session.runtime.firstEvaluationDelivery });
-      }
-    }
-  }
-  if (!frozen && event.type === 'phase_changed' && event.phase) checkpointSession(session, event.phase);
-  // Persist even duplicate retries: an earlier ledger save may have failed after in-memory mutation.
-  return { persist: !frozen && Boolean(pendingOperation || isOpening || event.type === 'phase_changed' || event.type === 'question_playing' || event.type === 'audio_ended' || event.type === 'client_error'), event: { eventId: event.eventId, type, actor: 'client' as const, turnId: event.turnId, role, payload: details } };
+  return applySessionClientEvent(session, event, { canonicalTurn: canonicalJournalTurn, closingFallback: closingOperations.get(session.id), HttpError,
+    onEvent: emitted => { void journal(session, emitted); } });
 }
 async function journalClientEvent(session: InterviewSession, event: z.infer<typeof clientConversationEventSchema>) {
   const applied = applyClientEvent(session, event);
@@ -350,259 +280,15 @@ function publicTurn(turn: RecordedTurn) {
     interviewerId: turn.interviewerId,
   };
 }
-async function prepareTurn(session: InterviewSession, forceMain = false, onAcknowledgement?: (event: AcknowledgementReady) => void, persist = true, retryKey?: string, workContext?: TurnWorkContext): Promise<RecordedTurn | null> {
-  const started = performance.now();
-  const context = await sessionContext(session);
-  const epoch = session.runtime!.epoch;
-  const durationSeconds = sessionDurationSeconds(session, context.interviewOverview?.durationSeconds ?? NaN);
-  const mainTarget = sessionMainQuestionTarget(session, durationSeconds);
-  const previous = session.turns.at(-1);
-  const allowFollowUp = mayAskFollowUp(session, durationSeconds, interviewConfig.maxFollowUps);
-  const allowClarification = mayAskClarification(session, durationSeconds);
-  const assertActive = () => { workContext?.assertLive(); if (session.status !== "active" || session.runtime!.endRequestedAt || evaluationInputFrozen(session) || session.runtime!.epoch !== epoch) throw new HttpError(409, "종료하거나 복원한 면접의 늦은 질문 준비 결과를 무시했습니다."); };
-  const retireUncommittedWork = async (prepared: PreparedWork, code: 'QUESTION_ACTION_BUDGET_EXHAUSTED' | 'QUESTION_REPAIR_PROOF_INVALID' | 'QUESTION_REPAIR_RECOVERY_UNAVAILABLE'): Promise<never> => {
-    assertActive();
-    const operation = retryKey ? session.runtime!.operations[retryKey] : undefined;
-    if (operation) {
-      (operation.retiredPrepared ??= []).push(structuredClone(prepared));
-      delete operation.prepared; delete operation.acknowledgementDelivery;
-      operation.status = code === 'QUESTION_REPAIR_RECOVERY_UNAVAILABLE' ? 'blocked' : 'retryable';
-      if (code === 'QUESTION_REPAIR_RECOVERY_UNAVAILABLE') operation.failureCode = code; else delete operation.failureCode;
-    }
-    if (retryKey) preparedDrafts.delete(retryKey);
-    checkpointSession(session, code === 'QUESTION_ACTION_BUDGET_EXHAUSTED' ? 'follow_up_budget_reconciled' : 'question_repair_cache_retired');
-    await save(session); assertActive();
-    throw new HttpError(409, code === 'QUESTION_REPAIR_RECOVERY_UNAVAILABLE' ? '질문 연결을 복구할 근거를 확인하지 못했습니다. 면접을 마치면 지금까지의 답변은 저장됩니다.' : '확인한 기록을 바탕으로 다음 질문을 다시 연결합니다.', code);
-  };
-  let work = retryKey ? preparedDrafts.get(retryKey) : undefined;
-  if (!work && retryKey && session.runtime?.operations[retryKey]?.prepared) {
-    const saved = session.runtime.operations[retryKey].prepared as PreparedWork;
-    if (!saved.id || saved.sourceTurnId !== previous?.id || !saved.draft || saved.draft.validationStatus !== 'approved' || saved.draft.premiseValidation && saved.draft.premiseValidation.questionSha256 !== createHash('sha256').update(saved.draft.questionText).digest('hex')) throw new HttpError(409, '저장된 질문 준비 체크포인트를 확인하지 못했습니다.');
-    work = structuredClone(saved); preparedDrafts.set(retryKey, work);
-  }
-  if (work) {
-    assertActive();
-    const execution = previous?.metadata.coreDecision?.execution as { surfaceOrigin?: unknown } | undefined;
-    const repaired = work.position.kind !== 'main' && Boolean((work.coreTimings?.repairModelCalls ?? 0) > 0 || execution?.surfaceOrigin === 'bounded_surface_repair');
-    if (work.draft) {
-      const parsedSemantic = singleCoreCandidateDecisionSchema.safeParse(previous?.metadata.coreDecision?.semanticDecision);
-      const original = parsedSemantic.success ? parsedSemantic.data.next : undefined;
-      try {
-        if (repaired && (!original || original.action !== 'FOLLOW_UP' && original.action !== 'CLARIFICATION' || work.draft.questionKind !== (original.action === 'FOLLOW_UP' ? 'follow_up' : 'clarification'))) throw new Error('REPAIR_PROOF_INVALID');
-        const expected = repaired && original && (original.action === 'FOLLOW_UP' || original.action === 'CLARIFICATION') ? createRepairContract({ ...work.draft, questionText: original.question.text,
-          primaryFunction: original.action === 'FOLLOW_UP' ? original.question.primaryFunction : previous!.metadata.primaryFunction,
-          depth: original.action === 'FOLLOW_UP' ? original.question.depth : previous!.metadata.depth,
-          targetEvidence: original.action === 'FOLLOW_UP' ? [original.question.target] : [...previous!.metadata.targetEvidence] }) : undefined;
-        assertRepairProof(work.draft, repaired ? expected : undefined, repaired);
-        if (work.draft.approvedQuestion) assertQuestionContractIntegrity(work.draft, work.draft.approvedQuestion);
-      } catch {
-        // Never retry the same unverifiable surface. A verified original
-        // decision can be executed/reviewed again without another core call.
-        const candidate = previous?.metadata.answerCandidateId ? session.runtime?.answerCandidates?.[previous.metadata.answerCandidateId] : undefined;
-        let recoverable = false;
-        if (previous && candidate?.decision?.kind === 'ADVANCE') {
-          try {
-            assertCandidateSource(previous, candidate);
-            assertSingleCoreCandidateBinding(context, session, candidate.decision, session.runtime?.runtimePolicy?.mode ?? 'compiled');
-            previous.metadata.coreDecision = { ...previous.metadata.coreDecision, sourceTurnId: previous.id, sourceAnswerId: previous.answerId,
-              sourceTranscriptSha256: transcriptHash(previous.rawTranscript ?? ''), engineVersion: candidate.decision.engineVersion,
-              semanticDecision: candidate.decision.semanticDecision, questionRecoveryRequired: true };
-            recoverable = true;
-          } catch { /* An unbound decision cannot authorize new model work. */ }
-        } else if (previous && !candidate?.decision && parsedSemantic.success && parsedSemantic.data.assessment !== null) {
-          const saved = previous.metadata.coreDecision;
-          recoverable = saved?.sourceTurnId === previous.id && saved.sourceAnswerId === previous.answerId && saved.engineVersion === SINGLE_CORE_ENGINE_VERSION && saved.sourceTranscriptSha256 === transcriptHash(previous.rawTranscript ?? '');
-          if (recoverable) saved!.questionRecoveryRequired = true;
-        }
-        await retireUncommittedWork(work, recoverable ? 'QUESTION_REPAIR_PROOF_INVALID' : 'QUESTION_REPAIR_RECOVERY_UNAVAILABLE');
-      }
-    }
-    if (work.position.kind === 'follow_up' && !allowFollowUp && retryKey) {
-      await retireUncommittedWork(work, 'QUESTION_ACTION_BUDGET_EXHAUSTED');
-    }
-  }
-  const retryCacheHit = Boolean(work);
-  if (!work) {
-    const usageAttemptId = randomUUID();
-    const usageStageAttempts = new Map<string, number>();
-    const candidate = previous?.metadata.answerCandidateId ? session.runtime?.answerCandidates?.[previous.metadata.answerCandidateId] : undefined;
-    const pendingCandidateDecision = candidate?.decision?.kind === 'ADVANCE' ? candidate.decision : undefined;
-    let core = previous ? await runTurnWorkStage(workContext, Infinity, () => runRealtimeCore(context, session, { workContext, pendingCandidateDecision, policyMode: session.runtime?.runtimePolicy?.mode ?? 'compiled', recoveryOnly: !pendingCandidateDecision && previous.metadata.coreDecision?.questionRecoveryRequired === true && previous.metadata.coreDecision?.sourceTurnId === previous.id && previous.metadata.coreDecision?.sourceAnswerId === previous.answerId, allowFollowUp: allowFollowUp && !forceMain, allowClarification: allowClarification && !forceMain, allowReplay: !forceMain && mayReplayQuestion(session, durationSeconds), onProviderUsage: (stage, observation) => { const attempt = (usageStageAttempts.get(stage) ?? 0) + 1; usageStageAttempts.set(stage, attempt); observeSessionUsage(session, stage, `${usageAttemptId}:${stage}:${attempt}`, observation); } })) : undefined;
-    assertActive();
-    // Another observer can reconcile older playback while the core/review was
-    // awaiting I/O. Enforce the latest delivery budget before reserving a UUID.
-    if (core?.reaction.directive.startsWith('follow_up') && !mayAskFollowUp(session, durationSeconds, interviewConfig.maxFollowUps)) core = { ...core, draft: null, nextAction: 'TRANSITION', reaction: { ...core.reaction, action: 'transition', directive: 'next_main' }, ...(core.execution ? { execution: { ...core.execution, action: 'TRANSITION' } } : {}), serverGuards: [...(core.serverGuards ?? []), 'QUESTION_ACTION_BUDGET_EXHAUSTED'] };
-    if (core?.nextAction === 'CONTINUE_ANSWER') throw new HttpError(409, '답변을 이어서 말씀해 주세요.', 'ANSWER_CONTINUATION_REQUIRED');
-    let reaction = core?.reaction;
-    let draft = core?.draft ?? undefined;
-    const desired = reaction?.directive === 'clarification_same_target' ? 'clarification' as const : reaction?.directive.startsWith('follow_up') ? 'follow_up' as const : 'main' as const;
-    const clarificationMode = core?.clarificationMode ?? 'rephrase';
-    let restatementUnavailable = false;
-    if (!core?.questionRecoveryRequired && desired === 'clarification' && draft?.questionKind !== 'clarification') {
-      draft = (clarificationMode === 'repeat_audio' ? approvedAudioReplay(context, session) : approvedRestatement(context, session, context.student.evidence.filter(source => previous?.evidenceIds.includes(source.id)), reaction)) ?? undefined;
-      if (!draft) {
-        // An old or unverifiable approval never authorizes a runtime model chain or invented question.
-        restatementUnavailable = true;
-        reaction = reaction ? { ...reaction, classification: 'unassessed', reasonCode: 'REACTION_VALIDATION_FAILED', action: 'transition', directive: 'next_main', keywordQuote: null, evidenceSpan: null, missingTarget: null, reply: null } : undefined;
-      }
-    }
-    assertActive();
-    if (previous && reaction) {
-      previous.metadata.answerReaction = reaction;
-        const coreDecision = { sourceTurnId: previous.id, sourceAnswerId: previous.answerId ?? null, sourceTranscriptSha256: transcriptHash(previous.rawTranscript ?? ''), engineVersion: core?.engineVersion ?? 'legacy-provider', fulfillment: core?.fulfillment ?? (reaction.classification === 'relevant' ? 'met' as const : reaction.classification === 'partial' ? 'partial' as const : 'unknown' as const), nextAction: core?.nextAction ?? (reaction.directive === 'clarification_same_target' ? 'CLARIFICATION' as const : reaction.directive.startsWith('follow_up') ? 'FOLLOW_UP' as const : 'TRANSITION' as const), targetDescription: core?.targetDescription ?? null, decisionReasonCode: core?.decisionReasonCode ?? null, requestedAction: core?.requestedAction ?? null, strategyDecision: core?.strategyDecision ?? null, origin: core?.origin ?? 'deterministic', followUpGoal: core?.followUpGoal ?? null, failureCode: core?.failureCode ?? null, serverGuards: core?.serverGuards ?? [], providerTimings: core?.providerTimings ?? { coreMs: 0, coreModelCalls: 0 }, actualDirective: reaction.directive, bridge: reaction.bridge ?? null, answerRelation: core?.answerRelation ?? null };
-        const persistedCoreDecision = { ...coreDecision, ...(core?.execution?.status === 'blocked' ? { actualDirective: 'preserve_current_question' } : {}), ...(core?.semanticDecision ? { semanticDecision: core.semanticDecision } : {}), ...(core?.execution ? { execution: core.execution } : {}), ...(core?.factReviewTraces ? { factReviewTraces: core.factReviewTraces } : {}), ...(core?.interpretation ? { interpretation: core.interpretation } : {}), ...(core?.failureStage ? { failureStage: core.failureStage } : {}), ...(core?.failureDetail ? { failureDetail: core.failureDetail } : {}), ...(core?.providerUnavailable ? { providerUnavailable: true } : {}), ...(core?.questionRecoveryRequired ? { questionRecoveryRequired: true } : {}), ...(core?.reviewTrace ? { reviewTrace: core.reviewTrace } : {}), ...(core?.reviewTraces ? { reviewTraces: core.reviewTraces } : {}), ...(core?.turnLocalCoverage ? { turn_local_coverage: core.turnLocalCoverage } : {}), ...(core?.policyTrace ? { policyTrace: core.policyTrace } : {}), ...(core?.providerUsage ? { providerUsage: core.providerUsage } : {}), ...(core?.candidateQuestion ? { candidateQuestion: core.candidateQuestion } : {}) };
-        Object.assign(previous.metadata, { coreDecision: persistedCoreDecision });
-        if (persist) journal(session, { type: 'answer.core_decision', actor: 'server', turnId: previous.id, answerId: previous.answerId, payload: persistedCoreDecision });
-      if (persist) journal(session, { type: "answer.relevance", actor: "server", turnId: previous.id, answerId: previous.answerId, payload: reaction });
-      const trace = answerContextTrace(session);
-      previous.metadata.answerContext = trace;
-      if (persist) journal(session, { type: 'answer.context', actor: 'server', turnId: previous.id, answerId: previous.answerId, payload: trace });
-      session.conversationLedger = buildConversationLedger(session);
-      if (persist) journal(session, { type: 'answer.ledger', actor: 'server', turnId: previous.id, answerId: previous.answerId, payload: conversationLedgerTrace(session.conversationLedger) });
-    }
-    if (core?.providerUnavailable) {
-      // A rejected provider account/quota is not an answer-quality decision or
-      // permission to advance through cached Q0. Keep the finalized answer and
-      // let an explicit later request retry this same operation after recovery.
-      checkpointSession(session, 'provider_unavailable');
-      if (retryKey && session.runtime?.operations[retryKey]) session.runtime.operations[retryKey] = { ...session.runtime.operations[retryKey], status: 'retryable', failureCode: 'QUESTION_PROVIDER_UNAVAILABLE' };
-      await save(session);
-      throw new HttpError(503, '질문 연결을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.', 'QUESTION_PROVIDER_UNAVAILABLE');
-    }
-    if (core?.questionRecoveryRequired || restatementUnavailable) {
-      checkpointSession(session, 'question_review_failed');
-      if (retryKey && session.runtime?.operations[retryKey]) session.runtime.operations[retryKey] = { ...session.runtime.operations[retryKey], status: 'retryable', failureCode: 'QUESTION_REVIEW_UNAVAILABLE' };
-      await save(session);
-      throw new HttpError(503, '질문 연결을 다시 준비하지 못했습니다. 같은 답변으로 다시 시도해 주세요.', 'QUESTION_REVIEW_UNAVAILABLE');
-    }
-    if (core?.nextAction === 'CLOSING') return null;
-    const position = nextPosition(session, desired, mainTarget, interviewConfig.maxFollowUps, durationSeconds, { clarificationMode });
-    if (!position) return null;
-    const bank = await requireQuestionBank(context, session);
-    const main = position.kind === 'main' ? selectNextPreparedMainQuestion(bank, session) : null;
-    if (position.kind === 'main' && !main) {
-      checkpointSession(session, 'candidate_exhausted');
-      if (retryKey && session.runtime?.operations[retryKey]) session.runtime.operations[retryKey] = { ...session.runtime.operations[retryKey], status: 'blocked', failureCode: 'PREPARATION_REQUIRED' };
-      await save(session);
-      throw new HttpError(503, '다음 질문을 위한 추가 사전 준비가 필요합니다.', 'PREPARATION_REQUIRED');
-    }
-    draft ??= main?.draft;
-    if (!draft || draft.questionKind !== position.kind) throw new HttpError(422, '현재 면접 순서의 질문을 확인하지 못했습니다.');
-    if (main) {
-      const offline = draft.providerTimings ?? {};
-      draft = { ...draft, providerTimings: { offlineQuestionGenerationMs: offline.questionGenerationMs ?? 0, offlinePremiseReviewMs: offline.premiseReviewMs ?? 0, offlinePremiseReviewAttempts: offline.premiseReviewAttempts ?? 0, questionGenerationMs: 0, premiseReviewMs: 0, premiseReviewAttempts: 0 } };
-    }
-    const slot = position.kind === "main" ? main?.slot ?? session.plan?.slots[position.mainIndex - 1] : currentPlanSlot(session);
-    const interviewerId = slot?.interviewerId ?? previous?.interviewerId ?? "interviewer-1";
-    const role = interviewerId === "interviewer-1" ? "primary" : "secondary";
-    const speaker = role === "primary" ? process.env.CLOVA_VOICE_SPEAKER || interviewerVoiceDefaults.primary : process.env.CLOVA_VOICE_SECOND_SPEAKER || interviewerVoiceDefaults.secondary;
-    const turnId = randomUUID(), preparedDraft = structuredClone(draft);
-    if (context.interviewerPolicy && preparedDraft.premiseValidation) Object.assign(preparedDraft, bindQuestionContractToTurn(preparedDraft, context, session, turnId));
-    work = { id: turnId, sourceTurnId: previous?.id, reaction, position, interviewerId, role, speaker, acknowledgement: !previous && !session.hasGreeted ? '안녕하세요. 면접을 시작하겠습니다.' : reaction?.reply ?? null, acknowledgementQuote: reaction?.keywordQuote ?? null,
-      draft: { ...preparedDraft, ...(position.kind === 'clarification' ? { clarificationMode } : {}) }, cachedQuestionAudioUrl: clarificationMode === 'repeat_audio' && position.kind === 'clarification' ? previous?.questionAudioUrl : main?.audioUrl, cachedVoiceSettings: main?.voiceSettings, bankKey: main?.bankKey, candidateId: main?.candidateId,
-      selectionTrace: main?.selectionTrace ?? undefined,
-      coreTimings: core?.providerTimings ?? { coreMs: 0, coreModelCalls: 0 }, llmMs: core?.providerTimings.coreMs ?? 0 };
-    // Reserve identity, progression and voice BEFORE publishing an early reaction.
-    if (retryKey) {
-      preparedDrafts.set(retryKey, work);
-      const operation = session.runtime!.operations[retryKey];
-      if (operation) operation.prepared = structuredClone(work);
-      await save(session); // Publish no early speech before its exact approved draft/identity is durable.
-    }
-  }
-  const preparedWork = work;
-  const { id, position, interviewerId, speaker, role } = preparedWork;
-  const parentId = position.parentId ?? id;
-  const slot = position.kind === "main" ? session.plan?.slots[position.mainIndex - 1] : currentPlanSlot(session);
-  const providerTimings: Record<string, number> = { reactionMs: 0, llmMs: retryCacheHit ? 0 : preparedWork.llmMs ?? 0, draftCacheHit: Number(retryCacheHit), ...preparedWork.coreTimings, ...(retryCacheHit ? { coreMs: 0, coreModelCalls: 0, originalCoreMs: preparedWork.coreTimings?.coreMs ?? 0, originalCoreModelCalls: preparedWork.coreTimings?.coreModelCalls ?? 0 } : {}), ...(preparedWork.cachedQuestionAudioUrl ? { preparedMainBankHit: 1 } : {}) };
-  const voiceSettings: { question?: SpeechSynthesisSettings; acknowledgement?: SpeechSynthesisSettings } = {};
-  const priorTurn = session.turns.at(-1);
-  const priorVoice = (priorTurn?.metadata as { voiceSettings?: { question?: SpeechSynthesisSettings } } | undefined)?.voiceSettings?.question;
-  const pinnedVoice = preparedWork.cachedVoiceSettings ?? (priorTurn?.interviewerId === interviewerId ? priorVoice : undefined);
-  const synthesisSpeaker = pinnedVoice?.speaker ?? speaker;
-  const recordAudio = (kind: "question" | "acknowledgement", text: string, audioUrl: string) => {
-    if (persist) journal(session, { type: `${kind}.prepared`, actor: "provider", turnId: id, role: interviewerId, payload: { text, audioUrl, voice: voiceSettings[kind], providerTimings, sourceTurnId: preparedWork.sourceTurnId } });
-  };
-  assertActive();
-  if (position.kind === 'follow_up' && !mayAskFollowUp(session, durationSeconds, interviewConfig.maxFollowUps)) await retireUncommittedWork(preparedWork, 'QUESTION_ACTION_BUDGET_EXHAUSTED');
-  // One core response owns the decision; cached audio and new follow-up TTS prepare in parallel.
-  const acknowledgementPromise = preparedWork.acknowledgement ? (async () => {
-    const cached = preparedWork.cachedAcknowledgementAudioUrl;
-    const reusable = cached && await readSpeechAudio(cached.slice('/api/audio/'.length));
-    if (reusable) { voiceSettings.acknowledgement = preparedWork.cachedAcknowledgementSettings; providerTimings.acknowledgementTtsMs = 0; providerTimings.acknowledgementTtsCacheHit = 1; return cached; }
-    return runTurnWorkStage(workContext, 35_000, stage => synthesizeSpeech(preparedWork.acknowledgement!, synthesisSpeaker, { signal: stage.signal, role, ...(pinnedVoice ? { settings: pinnedVoice } : {}), onTiming: timing => {
-    providerTimings.acknowledgementTtsMs = timing.durationMs; providerTimings.acknowledgementTtsCacheHit = Number(timing.cache !== "provider"); voiceSettings.acknowledgement = timing.settings;
-    } }));
-  })().then(async audioUrl => {
-      assertActive();
-      preparedWork.cachedAcknowledgementAudioUrl = audioUrl; preparedWork.cachedAcknowledgementSettings = voiceSettings.acknowledgement;
-      if (retryKey && session.runtime!.operations[retryKey]) { session.runtime!.operations[retryKey].prepared = structuredClone(preparedWork); audioOwners.set(audioUrl, owner.id); await save(session); }
-      assertActive();
-      if (session.status === "active" && session.runtime!.epoch === epoch) {
-        providerTimings.ackReadyMs = performance.now() - started;
-        recordAudio("acknowledgement", preparedWork.acknowledgement!, audioUrl);
-        if (!retryKey || !session.runtime!.operations[retryKey]?.acknowledgementDelivery?.completedAt) onAcknowledgement?.({ type: "acknowledgement_ready", turnId: id, acknowledgement: preparedWork.acknowledgement!, acknowledgementAudioUrl: audioUrl, interviewerId });
-      }
-      return audioUrl;
-    }) : Promise.resolve(null);
-  const questionPromise = (async () => {
-    const draft = structuredClone(preparedWork.draft!);
-    assertActive();
-    const audioUrl = preparedWork.cachedQuestionAudioUrl ?? await runTurnWorkStage(workContext, 35_000, stage => synthesizeSpeech(draft.questionText, synthesisSpeaker, { signal: stage.signal, role, ...(pinnedVoice ? { settings: pinnedVoice } : {}), onTiming: timing => { providerTimings.questionTtsMs = timing.durationMs; providerTimings.questionTtsCacheHit = Number(timing.cache !== "provider"); voiceSettings.question = timing.settings; } }));
-    assertActive();
-    if (preparedWork.cachedVoiceSettings) { voiceSettings.question = preparedWork.cachedVoiceSettings; providerTimings.questionTtsMs = 0; providerTimings.questionTtsCacheHit = 1; }
-    providerTimings.questionReadyMs = performance.now() - started;
-    recordAudio("question", draft.questionText, audioUrl);
-    return { draft, audioUrl };
-  })();
-  const [{ draft, audioUrl: questionAudioUrl }, acknowledgementAudioUrl] = await Promise.all([questionPromise, acknowledgementPromise]);
-  assertActive();
-  if (position.kind === 'follow_up' && !mayAskFollowUp(session, durationSeconds, interviewConfig.maxFollowUps)) await retireUncommittedWork(preparedWork, 'QUESTION_ACTION_BUDGET_EXHAUSTED');
-  const turn: RecordedTurn = {
-    id, questionText: draft.questionText, questionKind: position.kind,
-    parentMainQuestionId: parentId, mainIndex: position.mainIndex,
-    mainCount: mainTarget, mainCountIsLimit: session.plan?.scheduling === 'time_based' ? false : undefined, followUpIndex: position.followUpIndex,
-    evidenceIds: draft.evidenceIds, questionAudioUrl, acknowledgement: preparedWork.acknowledgement,
-    acknowledgementAudioUrl, interviewerId,
-    metadata: { acknowledgementQuote: preparedWork.acknowledgementQuote, evidenceQuotes: draft.evidenceQuotes, primaryFunction: draft.primaryFunction, questionIntent: draft.questionIntent, targetEvidence: draft.targetEvidence, depth: draft.depth, groundingRationale: draft.groundingRationale, validationStatus: "approved", validationFailures: [], rulesVersion: interviewConfig.rulesVersion, generatedAt: new Date().toISOString(), answerTurnId: position.kind !== "main" ? previous?.id ?? null : null, sourceAnswerId: position.kind !== "main" ? previous?.answerId ?? null : null, sourceRefIds: draft.evidenceIds, activityIds: [...new Set(context.student.evidence.filter(item => draft.evidenceIds.includes(item.id)).map(item => item.activityId))], supportTarget: context.target, questionClusterId: parentId, parentQuestionId: position.kind !== "main" ? previous?.id ?? null : null, nonEvaluative: position.kind === "clarification", ...(position.kind === "clarification" && previous ? { clarificationOfTurnId: actualEvaluativeQuestion(session, previous)?.id ?? previous.id, clarificationMode: draft.clarificationMode ?? 'rephrase' } : {}) },
-  };
-  Object.assign(turn.metadata, { commonApproval: draft.commonApproval, premiseValidation: draft.premiseValidation, followUpLanguage: draft.followUpLanguage, questionReferenceContext: draft.questionReferenceContext, questionBlueprint: draft.questionBlueprint, approvedQuestion: draft.approvedQuestion, questionRealization: draft.questionRealization, strategyTrace: draft.strategyTrace, bridge: preparedWork.reaction?.bridge ?? null, planSlotId: slot?.id, topicArea: slot?.topicArea, interviewerRole: slot?.interviewerRole, schoolConnections: slot?.schoolConnections, questionBankKey: preparedWork.bankKey, questionBankCandidateId: preparedWork.candidateId, selectionTrace: preparedWork.selectionTrace, voiceSettings, providerTimings: { ...draft.providerTimings, ...providerTimings, prepareMs: performance.now() - started } });
-  if (draft.questionBlueprint) {
-    turn.metadata.answerTurnId = draft.questionBlueprint.answerTurnId;
-    turn.metadata.sourceAnswerId = position.kind === 'main' ? null : previous?.answerId ?? null;
-  }
-  const oldCounter = session.followUpCountByMainQuestion[parentId];
-  const oldLedger = session.conversationLedger;
-  session.turns.push(turn);
-  session.conversationLedger = buildConversationLedger(session);
-  if (!session.runtime || position.kind === 'main') session.followUpCountByMainQuestion[parentId] = position.followUpIndex;
-  const greetedBefore = session.hasGreeted;
-  if (!session.runtime) session.hasGreeted = true;
-  const oldOperation = retryKey ? session.runtime?.operations[retryKey] : undefined;
-  if (retryKey && session.runtime) session.runtime.operations[retryKey] = { ...oldOperation, status: 'committed', startedAt: oldOperation?.startedAt ?? new Date().toISOString(), epoch, result: { turn: structuredClone(turn), done: false } };
-  try { if (persist) await save(session); }
-  catch (error) {
-    session.hasGreeted = greetedBefore;
-    session.turns.pop();
-    session.conversationLedger = oldLedger;
-    if (retryKey && session.runtime) { if (oldOperation) session.runtime.operations[retryKey] = oldOperation; else delete session.runtime.operations[retryKey]; }
-    if (oldCounter === undefined) delete session.followUpCountByMainQuestion[parentId];
-    else session.followUpCountByMainQuestion[parentId] = oldCounter;
-    throw error;
-  }
-  if (persist && (draft.followUpLanguage || draft.questionReferenceContext || preparedWork.reaction?.bridge)) void journal(session, {
-    eventId: journalId('question.wording', turn.id), type: 'question.wording', actor: 'server', turnId: turn.id, role: turn.interviewerId,
-    payload: { sourceTurnId: previous?.id ?? null, sourceAnswerId: previous?.answerId ?? null, followUpLanguage: draft.followUpLanguage ?? null, questionReferenceContext: draft.questionReferenceContext ?? null, strategyTrace: draft.strategyTrace ?? null, questionRealization: draft.questionRealization ?? null, questionBlueprint: draft.questionBlueprint ?? null, approvedQuestion: draft.approvedQuestion ?? null, bridge: preparedWork.reaction?.bridge ?? null },
-  });
-  if (retryKey) preparedDrafts.delete(retryKey);
-  return turn;
-}
+const prepareTurn = createSessionTurnPreparer({ ownerId: owner.id, contextFor: sessionContext, requireQuestionBank, save, journal,
+  observeSessionUsage, preparedDrafts, audioOwners, HttpError,
+  providers: { runRealtimeCore, approvedRestatement, approvedAudioReplay, synthesizeSpeech, readSpeechAudio, interviewerVoiceDefaults, selectNextPreparedMainQuestion, assertSingleCoreCandidateBinding, SINGLE_CORE_ENGINE_VERSION } });
 
 function newSession(context: Awaited<typeof contextPromise>, plan = createInterviewPlan(context, randomUUID())): InterviewSession {
   if (!context.interviewOverview) throw new HttpError(422, "대상 전형의 공식 면접 시간을 확인해 주세요.");
   const now = new Date().toISOString();
   const runtime = createSessionRuntime(context, owner, now); pinnedContexts.set(runtime.contextSnapshotSha256, structuredClone(context));
-  return { id: randomUUID(), createdAt: now, updatedAt: now, status: "active", evaluationStatus: "pending", target: context.target, runtime, sourceManifest: { ...structuredClone(context.manifest), interviewPlan: structuredClone(plan) }, durationSeconds: context.interviewOverview.durationSeconds, interviewOverview: structuredClone(context.interviewOverview), plan, mainQuestionTarget: plan.mainQuestionTarget, hasGreeted: false, turns: [], questionPresentations: [], questionPresentationEventIds: [], followUpCountByMainQuestion: {}, elapsedMs: 0 };
+  return createInterviewSession(context, plan, runtime, { now, HttpError });
 }
 async function prepareFirstQuestion(preparationId?: string) {
   const missing = missingKeys();
@@ -632,45 +318,10 @@ async function prepareFirstQuestion(preparationId?: string) {
   return entry;
 }
 
-async function prepareClosing(session: InterviewSession, reason: ClosingUtterance['reason'], workContext?: TurnWorkContext): Promise<ClosingUtterance> {
-  workContext?.assertLive();
-  if (session.runtime?.closingUtterance) return session.runtime.closingUtterance;
-  const epoch = session.runtime!.epoch;
-  const delivered = [...(session.questionPresentations ?? [])].reverse().find(item => item.startedAtMs !== null);
-  const last = session.turns.find(turn => turn.id === delivered?.turnId) ?? session.turns.at(-1);
-  const interviewerId = last?.interviewerId ?? 'interviewer-1', role = interviewerId === 'interviewer-1' ? 'primary' : 'secondary';
-  const settings = (last?.metadata as { voiceSettings?: { question?: SpeechSynthesisSettings } } | undefined)?.voiceSettings;
-  const speaker = settings?.question?.speaker ?? (role === 'primary' ? process.env.CLOVA_VOICE_SPEAKER || interviewerVoiceDefaults.primary : process.env.CLOVA_VOICE_SECOND_SPEAKER || interviewerVoiceDefaults.secondary);
-  const text = reason === 'technical_failure' ? '연결 상태를 확인한 뒤 다시 진행해 주세요.' : '면접은 여기까지 하겠습니다. 수고하셨습니다.';
-  let voiceSettings: SpeechSynthesisSettings | undefined;
-  const audioUrl = await runTurnWorkStage(workContext, 35_000, stage => synthesizeSpeech(text, speaker, { signal: stage.signal, role, ...(settings?.question ? { settings: settings.question } : {}), onTiming: timing => { voiceSettings = timing.settings; } }));
-  workContext?.assertLive();
-  if (session.runtime!.epoch !== epoch || session.status === 'completed') throw new HttpError(409, '종료된 면접의 늦은 음성 결과를 무시했습니다.');
-  const closing: ClosingUtterance = { id: randomUUID(), text, audioUrl, interviewerId, nonEvaluative: true, reason, ...(voiceSettings ? { voiceSettings } : {}) };
-  session.runtime!.closingUtterance = closing; audioOwners.set(audioUrl, owner.id);
-  checkpointSession(session, 'closing_prepared');
-  void journal(session, { type: 'closing.prepared', actor: 'server', role: interviewerId, payload: closing });
-  return closing;
-}
+const prepareClosing = createSessionClosingPreparer({ ownerId: owner.id, synthesizeSpeech, interviewerVoiceDefaults, audioOwners, journal, HttpError });
 
-const speechTimingSchema = z.object({ durationMs: z.number().finite().min(0).max(7_200_000), speakingMs: z.number().finite().min(0).max(7_200_000).nullable().optional(), firstSpeechMs: z.number().finite().min(0).max(7_200_000).nullable().optional() });
-function answerMetrics(answerId: string, transcript: string, input: unknown) {
-  const object = input && typeof input === "object" ? input as Record<string, unknown> : {};
-  const timing = speechTimingSchema.safeParse(object.speech);
-  const durationMs = timing.success ? timing.data.durationMs : 0;
-  const speakingMs = timing.success && timing.data.speakingMs != null && timing.data.speakingMs <= durationMs ? timing.data.speakingMs : null;
-  const firstSpeechMs = timing.success && timing.data.firstSpeechMs != null && timing.data.firstSpeechMs <= durationMs ? timing.data.firstSpeechMs : null;
-  return { ...object, speech: calculateSpeechMetrics({ rawTranscript: transcript, durationMs, speakingMs, firstSpeechMs }), habits: observeSpeechHabits(answerId, transcript, durationMs), timingOrigin: "client-monotonic-observed", transcriptOrigin: "CLOVA-Speech-gRPC" };
-}
 function recordAnswerObservation(session: InterviewSession, turn: RecordedTurn) {
-  if (!isFinalizedAnswer(turn)) return;
-  turn.answerObservation = observeAnswerSubmission(turn.rawTranscript, turn.metrics, turn.metadata.answerEndingObservation);
-  if (!turn.answerObservation.nonAnswer) return;
-  const payload = { ...turn.answerObservation, rawTranscript: turn.rawTranscript, transcriptStatus: turn.transcriptStatus,
-    microphoneEnabled: turn.metadata.answerEndingObservation?.microphoneEnabled ?? null,
-    reasonCode: turn.metadata.answerEndingObservation?.microphoneEnabled === false ? 'INPUT_DISABLED' : 'NO_ANSWER', scoring: "no-fabricated-content-or-independent-silence-score" };
-  void journal(session, { eventId: journalId("answer.non_answer", turn.id, turn.answerId), type: "answer.non_answer", actor: "server", turnId: turn.id, answerId: turn.answerId, payload });
-  if (turn.answerObservation.classification === "silence_observed") void journal(session, { eventId: journalId("answer.silence", turn.id, turn.answerId), type: "answer.silence", actor: "server", turnId: turn.id, answerId: turn.answerId, payload });
+  observeFinalizedAnswer(session, turn, { onEvent: event => { void journal(session, event); } });
 }
 function publicSessionProgress(session: InterviewSession) {
   return { status: session.status, evaluationStatus: session.evaluationStatus };
@@ -769,79 +420,27 @@ async function commitSessionEnd(session: InterviewSession, body: { metrics?: unk
         if (session.status !== 'completed' && (!session.runtime?.evaluationJob || session.evaluationError === 'EVALUATION_JOB_MISSING')) await beginEvaluation(session);
         return;
       }
-      const suppliedMetrics = body.metrics && typeof body.metrics === 'object' ? body.metrics as Record<string, unknown> : {};
-      const captureScopeSchema = z.object({ turnId: z.string().uuid(), answerId: z.string().min(1).max(160), captureRevision: z.number().int().min(1) });
-      const requestedScope = suppliedMetrics.captureFinishScope === undefined ? null : captureScopeSchema.parse(suppliedMetrics.captureFinishScope);
-      const capturedTurn = session.turns.at(-1);
-      if (!session.runtime!.acceptedEndRequest && requestedScope && (!capturedTurn || capturedTurn.id !== requestedScope.turnId || capturedTurn.answerId !== requestedScope.answerId || capturedTurn.metadata.answerCaptureRevision !== requestedScope.captureRevision)) throw new HttpError(409, '종료할 답변의 식별자가 일치하지 않습니다.');
-      session.runtime!.endRequestedAt ??= new Date().toISOString();
-      submissionWork.cancelSession(session.id);
-      session.runtime!.acceptedEndRequest ??= { elapsedMs: Math.max(session.elapsedMs, body.elapsedMs ?? 0), metrics: structuredClone(suppliedMetrics) };
+      const acceptedEnd = acceptSessionEndRequest(session, body, { HttpError, onAcceptedBeforeSnapshot: () => submissionWork.cancelSession(session.id) });
+      const captureScopeSchema = sessionEndCaptureScopeSchema;
       // Persist intent BEFORE waiting on STT, browser playback or client events.
       // A disconnected response does not cancel this server-owned operation.
       await save(session);
-      const endMetrics = session.runtime!.acceptedEndRequest.metrics;
+      const endMetrics = acceptedEnd.metrics;
       const finishScope = endMetrics.captureFinishScope === undefined ? null : captureScopeSchema.parse(endMetrics.captureFinishScope);
       await journalClientBackup(session, endMetrics);
       const activeStreams = [...streams.get(session.id) ?? []];
-      await Promise.all(activeStreams.map(async stream => {
-        const drain = endCaptureDrains.get(stream);
-        try {
-          if (drain && finishScope && drain.turnId === finishScope.turnId && drain.answerId === finishScope.answerId && drain.captureRevision === finishScope.captureRevision) {
-            // HTTP and WS are independent transports. The existing WS finish
-            // marker follows flushed PCM in the socket queue; wait for that
-            // marker before ending the provider stream.
-            let timer: ReturnType<typeof setTimeout> | undefined;
-            const received = await Promise.race([drain.receipt.then(() => true), new Promise<false>(resolve => { timer = setTimeout(() => resolve(false), 2_000); })]);
-            if (timer) clearTimeout(timer);
-            if (!received) throw new Error('END_CAPTURE_FINISH_NOT_RECEIVED');
-          }
-          if (drain) await drain.finishForEnd(); else await stream.finish();
-        } catch (error) {
+      const drainCaptures = createSessionEndDrainer<ClovaSpeechStream>({
+        drainFor: stream => endCaptureDrains.get(stream), finish: stream => stream.finish(), close: stream => stream.close(),
+        onFailure: (_stream, drain, error) => {
           const interrupted = session.turns.find(turn => turn.id === drain?.turnId) ?? session.turns.at(-1);
           if (interrupted?.transcriptStatus === 'streaming') interrupted.transcriptStatus = 'error';
           void journal(session, { type: 'error', actor: 'server', turnId: interrupted?.id, answerId: interrupted?.answerId, payload: { source: 'end-capture-drain', code: 'END_CAPTURE_UNCONFIRMED', message: safeProviderError(error), rawTranscript: interrupted?.rawTranscript ?? '' } });
-        }
-      }));
-      for (const stream of activeStreams) stream.close();
-      for (const stream of activeStreams) endCaptureDrains.delete(stream);
-      streams.delete(session.id);
-      const pausedTurn = session.turns.at(-1);
-      if (pausedTurn?.transcriptStatus === 'paused' && pausedTurn.metadata.answerSubmissionMode === 'staged-v2') {
-        try { assertCaptureConfirmed(pausedTurn); }
-        catch {
-          pausedTurn.transcriptStatus = 'error';
-          void journal(session, { type: 'error', actor: 'server', turnId: pausedTurn.id, answerId: pausedTurn.answerId, payload: { source: 'end-recovered-capture', code: 'END_CAPTURE_UNCONFIRMED', rawTranscript: pausedTurn.rawTranscript ?? '' } });
-        }
-      }
-      finalizeCapturedTurnForEnd(session.turns.at(-1), activeStreams.length > 0);
-      const endingTurn = session.turns.at(-1);
-      if (endingTurn?.metadata.answerSubmissionMode === 'staged-v2' && endingTurn.transcriptStatus === 'finalized') endingTurn.metadata.answerCommitStatus = 'committed';
-      session.status = "ending";
-      session.runtime!.epoch++;
-      checkpointSession(session, 'ending');
-      for (const key of preparedDrafts.keys()) if (key.startsWith(`${session.id}:`)) preparedDrafts.delete(key);
-      const timingBackup = z.record(z.string().uuid(), z.record(z.string().min(1), z.number().finite().min(0))).safeParse(endMetrics.clientTimingsByTurn);
-      if (timingBackup.success) for (const [turnId, timings] of Object.entries(timingBackup.data)) {
-        const timedTurn = session.turns.find(turn => turn.id === turnId);
-        if (timedTurn) { timedTurn.metadata.clientTimings = { ...timedTurn.metadata.clientTimings, ...timings }; void journal(session, { type: "timings.observed", actor: "client", turnId, payload: { clientTimings: timedTurn.metadata.clientTimings, origin: "end-backup" } }); }
-      }
-      session.metrics = { ...endMetrics, latency: summarizeSessionLatency(session) };
-      session.elapsedMs = session.runtime!.acceptedEndRequest.elapsedMs;
-      const lastTurn = session.turns.at(-1);
-      if (isFinalizedAnswer(lastTurn)) {
-        const scoped = Array.isArray(endMetrics.answers) ? endMetrics.answers.find(item => item && typeof item === 'object' && (item as { turnId?: string }).turnId === lastTurn.id && (item as { answerId?: string }).answerId === lastTurn.answerId) : null;
-        const currentMetrics = scoped ?? (endMetrics.lastObservedAnswerTurnId === lastTurn.id ? endMetrics : lastTurn.metrics ?? {});
-        lastTurn.metrics = answerMetrics(lastTurn.answerId, lastTurn.rawTranscript, currentMetrics);
-      }
-      if (lastTurn) recordAnswerObservation(session, lastTurn);
-      if (lastTurn?.transcriptStatus === "finalized" && lastTurn.answerId) {
-        const captureAttemptId = journalCaptureId(lastTurn);
-        void journal(session, { eventId: journalId("answer.submitted", lastTurn.id, lastTurn.answerId, captureAttemptId), type: "answer.submitted", actor: "candidate", turnId: lastTurn.id, answerId: lastTurn.answerId, payload: { source: "explicit-end", rawTranscript: lastTurn.rawTranscript ?? "", captureAttemptId } });
-        void journal(session, { eventId: journalId("stt.final", lastTurn.id, lastTurn.answerId, captureAttemptId), type: "stt.final", actor: "candidate", turnId: lastTurn.id, answerId: lastTurn.answerId, payload: { rawTranscript: lastTurn.rawTranscript ?? "", source: "explicit-end", captureAttemptId, observations: lastTurn.sttObservations ?? null } });
-      }
-      void journal(session, { eventId: "session-ended", type: "session.ended", actor: "server", payload: { elapsedMs: session.elapsedMs, status: session.status, metrics: session.metrics } });
-      void journal(session, { type: "session.snapshot", actor: "server", payload: session });
+        }, forget: streamsToForget => { for (const stream of streamsToForget) endCaptureDrains.delete(stream); streams.delete(session.id); },
+      });
+      const drained = await drainCaptures({ captures: activeStreams, finishScope });
+      finalizeSessionEndState(session, { activeStreamsFlushed: drained.activeStreamsFlushed,
+        retirePreparedWork: () => { for (const key of preparedDrafts.keys()) if (key.startsWith(`${session.id}:`)) preparedDrafts.delete(key); },
+        onEvent: event => { void journal(session, event); } });
       await beginEvaluation(session);
       });
 }

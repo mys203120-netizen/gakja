@@ -1,5 +1,19 @@
 # 청사진 v2 기준 구현 기록
 
+## 2026-11-07 PR07-E 격리 세션 writer 단계
+
+D의 정확한 `34c257e`에서 별도 기능 브랜치를 시작했다. [E 실제 경로·transaction 계약](pr07e-session-writer.md)은 기존 local adapter와 명시한 합성 인증 세션의 DB 단일 writer를 구분한다. 시작/최종 SHA·새 설치·고유 실행 로그·두 서버/CI와 보호 원본 전후 증거는 Git 제외 `artifacts/pr07e/final-report.json`으로 판정한다. 문서의 명령 예시나 이전 D의 통과 수를 E 결과로 사용하지 않는다.
+
+| E 관문 | 판정 범위 |
+|---|---|
+| 구현 | 별도 authenticated runtime/binding, 기존 lifecycle·질문/closing preparer의 실제 재사용, DB writer 선택·CAS·멱등 receipt·복구 fence·두 단계 종료와 F handoff |
+| 격리 검증 | 실제 PostgreSQL/서로 다른 두 서버·독립 pool의 HTTP/WSS, 정상 A/B·교차 거부·경합/응답 유실/재시작·권한/자원·rollback. 최종 SHA의 실제 실행 보고서로 판정 |
+| 기존 local/원본 | runtime-v1·5개 SessionStore/local 동작·목적/정본/UTF-16/hash, 원본1665·공개17·credential1·기존평가31와 기존 작업 트리 보존을 전후 비교 |
+| 운영 writer 전환 | 이번 범위 밖, 미완료. 실제 귀속/Auth/provider/bucket/관리 책임 및 private 실제 Storage·운영 검증 필요 |
+| F 인계 | 새 DB 종료는 frozen 입력과 unique durable handoff의 대기 상태. 평가 job 실행·검수/서명·평가 writer는 별도 F |
+
+운영 미설정 mutation503, 질문승인35/평가규격승인0/검수대기35 및 `sessionEvaluationReady=false`를 유지한다. D shadow run을 운영 권위로 승격하지 않는다. 기존 B/C/D migration/checkpoint와 local 세션을 일괄 변경하지 않는다. W0 실계정 API/브라우저 QA·G1 실제 장치/상용 음성/검수·PR04 의미 품질·G4 identity/OCR·PR08 일반 job/비용 기반 및 G 제한 전환도 별도 관문이다.
+
 ## 2026-11-07 PR07-D 읽기 이관·shadow 단계
 
 C의 정확한 `3204e83`에서 별도 기능 브랜치를 시작했다. [D 계약·실행 경로](pr07d-read-shadow.md)는 inventory/귀속(D1), C lifecycle 기반 격리 적재·typed reader의 실제 caller 연결(D2), 독립 C baseline/후보 비교(D3)를 구분한다. 기존 local이 세션·답변·평가의 유일 writer다. 시작/최종 SHA·새 설치·고유 실행 로그·CI와 보호 자료의 전후 증거는 Git 제외 `artifacts/pr07d/final-report.json`을 따른다. 명령 예시나 이전 C 통과 수를 D 성공 증거로 사용하지 않는다.

@@ -4,6 +4,7 @@ packages/contracts/reference/proposed-v2-2026-11-06/** -text
 
 # The generated contract is compared to canonical JSON serialization bytes.
 packages/contracts/domain-v1/generated.schemas.json -text
+packages/contracts/session-auth-v1/generated.schemas.json -text
 
 # These configured source inputs participate in existing private source hashes.
 # Their committed bytes already equal the authoritative originals; do not convert.

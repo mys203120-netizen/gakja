@@ -28,8 +28,10 @@ await writeFile(`data/prepared/runtime-policy-registry/${registry.contentSha256}
 const previous=JSON.parse(await readFile('artifacts/fixed-bank-answers-retest.json','utf8'));
 const prior=JSON.parse(await readFile('artifacts/bank-ai-student-followup-e2e.json','utf8'));
 const original:InterviewSession=JSON.parse(await readFile(`data/sessions/${prior.sessionId}.json`,'utf8'));
+const localOwner=original.runtime?.owner;
+if(localOwner?.mode!=='local-development')throw new Error('LOCAL_RUNTIME_POLICY_FIXTURE_REQUIRED');
 const hash=(s:string)=>createHash('sha256').update(s).digest('hex');
-const makeSession=()=>({...structuredClone(original),id:randomUUID(),status:'active',evaluationStatus:'pending',plan:structuredClone(bank.plan),sourceManifest:{...structuredClone(context.manifest),interviewPlan:structuredClone(bank.plan)},runtime:createSessionRuntime(context,original.runtime!.owner),turns:[],questionPresentations:[],questionPresentationEventIds:[],followUpCountByMainQuestion:{},conversationLedger:undefined,elapsedMs:30000,durationSeconds:context.interviewOverview!.durationSeconds}) as InterviewSession;
+const makeSession=()=>({...structuredClone(original),id:randomUUID(),status:'active',evaluationStatus:'pending',plan:structuredClone(bank.plan),sourceManifest:{...structuredClone(context.manifest),interviewPlan:structuredClone(bank.plan)},runtime:createSessionRuntime(context,localOwner),turns:[],questionPresentations:[],questionPresentationEventIds:[],followUpCountByMainQuestion:{},conversationLedger:undefined,elapsedMs:30000,durationSeconds:context.interviewOverview!.durationSeconds}) as InterviewSession;
 const fixtures=previous.cases.map((c:{index:number;question:string;answer:string;sameAnswerSha256:string})=>{
  const selected=bank.slots.flatMap(slot=>slot.candidates.map(candidate=>({slot,candidate}))).find(({candidate})=>candidate.draft.questionText===c.question);
  if(!selected||hash(c.answer)!==c.sameAnswerSha256)throw new Error('FIXED_CASE_CHANGED');

@@ -51,7 +51,12 @@
     "test:shadow-unit": "tsx --test tests/shadow/*.unit.test.ts",
     "test:shadow": "node scripts/run-pr07d-storage-tests.mjs",
     "test:shadow-db": "node scripts/run-pr07d-db-tests.mjs",
-    "test:shadow-db-local": "node scripts/run-pr07d-local-db.mjs"
+    "test:shadow-db-local": "node scripts/run-pr07d-local-db.mjs",
+    "verify:session-contracts": "tsx scripts/export-authenticated-session-schemas.ts --check",
+    "test:session-writer-unit": "tsx --test tests/session-writer/*.unit.test.ts",
+    "test:session-writer": "node scripts/run-pr07e-storage-tests.mjs",
+    "test:session-writer-db": "node scripts/run-pr07e-db-tests.mjs",
+    "test:session-writer-db-local": "node scripts/run-pr07e-local-db.mjs"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-kr": "^5.3.1",

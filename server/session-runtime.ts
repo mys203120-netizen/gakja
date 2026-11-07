@@ -5,6 +5,7 @@ import type { SessionStore } from './storage/session-store';
 import { compilePolicyClauseRegistry, COMPILED_RUNTIME_POLICY_VERSION } from './policy/compiled-runtime-policy';
 
 export const SESSION_RUNTIME_VERSION = 'session-runtime-v1';
+export const AUTHENTICATED_SESSION_RUNTIME_VERSION = 'authenticated-session-runtime-v1';
 export const SESSION_RECOVERY_WINDOW_MS = 10 * 60_000;
 export const localDevelopmentOwner = () => ({ id: process.env.LOCAL_INTERVIEW_OWNER_ID?.trim() || 'local-development-owner', mode: 'local-development' as const });
 export const snapshotHash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -14,9 +15,7 @@ export interface ClosingUtterance {
   voiceSettings?: { speaker: string; speed: number; pitch: number; volume: number; format: string };
 }
 export interface PersistedNextResult { turn: RecordedTurn | null; done: boolean; closingUtterance?: ClosingUtterance }
-export interface SessionRuntimeState {
-  version: typeof SESSION_RUNTIME_VERSION;
-  owner: { id: string; mode: 'local-development' };
+export interface SessionRuntimeCommon {
   engineVersion: string; contextSnapshotSha256: string; epoch: number;
   runtimePolicy?: { mode: 'compiled' | 'full'; version: string; registrySha256: string | null };
   checkpoint: { phase: string; at: string; turnId: string | null; answerId: string | null; disconnectedAt?: string; deliveryUncertain?: boolean };
@@ -35,17 +34,41 @@ export interface SessionRuntimeState {
   opening?: { id: string; questionTurnId: string; text: string; audioUrl: string; interviewerId: string; delivery?: { startedAt?: string; completedAt?: string } };
   firstEvaluationDelivery?: { eventId: string; turnId: string; observedAt: string; clockId: string; status: 'normal_delivery_observed'; entitlementLedgerImplemented: false };
 }
-export function createSessionRuntime(context: InterviewContext, owner = localDevelopmentOwner(), now = new Date().toISOString()): SessionRuntimeState {
+export interface LocalSessionRuntimeState extends SessionRuntimeCommon {
+  version: typeof SESSION_RUNTIME_VERSION;
+  owner: { id: string; mode: 'local-development' };
+}
+export interface AuthenticatedSessionRuntimeState extends SessionRuntimeCommon {
+  version: typeof AUTHENTICATED_SESSION_RUNTIME_VERSION;
+  owner: { id: string; mode: 'authenticated' };
+  /** The capture owner received the ordered end marker and owns the bounded
+   * external drain. Other servers wait for its durable finalization receipt. */
+  endCaptureDrain?: { intentId: string; streamId: string; turnId: string; answerId: string; captureRevision: number; markerReceivedAt: string; providerDeadlineAt: string };
+}
+export type SessionRuntimeState = LocalSessionRuntimeState | AuthenticatedSessionRuntimeState;
+function runtimeState(context: InterviewContext, now: string): SessionRuntimeCommon {
   const registry = context.interviewerPolicy ? compilePolicyClauseRegistry(context) : null;
-  return { version: SESSION_RUNTIME_VERSION, owner, engineVersion: context.manifest.rulesVersion, contextSnapshotSha256: snapshotHash(context), epoch: 0,
+  return { engineVersion: context.manifest.rulesVersion, contextSnapshotSha256: snapshotHash(context), epoch: 0,
     runtimePolicy: { mode: 'compiled', version: COMPILED_RUNTIME_POLICY_VERSION, registrySha256: registry?.contentSha256 ?? null },
     checkpoint: { phase: 'prepared', at: now, turnId: null, answerId: null }, operations: {} };
 }
+export function createSessionRuntime(context: InterviewContext, owner = localDevelopmentOwner(), now = new Date().toISOString()): LocalSessionRuntimeState {
+  return { version: SESSION_RUNTIME_VERSION, owner, ...runtimeState(context, now) };
+}
+/** The caller gets ownerId from A/B authority; this function does not mint it. */
+export function createAuthenticatedSessionRuntime(context: InterviewContext, ownerId: string, now = new Date().toISOString()): AuthenticatedSessionRuntimeState {
+  if (!ownerId || ownerId !== ownerId.trim()) throw new Error('AUTHENTICATED_SESSION_OWNER_REQUIRED');
+  return { version: AUTHENTICATED_SESSION_RUNTIME_VERSION, owner: { id: ownerId, mode: 'authenticated' }, ...runtimeState(context, now) };
+}
 export function assertSessionOwner(session: InterviewSession, ownerId: string) {
-  if (!session.runtime || session.runtime.version !== SESSION_RUNTIME_VERSION || session.runtime.owner.id !== ownerId) throw new Error('SESSION_OWNER_MISMATCH');
+  if (!session.runtime || session.runtime.version !== SESSION_RUNTIME_VERSION || session.runtime.owner.mode !== 'local-development' || session.runtime.owner.id !== ownerId) throw new Error('SESSION_OWNER_MISMATCH');
 }
 export function assertRecoverableSession(session: InterviewSession, ownerId: string, now = Date.now()) {
   assertSessionOwner(session, ownerId);
+  assertSessionRecoveryWindow(session, now);
+}
+/** Shared existing 10-minute policy; DB generation remains a separate fence. */
+export function assertSessionRecoveryWindow(session: InterviewSession, now = Date.now()) {
   if (session.status !== 'active') return;
   const checkpoint = session.runtime!.checkpoint;
   const interruptedAt = Date.parse(checkpoint.disconnectedAt ?? checkpoint.at);
@@ -54,6 +77,17 @@ export function assertRecoverableSession(session: InterviewSession, ownerId: str
 /** A new socket is required. A saved partial text is preserved, never promoted to final. */
 export function restoreLogicalSession(session: InterviewSession, ownerId: string, now = Date.now()) {
   assertRecoverableSession(session, ownerId, now);
+  return restoreSessionRuntimeState(session);
+}
+export function assertAuthenticatedSessionOwner(session: InterviewSession, ownerId: string) {
+  if (session.runtime?.version !== AUTHENTICATED_SESSION_RUNTIME_VERSION || session.runtime.owner.mode !== 'authenticated' || session.runtime.owner.id !== ownerId) throw new Error('AUTHENTICATED_SESSION_OWNER_MISMATCH');
+}
+export function restoreAuthenticatedSession(session: InterviewSession, ownerId: string, now = Date.now()) {
+  assertAuthenticatedSessionOwner(session, ownerId);
+  assertSessionRecoveryWindow(session, now);
+  return restoreSessionRuntimeState(session);
+}
+function restoreSessionRuntimeState(session: InterviewSession) {
   const restored = structuredClone(session);
   if (restored.status === 'active') {
     restored.runtime!.epoch++;

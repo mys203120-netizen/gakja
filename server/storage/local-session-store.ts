@@ -10,7 +10,8 @@ export interface LocalSessionStoreOptions {
   replaceFile?: typeof rename;
   wait?: (milliseconds: number) => Promise<void>;
 }
-/** Local-only adapter. A future DB adapter can implement the same boundary. */
+/** Existing local-only adapter. Authenticated DB mutations use explicit CAS
+ * commands rather than implementing this unconditional save boundary. */
 export class LocalSessionStore implements SessionStore {
   private writes = new Map<string, Promise<void>>();
   constructor(private directory = path.join(process.cwd(), "data", "sessions"), private readonly io: LocalSessionStoreOptions = {}) {}
@@ -46,6 +47,7 @@ export class LocalSessionStore implements SessionStore {
     return envelope.context;
   }
   save(session: InterviewSession) {
+    if (session.runtime && (session.runtime.version !== 'session-runtime-v1' || session.runtime.owner.mode !== 'local-development')) throw new Error('LOCAL_SESSION_WRITER_ONLY');
     if (!/^[0-9a-f-]{36}$/.test(session.id)) throw new Error("잘못된 세션 ID");
     const content = JSON.stringify(session, null, 2);
     const pending = (this.writes.get(session.id) ?? Promise.resolve()).catch(() => {}).then(async () => {

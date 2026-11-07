@@ -65,6 +65,8 @@ function policySha256(context: InterviewContext, session: InterviewSession, mode
   const policy = mode === 'full' ? null : selectSingleCorePolicy(context, session);
   return hash(`${SINGLE_CORE_CONTRACT_VERSION}\n${singleCoreInstructions(context, policy)}`);
 }
+/** Reuse the exact existing policy pin for trusted provider compositions. */
+export { policySha256 as singleCoreCandidatePolicySha256 };
 
 /** Identity, revision and policy checks only. This works while the source is
  * staged and after commitment; it never reclassifies the answer. */

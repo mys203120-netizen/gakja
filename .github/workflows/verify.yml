@@ -134,3 +134,31 @@ jobs:
           path: artifacts/pr07d/storage-*/
           if-no-files-found: ignore
           retention-days: 14
+  session-writer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      PR07E_TEST_RUN_ID: ci_${{ github.run_id }}_${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify session command and domain units
+        run: npm run test:session-writer-unit
+      - name: Verify authenticated schema generation is current
+        run: npm run verify:session-contracts
+      - name: Verify actual two-server session writer and isolated PostgreSQL Storage
+        run: node scripts/run-pr07e-storage-tests.mjs
+      - name: Retain redacted session writer verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr07e-session-writer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/pr07e/storage-*/
+          if-no-files-found: ignore
+          retention-days: 14
