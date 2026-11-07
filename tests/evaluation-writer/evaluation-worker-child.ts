@@ -43,7 +43,7 @@ net.Socket.prototype.connect = function (this: net.Socket, ...args: Parameters<t
   if (!(option && typeof option === 'object' && 'path' in option) && !['127.0.0.1', 'localhost', '::1', '[::1]'].includes(host)) { counters.externalNetworkAttempts++; throw new Error('F_WORKER_EXTERNAL_NETWORK'); } return Reflect.apply(nativeConnect, this, args); } as typeof nativeConnect;
 const sessions = createPostgresSessionCommandReader({ boundary: auth.identity, requestPool: request, environment: 'isolated-session-writer' });
 const actualRepository = createPostgresEvaluationWriter({ boundary: auth.identity, requestPool: request, workerPool: worker, environment: 'isolated-evaluation-writer' });
-let holdModel = false, failModel = false, holdAfterWorker = false,holdAfterCheckpoint=false;
+let holdModel = false, failModel = false, terminalModelFailure = false, holdAfterWorker = false,holdAfterCheckpoint=false;
 const holds = new Map<string, () => void>(), aborts = new Map<string, AbortController>();
 const repository={...actualRepository,workerJobs(context:Parameters<typeof actualRepository.workerJobs>[0],capability:Parameters<typeof actualRepository.workerJobs>[1]){
   const actual=actualRepository.workerJobs(context,capability);return {...actual,async checkpoint(...args:Parameters<typeof actual.checkpoint>){
@@ -61,7 +61,7 @@ const engine = createIsolatedEvaluationWorker({ environment: 'isolated-evaluatio
     const measured=JSON.parse(input.input) as {answers:Array<{id:string}>};modelInputs.push({model:input.model,turnIds:measured.answers.map(answer=>answer.id)});
     counters.modelCalls++; const callId = randomUUID(); send({ type: 'model-start', callId, pid: process.pid, model: input.model });
     if (holdModel) await new Promise<void>((resolve, reject) => { const timer = setTimeout(() => { holds.delete(callId); reject(new Error('F_MODEL_BARRIER_TIMEOUT')); }, 30_000); holds.set(callId, () => { clearTimeout(timer); holds.delete(callId); resolve(); }); send({ type: 'barrier', phase: 'model', barrierId: callId }); });
-    if (failModel) throw Object.assign(new Error('Explicit synthetic transient provider failure'), { status: 503 });
+    if (failModel) throw Object.assign(new Error(terminalModelFailure ? 'Explicit synthetic terminal provider failure' : 'Explicit synthetic transient provider failure'), { status: terminalModelFailure ? 400 : 503 });
     return syntheticEvaluationResponse(input, execution);
   } } });
 async function contextFor(who: string): Promise<AuthenticatedRequestContext> { return auth.identity.selectScope(await auth.identity.authenticate('Bearer ' + initial.tokens[who]), { applicationTargetId: 'shadow-app-' + (who.startsWith('b') ? 'b' : 'a') }) as AuthenticatedRequestContext; }
@@ -70,7 +70,7 @@ async function state() { return { pid: process.pid, counters: { ...counters }, m
 process.on('message', (message: { type: string; requestId: string; operation: string; payload?: Record<string, unknown> }) => {
   if (message?.type !== 'control') return;
   void (async () => { const p = message.payload ?? {}; let result: unknown;
-    if (message.operation === 'configure') { holdModel = p.holdModel === true; failModel = p.failModel === true; holdAfterWorker=p.holdAfterWorker===true;holdAfterCheckpoint=p.holdAfterCheckpoint===true; result = { configured: true }; }
+    if (message.operation === 'configure') { holdModel = p.holdModel === true; failModel = p.failModel === true || p.failModel === 'terminal'; terminalModelFailure = p.failModel === 'terminal'; holdAfterWorker=p.holdAfterWorker===true;holdAfterCheckpoint=p.holdAfterCheckpoint===true; result = { configured: true }; }
     else if (message.operation === 'release') { const release = holds.get(String(p.barrierId)); if (!release) throw new Error('F_BARRIER_NOT_FOUND'); release(); result = { released: true }; }
     else if (message.operation === 'state') result = await state();
     else if (message.operation === 'probe-database') result = { request: (await request.query('SELECT pg_backend_pid() pid,current_user role')).rows[0], worker: (await worker.query('SELECT pg_backend_pid() pid,current_user role')).rows[0] };

@@ -294,7 +294,12 @@ test('F-RESTORE-12 completed real E/F input, reviews and results restore read-on
   assert.equal(Object.keys(archive.fTables).length,14);assert.equal(archive.manifest.length,14);assert.equal(archive.eSession.session.session_json,source.sessionJson);assert.equal(archive.eSession.session.context_json,source.contextJson);
   assert.equal(hash(archive.sourceDependenciesJson),archive.sourceDependenciesSha256);assert.deepEqual(archive.newResultObjects,[]);
   const dependencies=JSON.parse(archive.sourceDependenciesJson) as {state:string;objects:Array<{bucket:string;key:string;bytes:string;sha256:string}>};assert.equal(dependencies.state,'pinned-D-manifest');assert.ok(dependencies.objects.length>0);
-  for(const reference of dependencies.objects){const bytes=await provider.read({bucket:reference.bucket,key:reference.key},{maxBytes:32*1024*1024,signal:AbortSignal.timeout(15_000)});assert.equal(bytes.length,Number(reference.bytes));assert.equal(hash(bytes),reference.sha256);}
+  for(const reference of dependencies.objects){
+    const expectedBytes=Number(reference.bytes);
+    assert.ok(Number.isSafeInteger(expectedBytes)&&expectedBytes>0&&expectedBytes<=16*1024*1024,'Public source fixture must fit the retained provider limit');
+    const bytes=await provider.read({bucket:reference.bucket,key:reference.key},{maxBytes:expectedBytes,signal:AbortSignal.timeout(15_000)});
+    assert.equal(bytes.length,expectedBytes);assert.equal(hash(bytes),reference.sha256);
+  }
   const restoring=await new ServerChild('restore-mapping','restore').start();await restoring.rpc('f-restore',{who:'boperator',sessionId:item.id,bundle});const restored=await restoring.rpc<SessionCommandSnapshot>('snapshot',{who:'b',sessionId:item.id});assert.equal(restored.writer,'read-only');assert.equal(restored.sessionJson,source.sessionJson);assert.equal(restored.contextJson,source.contextJson);assert.equal(restored.pinsJson,source.pinsJson);assert.deepEqual(restored.handoff,source.handoff);
   const recopy=await restoring.rpc<EvaluationPreservationBundle>('f-export',{who:'boperator',sessionId:item.id}),copied=JSON.parse(recopy.payloadJson);assert.deepEqual(copied.fTables,archive.fTables);assert.deepEqual(copied.manifest,archive.manifest);
   assert.equal(copied.sourceDependenciesJson,archive.sourceDependenciesJson);assert.equal(copied.sourceDependenciesSha256,archive.sourceDependenciesSha256);assert.deepEqual(copied.newResultObjects,[]);
@@ -322,10 +327,17 @@ registerHandoffIntegrityCases({one:()=>one,worker1:()=>worker1,worker2:()=>worke
 
 test('F-RETRY-14 authenticated retry and receipt queries recover a real synthetic provider failure and reject another session receipt',{timeout:300_000},async()=>{
   await installTrust('a');const id=await endedHttp('a');await publishA('a',id);assert.equal((await publishB('a',id)).status,200);assert.equal((await consume('a',id)).status,200);const jobId=(await eview('a',id)).projection!.job!.id;
-  await worker1.rpc('configure',{failModel:true});const failed=await runJob('a',jobId);assert.equal(failed.job?.status,'queued',JSON.stringify(failed));await worker1.rpc('configure',{});assert.equal((await sql('evaluation_results',id)).length,0);
+  const dbState=async()=> (await pools.admin.query("SELECT status,attempts,next_retry_at::text next_retry_at,lease_token::text lease_token,clock_timestamp()::text server_now,(status='queued' AND (next_retry_at IS NULL OR next_retry_at<=clock_timestamp())) eligible FROM gakja.evaluation_jobs WHERE job_id=$1",[jobId])).rows[0];
+  // A transient 503 is already queued behind the retained DB-clock backoff;
+  // manual retry deliberately resets terminal failed jobs only, as locally.
+  await worker1.rpc('configure',{failModel:'terminal'});let failed:Awaited<ReturnType<typeof runJob>>;
+  try{failed=await runJob('a',jobId);}finally{await worker1.rpc('configure',{});}
+  assert.equal(failed!.job?.status,'failed',JSON.stringify(failed!));const failedState=await dbState();assert.equal(failedState.status,'failed');assert.equal(failedState.attempts,1);assert.equal(failedState.next_retry_at,null);assert.equal(failedState.lease_token,null);assert.equal(failedState.eligible,false);assert.equal((await sql('evaluation_results',id)).length,0);
   const retried=await fcommand('a',id,'retry',{jobId});assert.equal(retried.status,200,JSON.stringify(retried.value));
+  const queuedState=await dbState();assert.equal(queuedState.status,'queued');assert.equal(queuedState.attempts,1);assert.equal(queuedState.next_retry_at,null);assert.equal(queuedState.lease_token,null);assert.equal(queuedState.eligible,true);
+  rows.push({caseId:'F-RETRY-14-admission',jobId,failureMode:'explicit-synthetic-terminal-400',failedWorkerResult:failed!,failedState,queuedState,retryReceipt:retried.value});
   const query=`?key=${retried.value.key}&inputSha256=${retried.value.inputSha256}`,receipt=await one.request<Reply>('a',epath(id,'commands')+query);assert.equal(receipt.status,200);assert.equal(receipt.value.operationId,retried.value.operationId);
   const other=completed.get('a')!.id,wrong=await one.request<{code:string}>('a',epath(other,'commands')+query);assert.equal(wrong.status,409,JSON.stringify(wrong.value));assert.equal(wrong.value.code,'F_RECEIPT_SESSION_CHANGED');
   const complete=await runJob('a',jobId,worker2);assert.equal(complete.job?.status,'completed',JSON.stringify(complete));assert.equal((await sql('evaluation_results',id)).length,1);assert.equal((await eview('a',id)).projection!.job!.attempts,2);
-  rows.push({caseId:'F-RETRY-14',jobId,actualFailure:true,authorizedRetry:200,sameReceiptReplayed:true,crossSessionReceiptRejected:409,attempts:2,resultRows:1});
+  rows.push({caseId:'F-RETRY-14',jobId,actualFailure:true,failureMode:'explicit-synthetic-terminal-400',authorizedRetry:200,sameReceiptReplayed:true,crossSessionReceiptRejected:409,attempts:2,resultRows:1,failedState,queuedState,completedState:await dbState()});
 });
