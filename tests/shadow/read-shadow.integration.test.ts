@@ -122,9 +122,20 @@ test.before(async()=>{
 });
 test.after(async()=>{
   observing=false;
-  const cleanupErrors:Record<string,unknown>[]=[];
+  const cleanupErrors:Record<string,unknown>[]=[],inventoryStatistics:Record<string,unknown>[]=[];
   for(const value of inventories){const context=contexts.get(value.plan.ownerId.slice(-1));if(context)try{
+    const prior=await repository.capture(context,value.plan.runId);
     const result=await importer.cleanup(context,value,capability(context,value));assert.equal(result.complete,true);assert.deepEqual(result.remaining,[]);
+    const statistics=(snapshot:typeof prior)=>snapshot?{state:snapshot.state,generation:snapshot.generation,artifactRows:snapshot.artifacts.length,
+      boundMappingRows:snapshot.artifacts.filter(a=>a.status==='bound').length,trackedReceiptRefs:snapshot.artifacts.filter(a=>!!a.receiptId).length,
+      assignedObjectRefs:snapshot.artifacts.filter(a=>!!a.objectId).length,knownAbsentRows:snapshot.artifacts.filter(a=>a.availability==='absent').length,
+      quarantinedRows:snapshot.artifacts.filter(a=>a.status==='quarantined').length,pointerRows:snapshot.pointers.length}:null;
+    inventoryStatistics.push({runId:value.plan.runId,planSha256:value.plan.planSha256,inputFingerprint:value.inputFingerprint,binding:value.plan.binding,
+      classifications:value.counts,plannedArtifactRows:value.plan.artifacts.length,plannedPresentRows:value.plan.artifacts.filter(a=>a.availability==='present').length,
+      plannedKnownAbsentRows:value.plan.artifacts.filter(a=>a.availability==='absent').length,
+      plannedRawBytes:value.plan.artifacts.reduce((total,a)=>total+(a.availability==='present'?a.sizeBytes:0),0),
+      beforeCleanup:statistics(prior),afterCleanup:statistics(result.state),cleanupComplete:result.complete,
+      boundRowsAfterCleanupMeaning:'ledger tracking status only; cancelled objects are not readable'});
     rows.push({caseId:'D-CLEANUP-VERIFIED',runId:value.plan.runId,complete:result.complete,remaining:result.remaining});
   }catch(error){const failure={caseId:'D-CLEANUP',runId:value.plan.runId,error:(error as {code?:string;message?:string}).code??(error as Error).message};rows.push(failure);cleanupErrors.push(failure);}}
   fs.promises.readFile=originalRead;syncBuiltinESMExports();
@@ -132,6 +143,9 @@ test.after(async()=>{
   await fs.promises.writeFile(output,JSON.stringify({version:'pr07d-actual-domain-shadow-v1',baselineCommit:baseline.codeCommit,baselineFileReads:baseline.metrics.fixtureFileReads,
     storageEngine:diagnostic?'controlled-memory-diagnostic-NOT-actual-Storage':'official-Supabase-Storage-REST',
     actualStudentDataTransferred:false,fixtureKind:'public synthetic student + Git-public policy/school reference dependencies',rows,io,localAttempts,
+    inventoryStatistics,inventoryTotals:{runs:inventories.length,planArtifactRows:inventories.reduce((total,v)=>total+v.plan.artifacts.length,0),
+      selectedFileRows:inventories.reduce((total,v)=>total+(v.counts.selected??0),0),dependencyFileRows:inventories.reduce((total,v)=>total+(v.counts.dependency??0),0),
+      knownAbsentRows:inventories.reduce((total,v)=>total+(v.counts.absent??0),0),counting:'plan rows across separate runs; intentional repeated inputs are counted repeatedly, not claimed as unique original files'},
     approvedEvaluationCount:0,sessionEvaluationWrites:0,aiProviderCalls:0},null,2)+'\n');await closePools(pools);assert.deepEqual(cleanupErrors,[]);
 });
 
@@ -308,8 +322,9 @@ test('D-SHADOW-11 pinned ready bank and a separate partial-present plan pass the
   const pinned=await noLocal(()=>loadQuestionBankByPinnedPlan(contextValue,fixture.pinnedPlan,{...read.bankOptions(),root:poisonRoot}));
   assert.equal(baseline.pinnedBank.status,'fulfilled');assert.ok(pinned);assert.deepEqual(json(pinned),baseline.pinnedBank.value);
   assert.equal(await noLocal(()=>loadQuestionBankByPinnedPlan(contextValue,{...fixture.pinnedPlan,poolContentSha256:'0'.repeat(64)},{...read.bankOptions(),root:poisonRoot})),null);
-  const ids=['input-studentPdf','source','source-pointer','analysis-v2','analysis-pointer','audio','bank','bank-partial'];
-  const artifacts=fixture.artifacts.filter((a:{artifactId:string})=>ids.includes(a.artifactId)).map((a:ShadowInventoryRequest['artifacts'][number])=>{
+  // Preparation summary revalidates the staged analysis QA and all context
+  // dependencies. Retain the complete selected graph in this separate plan.
+  const artifacts=fixture.artifacts.map((a:ShadowInventoryRequest['artifacts'][number])=>{
     if(a.artifactId==='bank')return {artifactId:a.artifactId,role:a.role,reference:a.reference,selection:a.selection,scope:a.scope,required:false as const,
       availability:'absent' as const,absenceReason:'known-absent' as const,dependencies:[]};
     if(a.artifactId==='bank-partial')return {artifactId:a.artifactId,role:a.role,reference:a.reference,selection:a.selection,scope:'target' as const,required:true,
@@ -323,7 +338,8 @@ test('D-SHADOW-11 pinned ready bank and a separate partial-present plan pass the
   assert.equal(partial.eligible,true);inventories.push(partial);
   const partialImporter=createShadowImporter({repository,objects,objectRepository,identity,roots});await partialImporter.import(context,partial,capability(context,partial));
   const partialRead=await createShadowReadRepositories({context,runId:partial.plan.runId,repository,objects,environment:'isolated-shadow'});
-  const summary=await noLocal(()=>loadQuestionBankPreparationSummary(contextValue,{...partialRead.bankOptions(),root:poisonRoot,plan:fixture.plan,environment:fixture.environment}));
+  const partialContext=await noLocal(()=>loadInterviewContextAt(poisonRoot,{...partialRead.readOptions(),writeManifest:false}));assert.deepEqual(partialContext.errors,[]);
+  const summary=await noLocal(()=>loadQuestionBankPreparationSummary(partialContext,{...partialRead.bankOptions(),root:poisonRoot,plan:fixture.plan,environment:fixture.environment}));
   assert.equal(baseline.partialSummary.status,'fulfilled');assert.equal(summary.status,'preparing');assert.deepEqual(json(summary),baseline.partialSummary.value);
   rows.push({caseId:'D-SHADOW-11',outcome:'equivalent-success',pinnedReady:true,wrongBankHashRefused:true,partialPresentStatus:summary.status,
     partialEligibleCount:summary.availableApprovedCount,partialPublishedAsReady:false,diagnostics:partialRead.diagnostics()});

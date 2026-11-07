@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import net from 'node:net';
+import { request as httpRequest } from 'node:http';
+import { Readable } from 'node:stream';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -13,44 +14,87 @@ import { WebSocket } from 'ws';
 import { startSyntheticEvaluationWorker } from './fixtures/evaluation-worker-harness';
 
 const workspace = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-async function port() { const s = net.createServer(); await new Promise<void>(resolve => s.listen(0, '127.0.0.1', resolve)); const p = (s.address() as net.AddressInfo).port; await new Promise<void>(resolve => s.close(() => resolve())); return p; }
+// Node fetch rewrites Host to the connection address. This actual HTTP client
+// retains the runtime's allowed web/proxy Host while preserving streamed NDJSON.
+function fetch(url: string, init: RequestInit = {}): Promise<Response> {
+  if (init.body !== undefined && typeof init.body !== 'string') throw new Error('Synthetic restart fixture requires a string request body');
+  return new Promise((resolve, reject) => {
+    const request = httpRequest(url, { method: init.method ?? 'GET', headers: Object.fromEntries(new Headers(init.headers).entries()), signal: init.signal ?? undefined }, response => {
+      const headers = new Headers();
+      for (let index = 0; index < response.rawHeaders.length; index += 2) headers.append(response.rawHeaders[index], response.rawHeaders[index + 1]);
+      resolve(new Response(Readable.toWeb(response) as ReadableStream<Uint8Array>, { status: response.statusCode ?? 500, statusText: response.statusMessage, headers }));
+    });
+    request.once('error', reject); request.end(init.body);
+  });
+}
+function boundPorts(child: ChildProcess): Promise<number[]> {
+  return new Promise((resolve, reject) => {
+    const ports = new Set<number>();
+    const cleanup = () => { clearTimeout(timer); child.off('message', message); child.off('exit', exited); child.off('error', failed); };
+    const failed = (error: Error) => { cleanup(); reject(error); };
+    const exited = () => failed(new Error('Synthetic restart fixture exited before binding both listeners'));
+    const message = (value: unknown) => {
+      if (!value || typeof value !== 'object' || !('type' in value) || value.type !== 'synthetic-restart-listening' || !('port' in value) ||
+        typeof value.port !== 'number' || !Number.isInteger(value.port) || value.port < 1 || value.port > 65535) return;
+      ports.add(value.port);
+      if (ports.size === 2) { cleanup(); resolve([...ports]); }
+    };
+    const timer = setTimeout(() => failed(new Error('Synthetic restart fixture listener startup timed out')), 10_000);
+    child.on('message', message); child.once('exit', exited); child.once('error', failed);
+  });
+}
 async function poll<T>(read: () => Promise<T>, valid: (value: T) => boolean) { for (let i = 0; i < 200; i++) { try { const value = await read(); if (valid(value)) return value; } catch { /* bounded startup/read retry */ } await sleep(25); } throw new Error('Synthetic restart fixture timed out'); }
-async function stop(child?: ChildProcessWithoutNullStreams, force = false) { if (child && child.exitCode === null && child.signalCode === null) await new Promise<void>(resolve => { child.once('exit', () => resolve()); child.kill(force ? 'SIGKILL' : 'SIGTERM'); }); }
+async function stop(child?: ChildProcess, force = false) { if (child && child.exitCode === null && child.signalCode === null) await new Promise<void>(resolve => { child.once('exit', () => resolve()); child.kill(force ? 'SIGKILL' : 'SIGTERM'); }); }
 test('actual HTTP/socket flow pins preparation, persists next results, closes with the same voice and restores after restart', { timeout: 45000 }, async () => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'interview-runtime-flow-')); let child: ChildProcessWithoutNullStreams | undefined;
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'interview-runtime-flow-')); let child: ChildProcess | undefined;
   let diagnostic = '';
   let worker: Awaited<ReturnType<typeof startSyntheticEvaluationWorker>> | undefined;
   try {
     const outfile = path.join(directory, 'runtime.cjs'), main = path.join(workspace, 'server/realtime.ts'), providers = path.join(workspace, 'tests/fixtures/realtime-providers.ts'), context = path.join(workspace, 'tests/fixtures/runtime-context.ts');
-    const bundled = await build({ entryPoints: [main], outfile, bundle: true, metafile: true, platform: 'node', format: 'cjs', target: 'node22', logLevel: 'silent', plugins: [{ name: 'explicit-no-network-providers', setup(builder) {
+    const bundled = await build({ entryPoints: [main], outfile, bundle: true, metafile: true, platform: 'node', format: 'cjs', target: 'node22', logLevel: 'silent',
+      // Observe only this synthetic bundle. The OS allocates and retains both
+      // listener ports; no reserve-close-rebind window is shared with other tests.
+      banner: { js: `const fixtureNetServer = require('node:net').Server;
+const fixtureListen = fixtureNetServer.prototype.listen;
+fixtureNetServer.prototype.listen = function (...args) {
+  this.once('listening', () => { const address = this.address(); if (address && typeof address === 'object') process.send?.({ type: 'synthetic-restart-listening', port: address.port }); });
+  return Reflect.apply(fixtureListen, this, args);
+};` }, plugins: [{ name: 'explicit-no-network-providers', setup(builder) {
       builder.onResolve({ filter: /^\.\/(?:providers\/(?:openai|clova-tts|clova-stt|answer-reaction|realtime-core|single-core-runtime|approved-restatement)|data\/prepared-question-bank)$/ }, args => args.importer === main ? { path: providers } : undefined);
       builder.onResolve({ filter: /^\.\/data\/load-interview-context$/ }, args => args.importer === main ? { path: context } : undefined);
     } }] });
     assert.ok(!Object.keys(bundled.metafile!.inputs).some(input => /server[\\/]providers[\\/](?:openai|clova-stt|clova-tts)\.ts$/u.test(input)));
-    const realPort = await port(), webPort = await port(), origin = `http://127.0.0.1:${webPort}`, base = `http://127.0.0.1:${realPort}`;
-    let controlPort = 0;
+    const webPort = 3000, origin = `http://127.0.0.1:${webPort}`;
+    // The runtime's existing guard also accepts its configured web/proxy Host.
+    // Keep that real guard while connecting to the kernel-selected test port.
+    const headers = { Host: `127.0.0.1:${webPort}`, Origin: origin, 'Content-Type': 'application/json' };
+    let realPort = 0, controlPort = 0, base = '';
     const launch = async () => {
-      controlPort = await port();
-      const env: NodeJS.ProcessEnv = { INTERVIEW_EXECUTION_MODE: 'local-development', NODE_ENV: 'test', REALTIME_PORT: String(realPort), WEB_PORT: String(webPort), RECOVERY_TEST_CONTROL_PORT: String(controlPort), RECOVERY_TEST_TOKEN: 'explicit-synthetic-token', OPENAI_API_KEY: 'synthetic-test-only', CLOVA_SPEECH_SECRET_KEY: 'synthetic-only', CLOVA_VOICE_CLIENT_ID: 'synthetic-only', CLOVA_VOICE_CLIENT_SECRET: 'synthetic-only', LOCAL_INTERVIEW_OWNER_ID: 'owner-runtime-fixture' };
+      const env: NodeJS.ProcessEnv = { INTERVIEW_EXECUTION_MODE: 'local-development', NODE_ENV: 'test', REALTIME_PORT: '0', WEB_PORT: String(webPort), RECOVERY_TEST_CONTROL_PORT: '0', RECOVERY_TEST_TOKEN: 'explicit-synthetic-token', OPENAI_API_KEY: 'synthetic-test-only', CLOVA_SPEECH_SECRET_KEY: 'synthetic-only', CLOVA_VOICE_CLIENT_ID: 'synthetic-only', CLOVA_VOICE_CLIENT_SECRET: 'synthetic-only', LOCAL_INTERVIEW_OWNER_ID: 'owner-runtime-fixture' };
       for (const name of ['SystemRoot', 'PATH', 'Path', 'COMSPEC', 'TEMP', 'TMP', 'USERPROFILE']) if (process.env[name]) env[name] = process.env[name];
-      child = spawn(process.execPath, [outfile], { cwd: directory, env, windowsHide: true, stdio: 'pipe' }); child.stdout.resume(); child.stderr.on('data', value => { diagnostic = (diagnostic + String(value)).slice(-4000); });
-      await poll(() => fetch(`${base}/api/health`), row => row.ok);
+      child = spawn(process.execPath, [outfile], { cwd: directory, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe', 'ipc'] }); child.stdout?.resume(); child.stderr?.on('data', value => { diagnostic = (diagnostic + String(value)).slice(-4000); });
+      const ports = await boundPorts(child);
+      const healthy = await Promise.all(ports.map(async port => ({ port, ok: (await fetch(`http://127.0.0.1:${port}/api/health`, { headers, signal: AbortSignal.timeout(1000) })).ok })));
+      const realtime = healthy.filter(row => row.ok); assert.equal(realtime.length, 1);
+      realPort = realtime[0].port; controlPort = ports.find(port => port !== realPort)!; base = `http://127.0.0.1:${realPort}`;
+      assert.notEqual(realPort, controlPort);
+      await poll(() => fetch(`${base}/api/health`, { headers }), row => row.ok);
       worker ??= await startSyntheticEvaluationWorker(directory, env);
     };
     const control = async (route: string, body?: unknown) => (await fetch(`http://127.0.0.1:${controlPort}${route}`, { method: body === undefined ? 'GET' : 'POST', headers: { 'X-Recovery-Test-Token': 'explicit-synthetic-token', 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) })).json();
-    const request = async (route: string, body?: unknown) => { const response = await fetch(`${base}${route}`, { method: body === undefined ? 'GET' : 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }); const value = await response.json(); assert.ok(response.ok, `${response.status}: ${JSON.stringify(value)}`); return value; };
+    const request = async (route: string, body?: unknown) => { const response = await fetch(`${base}${route}`, { method: body === undefined ? 'GET' : 'POST', headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }); const value = await response.json(); assert.ok(response.ok, `${response.status}: ${JSON.stringify(value)}`); return value; };
     await launch();
     const prepared = await request('/api/prepare', {});
-    assert.equal((await fetch(`${base}/api/sessions`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ preparationId: randomUUID() }) })).status, 409);
+    assert.equal((await fetch(`${base}/api/sessions`, { method: 'POST', headers, body: JSON.stringify({ preparationId: randomUUID() }) })).status, 409);
     const started = await request('/api/sessions', { preparationId: prepared.preparationId }), id = started.sessionId, first = started.turn;
     assert.equal(first.acknowledgement, '안녕하세요. 면접을 시작하겠습니다.');
-    assert.equal((await fetch(`${base}/api/sessions`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ preparationId: prepared.preparationId }) })).status, 409);
+    assert.equal((await fetch(`${base}/api/sessions`, { method: 'POST', headers, body: JSON.stringify({ preparationId: prepared.preparationId }) })).status, 409);
     const clockId = randomUUID();
     const event = (type: string, turnId: string, atMs: number, payload?: unknown) => request(`/api/sessions/${id}/events`, { eventId: randomUUID(), type, turnId, atMs, clockId, ...(payload ? { payload } : {}) });
     await event('acknowledgement_playing', first.id, 1); await event('audio_ended', first.id, 5, { role: 'acknowledgement' });
     await event('question_playing', first.id, 10); await event('audio_ended', first.id, 20, { role: 'question' });
     await request(`/api/sessions/${id}/events`, { eventId: randomUUID(), type: 'phase_changed', phase: 'listening', turnId: first.id, atMs: 21, clockId, payload: { elapsedMs: 1234, checkpoint: true } });
-    const ws = new WebSocket(`ws://127.0.0.1:${realPort}/api/realtime?sessionId=${id}`, { origin }); await new Promise<void>((resolve, reject) => { ws.once('open', () => resolve()); ws.once('error', reject); });
+    const ws = new WebSocket(`ws://127.0.0.1:${realPort}/api/realtime?sessionId=${id}`, { origin, headers: { Host: headers.Host } }); await new Promise<void>((resolve, reject) => { ws.once('open', () => resolve()); ws.once('error', reject); });
     const answerId = randomUUID(), messages: Array<Record<string, unknown>> = []; ws.on('message', bytes => messages.push(JSON.parse(bytes.toString())));
     ws.send(JSON.stringify({ type: 'start', turnId: first.id, answerId })); await poll(async () => messages, rows => rows.some(row => row.type === 'started'));
     ws.send(Buffer.alloc(320)); await poll(async () => messages, rows => rows.some(row => row.type === 'transcript'));
@@ -58,11 +102,11 @@ test('actual HTTP/socket flow pins preparation, persists next results, closes wi
     ws.close(); await new Promise<void>(resolve => ws.once('close', () => resolve())); await sleep(100); await stop(child); await launch();
     const recovered = await request(`/api/sessions/${id}`); assert.equal(recovered.recovery.transcript, '합성 테스트'); assert.notEqual(recovered.recovery.transcriptStatus, 'finalized'); assert.equal(recovered.recovery.answerId, answerId); assert.equal(recovered.recovery.currentTurn.acknowledgement, null);
     assert.equal(recovered.recovery.elapsedMs, 1234);
-    const ws2 = new WebSocket(`ws://127.0.0.1:${realPort}/api/realtime?sessionId=${id}`, { origin }); await new Promise<void>(resolve => ws2.once('open', () => resolve())); const replies: Array<Record<string, unknown>> = []; ws2.on('message', bytes => replies.push(JSON.parse(bytes.toString())));
+    const ws2 = new WebSocket(`ws://127.0.0.1:${realPort}/api/realtime?sessionId=${id}`, { origin, headers: { Host: headers.Host } }); await new Promise<void>(resolve => ws2.once('open', () => resolve())); const replies: Array<Record<string, unknown>> = []; ws2.on('message', bytes => replies.push(JSON.parse(bytes.toString())));
     ws2.send(JSON.stringify({ type: 'start', turnId: first.id, answerId })); await poll(async () => replies, rows => rows.some(row => row.type === 'started')); ws2.send(Buffer.alloc(320)); ws2.send(JSON.stringify({ type: 'finish', turnId: first.id, answerId })); await poll(async () => replies, rows => rows.some(row => row.type === 'finalized'));
     const body = { turnId: first.id, answerId, elapsedMs: 2500 };
     await control('/configure', { holdNextQuestionTts: true, followUpNextCore: true });
-    const response = await fetch(`${base}/api/sessions/${id}/next`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', Accept: 'application/x-ndjson' }, body: JSON.stringify(body) });
+    const response = await fetch(`${base}/api/sessions/${id}/next`, { method: 'POST', headers: { ...headers, Accept: 'application/x-ndjson' }, body: JSON.stringify(body) });
     const reader = response.body!.getReader(), decoder = new TextDecoder(); let line = '';
     while (!line.includes('\n')) { const bytes = await reader.read(); assert.equal(bytes.done, false); line += decoder.decode(bytes.value, { stream: true }); }
     const early = JSON.parse(line.split('\n')[0]); assert.equal(early.type, 'acknowledgement_ready');
@@ -78,7 +122,7 @@ test('actual HTTP/socket flow pins preparation, persists next results, closes wi
     await poll(async () => JSON.parse(await readFile(path.join(directory, 'data/sessions', `${id}.json`), 'utf8')), row => row.runtime.operations[`${id}:${first.id}:${answerId}`].status === 'committed');
     ws2.close(); await stop(child, true); await reader.cancel().catch(() => {}); await launch();
     for (let retry = 0; retry < 2; retry++) {
-      const rejected = await fetch(`${base}/api/sessions/${expiredId}/next`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const rejected = await fetch(`${base}/api/sessions/${expiredId}/next`, { method: 'POST', headers, body: JSON.stringify(body) });
       assert.equal(rejected.status, 408); assert.equal((await rejected.json()).code, 'TURN_WORK_TIMEOUT');
     }
     const expiredSaved = JSON.parse(await readFile(path.join(directory, 'data/sessions', `${expiredId}.json`), 'utf8'));
