@@ -111,11 +111,21 @@ export function createShadowImporter(options:{
       for(const pointer of inventory.plan.pointers??[]) {
         const existing=state.pointers.find(p=>p.name===pointer.name&&p.selection===pointer.selection);
         if(existing) {if(existing.artifactId!==pointer.artifactId)throw new ShadowImportError('SHADOW_POINTER_CONFLICT');continue;}
-        if(!await repository.setPointer(context,state.runId,pointer,'0',capability))throw new ShadowImportError('SHADOW_POINTER_CONFLICT');
+        const published=await repository.setPointer(context,state.runId,pointer,'0',capability);
         state=await snapshot(context,inventory);
+        if(!published) {
+          // A concurrent retry may have published this exact frozen pointer.
+          // Adopt only its observed identical target, never reset/replace it.
+          const observed=state.pointers.find(p=>p.name===pointer.name&&p.selection===pointer.selection);
+          if(!observed||observed.artifactId!==pointer.artifactId)throw new ShadowImportError('SHADOW_POINTER_CONFLICT');
+        }
       }
       const finalSnapshot=await snapshot(context,inventory);
-      if(!await repository.unchanged(context,finalSnapshot.runId,finalSnapshot.generation))throw new ShadowImportError('SHADOW_IMPORT_CONFLICT');
+      for(const expected of inventory.plan.pointers??[]) {
+        const observed=finalSnapshot.pointers.find(p=>p.name===expected.name&&p.selection===expected.selection);
+        if(!observed||observed.artifactId!==expected.artifactId)throw new ShadowImportError('SHADOW_POINTER_CONFLICT');
+      }
+      if(finalSnapshot.generation!==state.generation||!await repository.unchanged(context,finalSnapshot.runId,finalSnapshot.generation))throw new ShadowImportError('SHADOW_IMPORT_CONFLICT');
       return {version:'shadow-import-result-v1',runId:state.runId,planSha256:state.planSha256,results,snapshot:finalSnapshot,
         sessionEvaluationWrites:0,activeLocalPointerWrites:0,aiProviderCalls:0};
     },

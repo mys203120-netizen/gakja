@@ -7,6 +7,9 @@ test('D comparison requires a positive independent candidate and exact IDs/quote
   assert.equal(compareShadowObservations({caseId:'normal',expectation:'equivalent-success'},baseline,candidate).passed,true);
   const bad=structuredClone(candidate);bad.value={ids:['changed'],quote:'한글🙂',nullable:null};assert.equal(compareShadowObservations({caseId:'id',expectation:'equivalent-success'},baseline,bad).passed,false);
   const fallback=structuredClone(candidate);fallback.effects.privateFileReads=1;assert.equal(compareShadowObservations({caseId:'fallback',expectation:'equivalent-success'},baseline,fallback).passed,false);
+  const compare=(a:unknown,b:unknown)=>compareShadowObservations({caseId:'own-array-value',expectation:'equivalent-success'},observation(true,a),observation(false,b)).passed;
+  const sparse=[1];sparse.length=2;assert.equal(compare([1],sparse),false);
+  assert.equal(compare(new Date('2026-01-01'),new Date('2026-01-02')),false);
 });
 test('D comparison permits only declared native-separator display differences and retains both originals',()=>{
   const baseline=observation(true,{staged:{revisionPath:'archive\\r1\\analysis.json'},hash:'hash'}),candidate=observation(false,{staged:{revisionPath:'archive/r1/analysis.json'},hash:'hash'});

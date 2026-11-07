@@ -15,7 +15,13 @@ if(actual!==baseline)throw new Error('PR07D_EXACT_C_BASELINE_REQUIRED');
 const readFile=fs.promises.readFile.bind(fs.promises),writeFile=fs.promises.writeFile.bind(fs.promises);
 const metrics={fixtureFileReads:0,fixtureFileWrites:0,reads:[],writes:[],paidProviderCalls:0};
 let observing=false;
-const inside=value=>{try{const file=path.resolve(String(value)),relative=path.relative(root,file);return relative!==''&&!relative.startsWith('..')&&!path.isAbsolute(relative)?relative.replaceAll('\\','/'):null;}catch{return null;}};
+const relativeMain=value=>{try{const file=path.resolve(String(value)),relative=path.relative(root,file);return relative!==''&&!relative.startsWith('..')&&!path.isAbsolute(relative)?relative.replaceAll('\\','/'):null;}catch{return null;}};
+const inside=value=>{
+  const main=relativeMain(value);if(main)return main;
+  for(const [label,base]of [['historical-current',root+'-historical-current'],['partial-present',root+'-partial-present']]){
+    const relative=path.relative(base,path.resolve(String(value)));if(relative&&!relative.startsWith('..')&&!path.isAbsolute(relative))return '@'+label+'/'+relative.replaceAll('\\','/');
+  }return null;
+};
 fs.promises.readFile=async function(file,...args){const relative=inside(file);if(observing&&relative){metrics.fixtureFileReads++;metrics.reads.push(relative);}return readFile(file,...args);};
 fs.promises.writeFile=async function(file,...args){const relative=inside(file);if(observing&&relative){metrics.fixtureFileWrites++;metrics.writes.push(relative);}return writeFile(file,...args);};
 syncBuiltinESMExports();
@@ -36,7 +42,7 @@ const bankHash=value=>hash(JSON.stringify(stable(value)));
 const jsonBytes=value=>Buffer.from(JSON.stringify(value,null,2)+'\r\n');
 const configuration={target:{...interviewConfig.target,studentName:'합성 학생'},files:{...interviewConfig.files,studentPdf:'synthetic/student.pdf'}};
 const applyConfig=value=>{interviewConfig.target=value.target;interviewConfig.files=value.files;};
-const save=async(reference,bytes)=>{const file=path.resolve(root,reference);if(!inside(file))throw new Error('PR07D_FIXTURE_PATH_INVALID');await fs.promises.mkdir(path.dirname(file),{recursive:true});await writeFile(file,bytes);};
+const save=async(reference,bytes)=>{const file=path.resolve(root,reference);if(!relativeMain(file))throw new Error('PR07D_FIXTURE_PATH_INVALID');await fs.promises.mkdir(path.dirname(file),{recursive:true});await writeFile(file,bytes);};
 const sourceRef='data/prepared/record-revisions/public-synthetic/source.json';
 const v2Ref='data/prepared/student-analysis-revisions/public-v2/analysis.json';
 const v1Ref='data/prepared/student-analysis-revisions/public-v1/analysis.json';
@@ -162,9 +168,15 @@ if(mode==='build') {
   fixture.artifacts=artifacts;fixture.provenanceOwnerId='local-development-owner';
   fixture.pointers=[{name:'full-record-pointer',selection:'current',artifactId:'source-pointer'},{name:'analysis-pointer',selection:'current',artifactId:'analysis-pointer'}];
   fixture.historicalCurrentRoot=root+'-historical-current';
+  fixture.partialPresentRoot=root+'-partial-present';
+  fixture.pinnedPlan={...plan,poolKey:bank.key,poolContentSha256:bank.contentSha256};
   await save('fixture-manifest.json',jsonBytes(fixture));
   await fs.promises.cp(root,fixture.historicalCurrentRoot,{recursive:true,errorOnExist:true,force:false});
   await writeFile(path.join(fixture.historicalCurrentRoot,'data/prepared/student-analysis-current.json'),jsonBytes({path:v1Ref,revision:historical.common.revision,sourceContentSha256:source.contentSha256}));
+  await fs.promises.cp(root,fixture.partialPresentRoot,{recursive:true,errorOnExist:true,force:false});
+  const {contentSha256:_bankHash,completedAt:_completed,status:_status,...partialBody}=bank;void _bankHash;void _completed;void _status;
+  await fs.promises.unlink(path.join(fixture.partialPresentRoot,`data/prepared/question-banks/${bank.key}.json`));
+  await writeFile(path.join(fixture.partialPresentRoot,`data/prepared/question-banks/${bank.key}.partial.json`),jsonBytes({...partialBody,status:'preparing'}));
 } else {
   fixture=JSON.parse(await readFile(path.join(root,'fixture-manifest.json'),'utf8'));applyConfig(fixture.configuration);
 }
@@ -185,6 +197,8 @@ const result={version:'pr07d-exact-c-local-baseline-v1',codeCommit:actual,config
   review:await capture(()=>analysis.loadStagedFullStudentAnalysisSnapshot(fixture.contextInput,fixture.review.child.revisionPath,root)),
   ancestry:await capture(()=>questionReview.resolveQuestionReviewAuthority(fixture.review.reviewContext,fixture.review.objectiveId,fixture.review.questionSha256,fixture.review.reviewModel,root)),
   bank:await capture(async()=>banks.loadQuestionBank(await loadInterviewContextAt(root,{writeManifest:false}),{root,plan:fixture.plan,environment:fixture.environment})),
+  pinnedBank:fixture.pinnedPlan?await capture(async()=>banks.loadQuestionBankByPinnedPlan(await loadInterviewContextAt(root,{writeManifest:false}),fixture.pinnedPlan,{root})):{status:'not-selected',reason:'earlier fixture version'},
+  partialSummary:fixture.partialPresentRoot?await capture(async()=>banks.loadQuestionBankPreparationSummary(await loadInterviewContextAt(fixture.partialPresentRoot,{writeManifest:false}),{root:fixture.partialPresentRoot,plan:fixture.plan,environment:fixture.environment})):{status:'not-selected',reason:'earlier fixture version'},
   metrics};
 result.rawArtifacts=[];
 for(const artifact of fixture.artifacts.filter(a=>a.availability==='present')) {

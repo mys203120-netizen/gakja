@@ -33,8 +33,10 @@ export function compareShadowObservations(config:ShadowComparisonCase,baseline:S
     if(rule&&typeof a==='string'&&typeof b==='string'&&a.replaceAll('\\','/')===b.replaceAll('\\','/')) {
       allowed.push({path,reason:rule.reason,baseline:config.privateReport?{sha256:sha(a)}:a,candidate:config.privateReport?{sha256:sha(b)}:b});return true;
     }
-    if(a&&b&&typeof a==='object'&&typeof b==='object'&&!Buffer.isBuffer(a)&&!Buffer.isBuffer(b)&&Array.isArray(a)===Array.isArray(b)) {
+    if(a&&b&&typeof a==='object'&&typeof b==='object'&&!Buffer.isBuffer(a)&&!Buffer.isBuffer(b)&&Array.isArray(a)===Array.isArray(b)&&
+      Object.getPrototypeOf(a)===Object.getPrototypeOf(b)&&(Array.isArray(a)||Object.getPrototypeOf(a)===Object.prototype||Object.getPrototypeOf(a)===null)) {
       const ak=Object.keys(a),bk=Object.keys(b);let result=true;
+      if(Array.isArray(a)&&Array.isArray(b)&&a.length!==b.length){diff(path,'array-length',a.length,b.length);result=false;}
       if(ak.length!==bk.length||ak.some(k=>!Object.hasOwn(b,k))){diff(path,'own-fields',ak,bk);result=false;}
       for(const k of ak)if(Object.hasOwn(b,k)&&!equal(Reflect.get(a,k),Reflect.get(b,k),pointer(path,k)))result=false;
       return result;

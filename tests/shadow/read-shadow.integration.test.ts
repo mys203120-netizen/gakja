@@ -8,7 +8,7 @@ import { exportJWK,generateKeyPair,SignJWT } from 'jose';
 import { interviewConfig } from '../../interview.config';
 import { loadInterviewContextAt } from '../../server/data/load-interview-context';
 import { loadFullRecord,loadFullStudentAnalysisSnapshot,loadStagedFullStudentAnalysisSnapshot } from '../../server/data/full-student-analysis';
-import { loadQuestionBank } from '../../server/data/prepared-question-bank';
+import { loadQuestionBank,loadQuestionBankByPinnedPlan,loadQuestionBankPreparationSummary } from '../../server/data/prepared-question-bank';
 import { resolveQuestionReviewAuthority,createQuestionReviewAuthorityScope } from '../../server/data/question-review-authority';
 import { createRequestIdentityBoundary,RequestAccessError,type PrincipalVerifier,type AuthenticatedRequestContext } from '../../server/auth/request-identity';
 import { createTrustedJwtVerifier } from '../../server/auth/jose-jwt-verifier';
@@ -104,6 +104,7 @@ async function inventory(who:'a'|'b',artifacts=fixture.artifacts){
   const value=await inventoryShadowFiles(request,{fixture:root!});assert.equal(value.eligible,true,JSON.stringify(value.entries.filter(x=>['unsupported','quarantined','missing'].includes(x.classification))));inventories.push(value);return value;
 }
 const imported=new Map<string,ShadowInventory>();
+const candidateContexts=new Map<string,Awaited<ReturnType<typeof loadInterviewContextAt>>>();
 const progress=async(phase:string)=>{await fs.promises.appendFile(path.join(process.env.PR07D_TEST_OUTPUT??'artifacts/pr07d','execution-progress.jsonl'),JSON.stringify({phase,at:new Date().toISOString(),io})+'\n');};
 test.before(async()=>{
   await progress('before-outer-mappings');
@@ -113,6 +114,8 @@ test.before(async()=>{
     await pools.admin.query('INSERT INTO gakja.application_targets VALUES($1,$2,$3,$4,$5,$6)',['owner-'+who,fixture.source.studentId,'shadow-app-'+who,fixture.scope.supportTargetId,fixture.profileRevision,'Explicit synthetic outer mapping']);
     await pools.admin.query('INSERT INTO gakja.access_grants(account_id,owner_id,student_id,application_target_id,support_target_id,source_present,source_revision) VALUES($1,$2,$3,$4,$5,false,NULL)',
       ['account-'+who,'owner-'+who,fixture.source.studentId,'shadow-app-'+who,fixture.scope.supportTargetId]);
+    await pools.admin.query('INSERT INTO gakja.audio_bindings(owner_id,resource_id,student_id,application_target_id,support_target_id,source_present,source_revision,content_sha256) VALUES($1,$2,$3,$4,$5,true,$6,$7)',
+      ['owner-'+who,fixture.speechHash,fixture.source.studentId,'shadow-app-'+who,fixture.scope.supportTargetId,fixture.source.revision,baseline.rawArtifacts.find((a:{role:string})=>a.role==='audio').sha256]);
     contexts.set(who,await selected(who));
   }
   await progress('before-complete');
@@ -136,6 +139,7 @@ test('D-SHADOW-01 actual C local and D DB/Storage loaders preserve source, v2 an
   for(const who of ['a','b'] as const){
     const context=contexts.get(who)!,value=await inventory(who);await progress('import-'+who);await importer.import(context,value,capability(context,value));imported.set(who,value);await progress('read-'+who);
     const observed=await readDomain(context,value);
+    candidateContexts.set(who,observed.context);
     assert.deepEqual(json(observed.source),baseline.source.value);
     assert.deepEqual(json(observed.current?.analysis),baseline.current.value.analysis);
     const observedContext=json(observed.context),expectedContext=json(baseline.context.value),volatileDisplays=[];
@@ -154,6 +158,15 @@ test('D-SHADOW-01 actual C local and D DB/Storage loaders preserve source, v2 an
     assert.deepEqual(json(observed.ancestry),baseline.ancestry.value);assert.equal(observed.ancestry?.kind,'unchanged_objective_ancestor_review');
     assert.equal(observed.context.errors.length,0);assert.ok(observed.bank);assert.ok(observed.read.diagnostics().objectReads>0);assert.ok(observed.read.diagnostics().mappingReads>0);
     assert.equal(observed.read.diagnostics().localFileReads,0);assert.equal(localAttempts,0);
+    const audioRow=observed.read.snapshot.artifacts.find(a=>a.artifactId==='audio')!;
+    assert.ok(await objectRepository.linkAudio(context,audioRow.receiptId!,fixture.speechHash));
+    const audioMetadata=await objects.audioMetadata(context,fixture.speechHash),audioBytes=await objects.readAudio(context,fixture.speechHash);
+    assert.equal(audioMetadata?.contentType,'audio/mpeg');assert.ok(audioBytes);assert.equal(sha(audioBytes),audioRow.rawSha256);
+    const binding=await objectRepository.getVerified(context,{objectId:audioRow.objectId!,scope:'target'});assert.ok(binding);
+    const expectedObjectIdentity=sha(Buffer.from(JSON.stringify([binding.receiptId,binding.objectId,binding.scope,
+      Object.hasOwn(binding,'sourceRevision'),binding.sourceRevision??null,Object.hasOwn(binding,'domainSha256'),binding.domainSha256??null,
+      Object.hasOwn(binding,'mediaType'),binding.mediaType??null,binding.revision,binding.ref,binding.sizeBytes,binding.contentSha256])));
+    assert.equal(audioMetadata.objectIdentity,expectedObjectIdentity);
     await progress('verify-'+who);const verify=await importer.verify(context,value);assert.equal(verify.passed,true);await progress('complete-'+who);
     const rawArtifacts=value.plan.artifacts.filter(a=>a.availability==='present').map(a=>({role:a.role,reference:a.reference,sizeBytes:a.sizeBytes,sha256:a.rawSha256}));
     const diagnostics=observed.read.diagnostics();
@@ -162,7 +175,7 @@ test('D-SHADOW-01 actual C local and D DB/Storage loaders preserve source, v2 an
       {ok:true,value:json(observed.current?.analysis),availability:'present',rawArtifacts,effects:{privateFileReads:localAttempts,databaseReads:diagnostics.mappingReads,storageReads:diagnostics.objectReads,writes:0,aiProviderCalls:0,payloadReturned:true}});
     assert.equal(comparison.passed,true,JSON.stringify(comparison.differences));
     rows.push({caseId:'D-SHADOW-01-'+who,baseline:'fulfilled',candidate:'fulfilled',outcome:'equivalent-success',diagnostics:observed.read.diagnostics(),displays,volatileDisplays,bankHash:observed.bank?.contentSha256,
-      comparison,counterScope:'aggregate complete domain read (Source/Analysis/context/staged/review/bank)',
+      comparison,counterScope:'aggregate complete domain read (Source/Analysis/context/staged/review/bank)',audioMetadata:{contentType:audioMetadata.contentType,exactObjectIdentityVerified:true,rawBytesSha256:sha(audioBytes)},
       rawDomainHashesDistinct:value.plan.artifacts.filter(a=>a.availability==='present'&&a.domainSha256&&a.rawSha256!==a.domainSha256).map(a=>a.artifactId)});
   }
 });
@@ -287,4 +300,75 @@ test('D-SHADOW-10 actual copy response loss and committed binding interruption r
   assert.deepEqual(json(current?.analysis),baseline.current.value.analysis);
   rows.push({caseId:'D-SHADOW-10',outcome:'partial-resume-with-immutable-reuse',copyResponseLostAfterActualCopy:true,committedBindResponseLost:true,
     firstObjectPreserved:true,uploads:io.upload-uploads,copies:io.copy-copies,originalPointerWrites:0,diagnostics:read.diagnostics()});
+});
+
+test('D-SHADOW-11 pinned ready bank and a separate partial-present plan pass the actual C and D callers',async()=>{
+  const context=contexts.get('a')!,value=imported.get('a')!,contextValue=candidateContexts.get('a')!;
+  const read=await createShadowReadRepositories({context,runId:value.plan.runId,repository,objects,environment:'isolated-shadow'});
+  const pinned=await noLocal(()=>loadQuestionBankByPinnedPlan(contextValue,fixture.pinnedPlan,{...read.bankOptions(),root:poisonRoot}));
+  assert.equal(baseline.pinnedBank.status,'fulfilled');assert.ok(pinned);assert.deepEqual(json(pinned),baseline.pinnedBank.value);
+  assert.equal(await noLocal(()=>loadQuestionBankByPinnedPlan(contextValue,{...fixture.pinnedPlan,poolContentSha256:'0'.repeat(64)},{...read.bankOptions(),root:poisonRoot})),null);
+  const ids=['input-studentPdf','source','source-pointer','analysis-v2','analysis-pointer','audio','bank','bank-partial'];
+  const artifacts=fixture.artifacts.filter((a:{artifactId:string})=>ids.includes(a.artifactId)).map((a:ShadowInventoryRequest['artifacts'][number])=>{
+    if(a.artifactId==='bank')return {artifactId:a.artifactId,role:a.role,reference:a.reference,selection:a.selection,scope:a.scope,required:false as const,
+      availability:'absent' as const,absenceReason:'known-absent' as const,dependencies:[]};
+    if(a.artifactId==='bank-partial')return {artifactId:a.artifactId,role:a.role,reference:a.reference,selection:a.selection,scope:'target' as const,required:true,
+      availability:'present' as const,objectKind:'source-json' as const,sourceRevision:fixture.source.revision,classification:'selected' as const,
+      source:{rootId:'partial',relativePath:`data/prepared/question-banks/${fixture.bankKey}.partial.json`},dependencies:[{artifactId:'analysis-v2',required:true},{artifactId:'audio',required:true}]};
+    return a;
+  });
+  const roots={fixture:root!,partial:fixture.partialPresentRoot};
+  const partial=await inventoryShadowFiles({version:'shadow-inventory-request-v1',runId:'shadow_'+randomUUID(),binding:'synthetic',ownerId:'owner-a',studentId:fixture.source.studentId,
+    applicationTargetId:'shadow-app-a',supportTargetId:fixture.scope.supportTargetId,provenanceOwnerId:fixture.provenanceOwnerId,pointers:fixture.pointers,artifacts},roots);
+  assert.equal(partial.eligible,true);inventories.push(partial);
+  const partialImporter=createShadowImporter({repository,objects,objectRepository,identity,roots});await partialImporter.import(context,partial,capability(context,partial));
+  const partialRead=await createShadowReadRepositories({context,runId:partial.plan.runId,repository,objects,environment:'isolated-shadow'});
+  const summary=await noLocal(()=>loadQuestionBankPreparationSummary(contextValue,{...partialRead.bankOptions(),root:poisonRoot,plan:fixture.plan,environment:fixture.environment}));
+  assert.equal(baseline.partialSummary.status,'fulfilled');assert.equal(summary.status,'preparing');assert.deepEqual(json(summary),baseline.partialSummary.value);
+  rows.push({caseId:'D-SHADOW-11',outcome:'equivalent-success',pinnedReady:true,wrongBankHashRefused:true,partialPresentStatus:summary.status,
+    partialEligibleCount:summary.availableApprovedCount,partialPublishedAsReady:false,diagnostics:partialRead.diagnostics()});
+});
+
+test('D-SHADOW-12 concurrent same-plan attempts and an observed same-artifact pointer CAS winner converge without identity changes',async()=>{
+  const ids=['input-studentPdf','source','source-pointer','analysis-v2','analysis-pointer'],context=contexts.get('a')!;
+  const subset=fixture.artifacts.filter((a:{artifactId:string})=>ids.includes(a.artifactId)),value=await inventory('a',subset);
+  const outcomes=await Promise.allSettled([importer.import(context,value,capability(context,value)),importer.import(context,value,capability(context,value))]);
+  const initial=await repository.capture(context,value.plan.runId),resumed=await importer.import(context,value,capability(context,value));
+  for(const row of initial!.artifacts)if(row.objectId)assert.equal(resumed.snapshot.artifacts.find(a=>a.artifactId===row.artifactId)!.objectId,row.objectId);
+  assert.equal(resumed.snapshot.artifacts.filter(a=>a.status==='bound').length,ids.length);assert.equal(resumed.snapshot.pointers.length,2);
+  const concurrentRead=await createShadowReadRepositories({context,runId:value.plan.runId,repository,objects,environment:'isolated-shadow'});
+  assert.deepEqual(json((await noLocal(()=>loadFullStudentAnalysisSnapshot(fixture.contextInput,poisonRoot,concurrentRead.readOptions())))?.analysis),baseline.current.value.analysis);
+  const race=await inventory('a',subset);let samePointerWinnerObserved=false;
+  const contender=createShadowImporter({repository:{...repository,async setPointer(...args:Parameters<typeof repository.setPointer>){
+    if(!samePointerWinnerObserved){samePointerWinnerObserved=true;assert.ok(await repository.setPointer(...args));assert.equal(await repository.setPointer(...args),null);return null;}
+    return repository.setPointer(...args);
+  }},objects,objectRepository,identity,roots:{fixture:root!}});
+  const winner=await contender.import(context,race,capability(context,race));assert.equal(samePointerWinnerObserved,true);assert.equal(winner.snapshot.pointers.length,2);
+  const read=await createShadowReadRepositories({context,runId:race.plan.runId,repository,objects,environment:'isolated-shadow'});
+  const current=await noLocal(()=>loadFullStudentAnalysisSnapshot(fixture.contextInput,poisonRoot,read.readOptions()));assert.deepEqual(json(current?.analysis),baseline.current.value.analysis);
+  rows.push({caseId:'D-SHADOW-12',outcome:'concurrent-attempts-and-explicit-resume-converged',initialAttempts:outcomes.map(result=>result.status==='fulfilled'?{status:'fulfilled'}:
+    {status:'rejected',errorCode:result.reason.code??result.reason.message}),bothInitialAttemptsSucceeded:outcomes.every(r=>r.status==='fulfilled'),
+    originalObjectIdsPreserved:true,sameArtifactPointerCasWinnerObserved:true,pointersPublished:2,diagnostics:read.diagnostics()});
+});
+
+test('D-SHADOW-13 an observed final pointer A to B to A is refused despite restored payload and target',async()=>{
+  const ids=['input-studentPdf','source','source-pointer','analysis-v2','analysis-pointer'],context=contexts.get('a')!;
+  const subset=fixture.artifacts.filter((a:{artifactId:string})=>ids.includes(a.artifactId)),originalPointer=subset.find((a:{artifactId:string})=>a.artifactId==='analysis-pointer');
+  const value=await inventory('a',[...subset,{...originalPointer,artifactId:'analysis-pointer-alternate',reference:'data/prepared/shadow-only-alternate-pointer.json'}]);
+  const localPointer=path.join(root!,'data/prepared/student-analysis-current.json'),before=sha(await fs.promises.readFile(localPointer));
+  let completeCaptures=0,injected=false;
+  const racing=createShadowImporter({repository:{...repository,async capture(...args:Parameters<typeof repository.capture>){
+    const current=await repository.capture(...args);
+    if(current?.pointers.length===2&&++completeCaptures===2){
+      injected=true;const pointer=current.pointers.find(p=>p.name==='analysis-pointer')!,cap=capability(context,value);
+      const moved=await repository.setPointer(context,value.plan.runId,{name:pointer.name,selection:pointer.selection,artifactId:'analysis-pointer-alternate'},pointer.generation,cap);assert.ok(moved);
+      assert.ok(await repository.setPointer(context,value.plan.runId,{name:pointer.name,selection:pointer.selection,artifactId:'analysis-pointer'},moved.generation,cap));
+      return repository.capture(...args);
+    }return current;
+  }},objects,objectRepository,identity,roots:{fixture:root!}});
+  await assert.rejects(racing.import(context,value,capability(context,value)),error=>(error as {code?:string}).code==='SHADOW_IMPORT_CONFLICT');
+  assert.equal(injected,true);assert.equal(sha(await fs.promises.readFile(localPointer)),before);
+  const recovered=await importer.import(context,value,capability(context,value));assert.equal(recovered.snapshot.pointers.find(p=>p.name==='analysis-pointer')!.artifactId,'analysis-pointer');
+  rows.push({caseId:'D-SHADOW-13',outcome:'observed-db-pointer-aba-refused',restoredTargetWasInsufficient:true,payloadReturnedOnFailedImport:false,
+    originalLocalPointerChanged:false,explicitStableResumeSucceeded:true});
 });

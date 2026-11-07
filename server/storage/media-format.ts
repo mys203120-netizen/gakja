@@ -69,7 +69,7 @@ const pngSignature=Buffer.from([137,80,78,71,13,10,26,10]);
 export function inspectImageFormat(bytes:Buffer) {
   bounded(bytes);
   if(bytes.subarray(0,8).equals(pngSignature)) {
-    let width=0,height=0,bitDepth=0,color=0,interlace=0,seenData=false,ended=false;const idat:Buffer[]=[];
+    let width=0,height=0,bitDepth=0,color=0,interlace=0,seenData=false,ended=false,paletteEntries=0,dataEnded=false;const idat:Buffer[]=[];
     for(let pos=8;pos<bytes.length;) {
       if(pos+12>bytes.length)invalid();const size=bytes.readUInt32BE(pos),name=bytes.toString('ascii',pos+4,pos+8),begin=pos+8;
       if(size>maxBytes||begin+size+4>bytes.length||!/^[A-Za-z]{4}$/u.test(name)||crc32(bytes.subarray(pos+4,begin+size))!==bytes.readUInt32BE(begin+size))invalid();
@@ -80,8 +80,13 @@ export function inspectImageFormat(bytes:Buffer) {
         if(bytes[begin+10]!==0||bytes[begin+11]!==0||![0,1].includes(interlace))invalid();
         const legal:Record<number,number[]>={0:[1,2,4,8,16],2:[8,16],3:[1,2,4,8],4:[8,16],6:[8,16]};
         if(!legal[color]?.includes(bitDepth))invalid();
-      } else if(name==='IDAT'){seenData=true;idat.push(bytes.subarray(begin,begin+size));}
-      else if(name==='IEND'){if(size||!seenData||begin+4!==bytes.length)invalid();ended=true;}
+      } else if(name==='PLTE') {
+        if(paletteEntries||seenData||color===0||color===4||size<3||size>768||size%3||color===3&&size/3>2**bitDepth)invalid();
+        paletteEntries=size/3;
+      } else if(name==='IDAT') {
+        if(dataEnded||color===3&&!paletteEntries)invalid();seenData=true;idat.push(bytes.subarray(begin,begin+size));
+      } else if(name==='IEND'){if(size||!seenData||begin+4!==bytes.length)invalid();ended=true;}
+      else {if(name[0]===name[0].toUpperCase())unsupported();if(seenData)dataEnded=true;}
       pos=begin+size+4;if(ended)break;
     }
     if(!ended||!width)invalid();
@@ -96,7 +101,7 @@ export function inspectImageFormat(bytes:Buffer) {
     return {mediaType:'image/png' as const,width,height,validation:'png-chunks-crc-and-scanlines' as const};
   }
   if(bytes.length<4||bytes[0]!==255||bytes[1]!==216)invalid();
-  let pos=2,width=0,height=0,scan=false,ended=false;
+  let pos=2,width=0,height=0,scan=false,ended=false,frameType=0;const components=new Set<number>();
   while(pos<bytes.length) {
     if(bytes[pos++]!==255)invalid();while(bytes[pos]===255)pos++;if(pos>=bytes.length)invalid();const marker=bytes[pos++];
     if(marker===217){ended=true;if(pos!==bytes.length)invalid();break;}
@@ -107,15 +112,34 @@ export function inspectImageFormat(bytes:Buffer) {
       if(bytes[pos+2]!==8||![1,3,4].includes(bytes[pos+7]))unsupported();
       if(!width||!height||width>16384||height>16384||width*height>16777216)limit();
       if(size!==8+3*bytes[pos+7])invalid();
+      frameType=marker;
+      for(let n=0;n<bytes[pos+7];n++) {
+        const offset=pos+8+3*n,component=bytes[offset],sampling=bytes[offset+1];
+        if(components.has(component)||!(sampling>>4)||!(sampling&15)||(sampling>>4)>4||(sampling&15)>4||bytes[offset+2]>3)invalid();
+        components.add(component);
+      }
     } else if(marker>=192&&marker<=207&&![196,200,204].includes(marker))unsupported();
+    if(marker===218) {
+      if(!width||size<8)invalid();const count=bytes[pos+2],selected=new Set<number>();
+      if(!count||count>components.size||size!==6+2*count)invalid();
+      for(let n=0;n<count;n++) {
+        const component=bytes[pos+3+2*n],tables=bytes[pos+4+2*n];
+        if(!components.has(component)||selected.has(component)||(tables>>4)>3||(tables&15)>3)invalid();selected.add(component);
+      }
+      const start=bytes[pos+3+2*count],end=bytes[pos+4+2*count],approximation=bytes[pos+5+2*count];
+      if(start>end||end>63||(approximation>>4)>13||(approximation&15)>13||
+        (frameType!==194&&(start!==0||end!==63||approximation!==0))||
+        (frameType===194&&(start===0&&end!==0||start>0&&count!==1)))invalid();
+    }
     pos+=size;
     if(marker===218) {
-      if(!width)invalid();scan=true;
+      scan=true;const scanStart=pos;
       while(pos<bytes.length) {
         if(bytes[pos]!==255){pos++;continue;}
         const next=bytes[pos+1];if(next===0||next>=208&&next<=215){pos+=2;continue;}
         break;
       }
+      if(pos===scanStart)invalid();
     }
   }
   if(!ended||!scan||!width)invalid();return {mediaType:'image/jpeg' as const,width,height,validation:'jpeg-marker-and-scan-structure' as const};
