@@ -95,9 +95,11 @@ async function socket(server:ServerChild,who:'a'|'b',id:string){
   await new Promise<void>((resolve,reject)=>{ws.once('open',()=>resolve());ws.once('error',reject);});
   const wait=async(predicate:(v:Record<string,unknown>)=>boolean)=>{
     const found=messages.findIndex(predicate);if(found>=0)return messages.splice(found,1)[0];
-    return new Promise<Record<string,unknown>>((resolve,reject)=>{const timer=setTimeout(()=>{cleanup();reject(new Error('PR07E_SOCKET_MESSAGE_TIMEOUT'));},15_000);
-      const receive=(body:Buffer)=>{const value=JSON.parse(body.toString());if(predicate(value)){cleanup();const i=messages.findIndex(m=>m.type===value.type&&m.action===value.action);if(i>=0)messages.splice(i,1);resolve(value);}};
-      const closed=()=>{cleanup();reject(new Error('PR07E_SOCKET_CLOSED'));};const cleanup=()=>{clearTimeout(timer);ws.off('message',receive);ws.off('close',closed);};ws.on('message',receive);ws.once('close',closed);});
+    const errors=()=>messages.filter(m=>m.type==='error').map(m=>({type:m.type,code:m.code,status:m.status,action:m.action}));
+    if(errors().length)throw new Error('PR07E_SOCKET_COMMAND_ERROR:'+JSON.stringify(errors()));
+    return new Promise<Record<string,unknown>>((resolve,reject)=>{const timer=setTimeout(()=>{cleanup();reject(new Error('PR07E_SOCKET_MESSAGE_TIMEOUT:'+JSON.stringify(messages.map(m=>({type:m.type,action:m.action,status:m.status,code:m.code})))));},15_000);
+      const receive=(body:Buffer)=>{const value=JSON.parse(body.toString());if(predicate(value)){cleanup();const i=messages.findIndex(m=>m.type===value.type&&m.action===value.action);if(i>=0)messages.splice(i,1);resolve(value);}else if(value.type==='error'){cleanup();reject(new Error('PR07E_SOCKET_COMMAND_ERROR:'+JSON.stringify({code:value.code,status:value.status,action:value.action})));}};
+      const closed=()=>{cleanup();reject(new Error('PR07E_SOCKET_CLOSED:'+JSON.stringify(errors())));};const cleanup=()=>{clearTimeout(timer);ws.off('message',receive);ws.off('close',closed);};ws.on('message',receive);ws.once('close',closed);});
   };
   const ready=await wait(m=>m.type==='ready');assert.equal(ready.readOnly,false);return {ws,wait,messages,ready};
 }
@@ -159,7 +161,9 @@ test('E-HTTP-02 WSS capture and actual answer commit recover on the other server
     const head=await view(other,who,created.id);assert.ok(BigInt(head.writerGeneration)>BigInt(answer.value.writerGeneration));assert.equal(head.recovery.currentTurn!.rawTranscript,capture.finish.value.result.rawTranscript);
     const replay=await other.request<Reply<{sessionId:string;turn:RecordedTurn}>>(who,'/api/sessions',created.request);assert.equal(replay.status,201);assert.equal(replay.value.operationId,created.reply.operationId);assert.equal(replay.value.revision,created.reply.revision);assert.deepEqual(replay.value.result,created.reply.result);
     const receipt=await other.request<Reply>(who,`/api/sessions/${created.id}/commands?key=${answer.value.key}&inputSha256=${answer.value.inputSha256}`);assert.equal(receipt.status,200);assert.equal(receipt.value.operationId,answer.value.operationId);
-    capture.channel.ws.close();rows.push({caseId:'E-HTTP-02-'+who,actualBinaryCapture:true,answerCommitted:true,recoveredOnOtherPid:other.pid,writerGenerationChanged:true,oldRevisionReceiptReplayed:true});
+    capture.channel.ws.close();
+    if(who==='b'){const ended=await mutate(other,who,created.id,'end',{elapsedMs:8000});assert.equal(ended.status,202,JSON.stringify(ended.value));assert.equal((await sqlRows(pools,'session_evaluation_handoffs',created.id)).length,1);}
+    rows.push({caseId:'E-HTTP-02-'+who,actualBinaryCapture:true,answerCommitted:true,recoveredOnOtherPid:other.pid,writerGenerationChanged:true,oldRevisionReceiptReplayed:true,...(who==='b'?{endedSuccessfully:true,handoffCount:1}:{})});
   }
 });
 
@@ -252,7 +256,7 @@ test('E-DB-08 an owned row lock times out without success or local fallback and 
 
 let preservedEnd:{id:string;input:ReturnType<typeof envelope>;reply:Reply;frozen:SessionCommandSnapshot}|undefined;
 test('E-END-09 concurrent end inputs freeze once after drain and preserve late canonical closing evidence',{timeout:300_000},async()=>{
-  const created=await create(one,'a','end-'+randomUUID());const observedSocket=await socket(one,'a',created.id),closed=new Promise<void>(resolve=>observedSocket.ws.once('close',()=>resolve()));observedSocket.ws.close();await closed;await until(()=>sqlRows(pools,'session_connection_closes',created.id),items=>items.length>0);const head=await view(one,'a',created.id),key=randomUUID(),first={elapsedMs:9000,metrics:{answerId:'first-input',durationMs:9000}};
+  const created=happy.get('a')!;assert.equal((await sqlRows(pools,'session_answer_facts',created.id)).length,1);const observedSocket=await socket(one,'a',created.id),closed=new Promise<void>(resolve=>observedSocket.ws.once('close',()=>resolve()));observedSocket.ws.close();await closed;await until(()=>sqlRows(pools,'session_connection_closes',created.id),items=>items.length>0);const head=await view(one,'a',created.id),key=randomUUID(),first={elapsedMs:9000,metrics:{answerId:'first-input',durationMs:9000}};
   await configure(one,[{phase:'before-external',action:'end-finalize',mode:'hold',once:true}]);
   const input=envelope(key,head,first),pending=one.request<Reply>('a',`/api/sessions/${created.id}/end`,input),barrier=await one.barrier('before-external');
   const durable=await snapshot(two,created.id);assert.ok(durable.endIntent);assert.ok(JSON.parse(durable.endIntent!.inputJson));assert.equal(durable.handoff,null);
@@ -281,12 +285,13 @@ test('E-ROLLBACK-10 unpublished enrollment returns a fenced tombstone; committed
   const restoredServer=await new ServerChild('read-only-restored','restore').start();await assert.rejects(restoredServer.rpc('restore',{who:'b',bundle}));
   const restored=await restoredServer.rpc<SessionCommandSnapshot>('restore',{who:'a',bundle});assert.equal(restored.writer,'read-only');assert.equal(restored.sessionJson,readOnly.sessionJson);assert.equal(restored.contextJson,readOnly.contextJson);assert.equal(restored.pinsJson,readOnly.pinsJson);
   for(const table of ['session_commands','session_command_keys','session_command_semantics','session_command_attempts','session_mandatory_events','session_answer_facts','session_end_intents','session_evaluation_handoffs','session_connection_closes'])assert.deepEqual(await sqlRows(restorePools,table,committed),await sqlRows(pools,table,committed),table);
+  assert.equal((await sqlRows(restorePools,'session_answer_facts',committed)).length,1);assert.ok(JSON.parse(restored.sessionJson).turns[0].rawTranscript.length>0);assert.ok(JSON.parse(restored.sessionJson).turns[0].metadata.captureParts.length>0);
   const loaded=await view(restoredServer,'a',committed);assert.equal(loaded.writer,'read-only');assert.equal(loaded.recovery.currentTurn!.id,JSON.parse(restored.sessionJson).turns.at(-1).id);
   const replay=await restoredServer.request<Reply>('a',`/api/sessions/${committed}/end`,preservedEnd!.input);assert.equal(replay.status,202,JSON.stringify(replay.value));assert.equal(replay.value.replay,true);
   const denied=await mutate(restoredServer,'a',committed,'events',event(JSON.parse(restored.sessionJson).turns[0].id));assert.equal(denied.status,409);assert.equal((await snapshot(restoredServer,committed)).sessionJson,restored.sessionJson);
   rows.push({caseId:'E-ROLLBACK-10',unpublishedWriter:'local',unpublishedBindingCount:0,oldAttemptFenced:true,preservationSha256:bundle.sha256,newOwnedDatabase:true,restoredPid:restoredServer.pid,writer:'read-only',exactSessionContextPins:true,allNineChildCollectionsPreserved:true,receiptReplayAllowed:true,newMutationRefused:true,sourceRecordsRetained:true});await restoredServer.stop();
 });
-const endingObservation={stopSource:'button',lastSpeechMs:2000,trailingSilenceMs:1000,speechActiveAtEnd:false,vadAvailable:true};
+const endingObservation={stopSource:'button',lastSpeechMs:2000,trailingSilenceMs:1000,speechActiveAtEnd:false,vadAvailable:true,microphoneEnabled:true};
 test('E-DOMAIN-11 confirmed silence, failed STT and staged continuation remain separate and approved replay uses the shared engine',{timeout:600_000},async()=>{
   for(const mode of ['silence','failure'] as const){
     await configure(one,[],{transcript:'',confirmed:mode==='silence',captureError:mode==='failure'});const created=await create(one,'a',mode+'-'+randomUUID()),capture=await captureAnswer(one,'a',created.id,created.turn,mode==='silence');
@@ -296,12 +301,13 @@ test('E-DOMAIN-11 confirmed silence, failed STT and staged continuation remain s
     if(mode==='silence'){
       const bypass=await mutate(one,'a',created.id,'answer',scope);assert.equal(bypass.status,409,JSON.stringify(bypass.value));
       const candidate=await mutate<{action:string;candidateId:string}>(one,'a',created.id,'answer-candidate',scope);assert.equal(candidate.status,200,JSON.stringify(candidate.value));assert.equal(candidate.value.result.action,'ADVANCE');candidateId=candidate.value.result.candidateId;
+      const tampered=await mutate(one,'a',created.id,'answer',{...scope,candidateId,endingObservation:{...endingObservation,microphoneEnabled:false}});assert.equal(tampered.status,409,JSON.stringify(tampered.value));
     }
     const answer=await mutate(one,'a',created.id,'answer',{...scope,...(candidateId?{candidateId}:{})});
     const raw=JSON.parse((await snapshot(one,created.id)).sessionJson) as InterviewSession,turn=raw.turns.at(-1)!;
     if(mode==='silence'){assert.equal(answer.status,200,JSON.stringify(answer.value));assert.equal(turn.rawTranscript,'');assert.equal(turn.transcriptStatus,'finalized');assert.ok(turn.answerObservation);}
     else{assert.equal(answer.status,409,JSON.stringify(answer.value));assert.equal(turn.transcriptStatus,'error');assert.equal(turn.answerObservation,undefined);assert.equal((await sqlRows(pools,'session_answer_facts',created.id)).length,0);}
-    capture.channel.ws.close();rows.push({caseId:'E-DOMAIN-11-'+mode,providerConfirmed:mode==='silence',answerStatus:answer.status,transcriptStatus:turn.transcriptStatus,silenceAndFailureDistinct:true,...(mode==='silence'?{invalidAnswerBeforeCandidate:409,validAnswerAfterCandidate:200,pendingSemanticNotPoisoned:true}:{})});
+    capture.channel.ws.close();rows.push({caseId:'E-DOMAIN-11-'+mode,providerConfirmed:mode==='silence',answerStatus:answer.status,transcriptStatus:turn.transcriptStatus,silenceAndFailureDistinct:true,...(mode==='silence'?{invalidAnswerBeforeCandidate:409,validAnswerAfterCandidate:200,pendingSemanticNotPoisoned:true,tamperedCandidateEndingObservation:409,originalEndingObservationPreserved:true}:{})});
   }
   await configure(one,[],{transcript:'첫 번째 합성 설명입니다.',confirmed:true,captureError:false,classifyAction:'continue',nextAction:'REPLAY'});
   const created=await create(one,'a','continuation-'+randomUUID()),first=await captureAnswer(one,'a',created.id,created.turn,true),scope={turnId:created.turn.id,answerId:first.answerId,captureRevision:1,elapsedMs:3500,endingObservation,submissionAttemptId:(first.finish.value.result as {submissionAttemptId:string}).submissionAttemptId};
@@ -322,16 +328,16 @@ test('E-DRAIN-12 same-server and other-server end wait for owner WS tail PCM and
   for(const mode of ['same-server','other-server','missing-marker'] as const){
     await configure(one,[],{transcript:'종료 직전 보존할 합성 원문입니다.',confirmed:true,captureError:false});const created=await create(one,'a','drain-'+mode+'-'+randomUUID()),capture=await beginLiveCapture(one,created.id,created.turn),other=mode==='other-server'?two:one;
     const input=envelope(randomUUID(),await view(other,'a',created.id),{elapsedMs:12000,metrics:{answerId:capture.answerId,durationMs:12000,captureFinishScope:{turnId:created.turn.id,answerId:capture.answerId,captureRevision:1}}}),pending=other.request<Reply>('a',`/api/sessions/${created.id}/end`,input);
-    const accepted=await until(()=>snapshot(one,created.id),s=>!!s.endIntent);assert.equal(accepted.handoff,null);assert.equal((await sqlRows(pools,'session_end_intents',created.id)).length,1);
+    const accepted=await until(()=>sqlRows(pools,'session_end_intents',created.id),items=>items.length===1);
     if(mode!=='missing-marker'){
-      capture.channel.ws.send(Buffer.alloc(160,2));const head=await view(one,'a',created.id);capture.channel.ws.send(JSON.stringify({type:'command',action:'capture-finish',command:envelope(randomUUID(),head,{turnId:created.turn.id,answerId:capture.answerId,captureRevision:1})}));
+      capture.channel.ws.send(Buffer.alloc(160,2));capture.channel.ws.send(JSON.stringify({type:'command',action:'capture-finish',command:envelope(randomUUID(),{revision:input.expectedRevision,writerGeneration:input.writerGeneration},{turnId:created.turn.id,answerId:capture.answerId,captureRevision:1})}));
       const finished=await capture.channel.wait(m=>m.type==='command_result'&&m.action==='capture-finish');assert.ok(finished.value,JSON.stringify(finished));
     }
     const ended=await pending;assert.equal(ended.status,202,JSON.stringify(ended.value));const frozen=await snapshot(two,created.id),raw=JSON.parse(frozen.sessionJson) as InterviewSession,turn=raw.turns.at(-1)!;
     assert.ok(frozen.handoff);assert.equal((await sqlRows(pools,'session_evaluation_handoffs',created.id)).length,1);assert.equal((await sqlRows(pools,'session_end_intents',created.id)).length,1);assert.equal(raw.runtime!.evaluationJob,undefined);
     if(mode==='missing-marker'){assert.equal(turn.transcriptStatus,'error');assert.equal(turn.rawTranscript??'','');assert.equal(turn.answerObservation,undefined);}
     else{assert.equal(turn.transcriptStatus,'finalized');assert.equal(turn.rawTranscript,'종료 직전 보존할 합성 원문입니다.');assert.equal(turn.metadata.captureParts!.length,1);assert.equal(turn.metadata.captureParts![0].sha256,hash(turn.rawTranscript));}
-    capture.channel.ws.close();rows.push({caseId:'E-DRAIN-12-'+mode,serverPids:[one.pid,other.pid],endIntentCount:1,handoffCount:1,tailBytesSent:mode==='missing-marker'?0:160,transcriptStatus:turn.transcriptStatus,rawTranscriptSha256:hash(turn.rawTranscript??''),missingMarkerFabricatedSilence:false,frozenSha256:frozen.sessionSha256,evaluationQueued:false});
+    capture.channel.ws.close();rows.push({caseId:'E-DRAIN-12-'+mode,acceptedEndInputSha256:accepted[0].input_sha256,serverPids:[one.pid,other.pid],endIntentCount:1,handoffCount:1,tailBytesSent:mode==='missing-marker'?0:160,transcriptStatus:turn.transcriptStatus,rawTranscriptSha256:hash(turn.rawTranscript??''),missingMarkerFabricatedSilence:false,frozenSha256:frozen.sessionSha256,evaluationQueued:false});
   }
 });
 test('E-BUDGET-13 unrelated socket closure cannot close capture; staged answer cannot bypass approval; the actual 95-second deadline is not renewed on another server',{timeout:300_000},async()=>{
@@ -346,8 +352,8 @@ test('E-BUDGET-13 unrelated socket closure cannot close capture; staged answer c
   await configure(one,[{phase:'after-external',action:'answer-candidate',mode:'hold',once:true,timeoutMs:110_000}]);const key=randomUUID(),pending=mutate(one,'a',created.id,'answer-candidate',scope,key),barrier=await one.barrier('after-external',key);
   const original=JSON.parse((await snapshot(two,created.id)).sessionJson).runtime.submissionAttempts[`${scope.turnId}:${scope.answerId}:1`];assert.equal(original.deadlineAt,record.deadlineAt);assert.equal(original.attemptId,record.attemptId);
   const elapsedBeforeWait=Date.now()-Date.parse(record.startedAt),remaining=Math.max(0,Date.parse(record.deadlineAt)-Date.now()+100);
-  await new Promise(resolve=>setTimeout(resolve,remaining));await release(one,barrier);const expired=await pending;assert.ok([409,504].includes(expired.status),JSON.stringify(expired.value));
-  const retry=await mutate(two,'a',created.id,'answer-candidate',scope,randomUUID(),true);assert.ok([409,504].includes(retry.status),JSON.stringify(retry.value));
+  await new Promise(resolve=>setTimeout(resolve,remaining));await release(one,barrier);const expired=await pending;assert.equal(expired.status,408,JSON.stringify(expired.value));assert.equal((expired.value as unknown as {code:string}).code,'TURN_WORK_TIMEOUT');
+  const retry=await mutate(two,'a',created.id,'answer-candidate',scope,randomUUID(),true);assert.equal(retry.status,408,JSON.stringify(retry.value));assert.equal((retry.value as unknown as {code:string}).code,'TURN_WORK_TIMEOUT');
   const final=JSON.parse((await snapshot(two,created.id)).sessionJson).runtime.submissionAttempts[`${scope.turnId}:${scope.answerId}:1`];assert.equal(final.deadlineAt,record.deadlineAt);assert.equal(final.attemptId,record.attemptId);assert.equal((await sqlRows(pools,'session_answer_facts',created.id)).length,0);
   live.channel.ws.close();rows.push({caseId:'E-BUDGET-13',unrelatedSocketClosed:true,producerRemainedUsable:true,stagedBypassStatus:409,startedAt:record.startedAt,deadlineAt:record.deadlineAt,actualBudgetMs:95_000,elapsedBeforeWait,actualWaitMs:remaining,actualElapsedMs:Date.now()-Date.parse(record.startedAt),firstExpiredStatus:expired.status,otherServerRetryStatus:retry.status,deadlineUnchanged:true,attemptUnchanged:true,answerFacts:0});
 });
@@ -356,8 +362,8 @@ test('E-END-DEADLINE-14 timed-out STT cannot gain another 15 seconds or become c
   const created=await create(one,'a','end-deadline-'+randomUUID()),capture=await beginLiveCapture(one,created.id,created.turn),scope={turnId:created.turn.id,answerId:capture.answerId,captureRevision:1};
   await configure(one,[{phase:'synthetic-stt-finish',sessionId:created.id,mode:'hold',once:true,timeoutMs:30_000},{phase:'before-commit',action:'end-finalize',sessionId:created.id,mode:'fail',once:true}]);
   const input=envelope(randomUUID(),await view(one,'a',created.id),{elapsedMs:17000,metrics:{answerId:capture.answerId,durationMs:17000,captureFinishScope:scope}}),pending=one.request<Reply>('a',`/api/sessions/${created.id}/end`,input);
-  const accepted=await until(()=>snapshot(one,created.id),s=>!!s.endIntent);assert.equal(accepted.handoff,null);
-  capture.channel.ws.send(Buffer.alloc(160,4));capture.channel.ws.send(JSON.stringify({type:'command',action:'capture-finish',command:envelope(randomUUID(),await view(one,'a',created.id),scope)}));
+  await until(()=>sqlRows(pools,'session_end_intents',created.id),items=>items.length===1);
+  capture.channel.ws.send(Buffer.alloc(160,4));capture.channel.ws.send(JSON.stringify({type:'command',action:'capture-finish',command:envelope(randomUUID(),{revision:input.expectedRevision,writerGeneration:input.writerGeneration},scope)}));
   const provider=await one.barrier('synthetic-stt-finish'),draining=await snapshot(two,created.id),drain=(JSON.parse(draining.sessionJson) as InterviewSession).runtime as unknown as {endCaptureDrain:{providerDeadlineAt:string;markerReceivedAt:string}};
   assert.ok(drain.endCaptureDrain);const deadline=drain.endCaptureDrain.providerDeadlineAt,first=await pending;assert.equal(first.status,503,JSON.stringify(first.value));
   assert.ok(Date.now()>=Date.parse(deadline));const afterFailure=await snapshot(two,created.id);assert.equal(afterFailure.handoff,null);assert.equal(JSON.parse(afterFailure.sessionJson).runtime.endCaptureDrain.providerDeadlineAt,deadline);

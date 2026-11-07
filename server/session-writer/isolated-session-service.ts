@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { setTimeout as wait } from 'node:timers/promises';
 import { z } from 'zod';
 import type { AuthenticatedRequestContext, RequestIdentityBoundary } from '../auth/request-identity';
@@ -243,10 +244,11 @@ export function createIsolatedSessionService(options: IsolatedSessionServiceOpti
     if (turn.metadata.answerSubmissionMode === 'staged-v2') {
       if (!candidate || p.candidateId !== candidate.id || !['advance_ready', 'advancing'].includes(candidate.status)) return error(409, 'ANSWER_CANDIDATE_REQUIRED');
       assertCandidateSource(turn, candidate);
+      if (p.endingObservation !== undefined && !isDeepStrictEqual(p.endingObservation, candidate.endingObservation)) error(409, 'ANSWER_CANDIDATE_ENDING_CHANGED');
       if (candidate.decision) options.providers.forSession(state.pins).assertSingleCoreCandidateBinding(state.context, session, candidate.decision, session.runtime!.runtimePolicy?.mode ?? 'compiled');
     }
     if (candidate?.status === 'continuing') error(409, 'ANSWER_CONTINUATION_REQUIRED');
-    return { p, turn };
+    return { p, turn, candidate };
   }
   function nextSource(session: InterviewSession, payload: unknown) {
     const p = parse(nextRequestSchema, payload), turn = session.turns.at(-1);
@@ -416,11 +418,12 @@ export function createIsolatedSessionService(options: IsolatedSessionServiceOpti
         } finally { work.complete(); }
       }
       if (action === 'answer') {
-        const { p, turn } = answerSource(state, input.payload);
+        const { p, turn, candidate } = answerSource(state, input.payload);
         if (turn.metadata.answerSubmissionMode === 'staged-v2') {
           const deadline = getDurableSubmissionWork(session, p, p.submissionAttemptId, state.serverNowMs); deadline.workContext.assertLive(); deadline.workContext.complete();
         }
-        if (p.endingObservation) turn.metadata.answerEndingObservation = p.endingObservation;
+        if (turn.metadata.answerSubmissionMode === 'staged-v2') turn.metadata.answerEndingObservation = candidate!.endingObservation;
+        else if (p.endingObservation) turn.metadata.answerEndingObservation = p.endingObservation;
         turn.transcriptStatus = 'finalized'; turn.metadata.answerCommitStatus = 'committed'; turn.metrics = answerMetrics(p.answerId, turn.rawTranscript ?? '', p.metrics);
         session.elapsedMs = Math.max(session.elapsedMs, p.elapsedMs); observeFinalizedAnswer(session, turn, { onEvent: emit }); checkpointSession(session, 'answer_committed');
         const answerHash = answerSourceSha(turn);

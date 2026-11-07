@@ -52,10 +52,18 @@ function send(res: ServerResponse, status: number, value: unknown) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, no-store', Vary: 'Authorization, Cookie', 'X-Content-Type-Options': 'nosniff' });
   res.end(JSON.stringify(value));
 }
+const sessionGuardCodes = new Set(['ANSWER_ADVANCE_LOCKED', 'ANSWER_CANDIDATE_SOURCE_CHANGED', 'CAPTURE_FINAL_NOT_CONFIRMED', 'CAPTURE_PART_CHANGED']);
+function requestFailure(error: unknown) {
+  if (error instanceof RequestAccessError || error instanceof SessionCommandError || error instanceof SessionDomainError || error instanceof TurnWorkError)
+    return { status: error.status, code: error.code ?? 'SESSION_DOMAIN_CONFLICT' };
+  // These existing shared domain guards throw exact bounded codes. Preserve a
+  // conflict response without exposing arbitrary provider exception messages.
+  if (error instanceof Error && sessionGuardCodes.has(error.message)) return { status: 409, code: error.message };
+  return { status: 503, code: 'REQUEST_DEPENDENCY_UNAVAILABLE' };
+}
 function fail(res: ServerResponse, error: unknown) {
-  const known = error instanceof RequestAccessError || error instanceof SessionCommandError || error instanceof SessionDomainError || error instanceof TurnWorkError;
-  const status = known ? error.status : 503;
-  send(res, status, { error: status === 404 ? '요청한 자료를 찾을 수 없습니다.' : status === 401 ? '인증을 확인해 주세요.' : '요청을 처리할 수 없습니다.', code: known ? error.code ?? 'SESSION_DOMAIN_CONFLICT' : 'REQUEST_DEPENDENCY_UNAVAILABLE' });
+  const { status, code } = requestFailure(error);
+  send(res, status, { error: status === 404 ? '요청한 자료를 찾을 수 없습니다.' : status === 401 ? '인증을 확인해 주세요.' : '요청을 처리할 수 없습니다.', code });
 }
 async function body(req: IncomingMessage) {
   const chunks: Buffer[] = []; let size = 0;
@@ -235,8 +243,7 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
     const close = () => ws.close(1008, 'Access is no longer valid');
     const commandFailure = (error: unknown) => {
       if (!options.sessionMutations) { close(); return; }
-      const known = error instanceof RequestAccessError || error instanceof SessionCommandError || error instanceof SessionDomainError || error instanceof TurnWorkError;
-      const status = known ? error.status : 503, code = known ? error.code ?? 'SESSION_DOMAIN_CONFLICT' : 'REQUEST_DEPENDENCY_UNAVAILABLE';
+      const { status, code } = requestFailure(error);
       if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'error', status, code }));
       if ([401, 403, 404, 413].includes(status) || code === 'SESSION_STALE_SOCKET') close();
     };

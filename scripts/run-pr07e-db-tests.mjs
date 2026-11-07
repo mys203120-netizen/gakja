@@ -115,7 +115,7 @@ try {
   report.backendScope=process.env.PR07E_TEST_WITH_STORAGE==='1'?
     process.env.PR07E_TEST_CONTROLLED_PROVIDER_DIAGNOSTIC==='1'?'actual PostgreSQL + controlled memory provider diagnostic; actual Storage gate NOT satisfied':'actual Supabase Storage API + actual PostgreSQL':
     'actual PostgreSQL E SQL/repository only; no two-server HTTP or actual Storage claim';
-  const command=['--import','tsx','--test','--test-concurrency=1',...files];
+  const command=['--import','tsx','--test','--test-reporter=tap','--test-concurrency=1',...files];
   const run=spawn(process.execPath,command,{cwd:process.cwd(),env,windowsHide:true,stdio:['ignore','pipe','pipe']});let log='',progress=Promise.resolve();
   const observed=value=>{log+=value;const current=redact(log);progress=progress.then(()=>writeFile(path.join(output,'tests-progress.log'),current));};
   run.stdout.on('data',observed);run.stderr.on('data',observed);

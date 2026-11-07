@@ -42,7 +42,7 @@ DB의 세션 writer 행이 owner/student/개인 applicationTarget/supportTarget/
 
 추가 SQL은 `0004_session_writer.sql`이며 B bootstrap/0001/seed, C0002, D0003와 checkpoint bytes는 변경하지 않는다. 적용·재실행·SQL checksum 변조·catalog drift를 별도로 검증한다. owner/student/applicationTarget의 복합 관계·RLS·제한 역할을 사용한다. 일반 요청이 임의 verified 객체·다른 scope·기존 local 세션을 등록하지 못한다.
 
-멱등 키는 현재 인증 scope/session에 묶인다. 업무 입력 fingerprint는 `{version, action, payload}`의 원래 `JSON.stringify`이며 key/CAS revision/generation/resume metadata와 구분한다. business payload의 필드·배열·optional/null을 정규화해 맞추지 않는다. 같은 키의 다른 업무 입력은 충돌이다. 같은 입력의 이미 committed receipt는 현재 권한/입력 SHA를 확인한 뒤 stale revision/generation 검사보다 먼저 반환한다. 다른 키의 같은 turn/answer/capture semantic identity도 중복 확정하지 않는다. 이미 확정된 by-key/semantic 결과를 읽기 전용으로 먼저 확인한 뒤, 새 명령은 순수 도메인 preflight와 begin 이후 동일 조건을 다시 검사한다. 거부된 입력의 key를 다른 입력으로 재사용하도록 완화하지 않는다. 종료는 다른 키의 재요청이 최초 수락 입력을 덮어쓰지 않는다.
+멱등 키는 현재 인증 scope/session에 묶인다. 업무 입력 fingerprint는 `{version, action, payload}`의 원래 `JSON.stringify`이며 key/CAS revision/generation/resume metadata와 구분한다. business payload의 필드·배열·optional/null을 정규화해 맞추지 않는다. 같은 키의 다른 업무 입력은 충돌이다. 같은 입력의 이미 committed receipt는 현재 권한/입력 SHA를 확인한 뒤 stale revision/generation 검사보다 먼저 반환한다. 다른 키의 같은 turn/answer/capture semantic identity도 중복 확정하지 않는다. 이미 확정된 by-key/semantic 결과를 읽기 전용으로 먼저 확인한 뒤, 새 명령은 순수 도메인 preflight와 begin 이후 동일 조건을 다시 검사한다. 거부된 입력의 key를 다른 입력으로 재사용하도록 완화하지 않는다. staged 답변은 candidate의 원래 종료 관측을 유지하며 다른 관측을 제출하면409로 거부한다. 동일 값이나 생략은 허용하고 optional/null/필드 존재의 의미를 정규화하지 않는다. 종료는 다른 키의 재요청이 최초 수락 입력을 덮어쓰지 않는다.
 
 긴 작업은 begin intent → connection 반환 → provider/Storage await → 현재 권한·operation token·writer generation·expected revision 확인 → commit 순서다. 공유 preparer의 준비 draft/audio checkpoint는 progress로 저장하되 canonical 새 turn/committed 응답은 최종 receipt와 함께 저장한다. 정상 완료의 session/answer fact/context 참조/필수 event/receipt는 하나의 transaction이다. 관측 로그를 fire-and-forget 파일에만 두지 않는다.
 
@@ -74,7 +74,7 @@ freeze 뒤의 closing은 별도 presentation/receipt로 보존하며 canonical f
 
 ## 종료·F 인계
 
-첫 end 요청의 elapsed/metrics/capture scope를 먼저 durable하게 수락한다. 같은 intent의 재시도가 다른 최초 입력을 만들지 않는다. HTTP end와 WS의 전송 순서가 다르므로 같은 capture scope의 ordered finish marker를 기존2초 범위에서 기다리고 선행 PCM을 배출한다. 확인되지 않은 stream은 error/unknown으로 보존하며 정상 침묵으로 승격하지 않는다. provider wait는 DB transaction 밖이다. 다른 서버가 종료를 받으면 capture 소유 서버의 같은 finalize receipt로 합류한다. 2초 안에 순서대로 수신한 marker의 durable checkpoint가 있으면 기존 STT 15초 한도까지 최종화를 기다리며, PCM 수신 허용 창 자체는 늘리지 않는다.
+첫 end 요청의 elapsed/metrics/capture scope를 먼저 durable하게 수락한다. 같은 intent의 재시도가 다른 최초 입력을 만들지 않는다. HTTP end와 WS의 전송 순서가 다르므로 같은 capture scope의 ordered finish marker를 기존2초 범위에서 기다리고 선행 PCM을 배출한다. 확인되지 않은 stream은 error/unknown으로 보존하며 정상 침묵으로 승격하지 않는다. provider wait는 DB transaction 밖이다. 다른 서버가 종료를 받으면 capture 소유 서버의 같은 finalize receipt로 합류한다. 2초 안에 순서대로 수신한 marker의 durable checkpoint가 있으면 기존 STT 15초 한도까지 최종화를 기다리며, PCM 수신 허용 창 자체는 늘리지 않는다. 최종 CAS 실패 후 재시도도 최초 provider deadline을 유지한다. 제한 뒤 resolve한 promise는 확인된 전사로 승격하지 않으며, 제한 안에 도착한 확인 결과만 같은 intent의 재시도에서 재사용한다.
 
 최종 답변/전사·accepted end input·checkpoint와 context/source/model/schema pin을 확정하고, 동일 transaction에 unique `session-evaluation-handoff-v1` intent를 기록한다. F 입력에는 정확한 session/context/pins TEXT와 hash·pipeline/model·accepted intent를 포함한다. 새 DB 경로는 `awaiting-evaluation-consumer`/`review_required`이며 실제 job이 없으면 queued/running/completed라고 표시하지 않는다. E에는 평가 worker·검수 writer·서명 발급·점수 생성 경로가 없다.
 
