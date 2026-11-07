@@ -1,4 +1,5 @@
 import { registerHandoffIntegrityCases } from './handoff-integrity-cases';
+import { createControlledObjectProvider } from './controlled-object-provider';
 import { registerPartialHeldCases } from './partial-held-cases';
 import { registerAuthorityLineageCases } from './authority-lineage-cases';
 import { exportJWK,generateKeyPair,SignJWT } from 'jose';
@@ -33,10 +34,8 @@ const tokens:Record<string,string>={};
 for(const who of ['a','b'] as const){tokens[who]=await signing.token(who);for(const role of ['reviewer','specreviewer','operator','worker1','worker2'])tokens[who+role]=await signing.token(who,'f-'+who+'-'+role);}
 const api=process.env.PR07F_TEST_STORAGE_API_URL,credential=process.env.PR07F_TEST_STORAGE_SERVICE_KEY,bucket=process.env.PR07F_TEST_BUCKET,prefix=process.env.PR07F_TEST_KEY_PREFIX;
 if(!api||!credential||!bucket||!prefix)throw new Error('PR07F_EXPLICIT_STORAGE_REQUIRED');
-const bodies=new Map<string,Buffer>(),providerIo={read:0,upload:0,copy:0,remove:0};
-const actual:ObjectStorageProvider=diagnostic?{async read(ref){const body=bodies.get(JSON.stringify(ref));if(!body)throw new Error('PR07F_CONTROLLED_BODY_MISSING');return Buffer.from(body);},
-  async upload(ref,bytes){const key=JSON.stringify(ref);if(bodies.has(key))throw new Error('PR07F_CONTROLLED_BODY_EXISTS');bodies.set(key,Buffer.from(bytes));},
-  async copy(from,to){const body=bodies.get(JSON.stringify(from));if(!body)throw new Error('PR07F_CONTROLLED_BODY_MISSING');bodies.set(JSON.stringify(to),Buffer.from(body));},async remove(ref){bodies.delete(JSON.stringify(ref));}}:
+const providerIo={read:0,upload:0,copy:0,remove:0};
+const actual:ObjectStorageProvider=diagnostic?createControlledObjectProvider():
   createSupabaseObjectProvider({apiUrl:api,serviceCredential:credential,bucket,keyPrefix:prefix,allowLoopbackHttp:true});
 const provider:ObjectStorageProvider={read(ref,options){providerIo.read++;return actual.read(ref,options);},upload(ref,body,options){providerIo.upload++;return actual.upload(ref,body,options);},copy(from,to,options){providerIo.copy++;return actual.copy(from,to,options);},remove(ref,options){providerIo.remove++;return actual.remove(ref,options);}};
 const rows:Record<string,unknown>[]=[],children:ServerChild[]=[],snapshots:Record<string,unknown>[]=[];
