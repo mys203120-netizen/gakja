@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { snapshotHash } from '../session-runtime';
 import type { EvaluationRevisionRepository, EvaluationRevisionScope } from './evaluation-revision-ports';
+import { withLocalWriterFence } from '../transition/local-writer-fence';
 
 export interface EvaluationRevisionFileSystem {
   link: typeof link; mkdir: typeof mkdir; readFile: typeof readFile;
@@ -21,6 +22,7 @@ export function createLocalEvaluationRevisionRepository(root = process.cwd(), op
     list(scope) { return io.readdir(directory(scope)); },
     read(scope, contentSha256) { return io.readFile(filename(scope, contentSha256), 'utf8'); },
     async publish(scope, contentSha256, value) {
+      return withLocalWriterFence(root, async () => {
       const base = directory(scope);
       await io.mkdir(base, { recursive: true, mode: 0o700 });
       const file = filename(scope, contentSha256), content = JSON.stringify(value);
@@ -32,6 +34,7 @@ export function createLocalEvaluationRevisionRepository(root = process.cwd(), op
         try { await io.link(temporary, file); }
         catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST' || await io.readFile(file, 'utf8') !== content) throw error; }
       } finally { await io.unlink(temporary).catch(error => { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }); }
+      });
     },
   };
 }

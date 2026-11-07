@@ -1,3 +1,4 @@
+import { authorizeScoped, scopedServiceAuthority, type ScopedServiceAuthority } from '../service/scoped-authority';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { interviewConfig } from '../../interview.config';
@@ -37,10 +38,16 @@ export async function createShadowReadRepositories(options:{
   environment:'isolated-shadow';
 }) {
   if(options.environment!=='isolated-shadow'||process.env.NODE_ENV==='production')throw new ShadowReadError('SHADOW_READ_ONLY_REQUIRED');
+  return createShadowReadRepositoriesCore(options);
+}
+
+type ShadowReadOptions = Omit<Parameters<typeof createShadowReadRepositories>[0], 'environment'> & { authority?: ScopedServiceAuthority };
+async function createShadowReadRepositoriesCore(options: ShadowReadOptions) {
   const {context,runId,repository,objects}=options;
   const captured=await repository.capture(context,runId);
   if(!captured||captured.state!=='open'||context.mode!=='authenticated'||!context.scope||captured.ownerId!==context.account.ownerId||
     captured.studentId!==context.scope.studentId||captured.applicationTargetId!==context.scope.applicationTargetId||captured.supportTargetId!==context.scope.supportTargetId)throw new ShadowReadError('SHADOW_SCOPE_MISMATCH');
+  if(options.authority && scopedServiceAuthority(options.authority).mode==='production' && captured.binding!=='service-verified')throw new ShadowReadError('SHADOW_READ_ONLY_REQUIRED');
   const snapshot:ShadowSnapshot=structuredClone(captured),ownerId=snapshot.provenanceOwnerId??snapshot.ownerId;
   const counters={mappingReads:0,objectReads:0,objectBytes:0,confirmedAbsentReads:0,snapshotChecks:0,localFileReads:0};
   const byId=new Map(snapshot.artifacts.map(row=>[row.artifactId,row]));
@@ -70,6 +77,7 @@ export async function createShadowReadRepositories(options:{
     }
   }
   async function assertSnapshotUnchanged(){
+    if(options.authority){if(context.mode!=='authenticated')throw new ShadowReadError('SHADOW_SCOPE_MISMATCH');await authorizeScoped(options.authority,context,'read');}
     counters.snapshotChecks++;
     if(!await repository.unchanged(context,runId,snapshot.generation))throw new ShadowReadError('SHADOW_SNAPSHOT_CHANGED');
   }
@@ -136,4 +144,12 @@ export async function createShadowReadRepositories(options:{
     bankOptions:(extra:Partial<ReadScope>={}):BankOptions=>({readOnly:{bank:bankReader,audio:audioReader},readOptions:{repositories,scope:{...emptyReadScope(ownerId),...extra}}}),
     assertSnapshotUnchanged,diagnostics:()=>({...counters}),
   };
+}
+
+/** Explicit G reader. Original D admission and old source/domain pins remain intact. */
+export async function createScopedShadowReadRepositories(options: ShadowReadOptions & { authority: ScopedServiceAuthority }) {
+  scopedServiceAuthority(options.authority);
+  if(options.context.mode!=='authenticated')throw new ShadowReadError('SHADOW_SCOPE_MISMATCH');
+  await authorizeScoped(options.authority,options.context,'read');
+  return createShadowReadRepositoriesCore(options);
 }

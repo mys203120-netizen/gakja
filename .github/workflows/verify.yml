@@ -191,3 +191,30 @@ jobs:
           path: artifacts/pr07f/storage-*/
           if-no-files-found: ignore
           retention-days: 14
+
+  scoped-transition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      PR07G_TEST_RUN_ID: ci_${{ github.run_id }}_${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify scoped transition and recovery units
+        run: npx tsx --test tests/transition/*.unit.test.ts
+      - name: Verify two servers, two workers and independent recovery endpoints
+        run: node scripts/run-pr07g-storage-tests.mjs
+      - name: Retain redacted transition and integrated recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr07g-scoped-transition-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/pr07g/storage-*/
+          if-no-files-found: ignore
+          retention-days: 14

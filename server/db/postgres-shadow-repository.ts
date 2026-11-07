@@ -1,3 +1,4 @@
+import { scopedServiceAuthority, type ScopedServiceAuthority } from '../service/scoped-authority';
 import type { Pool, PoolClient } from 'pg';
 import { createHash } from 'node:crypto';
 import { RequestAccessError, type AccountAccess, type AuthenticatedRequestContext, type RequestContext, type RequestIdentityBoundary } from '../auth/request-identity';
@@ -37,6 +38,10 @@ export function createShadowImportCapability(authority: ShadowImportAuthority): 
  * no arbitrary SQL callback is exposed to import callers. All object I/O stays
  * outside these short transactions in the C service/orchestrator. */
 export function createPostgresShadowRepository(options:{authority:PostgresRequestAuthority;boundary:RequestIdentityBoundary;mappingPool:Pool;now?:()=>number}):ShadowRepository {
+  return createPostgresShadowRepositoryCore(options);
+}
+type ShadowRepositoryOptions=Omit<Parameters<typeof createPostgresShadowRepository>[0],'mappingPool'>&{mappingPool?:Pool;serviceAuthority?:ScopedServiceAuthority};
+function createPostgresShadowRepositoryCore(options:ShadowRepositoryOptions):ShadowRepository {
   const {authority,boundary,mappingPool}=options,now=options.now??Date.now;
   async function current(context:RequestContext):Promise<AuthenticatedRequestContext> {
     const value=await boundary.revalidate(context);
@@ -77,7 +82,7 @@ export function createPostgresShadowRepository(options:{authority:PostgresReques
   }
   function snapshot(value:ShadowSnapshot|null,context:AuthenticatedRequestContext):ShadowSnapshot|null {
     if(value===null)return null;
-    if(!value || !runIdPattern.test(value.runId) || !sha.test(value.planSha256) || !['synthetic','local-verification-only'].includes(value.binding) ||
+    if(!value || !runIdPattern.test(value.runId) || !sha.test(value.planSha256) || !(['synthetic','local-verification-only'].includes(value.binding)||options.serviceAuthority&&value.binding==='service-verified') ||
       !['open','cancelled','cleaned'].includes(value.state) || !/^\d+$/u.test(value.generation) || value.snapshotToken!==value.generation ||
       !Array.isArray(value.artifacts) || !Array.isArray(value.pointers))throw invalid();
     sameScope(value,context);
@@ -108,6 +113,7 @@ export function createPostgresShadowRepository(options:{authority:PostgresReques
     const selected=await current(context),permit=await requireCap(cap,selected,run,ids);
     let client:PoolClient|undefined,begun=false,healthy=true,result:T|null=null;
     try {
+      if(!mappingPool)throw scopeRequired();
       client=await mappingPool.connect();boundary.selectScope(selected,{});
       const role=(await client.query(`SELECT current_user::text current,session_user::text session,r.rolsuper,r.rolbypassrls,r.rolcreaterole,r.rolcreatedb,
         EXISTS(SELECT 1 FROM pg_roles p WHERE (p.rolsuper OR p.rolbypassrls OR p.rolname='gakja_owner') AND pg_has_role(current_user,p.oid,'MEMBER')) elevated
@@ -163,4 +169,12 @@ export function createPostgresShadowRepository(options:{authority:PostgresReques
     resolve: (context,run,selector)=>read(context,'SELECT gakja.shadow_resolve($1,$2,$3,$4) value',[run,selector.role,selector.reference??null,selector.selection??null],binding),
     async unchanged(context,run,generation) {if(!/^\d+$/u.test(generation))return false;return (await read(context,'SELECT gakja.shadow_unchanged($1,$2::bigint) value',[run,generation],value=>value===null?false:value))===true;},
   } satisfies ShadowRepository);
+}
+
+export function createScopedPostgresShadowRepository(options:ShadowRepositoryOptions&{serviceAuthority:ScopedServiceAuthority}):ShadowRepository {
+  scopedServiceAuthority(options.serviceAuthority);return createPostgresShadowRepositoryCore(options);
+}
+
+export function createScopedPostgresShadowReader(options:Omit<ShadowRepositoryOptions,'mappingPool'>&{serviceAuthority:ScopedServiceAuthority}):Pick<ShadowRepository,'capture'|'resolve'|'unchanged'> {
+  scopedServiceAuthority(options.serviceAuthority);const core=createPostgresShadowRepositoryCore(options);return Object.freeze({capture:core.capture,resolve:core.resolve,unchanged:core.unchanged});
 }

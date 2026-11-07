@@ -61,7 +61,13 @@
     "test:evaluation-writer": "node scripts/run-pr07f-storage-tests.mjs",
     "test:evaluation-writer-db": "node scripts/run-pr07f-db-tests.mjs",
     "test:evaluation-writer-db-local": "node scripts/run-pr07f-local-db.mjs",
-    "verify:evaluation-contracts": "tsx scripts/export-authenticated-evaluation-schemas.ts --check"
+    "verify:evaluation-contracts": "tsx scripts/export-authenticated-evaluation-schemas.ts --check",
+    "test:transition-unit": "tsx --test tests/transition/*.unit.test.ts",
+    "test:scoped-transition": "node scripts/run-pr07g-storage-tests.mjs",
+    "test:scoped-transition-db": "node scripts/run-pr07g-db-tests.mjs",
+    "test:scoped-transition-db-local": "node scripts/run-pr07g-local-db.mjs",
+    "service:preflight": "node --import tsx scripts/service-preflight.mjs",
+    "service:evaluation-worker": "node --import tsx scripts/run-service-evaluation-worker.mjs"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-kr": "^5.3.1",

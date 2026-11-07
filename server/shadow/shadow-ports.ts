@@ -22,7 +22,7 @@ export interface ShadowAbsentArtifact extends ShadowArtifactIdentity {
 export type ShadowArtifactPlan = ShadowPresentArtifact | ShadowAbsentArtifact;
 export interface ShadowPointerPlan { name: string; selection: ShadowSelectionMode; artifactId: string }
 export interface ShadowRunPlan {
-  runId: string; planSha256: string; binding: 'synthetic' | 'local-verification-only';
+  runId: string; planSha256: string; binding: 'synthetic' | 'local-verification-only' | 'service-verified';
   ownerId: string; studentId: string; applicationTargetId: string; supportTargetId: string;
   /** Provenance only. It does not grant the authenticated owner any scope. */
   provenanceOwnerId?: string;

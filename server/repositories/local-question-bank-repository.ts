@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { localDevelopmentOwner } from '../session-runtime';
 import type { QuestionBankRepository, QuestionBankRequest } from './question-bank-ports';
+import { withLocalWriterFence } from '../transition/local-writer-fence';
 
 type LocalBankIo = { mkdir: typeof mkdir; readFile: typeof readFile; rename: typeof rename; unlink: typeof unlink; writeFile: typeof writeFile };
 /** Same ready/partial files and wx-temp → rename → own-temp cleanup as before.
@@ -20,6 +21,7 @@ export function createLocalQuestionBankRepository(root = process.cwd(), options:
     try { return JSON.parse(await io.readFile(target, 'utf8')); } catch { return null; }
   };
   const write = async (request: QuestionBankRequest & { value: { key: string } }, partial: boolean) => {
+    return withLocalWriterFence(root, async () => {
     const target = file(request, partial);
     if (request.value.key !== request.scope.bankKey) throw new Error('QUESTION_BANK_REPOSITORY_KEY_MISMATCH');
     await io.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
@@ -28,10 +30,11 @@ export function createLocalQuestionBankRepository(root = process.cwd(), options:
     const temporary = `${target}.${nonce}.tmp`;
     try { await io.writeFile(temporary, JSON.stringify(request.value, null, 2), { mode: 0o600, flag: 'wx' }); await io.rename(temporary, target); }
     finally { await io.unlink(temporary).catch(() => {}); }
+    });
   };
   return { ownerId,
     readReady: request => read(request, false), readPartial: request => read(request, true),
     writePartial: request => write(request, true), publishReady: request => write(request, false),
-    async removePartial(request) { const target = file(request, true); await io.unlink(target).catch(() => {}); },
+    async removePartial(request) { const target = file(request, true); await withLocalWriterFence(root, () => io.unlink(target).catch(() => {})); },
   };
 }

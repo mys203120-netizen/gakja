@@ -1,3 +1,5 @@
+import { scopedServiceAuthority, type ScopedServiceAuthority } from '../service/scoped-authority';
+import { admitTransitionSql, applyTransitionSql, guardTransitionSql, cleanTransitionSql } from '../service/transition-transaction';
 import type { Pool, PoolClient } from 'pg';
 import { RequestAccessError, type AccountAccess, type AuthenticatedRequestContext, type RequestContext, type RequestIdentityBoundary } from '../auth/request-identity';
 import { DatabaseAuthorityError, type PostgresRequestAuthority } from './postgres-authority';
@@ -26,6 +28,10 @@ export function createPostgresObjectRepository(options: {
   authority: PostgresRequestAuthority; boundary: RequestIdentityBoundary; mappingPool: Pool;
   bucket: string; keyPrefix: string; admissionTtlSeconds?: number;
 }): PostgresObjectRepository {
+  return createPostgresObjectRepositoryCore(options);
+}
+type ObjectRepositoryOptions=Omit<Parameters<typeof createPostgresObjectRepository>[0],'mappingPool'>&{mappingPool?:Pool;serviceAuthority?:ScopedServiceAuthority};
+function createPostgresObjectRepositoryCore(options:ObjectRepositoryOptions):PostgresObjectRepository {
   const { authority, boundary, mappingPool, bucket, keyPrefix } = options;
   const ttl = options.admissionTtlSeconds ?? 900;
   if (!/^[a-z0-9][a-z0-9-]{2,62}$/u.test(bucket) || !/^[a-z0-9_-]{8,64}$/u.test(keyPrefix) ||
@@ -83,9 +89,11 @@ export function createPostgresObjectRepository(options: {
   }
   async function mutate<T>(context: RequestContext, query: string, args: unknown[], validate: (value: T | null, context: AuthenticatedRequestContext) => T | null) {
     const selected = await current(context);
+    const transition=await admitTransitionSql(options.serviceAuthority,selected,'session-write');
     let client: PoolClient | undefined, begun = false, healthy = true;
     let result: T | null = null;
     try {
+      if(!mappingPool)throw unavailable();
       client = await mappingPool.connect(); boundary.selectScope(selected, {});
       const role = (await client.query(`SELECT current_user::text AS current,session_user::text AS session,r.rolsuper,r.rolbypassrls,r.rolcreaterole,r.rolcreatedb,
         EXISTS(SELECT 1 FROM pg_catalog.pg_roles p WHERE (p.rolsuper OR p.rolbypassrls OR p.rolname='gakja_owner')
@@ -98,10 +106,12 @@ export function createPostgresObjectRepository(options: {
       const values = [selected.principal.issuer,selected.principal.subject,selected.account.accountId,selected.account.revision,
         selected.account.ownerId,selected.scope!.studentId,selected.scope!.applicationTargetId,'',''];
       for (let i=0;i<settings.length;i++) await client.query('SELECT pg_catalog.set_config($1,$2,true)', ['gakja.'+settings[i],values[i]]);
+      await applyTransitionSql(client,transition);
       await client.query("SELECT pg_catalog.set_config('statement_timeout','5000',true)");
       await sameAccount(client, selected);
       result = validate((await client.query<{value:T|null}>(query,args)).rows[0]?.value ?? null,selected);
       await sameAccount(client, selected); boundary.selectScope(selected, {});
+      await guardTransitionSql(client,transition);
       await client.query('COMMIT'); begun = false;
     } catch (error) {
       if (client && begun) { try { await client.query('ROLLBACK'); } catch { healthy = false; } }
@@ -114,6 +124,7 @@ export function createPostgresObjectRepository(options: {
           const { rows } = await client.query<{clean:boolean}>(`SELECT ${settings.map((_,i)=>`COALESCE(current_setting($${i+1},true),'')=''`).join(' AND ')} clean`,settings.map(s=>'gakja.'+s));
           healthy = healthy && rows[0]?.clean === true;
         } catch { healthy = false; }
+        if(options.serviceAuthority)try{healthy=healthy&&await cleanTransitionSql(client);}catch{healthy=false;}
         client.release(!healthy);
       }
     }
@@ -159,4 +170,13 @@ export function createPostgresObjectRepository(options: {
     versionObject: (context,scope,kind,version) => read(context,'SELECT gakja.storage_version_object($1::text,$2::text,$3::text) value',[scope,kind,version],selector),
     legacyObject: (context,scope,kind,legacy,pin) => read(context,'SELECT gakja.storage_legacy_object($1::text,$2::text,$3::text,$4::text) value',[scope,kind,legacy,pin],selector),
   } satisfies PostgresObjectRepository);
+}
+
+export function createScopedPostgresObjectRepository(options:ObjectRepositoryOptions&{serviceAuthority:ScopedServiceAuthority}):PostgresObjectRepository {
+  scopedServiceAuthority(options.serviceAuthority);return createPostgresObjectRepositoryCore(options);
+}
+
+/** No mapping credential or pool exists in a restored read-only process. */
+export function createReadOnlyScopedPostgresObjectRepository(options:Omit<ObjectRepositoryOptions,'mappingPool'>&{serviceAuthority:ScopedServiceAuthority}):PostgresObjectRepository {
+  scopedServiceAuthority(options.serviceAuthority);return createPostgresObjectRepositoryCore(options);
 }

@@ -1,3 +1,5 @@
+import { scopedServiceAuthority, type ScopedServiceAuthority } from '../service/scoped-authority';
+import { admitTransitionSql, applyTransitionSql, guardTransitionSql, cleanTransitionSql, transitionSqlOperation, transitionSessionId } from '../service/transition-transaction';
 import { createHash } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { RequestAccessError, type AuthenticatedRequestContext, type RequestContext, type RequestIdentityBoundary } from '../auth/request-identity';
@@ -78,7 +80,7 @@ function progress(value:SessionCommandProgress){
 function sqlError(error:unknown,commitStarted:boolean):Error {
   if(error instanceof SessionCommandError||error instanceof RequestAccessError)return error;
   const code=(error as {code?:string})?.code;
-  const known:Record<string,[number,string]>={P7101:[409,'SESSION_IDEMPOTENCY_CONFLICT'],P7102:[409,'SESSION_REVISION_CONFLICT'],P7103:[409,'SESSION_WRITER_STALE'],
+  const known:Record<string,[number,string]>={P7301:[409,'TRANSITION_GENERATION_CHANGED'],P7302:[409,'TRANSITION_EVIDENCE_REQUIRED'],P7303:[409,'TRANSITION_WRITE_DENIED'],P7304:[409,'TRANSITION_NOT_PREPARED'],P7101:[409,'SESSION_IDEMPOTENCY_CONFLICT'],P7102:[409,'SESSION_REVISION_CONFLICT'],P7103:[409,'SESSION_WRITER_STALE'],
     P7104:[409,'SESSION_INPUT_FROZEN'],P7105:[409,'SESSION_SEMANTIC_CONFLICT'],'42501':[404,'SESSION_NOT_FOUND'],
     P7106:[408,'SESSION_TURN_WORK_TIMEOUT'],P7107:[409,'SESSION_TURN_WORK_CANCELLED'],
     '22023':[400,'SESSION_COMMAND_INVALID'],'22P02':[400,'SESSION_COMMAND_INVALID'],'23505':[409,'SESSION_SEMANTIC_CONFLICT'],'23503':[409,'SESSION_RELATION_CONFLICT'],'23514':[409,'SESSION_INVARIANT_CONFLICT'],
@@ -93,6 +95,11 @@ export function createPostgresSessionCommandRepository(options:{
   boundary:RequestIdentityBoundary;requestPool:Pool;mappingPool?:Pool;environment:'isolated-session-writer';now?:()=>number;statementTimeoutMs?:number;
 }):SessionCommandRepository {
   if(options.environment!=='isolated-session-writer'||process.env.NODE_ENV==='production')throw denied();
+  return createPostgresSessionCommandRepositoryCore(options);
+}
+
+type SessionRepositoryOptions = Omit<Parameters<typeof createPostgresSessionCommandRepository>[0], 'environment'> & { authority?: ScopedServiceAuthority };
+function createPostgresSessionCommandRepositoryCore(options: SessionRepositoryOptions): SessionCommandRepository {
   const {boundary,requestPool,mappingPool}=options,now=options.now??Date.now,timeout=options.statementTimeoutMs??5000;
   if(!Number.isInteger(timeout)||timeout<1||timeout>30000)throw invalid();
   async function current(context:RequestContext){const value=await boundary.revalidate(context);if(value.mode!=='authenticated'||!value.scope)throw denied();return value;}
@@ -103,6 +110,7 @@ export function createPostgresSessionCommandRepository(options:{
   async function tx<T>(context:RequestContext,role:'gakja_request'|'gakja_mapping',sql:string,args:unknown[],validate:(value:unknown,context:AuthenticatedRequestContext)=>T,
     permit?:{value:SessionEnrollmentCapability;input:{sessionId:string;creationKey:string;inputSha256:string}}):Promise<T>{
     const selected=await current(context);if(permit)await cap(selected,permit.value,permit.input);
+    const transition=await admitTransitionSql(options.authority,selected,transitionSqlOperation(sql,'session'),transitionSessionId(args));
     let client:PoolClient|undefined,begun=false,healthy=true,commitStarted=false,result:T;
     try{
       const pool=role==='gakja_request'?requestPool:mappingPool;
@@ -114,14 +122,16 @@ export function createPostgresSessionCommandRepository(options:{
       await client.query('BEGIN ISOLATION LEVEL READ COMMITTED');begun=true;
       const values=[selected.principal.issuer,selected.principal.subject,selected.account.accountId,selected.account.revision,selected.account.ownerId,selected.scope!.studentId,selected.scope!.applicationTargetId,'',''];
       for(let i=0;i<settings.length;i++)await client.query('SELECT set_config($1,$2,true)',['gakja.'+settings[i],values[i]]);
+      await applyTransitionSql(client,transition);
       await client.query("SELECT set_config('statement_timeout',$1,true)",[String(timeout)]);
       const account=(await client.query('SELECT gakja.resolve_account($1,$2) value',[selected.principal.issuer,selected.principal.subject])).rows[0]?.value;
       if(!account||account.accountId!==selected.account.accountId||account.ownerId!==selected.account.ownerId||account.revision!==selected.account.revision)throw denied();
       result=validate((await client.query(sql,args)).rows[0]?.value??null,selected);
+      await guardTransitionSql(client,transition);
       boundary.selectScope(selected,{});commitStarted=true;await client.query('COMMIT');begun=false;
     }catch(error){if(client&&begun)try{await client.query('ROLLBACK');}catch{healthy=false;}throw sqlError(error,commitStarted);}
     finally{
-      if(client){try{await client.query('RESET ALL');healthy=healthy&&(await client.query(`SELECT ${settings.map((_,i)=>`coalesce(current_setting($${i+1},true),'')=''`).join(' AND ')} clean`,settings.map(k=>'gakja.'+k))).rows[0]?.clean===true;}catch{healthy=false;}client.release(!healthy);}
+      if(client){try{await client.query('RESET ALL');healthy=healthy&&(await client.query(`SELECT ${settings.map((_,i)=>`coalesce(current_setting($${i+1},true),'')=''`).join(' AND ')} clean`,settings.map(k=>'gakja.'+k))).rows[0]?.clean===true;}catch{healthy=false;}if(options.authority)try{healthy=healthy&&await cleanTransitionSql(client);}catch{healthy=false;}client.release(!healthy);}
     }
     await current(selected);if(permit)await cap(selected,permit.value,permit.input);return result;
   }
@@ -189,4 +199,11 @@ export const createPostgresSessionWriter=createPostgresSessionCommandRepository;
 export function createPostgresSessionCommandReader(options:Omit<Parameters<typeof createPostgresSessionCommandRepository>[0],'mappingPool'>):Pick<SessionCommandRepository,'read'> {
   const repository=createPostgresSessionCommandRepository(options);
   return Object.freeze({read:repository.read});
+}
+
+export function createScopedPostgresSessionCommandRepository(options: SessionRepositoryOptions & { authority: ScopedServiceAuthority }): SessionCommandRepository {
+  scopedServiceAuthority(options.authority); return createPostgresSessionCommandRepositoryCore(options);
+}
+export function createScopedPostgresSessionCommandReader(options: Omit<SessionRepositoryOptions,'mappingPool'> & { authority: ScopedServiceAuthority }): Pick<SessionCommandRepository,'read'> {
+  const repository=createScopedPostgresSessionCommandRepository(options);return Object.freeze({read:repository.read});
 }

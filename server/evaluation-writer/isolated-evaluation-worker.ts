@@ -1,3 +1,5 @@
+import { assertScopedComponent, authorizeScoped, bindScopedComponent, scopedServiceAuthority, type ScopedServiceAuthority } from '../service/scoped-authority';
+import { runScopedOperation } from '../service/scoped-command';
 import type { AuthenticatedRequestContext, RequestIdentityBoundary } from '../auth/request-identity';
 import { runEvaluationWorkerOnce } from '../evaluation-worker';
 import { authenticatedEvaluationWorkerScope, assertWorkerMetadataBinding, type TrustedEvaluationWorkerExecution } from '../internal-execution';
@@ -23,6 +25,9 @@ export interface IsolatedEvaluationWorkerOptions {
 export function createIsolatedEvaluationWorker(options: IsolatedEvaluationWorkerOptions) {
   if (options.environment !== 'isolated-evaluation-writer' || options.provider.kind !== 'synthetic' || process.env.NODE_ENV === 'production')
     throw new EvaluationWriterError(503, 'F_ISOLATED_WORKER_REQUIRED');
+  return createEvaluationWorkerCore(options);
+}
+function createEvaluationWorkerCore(options: Omit<IsolatedEvaluationWorkerOptions,'environment'|'provider'> & { provider: {requestEvaluation?:EvaluationSessionOptions['requestEvaluation']} }) {
   const { repository, identity } = options, now = options.now ?? Date.now;
   return {
     async run(context: AuthenticatedRequestContext, input: {
@@ -82,4 +87,24 @@ export function createIsolatedEvaluationWorker(options: IsolatedEvaluationWorker
       return result;
     },
   };
+}
+
+export interface ScopedEvaluationProvider { readonly kind:'service-native-evaluation'|'service-rehearsal-evaluation' }
+const providers=new WeakMap<ScopedEvaluationProvider,{requestEvaluation?:EvaluationSessionOptions['requestEvaluation']}>();
+export function createNativeEvaluationProvider(authority:ScopedServiceAuthority):ScopedEvaluationProvider {
+  scopedServiceAuthority(authority);const handle=bindScopedComponent(authority,Object.freeze({kind:'service-native-evaluation' as const}));providers.set(handle,{});return handle;
+}
+export function createRehearsalEvaluationProvider(authority:ScopedServiceAuthority,requestEvaluation:NonNullable<EvaluationSessionOptions['requestEvaluation']>):ScopedEvaluationProvider {
+  if(scopedServiceAuthority(authority).mode!=='rehearsal'||process.env.NODE_ENV==='production'||typeof requestEvaluation!=='function')throw new EvaluationWriterError(503,'F_REHEARSAL_PROVIDER_REQUIRED');
+  const handle=bindScopedComponent(authority,Object.freeze({kind:'service-rehearsal-evaluation' as const}));providers.set(handle,{requestEvaluation});return handle;
+}
+export function createScopedEvaluationWorker(options:Omit<IsolatedEvaluationWorkerOptions,'environment'|'provider'> & {authority:ScopedServiceAuthority;provider:ScopedEvaluationProvider}) {
+  const detail=scopedServiceAuthority(options.authority);assertScopedComponent(options.authority,options.provider);
+  const provider=providers.get(options.provider);if(!provider||detail.mode==='production'&&options.provider.kind!=='service-native-evaluation')throw new EvaluationWriterError(503,'F_NATIVE_PROVIDER_REQUIRED');
+  const core=createEvaluationWorkerCore({...options,provider});
+  return {async run(context:AuthenticatedRequestContext,input:Parameters<typeof core.run>[1]&{expectedTransitionGeneration:string}){
+    return runScopedOperation(options.authority,context,{generation:input.expectedTransitionGeneration,kind:'worker',signal:input.signal},async signal=>{
+      await authorizeScoped(options.authority,context,'worker-write');return core.run(context,{...input,signal});
+    });
+  }};
 }

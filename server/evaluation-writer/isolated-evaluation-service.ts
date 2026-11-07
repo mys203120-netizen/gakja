@@ -1,3 +1,5 @@
+import { decodeScopedServiceCommand, runScopedCommand } from '../service/scoped-command';
+import { authorizeScoped, bindScopedComponent, scopedServiceAuthority, type ScopedServiceAuthority } from '../service/scoped-authority';
 import { z } from 'zod';
 import type { AuthenticatedRequestContext, RequestIdentityBoundary } from '../auth/request-identity';
 import { AUTHENTICATED_SESSION_ENVELOPE_VERSION, decodeAuthenticatedSessionEnvelope } from '../contracts/authenticated-session-codec';
@@ -61,10 +63,15 @@ export interface IsolatedEvaluationServiceOptions {
  * writer, while a separately authorized worker consumes only registered jobs. */
 export function createIsolatedEvaluationService(options: IsolatedEvaluationServiceOptions) {
   if (options.environment !== 'isolated-evaluation-writer' || process.env.NODE_ENV === 'production') reject(503, 'F_ISOLATED_COMPOSITION_REQUIRED');
+  return createEvaluationServiceCore(options);
+}
+
+function createEvaluationServiceCore(options: Omit<IsolatedEvaluationServiceOptions, 'environment'> & { authority?: ScopedServiceAuthority }) {
   const { identity, repository } = options;
   async function current(context: AuthenticatedRequestContext) {
     const value = await identity.revalidate(context);
-    if (value.mode !== 'authenticated' || !value.scope) return reject(403, 'F_SCOPE_REQUIRED'); return value;
+    if (value.mode !== 'authenticated' || !value.scope) return reject(403, 'F_SCOPE_REQUIRED');
+    if (options.authority) await authorizeScoped(options.authority, value, 'read'); return value;
   }
   async function read(context: AuthenticatedRequestContext, binding: SessionAccessBinding) {
     const selected = await current(context), snapshot = await options.sessions.read(selected, binding.sessionId);
@@ -326,4 +333,15 @@ export function createIsolatedEvaluationService(options: IsolatedEvaluationServi
     },
   };
   return { mutations, prepare, reviewReaders };
+}
+
+export function createScopedEvaluationService(options: Omit<IsolatedEvaluationServiceOptions, 'environment'> & { authority: ScopedServiceAuthority }) {
+  scopedServiceAuthority(options.authority);
+  const core = createEvaluationServiceCore(options);
+  return { ...core, mutations: bindScopedComponent(options.authority, { ...core.mutations, kind: 'scoped-db-evaluation-writer' as const,
+    async command(context:AuthenticatedRequestContext,binding:SessionAccessBinding,action:EvaluationMutationAction,raw:unknown){
+      const input=decodeScopedServiceCommand(raw);
+      return runScopedCommand(options.authority,context,{generation:input.expectedTransitionGeneration,kind:'http',sessionId:binding.sessionId},()=>core.mutations.command(context,binding,action,input.command));
+    },
+  }) };
 }

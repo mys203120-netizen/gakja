@@ -26,7 +26,9 @@ export async function prepareExactCBaseline({runId,workspace=process.cwd(),repor
   await command('git',['-c','core.longpaths=true','worktree','add','--detach',codeRoot,exactCBaseline],workspace,'checkout');
   if(await command('git',['rev-parse','HEAD'],codeRoot,'commit')!==exactCBaseline)throw new Error('PR07D_BASELINE_COMMIT_MISMATCH');
   await command(process.platform==='win32'?'npm.cmd':'npm',['ci','--no-audit','--no-fund'],codeRoot,'npm-ci');
-  const changed=await command('git',['diff','--name-only',exactCBaseline],codeRoot,'source-check');
+  // Match checkout's long-path handling. Otherwise Git for Windows reports
+  // existing deep Live2D files as changed/deleted in a longer G checkout path.
+  const changed=await command('git',['-c','core.longpaths=true','diff','--name-only',exactCBaseline],codeRoot,'source-check');
   if(changed)throw new Error('PR07D_BASELINE_SOURCE_CHANGED');
   await command(process.execPath,['--import','tsx',path.join(workspace,'tests/shadow/c-baseline-driver.mjs'),'build',codeRoot,fixtureRoot,baselineResult],codeRoot,'actual-local-read',
     {INTERVIEW_EXECUTION_MODE:'local-development'});

@@ -1,3 +1,5 @@
+import { assertScopedComponent, scopedServiceAuthority, type ScopedServiceAuthority } from './service/scoped-authority';
+import { TransitionError } from './transition/transition-ports';
 import http, { type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { WebSocket, WebSocketServer } from 'ws';
@@ -59,6 +61,7 @@ function send(res: ServerResponse, status: number, value: unknown) {
 }
 const sessionGuardCodes = new Set(['ANSWER_ADVANCE_LOCKED', 'ANSWER_CANDIDATE_SOURCE_CHANGED', 'CAPTURE_FINAL_NOT_CONFIRMED', 'CAPTURE_PART_CHANGED']);
 function requestFailure(error: unknown) {
+  if (error instanceof TransitionError) return { status:error.status, code:error.code };
   if (error instanceof RequestAccessError || error instanceof SessionCommandError || error instanceof SessionDomainError || error instanceof TurnWorkError || error instanceof EvaluationWriterError)
     return { status: error.status, code: error.code ?? 'SESSION_DOMAIN_CONFLICT' };
   // These existing shared domain guards throw exact bounded codes. Preserve a
@@ -95,6 +98,15 @@ function flightKey(context: AuthenticatedContext, kind: string, id = '', binding
 /** Service HTTP/WSS boundary. The existing runtime-v1 local writer is deliberately
  * not a service writer. Supported service operations are explicitly read-only. */
 export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}) {
+  return createRealtimeTransportCore(options);
+}
+type ScopedSessionMutations = Omit<ServiceSessionMutations,'kind'> & { readonly kind:'scoped-db-session-writer' };
+type ScopedEvaluationMutations = Omit<ServiceEvaluationMutations,'kind'> & { readonly kind:'scoped-db-evaluation-writer' };
+type TransportOptions = Omit<ServiceRealtimeOptions,'sessionMutations'|'evaluationMutations'> & {
+  sessionMutations?: ServiceSessionMutations | ScopedSessionMutations;
+  evaluationMutations?: ServiceEvaluationMutations | ScopedEvaluationMutations;
+};
+function createRealtimeTransportCore(options:TransportOptions,authority?:ScopedServiceAuthority) {
   const identity = options.identity ?? createRequestIdentityBoundary({ mode: 'service' });
   const now = options.now ?? Date.now;
   const lifetime = Math.min(30_000, Math.max(1, options.ticketLifetimeMs ?? 30_000));
@@ -103,15 +115,18 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
   const flights = new Map<string, Promise<unknown>>();
   const sockets = new Set<WebSocket>();
   const resources = () => {
+    if(authority){if(!options.resources)throw unavailable();assertScopedComponent(authority,options.resources);return options.resources;}
     if (!options.resources || options.resources.kind === 'synthetic' && (options.environment !== 'test' || process.env.NODE_ENV === 'production')) throw unavailable();
     return options.resources;
   };
   const mutations = () => {
+    if(authority){if(!options.sessionMutations)throw unavailable();assertScopedComponent(authority,options.sessionMutations);return options.sessionMutations;}
     if (!options.sessionMutations || options.sessionMutations.kind !== 'isolated-db-session-writer' ||
       options.environment !== 'test' || process.env.NODE_ENV === 'production') throw unavailable();
     return options.sessionMutations;
   };
   const evaluations = () => {
+    if(authority){if(!options.evaluationMutations)throw unavailable();assertScopedComponent(authority,options.evaluationMutations);return options.evaluationMutations;}
     if (!options.evaluationMutations || options.evaluationMutations.kind !== 'isolated-db-evaluation-writer' ||
       options.environment !== 'test' || process.env.NODE_ENV === 'production') throw unavailable();
     return options.evaluationMutations;
@@ -327,4 +342,15 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
   });
   const close = async () => { tickets.clear(); for (const ws of sockets) ws.terminate(); await new Promise<void>(resolve => wss.close(() => resolve())); await new Promise<void>(resolve => server.close(() => resolve())); };
   return { server, wss, close };
+}
+
+/** Separate G transport entry. Legacy/default and isolated entry guards stay in force. */
+export function createScopedServiceRealtimeServer(options:Omit<TransportOptions,'environment'|'sessionMutations'|'evaluationMutations'> & {
+  authority:ScopedServiceAuthority; identity:IdentityBoundary; resources:ServiceRequestResources;
+  sessionMutations?:ScopedSessionMutations; evaluationMutations?:ScopedEvaluationMutations;
+}) {
+  scopedServiceAuthority(options.authority);assertScopedComponent(options.authority,options.resources);
+  if(options.sessionMutations)assertScopedComponent(options.authority,options.sessionMutations);
+  if(options.evaluationMutations)assertScopedComponent(options.authority,options.evaluationMutations);
+  return createRealtimeTransportCore(options,options.authority);
 }

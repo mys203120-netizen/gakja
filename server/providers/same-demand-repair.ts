@@ -1,3 +1,4 @@
+import { questionGenerationModel } from './realtime-model';
 import OpenAI from 'openai';
 import { z } from 'zod';
 import { zodTextFormat } from 'openai/helpers/zod';
@@ -28,7 +29,7 @@ export async function repairSameDemandQuestion(context: InterviewContext, sessio
     ...(candidate ? { candidate: candidate.decision.question } : {}), action,
     actualAnswers: (buildAnswerContext(session)?.answers ?? []).map(answer => ({ question: answer.question, rawTranscript: answer.rawTranscript })) };
   if (JSON.stringify(input).length > 8000) throw new Error('REPAIR_CONTEXT_BUDGET_EXCEEDED');
-  const model = process.env.OPENAI_QUESTION_MODEL || 'gpt-6-luna';
+  const model = questionGenerationModel();
   const observeRepair = (observation: ProviderUsageObservation) => { try { options.onRepairUsage?.(observation); } catch { /* Diagnostics never alter a repair verdict. */ } };
   let usageObserved = false;
   let repairedText: string;

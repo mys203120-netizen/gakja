@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { localDevelopmentOwner } from '../session-runtime';
 import { assertAudioOwner, type AudioReadRequest, type AudioRepository } from './audio-ports';
+import { withLocalWriterFence } from '../transition/local-writer-fence';
 
 export interface LocalAudioFileSystem {
   mkdir: typeof mkdir; readFile: typeof readFile; writeFile: typeof writeFile; rename: typeof rename; unlink: typeof unlink;
@@ -32,6 +33,7 @@ export function createLocalAudioRepository(root = process.cwd(), options: LocalA
     ownerId: localDevelopmentOwner().id,
     async read(request) { return io.readFile(file(request)); },
     async publish(request) {
+      return withLocalWriterFence(root, async () => {
       const destination = file(request);
       if (request.publication === 'speech-cache') {
         await io.mkdir(directory, { recursive: true });
@@ -45,6 +47,7 @@ export function createLocalAudioRepository(root = process.cwd(), options: LocalA
         await io.writeFile(temporary, request.bytes, { mode: 0o600, flag: 'wx' });
         await io.rename(temporary, destination);
       } finally { await io.unlink(temporary).catch(() => {}); }
+      });
     },
   };
   return repository;

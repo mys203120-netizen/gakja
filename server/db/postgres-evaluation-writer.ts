@@ -1,3 +1,5 @@
+import { scopedServiceAuthority, type ScopedServiceAuthority } from '../service/scoped-authority';
+import { admitTransitionSql, applyTransitionSql, guardTransitionSql, cleanTransitionSql, transitionSqlOperation, transitionSessionId } from '../service/transition-transaction';
 import { createHash } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import type { AuthenticatedRequestContext, RequestIdentityBoundary } from '../auth/request-identity';
@@ -121,6 +123,7 @@ function sqlError(error: unknown, committed: boolean): Error {
   if (error instanceof RequestAccessError || error instanceof EvaluationWriterError) return error;
   const code = (error as { code?: string })?.code;
   const known: Record<string, [number, string]> = {
+    P7301:[409,'TRANSITION_GENERATION_CHANGED'],P7302:[409,'TRANSITION_EVIDENCE_REQUIRED'],P7303:[409,'TRANSITION_WRITE_DENIED'],P7304:[409,'TRANSITION_NOT_PREPARED'],
     '42501': [404, 'EVALUATION_NOT_FOUND'], P7201: [409, 'EVALUATION_IDEMPOTENCY_CONFLICT'], P7202: [409, 'EVALUATION_REVIEW_GENERATION_CHANGED'],
     P7203: [409, 'EVALUATION_LEASE_LOST'], P7204: [409, 'EVALUATION_WRITER_FROZEN'], P7205: [409, 'EVALUATION_INPUT_CHANGED'],
     '22023': [400, 'EVALUATION_COMMAND_INVALID'], '22P02': [400, 'EVALUATION_COMMAND_INVALID'], '23505': [409, 'EVALUATION_IDEMPOTENCY_CONFLICT'],
@@ -137,6 +140,11 @@ export function createPostgresEvaluationWriter(options: {
   environment: 'isolated-evaluation-writer'; now?: () => number; statementTimeoutMs?: number;
 }): EvaluationWriterRepository {
   if (options.environment !== 'isolated-evaluation-writer' || process.env.NODE_ENV === 'production') throw denied();
+  return createPostgresEvaluationWriterCore(options);
+}
+
+type EvaluationRepositoryOptions = Omit<Parameters<typeof createPostgresEvaluationWriter>[0], 'environment'> & { authority?: ScopedServiceAuthority };
+function createPostgresEvaluationWriterCore(options: EvaluationRepositoryOptions): EvaluationWriterRepository {
   const now = options.now ?? Date.now, timeout = options.statementTimeoutMs ?? 5000, { boundary } = options;
   if (!Number.isInteger(timeout) || timeout < 1 || timeout > 30000) throw invalid();
   async function current(context: AuthenticatedRequestContext) {
@@ -151,6 +159,7 @@ export function createPostgresEvaluationWriter(options: {
   async function tx<T>(context: AuthenticatedRequestContext, role: 'gakja_request' | 'gakja_mapping' | 'gakja_worker', query: string, values: unknown[],
     validate: (value: unknown, context: AuthenticatedRequestContext) => T, capability?: Capability, extras: Partial<Record<typeof settings[number], string>> = {}) {
     const selected = await current(context); if (capability) await permit(selected, capability);
+    const transition = await admitTransitionSql(options.authority, selected, transitionSqlOperation(query,'evaluation',role==='gakja_worker'), transitionSessionId(values));
     const pool = role === 'gakja_mapping' ? options.mappingPool : role === 'gakja_worker' ? options.workerPool : options.requestPool;
     if (!pool) throw denied();
     let client: PoolClient | undefined, begun = false, healthy = true, committing = false, result: T;
@@ -164,6 +173,7 @@ export function createPostgresEvaluationWriter(options: {
         account_id: selected.account.accountId, account_revision: selected.account.revision, owner_id: selected.account.ownerId,
         student_id: selected.scope!.studentId, application_target_id: selected.scope!.applicationTargetId, job_id: '', worker_subject: '', reviewer_actor: '', reviewer_key: '', reviewer_action: '', ...extras };
       for (const name of settings) await client.query('SELECT set_config($1,$2,true)', ['gakja.' + name, vars[name]]);
+      await applyTransitionSql(client,transition);
       await client.query("SELECT set_config('statement_timeout',$1,true)", [String(timeout)]);
       // The retained worker role has no general account-discovery grant. F's
       // narrow worker SQL repeats account/principal/grant checks internally.
@@ -172,12 +182,14 @@ export function createPostgresEvaluationWriter(options: {
         if (!account || account.accountId !== selected.account.accountId || account.ownerId !== selected.account.ownerId || account.revision !== selected.account.revision) throw denied();
       }
       result = validate((await client.query(query, values)).rows[0]?.value ?? null, selected);
+      await guardTransitionSql(client,transition);
       boundary.selectScope(selected, {}); committing = true; await client.query('COMMIT'); begun = false;
     } catch (cause) {
       if (client && begun) try { await client.query('ROLLBACK'); } catch { healthy = false; } throw sqlError(cause, committing);
     } finally {
       if (client) {
         try { await client.query('RESET ALL'); healthy = healthy && (await client.query(`SELECT ${settings.map((_, i) => `coalesce(current_setting($${i + 1},true),'')=''`).join(' AND ')} clean`, settings.map(k => 'gakja.' + k))).rows[0]?.clean === true; } catch { healthy = false; }
+        if(options.authority)try{healthy=healthy&&await cleanTransitionSql(client);}catch{healthy=false;}
         client.release(!healthy);
       }
     }
@@ -291,4 +303,8 @@ export function createPostgresEvaluationWriter(options: {
     },
   };
   return Object.freeze(repository);
+}
+
+export function createScopedPostgresEvaluationWriter(options: EvaluationRepositoryOptions & { authority: ScopedServiceAuthority }): EvaluationWriterRepository {
+  scopedServiceAuthority(options.authority); return createPostgresEvaluationWriterCore(options);
 }

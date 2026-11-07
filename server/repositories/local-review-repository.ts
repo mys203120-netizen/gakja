@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, open, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { ReviewRepository } from './review-ports';
+import { withLocalWriterFence } from '../transition/local-writer-fence';
 
 export const BANK_SCOPE_REGISTRY_DIRECTORY = 'data/prepared/evaluation-scope-registry';
 export interface ReviewFileSystem {
@@ -24,21 +25,25 @@ export function createLocalReviewRepository(root = process.cwd(), options: {
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST' || await io.readFile(file, 'utf8') !== content) throw error; }
   };
   const immutableInDirectory = async (file: string, content: string, encoding?: 'utf8') => {
+    return withLocalWriterFence(root, async () => {
     await io.mkdir(path.dirname(file), { recursive: true, mode: 0o700 }); await immutable(file, content, encoding);
+    });
   };
   return {
     async readRegistryPointer() { return io.readFile(path.join(base, 'current.json'), 'utf8'); },
     async readRegistryRevision(digest) { return io.readFile(path.join(base, 'revisions', `${checked(digest)}.json`), 'utf8'); },
-    async ensureRegistryRevisions() { await io.mkdir(path.join(base, 'revisions'), { recursive: true, mode: 0o700 }); },
+    async ensureRegistryRevisions() { await withLocalWriterFence(root, () => io.mkdir(path.join(base, 'revisions'), { recursive: true, mode: 0o700 })); },
     async acquireRegistryPublishLock() {
       const lockPath = path.join(base, 'publish.lock'), lock = await io.open(lockPath, 'wx', 0o600);
       return { async release() { await lock.close(); await io.unlink(lockPath); } };
     },
-    async writeRegistryRevision(digest, content) { await immutable(path.join(base, 'revisions', `${checked(digest)}.json`), content); },
+    async writeRegistryRevision(digest, content) { await withLocalWriterFence(root, () => immutable(path.join(base, 'revisions', `${checked(digest)}.json`), content)); },
     async publishRegistryPointer(content) {
+      return withLocalWriterFence(root, async () => {
       const temporary = path.join(base, `current.${temporaryId()}.tmp`);
       await io.writeFile(temporary, content, { flag: 'wx', mode: 0o600 });
       await io.rename(temporary, path.join(base, 'current.json'));
+      });
     },
     async readSessionReceipt(digest) { return io.readFile(receiptFile(digest), 'utf8'); },
     async writeSessionReceipt(digest, content) { await immutableInDirectory(receiptFile(digest), content); },

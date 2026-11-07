@@ -1,3 +1,4 @@
+import { questionGenerationModel } from './realtime-model';
 import OpenAI from 'openai';
 import { z } from 'zod';
 import { zodTextFormat } from 'openai/helpers/zod';
@@ -263,7 +264,7 @@ export async function approveNaturalQuestion(context: InterviewContext, session:
     targetEvidence: clarification ? [...current.metadata.targetEvidence] : [proposal.target],
     groundingRationale: output.decision.necessity, validationStatus: 'approved', validationFailures: [],
   };
-  const model = process.env.OPENAI_QUESTION_MODEL || 'gpt-6-luna', started = performance.now();
+  const model = questionGenerationModel(), started = performance.now();
   const reviewTrace: NaturalReviewTrace = { version: 'runtime-question-review-trace-v1', policyVersion: RUNTIME_REVIEW_POLICY_VERSION, questionSha256: hash(draft.questionText), stage: 'surface_precheck', schemaValid: false, verdict: null, accepted: false, rejectReason: null, failureCode: null, invalidReason: null, premises: [], declaredDemandIdentity };
   let providerCallMade = false, providerUsageObserved = false;
   try {

@@ -37,28 +37,39 @@ export function speechAudioCacheId(text: string, settings: VoiceSettings) {
   return createHash("sha256").update(JSON.stringify({ version: 2, text, speaker: settings.speaker, speed: settings.speed, pitch: settings.pitch, volume: settings.volume, format: settings.format })).digest("hex");
 }
 
-export async function synthesizeSpeech(text: string, speaker: string, options: SpeechSynthesisOptions = {}): Promise<string> {
+export function checkedSpeechSettings(text: string, speaker: string, options: SpeechSynthesisOptions = {}): VoiceSettings {
   options.signal?.throwIfAborted();
   if (!text.trim()) throw new Error("빈 문장의 음성을 만들 수 없습니다.");
   const settings = options.settings ? { ...options.settings } : resolveVoiceSettings(speaker, process.env, options);
   if (settings.speaker !== speaker || !/^[a-z0-9_-]+$/i.test(settings.speaker) || !Number.isInteger(settings.speed) || settings.speed < -5 || settings.speed > 10 || !Number.isInteger(settings.pitch) || settings.pitch < -5 || settings.pitch > 5 || !Number.isInteger(settings.volume) || settings.volume < -5 || settings.volume > 5 || settings.format !== 'mp3') throw new Error('저장된 면접관 음성 설정을 확인하지 못했습니다.');
+  return settings;
+}
+
+/** Native request only: no local cache or persistence. Service composition
+ * supplies C-verified object persistence; the legacy caller keeps its cache. */
+export async function requestSpeechBytes(text: string, speaker: string, options: SpeechSynthesisOptions = {}): Promise<Buffer> {
+  const settings = checkedSpeechSettings(text, speaker, options);
+  const requestSignal = AbortSignal.any([options.signal ?? new AbortController().signal, AbortSignal.timeout(35_000)]);
+  requestSignal.throwIfAborted();
+  const response = await fetch(TTS_URL, {
+    method: "POST",
+    headers: { "X-NCP-APIGW-API-KEY-ID": process.env.CLOVA_VOICE_CLIENT_ID ?? "", "X-NCP-APIGW-API-KEY": process.env.CLOVA_VOICE_CLIENT_SECRET ?? "", "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ speaker: settings.speaker, text, format: settings.format, volume: String(settings.volume), speed: String(settings.speed), pitch: String(settings.pitch) }),
+    signal: requestSignal,
+  });
+  requestSignal.throwIfAborted();
+  if (!response.ok) throw new Error(`CLOVA Voice ${response.status}: ${(await response.text()).slice(0, 400)}`);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  requestSignal.throwIfAborted();
+  if (!bytes.length || !(response.headers.get("content-type") ?? "").includes("audio")) throw new Error("CLOVA Voice가 유효한 음성 파일을 반환하지 않았습니다.");
+  return bytes;
+}
+
+export async function synthesizeSpeech(text: string, speaker: string, options: SpeechSynthesisOptions = {}): Promise<string> {
+  const settings = checkedSpeechSettings(text, speaker, options);
   const id = speechAudioCacheId(text, settings);
-  return cache.getOrCreate(id, async producerSignal => {
-    const requestSignal = AbortSignal.any([producerSignal, AbortSignal.timeout(35_000)]);
-    requestSignal.throwIfAborted();
-    const response = await fetch(TTS_URL, {
-      method: "POST",
-      headers: { "X-NCP-APIGW-API-KEY-ID": process.env.CLOVA_VOICE_CLIENT_ID ?? "", "X-NCP-APIGW-API-KEY": process.env.CLOVA_VOICE_CLIENT_SECRET ?? "", "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ speaker: settings.speaker, text, format: settings.format, volume: String(settings.volume), speed: String(settings.speed), pitch: String(settings.pitch) }),
-      signal: requestSignal,
-    });
-    requestSignal.throwIfAborted();
-    if (!response.ok) throw new Error(`CLOVA Voice ${response.status}: ${(await response.text()).slice(0, 400)}`);
-    const bytes = Buffer.from(await response.arrayBuffer());
-    requestSignal.throwIfAborted();
-    if (!bytes.length || !(response.headers.get("content-type") ?? "").includes("audio")) throw new Error("CLOVA Voice가 유효한 음성 파일을 반환하지 않았습니다.");
-    return bytes;
-  }, { signal: options.signal, onTiming: timing => options.onTiming?.({ ...timing, settings: { ...settings } }) });
+  return cache.getOrCreate(id, producerSignal => requestSpeechBytes(text, speaker, { ...options, settings, signal: producerSignal }),
+    { signal: options.signal, onTiming: timing => options.onTiming?.({ ...timing, settings: { ...settings } }) });
 }
 
 export async function readSpeechAudio(id: string) {

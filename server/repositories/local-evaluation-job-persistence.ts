@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, open, readFile, readdir, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { EvaluationJobFileOptions, EvaluationJobPersistence } from './evaluation-job-ports';
+import { withLocalWriterFence } from '../transition/local-writer-fence';
 
 const isMissing = (error: unknown) => (error as NodeJS.ErrnoException).code === 'ENOENT';
 export const localEvaluationJobDirectory = (root = process.cwd()) => path.join(root, 'data/evaluation-jobs');
@@ -20,6 +21,7 @@ export function createLocalEvaluationJobPersistence(directory = localEvaluationJ
       return files.filter(name => /^[a-f0-9]{64}\.job\.json$/u.test(name)).map(name => name.slice(0, 64));
     },
     async atomic(reference, value) {
+      return withLocalWriterFence(path.dirname(path.dirname(directory)), async () => {
       const destination = file(reference.id, reference.kind);
       await mkdir(directory, { recursive: true, mode: 0o700 });
       const temporary = `${destination}.${process.pid}.${randomUUID()}.tmp`;
@@ -32,6 +34,7 @@ export function createLocalEvaluationJobPersistence(directory = localEvaluationJ
           await new Promise(resolve => setTimeout(resolve, delays[attempt]));
         }
       }
+      });
     },
     async locked(id, operation) {
       await mkdir(directory, { recursive: true, mode: 0o700 });

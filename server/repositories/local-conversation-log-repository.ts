@@ -2,6 +2,7 @@ import { mkdir, open, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { localDevelopmentOwner } from '../session-runtime';
 import type { ConversationLogRepository, ConversationLogScope } from './conversation-log-ports';
+import { withLocalWriterFence } from '../transition/local-writer-fence';
 
 export interface ConversationLogFileSystem { mkdir: typeof mkdir; open: typeof open; readFile: typeof readFile }
 export function createLocalConversationLogRepository(root = process.cwd(), options: {
@@ -16,16 +17,20 @@ export function createLocalConversationLogRepository(root = process.cwd(), optio
   };
   return { ownerId,
     coordinationKey: file,
-    async ensureDirectory(scope) { file(scope); await io.mkdir(directory, { recursive: true, mode: 0o700 }); },
+    async ensureDirectory(scope) { file(scope); await withLocalWriterFence(root, () => io.mkdir(directory, { recursive: true, mode: 0o700 })); },
     async read(scope) { return io.readFile(file(scope), 'utf8'); },
     async append(request) {
+      return withLocalWriterFence(root, async () => {
       const handle = await io.open(file(request), 'a', 0o600);
       try { await handle.chmod(0o600); await handle.writeFile(request.text); }
       finally { await handle.close(); }
+      });
     },
     async sync(scope) {
+      return withLocalWriterFence(root, async () => {
       const handle = await io.open(file(scope), 'r+');
       try { await handle.sync(); } finally { await handle.close(); }
+      });
     },
   };
 }

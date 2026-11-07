@@ -1,3 +1,6 @@
+import { assertSessionProviderHandle } from '../service/session-providers';
+import { decodeScopedServiceCommand, runScopedCommand, runScopedOperation } from '../service/scoped-command';
+import { authorizeScoped, bindScopedComponent, scopedServiceAuthority, type ScopedServiceAuthority } from '../service/scoped-authority';
 import { createHash, randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { setTimeout as wait } from 'node:timers/promises';
@@ -53,9 +56,9 @@ export interface SyntheticCapture {
 }
 export interface IsolatedSessionProviders {
   kind: 'synthetic';
-  forSession(pins: Readonly<Record<string, unknown>>): SessionTurnProviders;
-  classify: typeof import('../providers/single-core-runtime').classifySingleCoreAnswerCandidate;
-  openCapture(input: { sessionId: string; turnId: string; answerId: string; captureRevision: number; streamId: string; writerGeneration: string }): Promise<SyntheticCapture>;
+  forSession(pins: Readonly<Record<string, unknown>>, context?: AuthenticatedRequestContext): SessionTurnProviders;
+  classify(...args:[...Parameters<typeof import('../providers/single-core-runtime').classifySingleCoreAnswerCandidate>,pins?:Readonly<Record<string,unknown>>]):ReturnType<typeof import('../providers/single-core-runtime').classifySingleCoreAnswerCandidate>;
+  openCapture(input: { sessionId: string; turnId: string; answerId: string; captureRevision: number; streamId: string; writerGeneration: string }, context?: AuthenticatedRequestContext): Promise<SyntheticCapture>;
 }
 export interface IsolatedSessionServiceOptions {
   environment: 'isolated-session-writer'; identity: RequestIdentityBoundary; repository: SessionCommandRepository;
@@ -86,12 +89,18 @@ class DurableReceiptReplay { constructor(readonly receipt: SessionCommandReceipt
 export function createIsolatedSessionService(options: IsolatedSessionServiceOptions) {
   if (options.environment !== 'isolated-session-writer' || options.providers.kind !== 'synthetic' || process.env.NODE_ENV === 'production' ||
     !['question', 'realtime', 'review', 'evaluation'].every(key => typeof Reflect.get(options.models ?? {}, key) === 'string' && Reflect.get(options.models, key).trim().length)) error(503, 'ISOLATED_SESSION_COMPOSITION_REQUIRED');
+  return createSessionServiceCore(options);
+}
+
+type SessionServiceCoreOptions = Omit<IsolatedSessionServiceOptions, 'environment' | 'providers'> & { providers: Omit<IsolatedSessionProviders, 'kind'>; authority?: ScopedServiceAuthority };
+function createSessionServiceCore(options: SessionServiceCoreOptions) {
   const { identity, repository } = options, now = options.now ?? Date.now;
   const captures = new Map<string, Capture>();
   const finalizations = new Map<string, Promise<unknown>>();
   const counters = { localSessionWrites: 0, localEvaluationEnqueues: 0, paidProviderCalls: 0, syntheticCaptureBytes: 0, providerAttempts: 0 };
   async function current(context: AuthenticatedRequestContext) {
-    const value = await identity.revalidate(context); if (value.mode !== 'authenticated' || !value.scope) return error(403, 'SESSION_SCOPE_REQUIRED'); return value;
+    const value = await identity.revalidate(context); if (value.mode !== 'authenticated' || !value.scope) return error(403, 'SESSION_SCOPE_REQUIRED');
+    if (options.authority) await authorizeScoped(options.authority, value, 'read'); return value;
   }
   async function read(context: AuthenticatedRequestContext, id: string) {
     const checked = await current(context), value = await repository.read(checked, id); if (!value) return error(404, 'SESSION_NOT_FOUND');
@@ -223,7 +232,7 @@ export function createIsolatedSessionService(options: IsolatedSessionServiceOpti
     });
   }
   function makePreparer(context: AuthenticatedRequestContext, snapshot: SessionCommandSnapshot, state: ReturnType<typeof decode>, save: () => Promise<void>, emit: (event: ConversationEvent) => void) {
-    const providers = options.providers.forSession(state.pins);
+    const providers = options.providers.forSession(state.pins, context);
     return createSessionTurnPreparer({ ownerId: snapshot.binding.ownerId, contextFor: async () => state.context,
       async requireQuestionBank() {
         const bank = await options.readPinnedBank(context, snapshot, state.session, state.context);
@@ -355,7 +364,7 @@ export function createIsolatedSessionService(options: IsolatedSessionServiceOpti
           finalizeCapturedTurnForEnd(captured, false); checkpointSession(presentation, 'closing_prepared'); await save();
         }
         const duration = sessionDurationSeconds(presentation, state.context.interviewOverview?.durationSeconds ?? NaN);
-        const providers = options.providers.forSession(state.pins), closing = createSessionClosingPreparer({ ownerId: binding.ownerId,
+        const providers = options.providers.forSession(state.pins, context), closing = createSessionClosingPreparer({ ownerId: binding.ownerId,
           synthesizeSpeech: providers.synthesizeSpeech, interviewerVoiceDefaults: providers.interviewerVoiceDefaults, audioOwners: new Map(), journal: (_session, event) => emit(event), HttpError: SessionDomainError });
         const value = await closing(presentation, presentation.elapsedMs >= duration * 1000 ? 'time_expired' : p.reason ?? 'user_ended');
         return { result: { closingUtterance: value } };
@@ -370,7 +379,7 @@ export function createIsolatedSessionService(options: IsolatedSessionServiceOpti
         if (p.staged) turn!.metadata.answerSubmissionMode = 'staged-v2'; turn!.metadata.answerCommitStatus = 'capturing'; turn!.transcriptStatus = 'streaming';
         checkpointSession(session, 'starting_capture'); await save();
         counters.providerAttempts++; await hook('before-external', action, session.id, input.key, intent());
-        const provider = await options.providers.openCapture({ sessionId: session.id, ...p, streamId, writerGeneration: snapshot.writerGeneration });
+        const provider = await options.providers.openCapture({ sessionId: session.id, ...p, streamId, writerGeneration: snapshot.writerGeneration }, checked);
         disposeOnFailure(async () => { await provider.close(); if (captures.get(session.id)?.provider === provider) captures.delete(session.id); });
         await hook('after-external', action, session.id, input.key, intent());
         checkpointSession(session, 'listening');
@@ -410,7 +419,7 @@ export function createIsolatedSessionService(options: IsolatedSessionServiceOpti
         try {
           await hook('before-external', action, session.id, input.key, intent()); counters.providerAttempts++;
           const decision = session.elapsedMs < duration * 1000 ? await work.run(Infinity, () => options.providers.classify(state.context, session, { text: turn.rawTranscript ?? '', captureRevision: p.captureRevision, endingObservation: p.endingObservation, elapsedMs: session.elapsedMs },
-            { workContext: work, policyMode: session.runtime!.runtimePolicy?.mode ?? 'compiled', allowFollowUp: mayAskFollowUp(session, duration, interviewConfig.maxFollowUps), allowClarification: mayAskClarification(session, duration), allowReplay: mayReplayQuestion(session, duration) })) : undefined;
+            { workContext: work, policyMode: session.runtime!.runtimePolicy?.mode ?? 'compiled', allowFollowUp: mayAskFollowUp(session, duration, interviewConfig.maxFollowUps), allowClarification: mayAskClarification(session, duration), allowReplay: mayReplayQuestion(session, duration) },state.pins)) : undefined;
           await hook('after-external', action, session.id, input.key, intent()); work.assertLive(); assertCandidateSource(turn, candidate);
           const completed = { ...candidate, decision, status: decision?.kind === 'CONTINUE' ? 'continuing' as const : 'advance_ready' as const }; session.runtime!.answerCandidates[candidate.id] = completed; turn.metadata.answerCommitStatus = completed.status;
           if (completed.status === 'continuing') completeDurableSubmissionWork(session, p, submission.record.attemptId);
@@ -441,7 +450,7 @@ export function createIsolatedSessionService(options: IsolatedSessionServiceOpti
           await hook('after-external', action, session.id, input.key, intent());
           let closingUtterance: ClosingUtterance | undefined;
           if (!next) {
-            const duration = sessionDurationSeconds(session, state.context.interviewOverview?.durationSeconds ?? NaN), providers = options.providers.forSession(state.pins);
+            const duration = sessionDurationSeconds(session, state.context.interviewOverview?.durationSeconds ?? NaN), providers = options.providers.forSession(state.pins, context);
             const prepareClosing = createSessionClosingPreparer({ ownerId: binding.ownerId, synthesizeSpeech: providers.synthesizeSpeech,
               interviewerVoiceDefaults: providers.interviewerVoiceDefaults, audioOwners: new Map(), journal: (_session, event) => emit(event), HttpError: SessionDomainError });
             closingUtterance = await prepareClosing(session, session.elapsedMs >= duration * 1000 ? 'time_expired' : 'candidate_exhausted', work);
@@ -644,4 +653,56 @@ export function createIsolatedSessionService(options: IsolatedSessionServiceOpti
   };
   return { mutations, resources, inspect: async (context: AuthenticatedRequestContext, id: string) => response(await read(context, id)), diagnostics: () => ({ ...counters }),
     async close() { const pending = [...captures.values()]; captures.clear(); await Promise.all(pending.map(capture => Promise.resolve(capture.provider.close()).catch(() => {}))); } };
+}
+
+export interface ScopedSessionProviders extends Omit<IsolatedSessionProviders, 'kind'> { readonly kind: 'service-native' | 'service-rehearsal' }
+export function createScopedSessionService(options: Omit<IsolatedSessionServiceOptions, 'environment' | 'providers'> & {
+  authority: ScopedServiceAuthority; providers: ScopedSessionProviders;
+}) {
+  const detail = scopedServiceAuthority(options.authority);
+  assertSessionProviderHandle(options.authority, options.providers);
+  if (detail.mode === 'production' && options.providers.kind !== 'service-native') error(503, 'SERVICE_NATIVE_PROVIDER_REQUIRED');
+  if (!['question','realtime','review','evaluation'].every(key => typeof Reflect.get(options.models ?? {}, key) === 'string' && Reflect.get(options.models,key).trim().length)) error(503,'SERVICE_MODELS_REQUIRED');
+  const core = createSessionServiceCore(options);
+  const connections = new Map<string,string>();
+  const mutations = bindScopedComponent(options.authority, { ...core.mutations, kind: 'scoped-db-session-writer' as const,
+    async create(context: AuthenticatedRequestContext, raw: unknown) {
+      const input=decodeScopedServiceCommand(raw);
+      return runScopedCommand(options.authority,context,{generation:input.expectedTransitionGeneration,kind:'http'},()=>core.mutations.create(context,input.command));
+    },
+    async command(context: AuthenticatedRequestContext,binding:SessionAccessBinding,action:string,raw:unknown) {
+      const input=decodeScopedServiceCommand(raw);
+      return runScopedCommand(options.authority,context,{generation:input.expectedTransitionGeneration,kind:'http',sessionId:binding.sessionId},()=>core.mutations.command(context,binding,action,input.command));
+    },
+    async connect(context: AuthenticatedRequestContext,binding:SessionAccessBinding) {
+      const current=await authorizeScoped(options.authority,context,'read',binding.sessionId);
+      return runScopedOperation(options.authority,context,{generation:current.transition_generation,kind:'wss',sessionId:binding.sessionId},async()=>{
+        await authorizeScoped(options.authority,context,'session-write',binding.sessionId);
+        const connected=await core.mutations.connect(context,binding);connections.set(connected.connectionToken,current.transition_generation);return connected;
+      });
+    },
+    async assertSocketCurrent(context:AuthenticatedRequestContext,binding:SessionAccessBinding,generation:string) {
+      const current=await authorizeScoped(options.authority,context,'read',binding.sessionId);
+      return runScopedOperation(options.authority,context,{generation:current.transition_generation,kind:'wss',sessionId:binding.sessionId},async()=>{
+        await authorizeScoped(options.authority,context,'session-write',binding.sessionId);await core.mutations.assertSocketCurrent(context,binding,generation);
+      });
+    },
+    async socket(context:AuthenticatedRequestContext,binding:SessionAccessBinding,generation:string,raw:unknown,connectionToken:string) {
+      const input=decodeScopedServiceCommand(raw);
+      if(connections.get(connectionToken)!==input.expectedTransitionGeneration)error(409,'TRANSITION_GENERATION_CHANGED');
+      return runScopedOperation(options.authority,context,{generation:input.expectedTransitionGeneration,kind:'wss',sessionId:binding.sessionId},()=>core.mutations.socket(context,binding,generation,input.command,connectionToken));
+    },
+    async audio(context:AuthenticatedRequestContext,binding:SessionAccessBinding,generation:string,bytes:Buffer,connectionToken:string) {
+      const selected=connections.get(connectionToken);if(!selected)error(409,'SESSION_STALE_SOCKET');
+      return runScopedOperation(options.authority,context,{generation:selected!,kind:'capture',sessionId:binding.sessionId},async()=>{
+        await authorizeScoped(options.authority,context,'session-write',binding.sessionId);await core.mutations.audio(context,binding,generation,bytes,connectionToken);
+      });
+    },
+    async disconnect(context:AuthenticatedRequestContext,binding:SessionAccessBinding,generation:string,connectionToken:string) {
+      const selected=connections.get(connectionToken);connections.delete(connectionToken);if(!selected)return;
+      return runScopedOperation(options.authority,context,{generation:selected,kind:'wss',sessionId:binding.sessionId},()=>core.mutations.disconnect(context,binding,generation,connectionToken));
+    },
+  });
+  const resources = bindScopedComponent(options.authority, { ...core.resources, kind: 'operational' as const });
+  return { ...core, mutations, resources };
 }

@@ -4,6 +4,7 @@ import type { InterviewSession } from "../protocol";
 import type { InterviewContext } from '../data/load-interview-context';
 import { assertSessionOwner, snapshotHash } from '../session-runtime';
 import type { SessionStore } from './session-store';
+import { withLocalWriterFence } from '../transition/local-writer-fence';
 export type { SessionStore } from './session-store';
 
 export interface LocalSessionStoreOptions {
@@ -31,6 +32,7 @@ export class LocalSessionStore implements SessionStore {
     return rows.filter((row): row is InterviewSession => row !== null);
   }
   async saveContext(context: InterviewContext, ownerId: string) {
+    return withLocalWriterFence(path.dirname(path.dirname(this.directory)), async () => {
     const contentSha256 = snapshotHash(context), directory = path.join(path.dirname(this.directory), 'session-contexts');
     const file = path.join(directory, `${snapshotHash(ownerId)}-${contentSha256}.json`);
     await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -38,6 +40,7 @@ export class LocalSessionStore implements SessionStore {
     try { await writeFile(file, JSON.stringify(envelope), { mode: 0o600, flag: 'wx' }); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; }
     return contentSha256;
+    });
   }
   async loadContext(contentSha256: string, ownerId: string): Promise<InterviewContext> {
     if (!/^[a-f0-9]{64}$/i.test(contentSha256)) throw new Error('CONTEXT_SNAPSHOT_INVALID');
@@ -50,7 +53,7 @@ export class LocalSessionStore implements SessionStore {
     if (session.runtime && (session.runtime.version !== 'session-runtime-v1' || session.runtime.owner.mode !== 'local-development')) throw new Error('LOCAL_SESSION_WRITER_ONLY');
     if (!/^[0-9a-f-]{36}$/.test(session.id)) throw new Error("잘못된 세션 ID");
     const content = JSON.stringify(session, null, 2);
-    const pending = (this.writes.get(session.id) ?? Promise.resolve()).catch(() => {}).then(async () => {
+    const pending = (this.writes.get(session.id) ?? Promise.resolve()).catch(() => {}).then(() => withLocalWriterFence(path.dirname(path.dirname(this.directory)), async () => {
       await mkdir(this.directory, { recursive: true });
       const file = path.join(this.directory, `${session.id}.json`);
       const temporary = `${file}.tmp`;
@@ -66,7 +69,7 @@ export class LocalSessionStore implements SessionStore {
           await (this.io.wait ?? (milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))))(delays[attempt]);
         }
       }
-    });
+    }));
     this.writes.set(session.id, pending);
     return pending;
   }

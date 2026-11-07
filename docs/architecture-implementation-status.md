@@ -1,5 +1,18 @@
 # 청사진 v2 기준 구현 기록
 
+## 2026-11-07 PR07-G 서비스 연결·제한 전환·통합 복구
+
+F `4261acbd0cbc763a838be102b565d66f6f01e036`을 별도 worktree의 기준으로 사용한다. [서비스/전환 지도](pr07g-scoped-transition.md), [통합 복구 절차](pr07g-recovery-runbook.md)를 추가했다. 기존 F 결과를 G 실행 결과로 재사용하지 않는다. 최종 SHA별 실행 로그·원격 7개 job·비공개 보존 판정은 Git 제외 `artifacts/pr07g/final-report.json`이 근거다.
+
+| 구분 | G의 판정 범위 |
+| --- | --- |
+| 구현 | 명시적 native service composition, current Auth/귀속, C/D→E/F, DB 전환 상태·공유 generation·최종 commit fencing, 등록 local root 쓰기 차단, C/D bytes 포함 독립 복구 |
+| 격리 자동검증 | 새 설치와 실제 PostgreSQL/공식 Storage·두 서버·두 worker 실행을 해당 최종 SHA 로그로 판정. root 전체/portable/nested suite를 합산하지 않음 |
+| 실환경 준비 | 운영 Auth/소유 mapping/역할·Storage 책임·검수 신뢰 동기화·범위·기간·중단/복구 담당은 별도 공급·검증 필요. blocked/not-run은 pass가 아님 |
+| 실제 제한 전환 | 실행하지 않음. 운영 migration·배포·실계정 트래픽·실학생 외부 업로드·유료 호출·평가 승인 발급 없음 |
+
+G는 PR07의 일곱 번째 단위다. 청사진 G0~G8 전체 완료가 아니다. 실제 평가 승인 0개와 pending, PR04 미완료, G4 identity/OCR 후속 범위를 유지한다. 원래 사용자 작업본과 이전 7개에 F를 더한 8개 작업본을 보존한다. 새 DB 쓰기 이후 rollback은 freeze/export/독립 read-only restore이며 local writable 복귀가 아니다.
+
 ## 2026-11-07 PR07-F 격리 평가·검수 writer 단계
 
 E의 정확한 `4469aaf`에서 별도 기능 브랜치를 시작했다. [F 실제 caller·원본·승인·transaction 계약](pr07f-evaluation-review-writer.md)은 E의 불변 handoff와 F의 소비/검수/작업/결과 revision을 분리한다. E 원본·local writer·기존31개 평가와 질문/평가 승인 경계를 유지한다. 실제 최종 SHA·실행·CI·보존은 Git 제외 `artifacts/pr07f/final-report.json`으로 판정하며 문서 상태나 E 수치를 F 성공으로 재사용하지 않는다.
