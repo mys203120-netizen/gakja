@@ -132,7 +132,20 @@ test('F worker aborts its in-flight real evaluator when the DB lease is lost', a
     async fail() { failures++; return current; } };
   const pending = runEvaluationWorkerOnce({ jobs, leaseMs: 300, execution: value.execution(), reviewInputs: value.readers,
     requestEvaluation: async () => { calls++; lost = true; return new Promise(resolve => { release = resolve; }); } });
-  const result = await pending; assert.equal(result.processed, true); assert.equal(calls, 1); assert.equal(completions, 0); assert.equal(failures, 0); assert.equal(checkpoints, 0);
+  // The production heartbeat is deliberately unref'd. An unresolved fake I/O
+  // promise does not keep Node's event loop alive, so the test owns a bounded
+  // referenced deadline rather than relying on another test file's handles.
+  let deadline!: ReturnType<typeof setTimeout>, expired = false;
+  const watchdog = new Promise<never>((_resolve, reject) => { deadline = setTimeout(() => {
+    expired = true; reject(new Error('F_TEST_LEASE_HEARTBEAT_DID_NOT_ABORT'));
+  }, 2000); });
+  let result: Awaited<typeof pending>;
+  try { result = await Promise.race([pending, watchdog]); }
+  finally {
+    clearTimeout(deadline);
+    if (expired && typeof release === 'function') { release(modelOutput(value.turn.id, value.turn.rawTranscript!)); void pending.catch(() => {}); }
+  }
+  assert.equal(result.processed, true); assert.equal(calls, 1); assert.equal(completions, 0); assert.equal(failures, 0); assert.equal(checkpoints, 0);
   release(modelOutput(value.turn.id, value.turn.rawTranscript!)); await new Promise(resolve => setTimeout(resolve, 10));
   assert.equal(completions, 0); assert.equal(checkpoints, 0);
 });
