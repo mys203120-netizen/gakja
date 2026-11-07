@@ -112,19 +112,28 @@ export function validateBankScopeReview(input: unknown, context: InterviewContex
   return registry;
 }
 
-export async function loadBankScopeRegistry(root = process.cwd(), trustedPublicKey = process.env.EVALUATION_SCOPE_REVIEW_PUBLIC_KEY,
-  reviews: BankScopeRegistryReader = createLocalReviewRepository(root)): Promise<BankEvaluationScopeRegistry | null> {
+/** Read the same signed registry through explicit persistence. Current
+ * service reviewer/account authority is checked separately by its scoped reader;
+ * loading a stored receipt retains the existing issued-time expiry meaning. */
+export async function loadBankScopeRegistryFromReader(reviews: BankScopeRegistryReader,
+  trustedPublicKey: string | undefined, now: () => number = Date.now): Promise<BankEvaluationScopeRegistry | null> {
   let pointer: { contentSha256: string };
   try { pointer = JSON.parse(await reviews.readRegistryPointer()); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw new Error('BANK_SCOPE_REGISTRY_POINTER_INVALID', { cause: error }); }
   if (!sha.safeParse(pointer.contentSha256).success) throw new Error('BANK_SCOPE_REGISTRY_POINTER_INVALID');
   const envelope = JSON.parse(await reviews.readRegistryRevision(pointer.contentSha256));
   const registry = parseBankScopeRegistry(envelope.registry), receipt = receiptSchema.parse(envelope.receipt);
-  if (Date.parse(receipt.issuedAt) > Date.now() || registry.entries.some(row => row.review.status !== 'pending' && row.review.approverId !== receipt.actorId)) throw new Error('BANK_SCOPE_AUTHENTICATED_REVIEW_RECEIPT_REQUIRED');
+  if (Date.parse(receipt.issuedAt) > now() || registry.entries.some(row => row.review.status !== 'pending' && row.review.approverId !== receipt.actorId)) throw new Error('BANK_SCOPE_AUTHENTICATED_REVIEW_RECEIPT_REQUIRED');
   verifyBankScopeReviewReceipt(receipt, registry, trustedPublicKey, Date.parse(receipt.issuedAt));
   if (registry.contentSha256 !== pointer.contentSha256) throw new Error('BANK_SCOPE_REGISTRY_POINTER_CHANGED');
   return registry;
 }
+
+export async function loadBankScopeRegistry(root = process.cwd(), trustedPublicKey = process.env.EVALUATION_SCOPE_REVIEW_PUBLIC_KEY,
+  reviews: BankScopeRegistryReader = createLocalReviewRepository(root)): Promise<BankEvaluationScopeRegistry | null> {
+  return loadBankScopeRegistryFromReader(reviews, trustedPublicKey);
+}
+
 export async function publishBankScopeReview(input: unknown, context: InterviewContext, bank: PreparedQuestionBank,
   receiptInput: unknown, expectedCurrent: string | null, root = process.cwd(), trustedPublicKey = process.env.EVALUATION_SCOPE_REVIEW_PUBLIC_KEY,
   reviews: ReviewRepository = createLocalReviewRepository(root)) {

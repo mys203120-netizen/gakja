@@ -3,10 +3,10 @@ import { verify } from 'node:crypto';
 import { z } from 'zod';
 import type { InterviewContext } from './data/load-interview-context';
 import type { InterviewSession } from './protocol';
-import { assertSessionOwner, snapshotHash } from './session-runtime';
+import { assertSessionOwner, assertAuthenticatedSessionOwner, AUTHENTICATED_SESSION_RUNTIME_VERSION, snapshotHash } from './session-runtime';
 import { evaluationFrozenInputHash } from './evaluation-history';
 import { buildEvaluationUnits, assertEvaluationQuestionContracts } from './providers/evaluation-turns';
-import { parseBankScopeRegistry, loadBankScopeRegistry, findExactQuestionEvaluationSpec, type QuestionEvaluationSpecRegistry } from './data/evaluation-scope-registry';
+import { parseBankScopeRegistry, loadBankScopeRegistry, loadBankScopeRegistryFromReader, findExactQuestionEvaluationSpec, type QuestionEvaluationSpecRegistry } from './data/evaluation-scope-registry';
 import { freezeKnowledge, knowledgeHash, knowledgeSessionQuestionAnswerHash, parseApprovedKnowledgeBundle, type ApprovedKnowledgeBundle } from './data/approved-knowledge';
 import { createReviewedEvaluationKnowledgeContext } from './data/reviewed-evaluation-context';
 import { enqueueReviewedKnowledgeEvaluation } from './reviewed-evaluation-queue';
@@ -66,26 +66,29 @@ const receiptSchema = z.object({ version: z.literal('authenticated-session-evalu
   sessionQuestionAnswerSha256: sha, contextSnapshotSha256: sha, issuedAt: z.string().datetime(), expiresAt: z.string().datetime(), signature: z.string().min(1) }).strict();
 export type SessionEvaluationReviewReceipt = z.infer<typeof receiptSchema>;
 
-/** B-stage authority: the signed review covers the actual frozen session and
- * actual ApprovedKnowledgeBundle. A-stage approval is never copied here. */
-export async function supplyReviewedSessionEvaluation(options: {
-  context: InterviewContext; session: InterviewSession; proposal: EndedSessionReviewProposal; bundle: ApprovedKnowledgeBundle; receipt: unknown;
-  root?: string; trustedPublicKey?: string; enqueue?: boolean; model?: string; currentRegistry?: QuestionEvaluationSpecRegistry; sessions?: SessionStore;
-  jobs?: EvaluationRepository; reviews?: ReviewRepository; revisions?: EvaluationRevisionRepository;
-}) {
-  assertLocalInternalExecution();
-  const { context, session } = options, root = options.root ?? process.cwd(), reviews = options.reviews ?? createLocalReviewRepository(root);
-  const latest = options.currentRegistry ?? (options.root ? await loadBankScopeRegistry(root, options.trustedPublicKey, reviews) ?? undefined : context.evaluationScopeRegistry);
+export interface ReviewedSessionEvaluationInputOptions {
+  context: InterviewContext; session: InterviewSession; proposal: EndedSessionReviewProposal;
+  bundle: ApprovedKnowledgeBundle; receipt: unknown; currentRegistry?: QuestionEvaluationSpecRegistry;
+  trustedPublicKey: string | undefined; now?: number;
+}
+/** Exact existing B-stage domain checks, with no storage, authority minting,
+ * enqueue or environment-key lookup. Authenticated callers separately provide
+ * current reviewer/account authority and atomically bind the returned evidence.
+ * JSON/signature/hash targets and the existing issued-vs-stored expiry rules
+ * are retained. A valid signature alone is not service reviewer authorization. */
+export function validateReviewedSessionEvaluationInput(options: ReviewedSessionEvaluationInputOptions) {
+  const { context, session } = options, latest = options.currentRegistry;
   if ((latest?.contentSha256 ?? null) !== options.proposal.registrySha256) throw new Error('EVALUATION_SPEC_REVISION_CHANGED');
   const expected = prepareEndedSessionReview(context, session, latest);
   if (JSON.stringify(expected) !== JSON.stringify(options.proposal)) throw new Error('EVALUATION_SESSION_REVIEW_INPUT_CHANGED');
   const bundle = parseApprovedKnowledgeBundle(options.bundle), receipt = receiptSchema.parse(options.receipt), { signature, ...payload } = receipt;
-  const publicKey = options.trustedPublicKey ?? process.env.EVALUATION_SCOPE_REVIEW_PUBLIC_KEY;
-  if (!publicKey || Date.parse(receipt.issuedAt) > Date.now() || Date.parse(receipt.expiresAt) <= Date.now() ||
+  const publicKey = options.trustedPublicKey;
+  if (!publicKey || Date.parse(receipt.issuedAt) > (options.now ?? Date.now()) || Date.parse(receipt.expiresAt) <= (options.now ?? Date.now()) ||
     receipt.proposalSha256 !== expected.contentSha256 || receipt.bundleSha256 !== bundle.contentSha256 || receipt.sessionId !== session.id ||
     receipt.sessionQuestionAnswerSha256 !== expected.sessionQuestionAnswerSha256 || receipt.contextSnapshotSha256 !== expected.contextSnapshotSha256 ||
     !verify(null, Buffer.from(JSON.stringify(payload)), publicKey, Buffer.from(signature, 'base64'))) throw new Error('AUTHENTICATED_SESSION_REVIEW_RECEIPT_REQUIRED');
-  assertSessionOwner(session, expected.ownerId);
+  if (session.runtime?.version === AUTHENTICATED_SESSION_RUNTIME_VERSION) assertAuthenticatedSessionOwner(session, expected.ownerId);
+  else assertSessionOwner(session, expected.ownerId);
   for (const item of [...bundle.packets, ...bundle.bindings]) if (item.approval.status !== 'approved' || item.approval.approverId !== receipt.actorId) throw new Error('SESSION_REVIEW_ACTOR_MISMATCH');
   for (const binding of bundle.bindings) {
     const unit = expected.units.find(item => item.turnId === binding.turnId);
@@ -98,6 +101,23 @@ export async function supplyReviewedSessionEvaluation(options: {
         spec.packetRefs.length !== binding.packetRefs.length || spec.packetRefs.some(ref => !binding.packetRefs.some(item => JSON.stringify(item) === JSON.stringify(ref)))) throw new Error('SESSION_REVIEW_SPEC_SCOPE_MISMATCH');
     }
   }
+  return { expected, bundle, receipt };
+}
+
+/** B-stage authority: the signed review covers the actual frozen session and
+ * actual ApprovedKnowledgeBundle. A-stage approval is never copied here. */
+export async function supplyReviewedSessionEvaluation(options: {
+  context: InterviewContext; session: InterviewSession; proposal: EndedSessionReviewProposal; bundle: ApprovedKnowledgeBundle; receipt: unknown;
+  root?: string; trustedPublicKey?: string; enqueue?: boolean; model?: string; currentRegistry?: QuestionEvaluationSpecRegistry; sessions?: SessionStore;
+  jobs?: EvaluationRepository; reviews?: ReviewRepository; revisions?: EvaluationRevisionRepository;
+}) {
+  assertLocalInternalExecution();
+  const { context, session } = options, root = options.root ?? process.cwd(), reviews = options.reviews ?? createLocalReviewRepository(root);
+  const latest = options.currentRegistry ?? (options.root ? await loadBankScopeRegistry(root, options.trustedPublicKey, reviews) ?? undefined : context.evaluationScopeRegistry);
+  const { expected, bundle, receipt } = validateReviewedSessionEvaluationInput({ context, session, proposal: options.proposal,
+    bundle: options.bundle, receipt: options.receipt, currentRegistry: latest,
+    trustedPublicKey: options.trustedPublicKey ?? process.env.EVALUATION_SCOPE_REVIEW_PUBLIC_KEY });
+  assertSessionOwner(session, expected.ownerId);
   const content = JSON.stringify(bundle, null, 2), relative = reviews.knowledgeRevisionPath(bundle.contentSha256), receiptHash = hash(receipt);
   const projection = createReviewedEvaluationKnowledgeContext(context, session, bundle, { path: relative, fileSha256: knowledgeHash(content),
     sessionReviewReceiptSha256: receiptHash, ...(expected.registrySha256 ? { evaluationSpecRegistrySha256: expected.registrySha256, evaluationSpecRegistry: latest } : {}) });
@@ -128,21 +148,30 @@ export async function supplyReviewedSessionEvaluation(options: {
 
 /** Re-check authenticated actual-session approval and latest spec withdrawal
  * before execution and again before result publication. No approval is minted. */
-export async function verifyStoredSessionEvaluationReview(context: InterviewContext, session: InterviewSession, root: string,
-  sessions: SessionStore = createLocalSessionStore(root), trustedPublicKey = process.env.EVALUATION_SCOPE_REVIEW_PUBLIC_KEY,
-  reviews: ReviewRepository = createLocalReviewRepository(root)) {
+export interface StoredSessionEvaluationReviewReaders {
+  loadContext(sha256: string, ownerId: string): Promise<InterviewContext>;
+  reviews: Pick<ReviewRepository, 'readSessionReceipt' | 'readRegistryPointer' | 'readRegistryRevision'>;
+  trustedPublicKey: string | undefined;
+  /** A registry may be signed by a different currently trusted actor/key. */
+  trustedRegistryPublicKey?: string;
+  now?: () => number;
+}
+/** Actual stored B signature/proposal/bundle/registry verification with no
+ * inferred local root, directory, writer, or boolean approval override. */
+export async function verifyStoredSessionEvaluationReviewFromReaders(context: InterviewContext, session: InterviewSession,
+  options: StoredSessionEvaluationReviewReaders) {
   try {
     const receiptHash = context.manifest.recordIds.sessionReviewReceiptSha256;
     if (!receiptHash || !sha.safeParse(receiptHash).success || !context.approvedKnowledge) return false;
-    const envelope = JSON.parse(await reviews.readSessionReceipt(receiptHash as string));
+    const envelope = JSON.parse(await options.reviews.readSessionReceipt(receiptHash as string));
     const receipt = receiptSchema.parse(envelope.receipt), { signature, ...payload } = receipt;
-    if (!trustedPublicKey || hash(receipt) !== receiptHash || Date.parse(receipt.issuedAt) > Date.now() || Date.parse(receipt.expiresAt) <= Date.parse(receipt.issuedAt) ||
+    if (!options.trustedPublicKey || hash(receipt) !== receiptHash || Date.parse(receipt.issuedAt) > (options.now ?? Date.now)() || Date.parse(receipt.expiresAt) <= Date.parse(receipt.issuedAt) ||
       receipt.sessionId !== session.id || receipt.sessionQuestionAnswerSha256 !== knowledgeSessionQuestionAnswerHash(session) ||
       receipt.bundleSha256 !== parseApprovedKnowledgeBundle(context.approvedKnowledge).contentSha256 ||
-      !verify(null, Buffer.from(JSON.stringify(payload)), trustedPublicKey, Buffer.from(signature, 'base64'))) return false;
-    const originalContext = await sessions.loadContext(receipt.contextSnapshotSha256, session.runtime!.owner.id), original = structuredClone(session);
+      !verify(null, Buffer.from(JSON.stringify(payload)), options.trustedPublicKey, Buffer.from(signature, 'base64'))) return false;
+    const originalContext = await options.loadContext(receipt.contextSnapshotSha256, session.runtime!.owner.id), original = structuredClone(session);
     original.runtime!.contextSnapshotSha256 = receipt.contextSnapshotSha256;
-    const latest = await loadBankScopeRegistry(root, trustedPublicKey, reviews) ?? undefined;
+    const latest = await loadBankScopeRegistryFromReader(options.reviews, options.trustedRegistryPublicKey ?? options.trustedPublicKey, options.now) ?? undefined;
     if ((latest?.contentSha256 ?? null) !== envelope.proposal.registrySha256) return false;
     const expected = prepareEndedSessionReview(originalContext, original, latest);
     if (JSON.stringify(expected) !== JSON.stringify(envelope.proposal) || expected.contentSha256 !== receipt.proposalSha256) return false;
@@ -150,4 +179,11 @@ export async function verifyStoredSessionEvaluationReview(context: InterviewCont
       (expected.units.find(unit => unit.turnId === binding.turnId)?.questionKind !== 'main' ||
         expected.units.find(unit => unit.turnId === binding.turnId)?.specification?.reviewStatus === 'approved'));
   } catch { return false; }
+}
+
+export async function verifyStoredSessionEvaluationReview(context: InterviewContext, session: InterviewSession, root: string,
+  sessions: SessionStore = createLocalSessionStore(root), trustedPublicKey = process.env.EVALUATION_SCOPE_REVIEW_PUBLIC_KEY,
+  reviews: ReviewRepository = createLocalReviewRepository(root)) {
+  return verifyStoredSessionEvaluationReviewFromReaders(context, session, { loadContext: (hash, owner) => sessions.loadContext(hash, owner),
+    trustedPublicKey, reviews });
 }

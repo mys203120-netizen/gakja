@@ -90,7 +90,7 @@ function sqlError(error:unknown,commitStarted:boolean):Error {
 /** Credentials/pools and the isolated composition are explicit. No production
  * env fallback, arbitrary callback, local SessionStore save or provider I/O. */
 export function createPostgresSessionCommandRepository(options:{
-  boundary:RequestIdentityBoundary;requestPool:Pool;mappingPool:Pool;environment:'isolated-session-writer';now?:()=>number;statementTimeoutMs?:number;
+  boundary:RequestIdentityBoundary;requestPool:Pool;mappingPool?:Pool;environment:'isolated-session-writer';now?:()=>number;statementTimeoutMs?:number;
 }):SessionCommandRepository {
   if(options.environment!=='isolated-session-writer'||process.env.NODE_ENV==='production')throw denied();
   const {boundary,requestPool,mappingPool}=options,now=options.now??Date.now,timeout=options.statementTimeoutMs??5000;
@@ -105,7 +105,9 @@ export function createPostgresSessionCommandRepository(options:{
     const selected=await current(context);if(permit)await cap(selected,permit.value,permit.input);
     let client:PoolClient|undefined,begun=false,healthy=true,commitStarted=false,result:T;
     try{
-      client=await(role==='gakja_request'?requestPool:mappingPool).connect();boundary.selectScope(selected,{});
+      const pool=role==='gakja_request'?requestPool:mappingPool;
+      if(!pool)throw new SessionCommandError(503,'SESSION_MAPPING_DEPENDENCY_REQUIRED');
+      client=await pool.connect();boundary.selectScope(selected,{});
       const r=(await client.query(`SELECT current_user::text current,session_user::text session,r.rolsuper,r.rolbypassrls,r.rolcreaterole,r.rolcreatedb,
         EXISTS(SELECT 1 FROM pg_roles p WHERE (p.rolsuper OR p.rolbypassrls OR p.rolname='gakja_owner') AND pg_has_role(current_user,p.oid,'MEMBER')) elevated FROM pg_roles r WHERE r.rolname=current_user`)).rows[0];
       if(!r||r.current!==role||r.session!==role||r.rolsuper||r.rolbypassrls||r.rolcreaterole||r.rolcreatedb||r.elevated)throw denied();
@@ -180,3 +182,11 @@ export function createPostgresSessionCommandRepository(options:{
 
 /** Alias retains a concise name for trusted server composition. */
 export const createPostgresSessionWriter=createPostgresSessionCommandRepository;
+
+/** F workers reuse E's actual scoped read transaction without a mapping
+ * credential or an exposed session writer. Missing mapping dependencies never
+ * fall back to request credentials; existing E compositions stay unchanged. */
+export function createPostgresSessionCommandReader(options:Omit<Parameters<typeof createPostgresSessionCommandRepository>[0],'mappingPool'>):Pick<SessionCommandRepository,'read'> {
+  const repository=createPostgresSessionCommandRepository(options);
+  return Object.freeze({read:repository.read});
+}

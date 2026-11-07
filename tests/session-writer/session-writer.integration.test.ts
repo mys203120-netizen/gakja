@@ -13,6 +13,8 @@ import type { SessionCommandSnapshot,SessionWriterClaim,SessionPreservationBundl
 import { testPools,closePools } from './session-writer-test-database';
 import { createSessionTestSigningAuthority,loadOwnedPublicDFixture,seedPublicDOuterScope,importPublicDContexts } from './d-preparation';
 
+const phaseTrace:Record<string,unknown>[]=[];
+const tracePhase=(event:string,detail:Record<string,unknown>={})=>phaseTrace.push({utc:new Date().toISOString(),monotonicMs:performance.now(),event,...detail});
 const diagnostic=process.env.PR07E_TEST_CONTROLLED_PROVIDER_DIAGNOSTIC==='1';
 if(diagnostic&&process.env.GITHUB_ACTIONS==='true')throw new Error('PR07E_CI_REQUIRES_OFFICIAL_STORAGE');
 const data=await loadOwnedPublicDFixture(),pools=testPools(1),restorePools=testPools(1,'restore');
@@ -34,6 +36,7 @@ interface Barrier {type:'barrier';barrierId:string;phase:string;detail:{action?:
 type Message=Record<string,unknown>;
 class ServerChild {
   process:ChildProcess;port=0;pid=0;name:string;database:'primary'|'restore';ready:Message={};logs='';messages:Message[]=[];
+  lastPhase:Message|null=null;lastIpc:Array<{type:unknown;phase?:unknown;utc:string}>=[];
   pending=new Map<string,{resolve:(value:unknown)=>void;reject:(error:Error)=>void;timer:ReturnType<typeof setTimeout>}>();
   constructor(name:string,database:'primary'|'restore'='primary'){
     this.name=name;this.database=database;
@@ -43,8 +46,11 @@ class ServerChild {
     this.process=spawn(process.execPath,['--import','tsx',fileURLToPath(new URL('./session-writer-child.ts',import.meta.url))],{cwd:process.cwd(),env,windowsHide:true,stdio:['ignore','pipe','pipe','ipc']});
     this.process.stdout!.on('data',bytes=>{this.logs+=String(bytes);});this.process.stderr!.on('data',bytes=>{this.logs+=String(bytes);});
     this.process.on('message',(raw:Message)=>{
+      this.lastIpc.push({type:raw.type,phase:raw.phase,utc:new Date().toISOString()});if(this.lastIpc.length>12)this.lastIpc.shift();
+      if(raw.type==='phase'){this.lastPhase=raw;tracePhase('child-phase',{server:this.name,childPid:this.process.pid,phase:raw.phase,detail:raw.detail,childUtc:raw.utc,childMonotonicMs:raw.monotonicMs});return;}
       if(raw.type==='object-read'){void provider.read(raw.ref as StorageObjectRef,{signal:AbortSignal.timeout(15_000),maxBytes:32*1024*1024}).then(body=>this.process.send?.({type:'object-result',requestId:raw.requestId,bytes:body.toString('base64')}),()=>this.process.send?.({type:'object-result',requestId:raw.requestId,error:'missing'}));return;}
       if(raw.type==='control-result'){
+        tracePhase('rpc-result',{server:this.name,childPid:this.process.pid,requestId:raw.requestId,errorCode:(raw.error as {code?:string}|undefined)?.code});
         const pending=this.pending.get(String(raw.requestId));if(pending){clearTimeout(pending.timer);this.pending.delete(String(raw.requestId));if(raw.error)pending.reject(Object.assign(new Error((raw.error as {code:string}).code),{code:(raw.error as {code:string}).code}));else pending.resolve(raw.result);}return;
       }
       this.messages.push(raw);
@@ -52,32 +58,34 @@ class ServerChild {
     this.process.once('exit',()=>{for(const p of this.pending.values()){clearTimeout(p.timer);p.reject(new Error('PR07E_CHILD_EXITED'));}this.pending.clear();});
     children.push(this);
   }
-  async wait(predicate:(value:Message)=>boolean,timeout=30_000):Promise<Message>{
-    const found=this.messages.findIndex(predicate);if(found>=0)return this.messages.splice(found,1)[0];
+  async wait(predicate:(value:Message)=>boolean,timeout=30_000,phase='unspecified'):Promise<Message>{
+    const started=performance.now();tracePhase('wait-start',{server:this.name,childPid:this.process.pid,phase,timeoutMs:timeout});
+    const found=this.messages.findIndex(predicate);if(found>=0){tracePhase('wait-resolved',{server:this.name,childPid:this.process.pid,phase,elapsedMs:performance.now()-started,buffered:true});return this.messages.splice(found,1)[0];}
     return new Promise((resolve,reject)=>{
-      const deadline=setTimeout(()=>{cleanup();reject(new Error('PR07E_CHILD_MESSAGE_TIMEOUT:'+this.logs.slice(-2000)));},timeout);
-      const message=(value:Message)=>{if(predicate(value)){cleanup();const index=this.messages.indexOf(value);if(index>=0)this.messages.splice(index,1);resolve(value);}};
+      const deadline=setTimeout(()=>{const evidence={server:this.name,pid:this.process.pid,phase,timeoutMs:timeout,elapsedMs:performance.now()-started,lastPhase:this.lastPhase,lastIpc:this.lastIpc};tracePhase('wait-timeout',evidence);cleanup();reject(new Error('PR07E_CHILD_MESSAGE_TIMEOUT:'+JSON.stringify(evidence)+':'+this.logs.slice(-2000)));},timeout);
+      const message=(value:Message)=>{if(predicate(value)){tracePhase('wait-resolved',{server:this.name,childPid:this.process.pid,phase,elapsedMs:performance.now()-started,type:value.type});cleanup();const index=this.messages.indexOf(value);if(index>=0)this.messages.splice(index,1);resolve(value);}};
       const exit=()=>{cleanup();reject(new Error('PR07E_CHILD_EXIT_BEFORE_MESSAGE:'+this.logs.slice(-2000)));};
       const cleanup=()=>{clearTimeout(deadline);this.process.off('message',message);this.process.off('exit',exit);};
       this.process.on('message',message);this.process.once('exit',exit);
     });
   }
   async start(){
-    await this.wait(m=>m.type==='boot');
+    await this.wait(m=>m.type==='boot',30_000,'boot');
     this.process.send?.({type:'initialize',requestId:randomUUID(),name:this.name,database:this.database,fixtureRoot:data.root,fixture:data.fixture,jwk:signing.jwk,tokens,
       runIds:Object.fromEntries([...imported.inventories.values()].map(v=>[v.plan.ownerId,v.plan.runId])),controlledProvider:diagnostic});
-    const ready=await this.wait(m=>m.type==='ready',120_000);this.ready=ready;this.port=Number(ready.port);this.pid=Number(ready.pid);assert.ok(this.port>0&&this.pid>0);return this;
+    const ready=await this.wait(m=>m.type==='ready',120_000,'ready');this.ready=ready;this.port=Number(ready.port);this.pid=Number(ready.pid);assert.ok(this.port>0&&this.pid>0);return this;
   }
   rpc<T=Record<string,unknown>>(operation:string,payload:Record<string,unknown>={}):Promise<T>{
-    const requestId=randomUUID();return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.pending.delete(requestId);reject(new Error('PR07E_CONTROL_TIMEOUT'));},30_000);
+    const requestId=randomUUID(),started=performance.now();tracePhase('rpc-start',{server:this.name,childPid:this.process.pid,operation,requestId});return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{tracePhase('rpc-timeout',{server:this.name,childPid:this.process.pid,operation,requestId,timeoutMs:30_000,elapsedMs:performance.now()-started,lastPhase:this.lastPhase});this.pending.delete(requestId);reject(new Error('PR07E_CONTROL_TIMEOUT:'+operation));},30_000);
       this.pending.set(requestId,{resolve:value=>resolve(value as T),reject,timer});this.process.send?.({type:'control',requestId,operation,payload});});
   }
-  async barrier(phase:string,key?:string){return await this.wait(m=>m.type==='barrier'&&m.phase===phase&&(!key||(m.detail as Barrier['detail']).key===key)) as unknown as Barrier;}
+  async barrier(phase:string,key?:string){return await this.wait(m=>m.type==='barrier'&&m.phase===phase&&(!key||(m.detail as Barrier['detail']).key===key),30_000,'barrier:'+phase) as unknown as Barrier;}
   get base(){return 'http://127.0.0.1:'+this.port;}
   async request<T=Record<string,unknown>>(who:'a'|'b',route:string,input?:unknown,signal?:AbortSignal){
+    tracePhase('http-start',{server:this.name,childPid:this.pid,route,key:(input as {key?:string}|undefined)?.key});
     const sep=route.includes('?')?'&':'?',response=await fetch(this.base+route+sep+'applicationTargetId=shadow-app-'+who,{method:input===undefined?'GET':'POST',headers:{Authorization:'Bearer '+tokens[who],Origin:this.base,'Content-Type':'application/json'},
       ...(input===undefined?{}:{body:JSON.stringify(input)}),signal:signal??AbortSignal.timeout(120_000),redirect:'error'});
-    const value=await response.json() as T;return {status:response.status,value,headers:response.headers};
+    const value=await response.json() as T;tracePhase('http-result',{server:this.name,childPid:this.pid,route,status:response.status});return {status:response.status,value,headers:response.headers};
   }
   async stop(force=false){if(this.process.exitCode!==null||this.process.signalCode!==null)return;
     if(!force)try{await this.rpc('stop');}catch{/* exit evidence below remains authoritative */}
@@ -131,6 +139,7 @@ test.after(async()=>{
   for(const child of children)await writeFile(path.join(output,`child-${child.name}-${child.pid||child.process.pid}.log`),child.logs);
   await writeFile(path.join(output,'two-server-cases.json'),JSON.stringify({version:'pr07e-actual-two-server-session-writer-v1',rows,states,snapshots,providerIo,cleanup,
     twoIndependentProcesses:one?.pid!==two?.pid&&!!one?.pid&&!!two?.pid,actualStudentDataTransferred:false,paidProviderCalls:0,evaluationApprovalGranted:false},null,2)+'\n');
+  await writeFile(path.join(output,'phase-trace.json'),JSON.stringify({version:'pr07e-two-server-phase-trace-v1',rows:phaseTrace},null,2)+'\n');
   assert.equal((cleanup as {complete:boolean})?.complete,true);
   for(const state of states){const value=state as {counters:{localDataReadAttempts:number;localSessionWriteAttempts:number;externalNetworkAttempts:number}};assert.equal(value.counters.localDataReadAttempts,0);assert.equal(value.counters.localSessionWriteAttempts,0);assert.equal(value.counters.externalNetworkAttempts,0);}
 });

@@ -76,15 +76,34 @@ async function validateReference(record: ReviewedEvaluationRevisionReference, se
   };
   return { job, jobs, isAuthorized };
 }
-export async function appendReviewedEvaluationRevision(options: AppendReviewedEvaluationRevisionOptions): Promise<ReviewedEvaluationRevisionReference> {
-  assertLocalInternalExecution();
-  const { originalSession: session } = options, ownerId = session.runtime?.owner.id; if (!ownerId) throw new Error('REVIEWED_EVALUATION_OWNER_REQUIRED');
+/** Pure append-only reference construction. Storage publication and current
+ * account/review authority remain the caller's atomic writer responsibility. */
+export type ReviewedEvaluationRevisionReferenceInput = Pick<AppendReviewedEvaluationRevisionOptions,
+  'originalSession' | 'receiptSha256' | 'receiptIssuedAt' | 'originalContextSnapshotSha256' | 'reviewedContextSnapshotSha256' | 'sessionFrozenInputSha256'> & {
+    job: Pick<EvaluationJob, 'id' | 'sourceSha256' | 'snapshotSha256' | 'pipelineVersion' | 'model'>;
+  };
+export function prepareReviewedEvaluationRevisionReference(options: ReviewedEvaluationRevisionReferenceInput) {
+  const { originalSession: session } = options, ownerId = session.runtime?.owner.id;
+  if (!ownerId) throw new Error('REVIEWED_EVALUATION_OWNER_REQUIRED');
   const body = referenceBodySchema.parse({ version: 'reviewed-evaluation-revision-reference-v1', ownerId, sessionId: session.id,
     sessionFrozenInputSha256: options.sessionFrozenInputSha256, sessionQuestionAnswerSha256: knowledgeSessionQuestionAnswerHash(session),
     originalContextSnapshotSha256: options.originalContextSnapshotSha256, reviewedContextSnapshotSha256: options.reviewedContextSnapshotSha256,
     receiptSha256: options.receiptSha256, receiptIssuedAt: options.receiptIssuedAt,
     job: { id: options.job.id, sourceSha256: options.job.sourceSha256, snapshotSha256: options.job.snapshotSha256, pipelineVersion: options.job.pipelineVersion, model: options.job.model } });
-  const record = { ...body, contentSha256: snapshotHash(body) }, validated = await validateReference(record, session, options);
+  return { ...body, contentSha256: snapshotHash(body) };
+}
+
+/** Validate original reference bytes without a local filename convention. */
+export function parseReviewedEvaluationRevisionReference(value: unknown): ReviewedEvaluationRevisionReference {
+  const record = referenceSchema.parse(value), { contentSha256, ...body } = record;
+  if (snapshotHash(body) !== contentSha256) throw new Error('REVIEWED_EVALUATION_REVISION_REFERENCE_CHANGED');
+  return record;
+}
+
+export async function appendReviewedEvaluationRevision(options: AppendReviewedEvaluationRevisionOptions): Promise<ReviewedEvaluationRevisionReference> {
+  assertLocalInternalExecution();
+  const { originalSession: session } = options, ownerId = session.runtime?.owner.id; if (!ownerId) throw new Error('REVIEWED_EVALUATION_OWNER_REQUIRED');
+  const record = prepareReviewedEvaluationRevisionReference(options), validated = await validateReference(record, session, options);
   if (!await validated.isAuthorized()) throw new Error('REVIEWED_EVALUATION_REVIEW_NOT_CURRENT');
   const { revisions } = stores(options), existing = await readReferences(revisions, ownerId, session.id);
   if (existing.some(prior => Date.parse(prior.receiptIssuedAt) === Date.parse(record.receiptIssuedAt) && prior.contentSha256 !== record.contentSha256)) throw new Error('REVIEWED_EVALUATION_REVISION_ORDER_CONFLICT');

@@ -162,3 +162,32 @@ jobs:
           path: artifacts/pr07e/storage-*/
           if-no-files-found: ignore
           retention-days: 14
+
+  evaluation-writer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PR07F_TEST_RUN_ID: ci_${{ github.run_id }}_${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify evaluation writer domain units
+        run: npm run test:evaluation-writer-unit
+      - name: Verify evaluation contract projection is current
+        run: npm run verify:evaluation-contracts
+      - name: Verify actual evaluation consumer and independent workers
+        run: node scripts/run-pr07f-storage-tests.mjs
+      - name: Retain redacted evaluation writer verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr07f-evaluation-writer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/pr07f/storage-*/
+          if-no-files-found: ignore
+          retention-days: 14

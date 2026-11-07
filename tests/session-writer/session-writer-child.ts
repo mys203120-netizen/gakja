@@ -62,6 +62,8 @@ const storage=createEObjects(pools,auth,readOnlyProvider),repository=createPostg
 type Hook={phase:string;key?:string;action?:string;sessionId?:string;mode:'hold'|'fail';once:boolean;timeoutMs?:number};let hooks:Hook[]=[];
 const holds=new Map<string,{resolve:()=>void;timer:ReturnType<typeof setTimeout>}>();
 async function stage(phase:string,detail:Record<string,unknown>){
+  const fields=new Set(['action','sessionId','key','operationId','turnId','answerId','captureRevision','streamId','writerGeneration','bytes']);
+  send({type:'phase',phase,utc:new Date().toISOString(),monotonicMs:performance.now(),detail:Object.fromEntries(Object.entries(detail).filter(([key])=>fields.has(key)))});
   const index=hooks.findIndex(h=>h.phase===phase&&(h.key===undefined||h.key===detail.key)&&(h.action===undefined||h.action===detail.action)&&(h.sessionId===undefined||h.sessionId===detail.sessionId));
   if(index<0)return;const hook=hooks[index];if(hook.once)hooks.splice(index,1);
   if(hook.mode==='fail'){send({type:'injected-failure',phase,detail});throw new Error('PR07E_CONTROLLED_BEFORE_COMMIT_FAILURE');}

@@ -1,5 +1,19 @@
 # 청사진 v2 기준 구현 기록
 
+## 2026-11-07 PR07-F 격리 평가·검수 writer 단계
+
+E의 정확한 `4469aaf`에서 별도 기능 브랜치를 시작했다. [F 실제 caller·원본·승인·transaction 계약](pr07f-evaluation-review-writer.md)은 E의 불변 handoff와 F의 소비/검수/작업/결과 revision을 분리한다. E 원본·local writer·기존31개 평가와 질문/평가 승인 경계를 유지한다. 실제 최종 SHA·실행·CI·보존은 Git 제외 `artifacts/pr07f/final-report.json`으로 판정하며 문서 상태나 E 수치를 F 성공으로 재사용하지 않는다.
+
+| F 관문 | 판정 범위 |
+|---|---|
+| 구현 | 실제 E→F consumer·현재 trust/A/B 검증·기존 평가 worker/엔진·별도 DB writer/lease/원자 결과·revision 조회 |
+| 자동 검증 | 기존 local/A guard·v4·codec·질문/평가 의미 정책과 새 transport/authority 회귀. 실제 실행 보고서로 판정 |
+| 합성 실환경 | 실제 PostgreSQL/공식 Storage·독립 두 worker·현재 권한/승인·장애·역보존/readonly 복원. 최종 exact-SHA CI와 artifacts로 판정 |
+| E 진단 | 원래 네 실패와 phase별 새 좁은 재현을 `artifacts/pr07f/e-diagnostic-review.md`에 보존. 원인 미확정 범위를 CI 성공으로 지우지 않음 |
+| 운영 연계/G | 미완료·미활성. 실제 귀속/Auth/provider/검수 서비스·키/철회·운영 책임/private Storage·제한 전환 필요 |
+
+실제 은행 질문승인35/평가규격승인0/검수대기35/`sessionEvaluationReady=false`를 유지한다. F 합성 승인과 실제 승인 수를 합치지 않는다. G 제한 전환·W0 실계정/실제 브라우저·G1 실제 검수/장치·PR04·G4·PR08 범용 작업/비용은 별도로 남긴다.
+
 ## 2026-11-07 PR07-E 격리 세션 writer 단계
 
 D의 정확한 `34c257e`에서 별도 기능 브랜치를 시작했다. [E 실제 경로·transaction 계약](pr07e-session-writer.md)은 기존 local adapter와 명시한 합성 인증 세션의 DB 단일 writer를 구분한다. 시작/최종 SHA·새 설치·고유 실행 로그·두 서버/CI와 보호 원본 전후 증거는 Git 제외 `artifacts/pr07e/final-report.json`으로 판정한다. 문서의 명령 예시나 이전 D의 통과 수를 E 결과로 사용하지 않는다.

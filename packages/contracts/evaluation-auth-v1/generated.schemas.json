@@ -1,0 +1,259 @@
+{
+  "version": "authenticated-evaluation-shared-projection-v1",
+  "dialect": "draft-07",
+  "authority": "Structural F transport only. Original TS review/engine codecs, exact raw bytes, signatures, current authority and SQL generations remain authoritative. Not full Draft2020-12 support.",
+  "schemas": {
+    "command": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "authenticated-evaluation-command-v1"
+        },
+        "key": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,160}$"
+        },
+        "expectedTrustGeneration": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "expectedRegistryGeneration": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "expectedApprovalGeneration": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "payload": {}
+      },
+      "required": [
+        "version",
+        "key",
+        "expectedTrustGeneration",
+        "expectedRegistryGeneration",
+        "expectedApprovalGeneration",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "handoffPayload": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "session-evaluation-handoff-v1"
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "studentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "applicationTargetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "supportTargetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "acceptedEndIntentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "acceptedEndInputSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "contextSnapshotSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "frozenSessionSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "evaluationSourceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pipelineVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sessionJson": {
+          "type": "string",
+          "minLength": 2
+        },
+        "contextJson": {
+          "type": "string",
+          "minLength": 2
+        },
+        "pinsJson": {
+          "type": "string",
+          "minLength": 2
+        },
+        "state": {
+          "type": "string",
+          "const": "awaiting-evaluation-consumer"
+        },
+        "evaluationApprovalGranted": {
+          "type": "boolean",
+          "const": false
+        }
+      },
+      "required": [
+        "version",
+        "sessionId",
+        "ownerId",
+        "studentId",
+        "applicationTargetId",
+        "supportTargetId",
+        "acceptedEndIntentId",
+        "acceptedEndInputSha256",
+        "contextSnapshotSha256",
+        "frozenSessionSha256",
+        "evaluationSourceSha256",
+        "model",
+        "pipelineVersion",
+        "sessionJson",
+        "contextJson",
+        "pinsJson",
+        "state",
+        "evaluationApprovalGranted"
+      ],
+      "additionalProperties": false
+    },
+    "reviewTrust": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "evaluation-review-trust-v1"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "studentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "applicationTargetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "supportTargetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "reviewers": {
+          "minItems": 1,
+          "maxItems": 64,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "issuer": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "subject": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "actorId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "publicKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16384
+              },
+              "actions": {
+                "minItems": 1,
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "publish-spec",
+                    "supply-session",
+                    "withdraw"
+                  ]
+                }
+              },
+              "notBefore": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "revoked": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "issuer",
+              "subject",
+              "actorId",
+              "publicKey",
+              "actions",
+              "notBefore",
+              "expiresAt",
+              "revoked"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "contentSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "version",
+        "ownerId",
+        "studentId",
+        "applicationTargetId",
+        "supportTargetId",
+        "reviewers",
+        "contentSha256"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

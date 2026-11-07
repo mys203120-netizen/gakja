@@ -7,6 +7,8 @@ import type { ServiceSessionMutations } from './session-writer/service-session-m
 import { SessionCommandError } from './session-writer/session-command-ports';
 import { SessionDomainError } from './session-lifecycle';
 import { TurnWorkError } from './turn-work';
+import { EvaluationWriterError } from './evaluation-writer/evaluation-writer-ports';
+import type { ServiceEvaluationMutations, EvaluationQueryAction, EvaluationMutationAction } from './evaluation-writer/service-evaluation';
 
 type IdentityBoundary = ReturnType<typeof createRequestIdentityBoundary>;
 type AuthenticatedContext = Extract<RequestContext, { mode: 'authenticated' }>;
@@ -37,6 +39,8 @@ export interface ServiceRealtimeOptions {
   /** E only: a trusted, explicitly isolated mutation composition. Default
    * service and production requests retain the existing mutation503 boundary. */
   sessionMutations?: ServiceSessionMutations;
+  /** Explicit F isolation only. No service/production evaluation writer fallback. */
+  evaluationMutations?: ServiceEvaluationMutations;
   environment?: 'operational' | 'test';
   webPort?: number;
   allowedOrigins?: readonly string[];
@@ -46,6 +50,7 @@ export interface ServiceRealtimeOptions {
   accessCheckIntervalMs?: number;
 }
 const sessionPattern = /^\/api\/sessions\/([0-9a-f-]{36})(?:\/(next|answer|answer-candidate|capture-start|capture-finish|recover|context|end|closing|retry-evaluation|timings|events|commands|realtime-ticket))?$/u;
+const evaluationPattern = /^\/api\/sessions\/([0-9a-f-]{36})\/evaluation(?:\/(registry|review|approval|withdraw|consume|retry|commands|revision))?$/u;
 const unavailable = () => new RequestAccessError(503, 'AUTHENTICATED_STORAGE_UNAVAILABLE');
 const notFound = () => new RequestAccessError(404, 'RESOURCE_NOT_FOUND');
 function send(res: ServerResponse, status: number, value: unknown) {
@@ -54,7 +59,7 @@ function send(res: ServerResponse, status: number, value: unknown) {
 }
 const sessionGuardCodes = new Set(['ANSWER_ADVANCE_LOCKED', 'ANSWER_CANDIDATE_SOURCE_CHANGED', 'CAPTURE_FINAL_NOT_CONFIRMED', 'CAPTURE_PART_CHANGED']);
 function requestFailure(error: unknown) {
-  if (error instanceof RequestAccessError || error instanceof SessionCommandError || error instanceof SessionDomainError || error instanceof TurnWorkError)
+  if (error instanceof RequestAccessError || error instanceof SessionCommandError || error instanceof SessionDomainError || error instanceof TurnWorkError || error instanceof EvaluationWriterError)
     return { status: error.status, code: error.code ?? 'SESSION_DOMAIN_CONFLICT' };
   // These existing shared domain guards throw exact bounded codes. Preserve a
   // conflict response without exposing arbitrary provider exception messages.
@@ -65,9 +70,9 @@ function fail(res: ServerResponse, error: unknown) {
   const { status, code } = requestFailure(error);
   send(res, status, { error: status === 404 ? '요청한 자료를 찾을 수 없습니다.' : status === 401 ? '인증을 확인해 주세요.' : '요청을 처리할 수 없습니다.', code });
 }
-async function body(req: IncomingMessage) {
+async function body(req: IncomingMessage, maxBytes = 16_384) {
   const chunks: Buffer[] = []; let size = 0;
-  for await (const chunk of req) { size += chunk.length; if (size > 16_384) throw new RequestAccessError(413, 'INVALID_REQUEST'); chunks.push(Buffer.from(chunk)); }
+  for await (const chunk of req) { size += chunk.length; if (size > maxBytes) throw new RequestAccessError(413, 'INVALID_REQUEST'); chunks.push(Buffer.from(chunk)); }
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}') as unknown; }
   catch { throw new RequestAccessError(400, 'INVALID_REQUEST'); }
 }
@@ -105,6 +110,11 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
     if (!options.sessionMutations || options.sessionMutations.kind !== 'isolated-db-session-writer' ||
       options.environment !== 'test' || process.env.NODE_ENV === 'production') throw unavailable();
     return options.sessionMutations;
+  };
+  const evaluations = () => {
+    if (!options.evaluationMutations || options.evaluationMutations.kind !== 'isolated-db-evaluation-writer' ||
+      options.environment !== 'test' || process.env.NODE_ENV === 'production') throw unavailable();
+    return options.evaluationMutations;
   };
   const singleFlight = async <T>(key: string, operation: () => Promise<T>): Promise<T> => {
     const existing = flights.get(key); if (existing) return existing as Promise<T>;
@@ -177,6 +187,20 @@ export function createServiceRealtimeServer(options: ServiceRealtimeOptions = {}
         if (JSON.stringify(latest.binding) !== JSON.stringify(binding) || !bytes) throw notFound();
         await refresh(latest.context, binding);
         res.writeHead(200, { 'Content-Type': binding.contentType ?? 'audio/mpeg', 'Content-Length': bytes.length, 'Cache-Control': 'private, no-store', Vary: 'Authorization, Cookie', 'X-Content-Type-Options': 'nosniff' }); return void res.end(bytes);
+      }
+      const evaluation = evaluationPattern.exec(url.pathname);
+      if (evaluation) {
+        const access = await sessionAccess(context, evaluation[1]), current = await refresh(access.context, access.binding);
+        let value: unknown;
+        if (req.method === 'GET' && (!evaluation[2] || ['registry', 'review', 'approval', 'commands', 'revision'].includes(evaluation[2]))) {
+          value = await evaluations().query(current, access.binding, (evaluation[2] ?? 'status') as EvaluationQueryAction,
+            Object.fromEntries(url.searchParams.entries()));
+        } else if (req.method === 'POST' && evaluation[2] && ['registry', 'approval', 'withdraw', 'consume', 'retry'].includes(evaluation[2])) {
+          value = await evaluations().command(current, access.binding, evaluation[2] as EvaluationMutationAction, await body(req, 8 * 1024 * 1024));
+        } else throw unavailable();
+        const checked = await refresh(current, access.binding), latest = await sessionAccess(checked, evaluation[1]);
+        if (JSON.stringify(latest.binding) !== JSON.stringify(access.binding)) throw notFound();
+        return send(res, 200, value);
       }
       const match = sessionPattern.exec(url.pathname);
       if (match) {

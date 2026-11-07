@@ -56,7 +56,12 @@
     "test:session-writer-unit": "tsx --test tests/session-writer/*.unit.test.ts",
     "test:session-writer": "node scripts/run-pr07e-storage-tests.mjs",
     "test:session-writer-db": "node scripts/run-pr07e-db-tests.mjs",
-    "test:session-writer-db-local": "node scripts/run-pr07e-local-db.mjs"
+    "test:session-writer-db-local": "node scripts/run-pr07e-local-db.mjs",
+    "test:evaluation-writer-unit": "tsx --test tests/evaluation-writer/*.unit.test.ts",
+    "test:evaluation-writer": "node scripts/run-pr07f-storage-tests.mjs",
+    "test:evaluation-writer-db": "node scripts/run-pr07f-db-tests.mjs",
+    "test:evaluation-writer-db-local": "node scripts/run-pr07f-local-db.mjs",
+    "verify:evaluation-contracts": "tsx scripts/export-authenticated-evaluation-schemas.ts --check"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-kr": "^5.3.1",

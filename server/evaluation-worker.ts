@@ -7,13 +7,19 @@ import type { SessionStore } from './storage/session-store';
 import { EVALUATION_PIPELINE_VERSION, evaluationSessionSourceFingerprint, buildEvaluationClusterInputs } from './providers/evaluation-input';
 import { localEvaluationReviewRoot } from './repositories/local-evaluation-job-persistence';
 import type { ReviewRepository } from './repositories/review-ports';
-import { evaluateSession } from './providers/openai';
-import { assertWorkerExecution, authorizedWorkerCandidates, assertWorkerJobBinding, assertWorkerMetadataBinding, InternalExecutionError, type TrustedEvaluationWorkerExecution } from './internal-execution';
+import { evaluateSession, type EvaluationSessionOptions } from './providers/openai';
+import type { EvaluationWorkerJobs } from './evaluation-writer/evaluation-writer-ports';
+import type { StoredSessionEvaluationReviewReaders } from './evaluation-supply';
+import { assertWorkerExecution, authorizedWorkerCandidates, assertWorkerJobBinding, assertWorkerMetadataBinding, InternalExecutionError, authenticatedEvaluationWorkerScope, type TrustedEvaluationWorkerExecution } from './internal-execution';
 export { enqueueReviewedKnowledgeEvaluation } from './reviewed-evaluation-queue';
 
 export interface EvaluationWorkerOptions {
-  jobs?: EvaluationRepository; sessions?: SessionStore; workerId?: string; leaseMs?: number; root?: string; reviews?: ReviewRepository; trustedPublicKey?: string;
+  jobs?: EvaluationWorkerJobs & Partial<Pick<EvaluationRepository, 'directory' | 'pending'>>; sessions?: SessionStore; workerId?: string; leaseMs?: number; root?: string; reviews?: ReviewRepository; trustedPublicKey?: string;
   evaluate?: typeof evaluateSession;
+  /** F uses the real evaluator/parsing/aggregation, replacing only model I/O. */
+  requestEvaluation?: EvaluationSessionOptions['requestEvaluation'];
+  reviewInputs?: StoredSessionEvaluationReviewReaders;
+  signal?: AbortSignal;
   execution?: TrustedEvaluationWorkerExecution;
   loadContext?: (sha256: string, ownerId: string) => Promise<InterviewContext>;
   fingerprint?: (context: InterviewContext, session: InterviewSession, model?: string) => string;
@@ -31,12 +37,33 @@ function failure(error: unknown) {
   return { code: typeof item.code === 'string' ? item.code : typeof item.status === 'number' ? `PROVIDER_${item.status}` : 'EVALUATION_PROCESSING_FAILED', message, retryable };
 }
 
+/** Abort stops this worker's publication even when an external provider
+ * ignores cancellation. The actual evaluator also checks the signal before
+ * parsing/checkpointing the eventual response. Database lease/token checks
+ * remain the authoritative fence. */
+async function evaluationWithAbort<T>(signal: AbortSignal, operation: () => Promise<T>): Promise<T> {
+  signal.throwIfAborted();
+  let cancel!: () => void;
+  const aborted = new Promise<never>((_resolve, reject) => { cancel = () => reject(signal.reason); signal.addEventListener('abort', cancel, { once: true }); });
+  try { return await Promise.race([Promise.resolve().then(operation), aborted]); }
+  finally { signal.removeEventListener('abort', cancel); }
+}
+
 /** Executes at most one durable job. No session file or live interview object is written. */
 export async function runEvaluationWorkerOnce(options: EvaluationWorkerOptions = {}) {
   const now = options.now ?? Date.now, mode = assertWorkerExecution(options.execution, now());
   if (mode === 'service' && (options.reviewReadiness || options.fingerprint)) throw new InternalExecutionError('INTERNAL_OPERATION_UNSUPPORTED');
-  const jobs = options.jobs ?? createLocalEvaluationJobStore(options.root), sessions = options.sessions ?? createLocalSessionStore(options.root);
-  const reviewRoot = options.root ?? localEvaluationReviewRoot(jobs.directory);
+  const authenticated = mode === 'service' && authenticatedEvaluationWorkerScope(options.execution, now()) !== null;
+  if (authenticated && (options.evaluate || !options.jobs || !options.reviewInputs || options.root || options.sessions))
+    throw new InternalExecutionError('INTERNAL_OPERATION_UNSUPPORTED');
+  options.signal?.throwIfAborted();
+  const jobs = options.jobs ?? createLocalEvaluationJobStore(options.root);
+  const sessions = authenticated ? undefined : options.sessions ?? createLocalSessionStore(options.root);
+  // Authenticated F never accesses directory metadata or constructs local I/O.
+  const reviewRoot = authenticated ? undefined : options.root ?? (typeof jobs.directory === 'string' ? localEvaluationReviewRoot(jobs.directory) : undefined);
+  if (!authenticated && reviewRoot === undefined) throw new InternalExecutionError('INTERNAL_OPERATION_UNSUPPORTED');
+  const loadContext = (hash: string, owner: string) => options.loadContext ? options.loadContext(hash, owner) :
+    options.reviewInputs ? options.reviewInputs.loadContext(hash, owner) : sessions!.loadContext(hash, owner);
   const workerId = options.workerId ?? `evaluation-worker-${process.pid}-${randomUUID()}`, leaseMs = options.leaseMs ?? 60_000;
   for (const available of await authorizedWorkerCandidates(options.execution, jobs, now)) {
     // The authority first selects this exact job. Frozen payload binding is
@@ -46,11 +73,12 @@ export async function runEvaluationWorkerOnce(options: EvaluationWorkerOptions =
       await assertWorkerMetadataBinding(options.execution, available, now);
       const snapshot = await jobs.snapshot(available);
       await assertWorkerMetadataBinding(options.execution, available, now);
-      const context = await (options.loadContext ?? ((hash, owner) => sessions.loadContext(hash, owner)))(available.contextSnapshotSha256, available.ownerId);
+      const context = await loadContext(available.contextSnapshotSha256, available.ownerId);
       prepared = { snapshot, context };
     }
     if (prepared) await assertWorkerJobBinding(options.execution, available, prepared.snapshot, prepared.context, now);
     assertWorkerExecution(options.execution, now());
+    options.signal?.throwIfAborted();
     const job = await jobs.claim(available.id, workerId, now(), leaseMs);
     if (!job?.lease) continue;
     const token = job.lease.token;
@@ -58,14 +86,20 @@ export async function runEvaluationWorkerOnce(options: EvaluationWorkerOptions =
       if (prepared) await assertWorkerJobBinding(options.execution, job, prepared.snapshot, prepared.context, now);
       assertWorkerExecution(options.execution, now());
     };
+    const controller = new AbortController();
+    const cancel = () => controller.abort(options.signal?.reason ?? Object.assign(new Error('Evaluation execution cancelled'), { code: 'EVALUATION_CANCELLED' }));
+    options.signal?.addEventListener('abort', cancel, { once: true });
+    if (options.signal?.aborted) cancel();
     let persistence = Promise.resolve();
     const persist = (action: () => Promise<unknown>) => { persistence = persistence.then(async () => { await authorizeCurrent(); await action(); }); return persistence; };
-    const heartbeat = setInterval(() => { void persist(() => jobs.renew(job.id, token, now(), leaseMs)).catch(() => {}); }, Math.max(100, Math.floor(leaseMs / 3)));
+    const heartbeat = setInterval(() => {
+      void persist(() => jobs.renew(job.id, token, now(), leaseMs)).catch(error => { if (authenticated) controller.abort(error); });
+    }, Math.max(100, Math.floor(leaseMs / 3)));
     heartbeat.unref();
     try {
       if (job.pipelineVersion !== EVALUATION_PIPELINE_VERSION) throw new Error('EVALUATION_PIPELINE_VERSION_CHANGED');
       const snapshot = prepared?.snapshot ?? await jobs.snapshot(job);
-      const context = prepared?.context ?? await (options.loadContext ?? ((hash, owner) => sessions.loadContext(hash, owner)))(job.contextSnapshotSha256, job.ownerId);
+      const context = prepared?.context ?? await loadContext(job.contextSnapshotSha256, job.ownerId);
       if (context.manifest.rulesVersion !== snapshot.session.runtime?.engineVersion) throw new Error('EVALUATION_CONTEXT_VERSION_CHANGED');
       if ((options.fingerprint ?? evaluationSessionSourceFingerprint)(context, snapshot.session, job.model) !== job.sourceSha256) throw new Error('EVALUATION_INPUT_SOURCE_CHANGED');
       const readiness = options.reviewReadiness ?? ((source: InterviewContext, session: InterviewSession) => {
@@ -74,13 +108,18 @@ export async function runEvaluationWorkerOnce(options: EvaluationWorkerOptions =
           held, invalid: held.filter(reason => /INVALID|CHANGED|CONFLICT|MISMATCH/u.test(reason)) };
       });
       const required = await readiness(context, snapshot.session);
-      if (required.invalid.length) throw new Error('EVALUATION_REVIEW_INPUT_INVALID:' + required.invalid.join(','));
+      if (required.invalid.length) {
+        if (!authenticated) throw new Error('EVALUATION_REVIEW_INPUT_INVALID:' + required.invalid.join(','));
+        clearInterval(heartbeat); await persistence; await authorizeCurrent();
+        return { processed: true as const, job: await jobs.requireReview(job.id, token, required.invalid) };
+      }
       const receiptCurrent = async () => {
-        if (options.reviewReadiness || !required.unitCount || !required.readyCount) return true;
-        const { verifyStoredSessionEvaluationReview } = await import('./evaluation-supply');
-        return verifyStoredSessionEvaluationReview(context, snapshot.session, reviewRoot, sessions, options.trustedPublicKey, options.reviews);
+        if (!authenticated && (options.reviewReadiness || !required.unitCount || !required.readyCount)) return true;
+        const { verifyStoredSessionEvaluationReview, verifyStoredSessionEvaluationReviewFromReaders } = await import('./evaluation-supply');
+        if (authenticated) return verifyStoredSessionEvaluationReviewFromReaders(context, snapshot.session, options.reviewInputs!);
+        return verifyStoredSessionEvaluationReview(context, snapshot.session, reviewRoot!, sessions!, options.trustedPublicKey, options.reviews);
       };
-      if (required.unitCount && (!required.readyCount || !await receiptCurrent())) {
+      if (required.unitCount && (!required.readyCount || !await receiptCurrent()) || authenticated && !required.unitCount && !await receiptCurrent()) {
         clearInterval(heartbeat); await persistence;
         await authorizeCurrent();
         const waiting = await jobs.requireReview(job.id, token, [...required.held, 'AUTHENTICATED_SESSION_REVIEW_REQUIRED']);
@@ -88,13 +127,16 @@ export async function runEvaluationWorkerOnce(options: EvaluationWorkerOptions =
       }
       await authorizeCurrent();
       let usageIndex = 0;
-      const evaluation = await (options.evaluate ?? evaluateSession)(context, snapshot.session, {
+      const evaluation = await evaluationWithAbort(controller.signal, () => (options.evaluate ?? evaluateSession)(context, snapshot.session, {
         maxRetries: 0, model: job.model, resumeClusters: job.checkpoints,
+        ...(options.requestEvaluation ? { requestEvaluation: options.requestEvaluation } : {}),
+        ...((authenticated || options.signal) ? { signal: controller.signal } : {}),
         onClusterComplete: checkpoint => persist(() => jobs.checkpoint(job.id, token, checkpoint)),
         onProviderUsage: observation => { const attemptId = `${job.id}:${job.attempts}:${usageIndex++}`; void persist(() => jobs.recordUsage(job.id, token, attemptId, observation)).catch(() => {}); },
-      });
+      }));
       clearInterval(heartbeat); await persistence;
       await authorizeCurrent();
+      controller.signal.throwIfAborted();
       if (!await receiptCurrent()) {
         await authorizeCurrent();
         return { processed: true as const, job: await jobs.requireReview(job.id, token, ['EVALUATION_APPROVAL_WITHDRAWN_OR_CHANGED']) };
@@ -111,7 +153,7 @@ export async function runEvaluationWorkerOnce(options: EvaluationWorkerOptions =
       if (error instanceof Error && error.message === 'EVALUATION_LEASE_LOST') return { processed: true as const, job: await jobs.get(job.id) };
       const failed = await jobs.fail(job.id, token, failure(error), now());
       return { processed: true as const, job: failed };
-    } finally { clearInterval(heartbeat); }
+    } finally { clearInterval(heartbeat); options.signal?.removeEventListener('abort', cancel); }
   }
   return { processed: false as const, job: null };
 }

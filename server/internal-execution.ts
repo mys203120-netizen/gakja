@@ -1,7 +1,7 @@
 import type { InterviewContext } from './data/load-interview-context';
 import type { EvaluationJob, EvaluationJobSnapshot } from './evaluation-job-store';
 import type { EvaluationRepository } from './repositories/evaluation-job-ports';
-import { snapshotHash } from './session-runtime';
+import { snapshotHash, assertAuthenticatedSessionOwner } from './session-runtime';
 import { resolveExecutionMode } from './auth/request-identity';
 
 /** Internal execution is configured by the server, never by a request/job DTO. */
@@ -18,12 +18,15 @@ export interface TrustedEvaluationJobBinding {
   jobId: string; ownerId: string; sessionId: string; studentId: string; supportTargetId: string;
   sourceSha256: string; snapshotSha256: string; contextSnapshotSha256: string; pipelineVersion: string; model: string;
 }
+export interface TrustedAuthenticatedEvaluationJobBinding extends TrustedEvaluationJobBinding { applicationTargetId: string }
+export interface AuthenticatedEvaluationWorkerScope { ownerId: string; studentId: string; applicationTargetId: string; supportTargetId: string }
 export interface TrustedEvaluationWorkerExecution { readonly kind: 'trusted-evaluation-worker-v1' }
 interface WorkerAuthority {
   subjectId: string; issuedAt: number; expiresAt: number; jobIds: readonly string[];
   resolveBinding(jobId: string): Promise<TrustedEvaluationJobBinding | null>;
 }
 const authorities = new WeakMap<TrustedEvaluationWorkerExecution, WorkerAuthority>();
+const authenticatedScopes = new WeakMap<TrustedEvaluationWorkerExecution, Readonly<AuthenticatedEvaluationWorkerScope>>();
 const hash = /^[a-f0-9]{64}$/u;
 
 /** Composition-only seam for a trusted scheduler/account binding adapter.
@@ -36,6 +39,25 @@ export function createTrustedEvaluationWorkerExecution(authority: WorkerAuthorit
   const context = Object.freeze({ kind: 'trusted-evaluation-worker-v1' as const });
   authorities.set(context, { ...authority, jobIds: Object.freeze([...new Set(authority.jobIds)]), resolveBinding: authority.resolveBinding.bind(authority) });
   return context;
+}
+/** F's explicit authenticated composition. This additional WeakMap binding
+ * cannot be enabled by a legacy capability/DTO extra property. Personal target
+ * identity is a separate fixed scope from the domain support target. */
+export function createTrustedAuthenticatedEvaluationWorkerExecution(authority: Omit<WorkerAuthority, 'resolveBinding'> & {
+  scope: AuthenticatedEvaluationWorkerScope;
+  resolveBinding(jobId: string): Promise<TrustedAuthenticatedEvaluationJobBinding | null>;
+}): TrustedEvaluationWorkerExecution {
+  if (!authority.scope || !(['ownerId', 'studentId', 'applicationTargetId', 'supportTargetId'] as const).every(key => {
+    const value = authority.scope[key]; return typeof value === 'string' && value.length > 0 && value === value.trim();
+  }))
+    throw new InternalExecutionError('INTERNAL_AUTHORITY_REQUIRED');
+  const execution = createTrustedEvaluationWorkerExecution(authority);
+  authenticatedScopes.set(execution, Object.freeze({ ...authority.scope }));
+  return execution;
+}
+export function authenticatedEvaluationWorkerScope(execution: TrustedEvaluationWorkerExecution | undefined, now: number) {
+  authorityFor(execution, now);
+  return authenticatedScopes.get(execution!) ?? null;
 }
 function authorityFor(execution: TrustedEvaluationWorkerExecution | undefined, now: number) {
   const authority = execution && authorities.get(execution);
@@ -62,6 +84,9 @@ async function bindingFor(execution: TrustedEvaluationWorkerExecution, jobId: st
   if (!binding || binding.jobId !== jobId || !binding.ownerId || !binding.sessionId || !binding.studentId || !binding.supportTargetId ||
     ![binding.jobId, binding.sourceSha256, binding.snapshotSha256, binding.contextSnapshotSha256].every(value => hash.test(value)) ||
     !binding.pipelineVersion || !binding.model) throw new InternalExecutionError('INTERNAL_BINDING_DENIED');
+  const scope = authenticatedScopes.get(execution);
+  if (scope && (binding.ownerId !== scope.ownerId || binding.studentId !== scope.studentId || binding.supportTargetId !== scope.supportTargetId ||
+    (binding as TrustedAuthenticatedEvaluationJobBinding).applicationTargetId !== scope.applicationTargetId)) throw new InternalExecutionError('INTERNAL_BINDING_DENIED');
   return { ...binding };
 }
 function matchesJob(binding: TrustedEvaluationJobBinding, job: EvaluationJob) {
@@ -75,14 +100,21 @@ export async function assertWorkerMetadataBinding(execution: TrustedEvaluationWo
   if (!matchesJob(binding, job)) throw new InternalExecutionError('INTERNAL_BINDING_DENIED');
 }
 /** Service mode never scans pending(): it can quarantine and disclose other owners. */
-export async function authorizedWorkerCandidates(execution: TrustedEvaluationWorkerExecution | undefined, jobs: EvaluationRepository, now: () => number) {
-  if (assertWorkerExecution(execution, now()) === 'local-development') return jobs.pending(now());
+export async function authorizedWorkerCandidates(execution: TrustedEvaluationWorkerExecution | undefined, jobs: Pick<EvaluationRepository, 'get'> & Partial<Pick<EvaluationRepository, 'pending'>>, now: () => number) {
+  if (assertWorkerExecution(execution, now()) === 'local-development') {
+    if (!jobs.pending) throw new InternalExecutionError('INTERNAL_OPERATION_UNSUPPORTED');
+    return jobs.pending(now());
+  }
   const authority = authorityFor(execution, now()), candidates: EvaluationJob[] = [];
   for (const id of authority.jobIds) {
     const binding = await bindingFor(execution!, id, now), job = await jobs.get(id);
     if (!job) continue;
     if (!matchesJob(binding, job)) throw new InternalExecutionError('INTERNAL_BINDING_DENIED');
-    if (job.status === 'queued' && (!job.nextRetryAt || Date.parse(job.nextRetryAt) <= now()) ||
+    if (authenticatedScopes.has(execution!)) {
+      // The F repository claim uses DB time; a worker's wall-clock cannot
+      // make an expired lease runnable or hide it from a bounded claim attempt.
+      if (job.status === 'queued' || job.status === 'running') candidates.push(job);
+    } else if (job.status === 'queued' && (!job.nextRetryAt || Date.parse(job.nextRetryAt) <= now()) ||
       job.status === 'running' && job.lease && Date.parse(job.lease.expiresAt) <= now()) candidates.push(job);
   }
   return candidates;
@@ -91,6 +123,10 @@ export async function assertWorkerJobBinding(execution: TrustedEvaluationWorkerE
   snapshot: EvaluationJobSnapshot, context: InterviewContext, now: () => number) {
   if (assertWorkerExecution(execution, now()) === 'local-development') return;
   const binding = await bindingFor(execution!, job.id, now);
+  if (authenticatedScopes.has(execution!)) {
+    try { assertAuthenticatedSessionOwner(snapshot.session, binding.ownerId); }
+    catch { throw new InternalExecutionError('INTERNAL_BINDING_DENIED'); }
+  }
   if (!matchesJob(binding, job) || snapshot.ownerId !== binding.ownerId || snapshot.session.id !== binding.sessionId ||
     snapshot.session.runtime?.owner.id !== binding.ownerId || snapshot.contextSnapshotSha256 !== binding.contextSnapshotSha256 ||
     snapshotHash(snapshot) !== binding.snapshotSha256 || snapshotHash(context) !== binding.contextSnapshotSha256 ||
