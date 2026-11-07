@@ -88,8 +88,27 @@ export function createSupabaseObjectProvider(options: SupabaseObjectProviderOpti
       const response = await fetcher(url, { ...init, headers, redirect: 'error', signal: controller.signal, cache: 'no-store' });
       status = response.status;
       if (!response.ok) {
+        // Official Storage v1.89.12 renders NoSuchKey as HTTP 400 while its
+        // bounded JSON body retains statusCode "404". Only that explicit read
+        // response means absence; auth, bucket and availability failures cannot
+        // authorize the recovery uploader to treat an object as missing.
+        // https://github.com/supabase/storage/blob/v1.89.12/src/internal/errors/storage-error.ts#L83
+        // https://github.com/supabase/storage/blob/v1.89.12/src/http/error-handler.ts#L65
+        let missingObject = false;
+        if (operation === 'read' && response.status === 400 &&
+          /^application\/json(?:\s*;|$)/iu.test(response.headers.get('content-type') ?? '')) {
+          try {
+            const bytes = await bounded(response, 4096, controller);
+            const error = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) as Record<string, unknown> | null;
+            missingObject = !!error && !Array.isArray(error) && error.statusCode === '404' && error.code === 'NoSuchKey' &&
+              (error.error === 'not_found' || error.error === 'NoSuchKey') && error.message === 'Object not found';
+          } catch {
+            if (timedOut || input.signal?.aborted) throw new ObjectProviderError(timedOut ? 'STORAGE_TIMEOUT' : 'STORAGE_ABORTED');
+            // Invalid, excessive or incomplete error bodies remain unavailable.
+          }
+        }
         await response.body?.cancel().catch(() => {});
-        throw new ObjectProviderError(response.status === 404 ? 'STORAGE_NOT_FOUND' :
+        throw new ObjectProviderError(response.status === 404 || missingObject ? 'STORAGE_NOT_FOUND' :
           response.status === 409 ? 'STORAGE_CONFLICT' : 'STORAGE_UNAVAILABLE');
       }
       return await bounded(response, input.limit ?? 64 * 1024, controller);

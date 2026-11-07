@@ -98,3 +98,63 @@ test('upload and copy always disable upsert and telemetry cannot leak or change 
   await provider.upload(object, Buffer.from('x'), { contentType: 'application/octet-stream' });
   await provider.copy(object, { ...object, key: object.key.replace('/staging/', '/final/') }); assert.equal(operations, 2);
 });
+
+// Exact pinned upstream contract: storage-error.ts sets userStatusCode=400,
+// while errors/codes.ts NoSuchKey + http/error-handler.ts retain JSON 404.
+test('official HTTP 400 NoSuchKey is a missing object read and preserves raw HTTP telemetry', async () => {
+  let absent = true; const events: { operation: string; status: number | null }[] = [];
+  const server = createServer((request, response) => {
+    assert.equal(request.method, 'GET'); assert.equal(request.headers.authorization, 'Bearer ' + config.serviceCredential);
+    if (absent) { response.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' }); response.end(JSON.stringify({ statusCode: '404', code: 'NoSuchKey', error: 'not_found', message: 'Object not found' })); }
+    else response.end('exact subsequent bytes');
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const provider = createSupabaseObjectProvider({ ...config, apiUrl: 'http://127.0.0.1:' + (server.address() as AddressInfo).port, allowLoopbackHttp: true, maxConcurrent: 1, observe: event => { events.push(event); } });
+    await assert.rejects(provider.read(object, { maxBytes: 8 }), code('STORAGE_NOT_FOUND'));
+    absent = false; assert.equal((await provider.read(object, { maxBytes: 64 })).toString(), 'exact subsequent bytes');
+    assert.deepEqual(events, [{ operation: 'read', status: 400 }, { operation: 'read', status: 200 }]);
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
+test('structured object absence never masks auth, bucket, unavailable, malformed or excessive responses', async () => {
+  const missing = { statusCode: '404', code: 'NoSuchKey', error: 'not_found', message: 'Object not found' };
+  const cases = [
+    { status: 401, body: missing }, { status: 403, body: missing }, { status: 503, body: missing },
+    { status: 400, body: { ...missing, code: 'InvalidJWT' } },
+    { status: 400, body: { ...missing, code: 'NoSuchBucket', error: 'Bucket not found', message: 'Bucket not found' } },
+    { status: 400, body: { ...missing, statusCode: '403' } }, { status: 400, body: { ...missing, statusCode: 404 } },
+    { status: 400, body: { ...missing, message: 'synthetic sensitive detail' } },
+    { status: 400, body: null }, { status: 400, body: [missing] },
+    { status: 400, body: missing, contentType: 'text/html' },
+  ];
+  for (const value of cases) {
+    const provider = createSupabaseObjectProvider({ ...config, fetch: async () => new Response(JSON.stringify(value.body), { status: value.status, headers: { 'Content-Type': value.contentType ?? 'application/json' } }) });
+    await assert.rejects(provider.read(object, { maxBytes: 8 }), code('STORAGE_UNAVAILABLE'));
+  }
+  for (const body of ['{broken', JSON.stringify({ ...missing, extra: 'x'.repeat(4096) })]) {
+    const provider = createSupabaseObjectProvider({ ...config, fetch: async () => new Response(body, { status: 400, headers: { 'Content-Type': 'application/json' } }) });
+    await assert.rejects(provider.read(object, { maxBytes: 8 }), code('STORAGE_UNAVAILABLE'));
+  }
+  const declared = createSupabaseObjectProvider({ ...config, fetch: async () => new Response(JSON.stringify(missing), { status: 400, headers: { 'Content-Type': 'application/json', 'Content-Length': '4097' } }) });
+  await assert.rejects(declared.read(object, { maxBytes: 8 }), code('STORAGE_UNAVAILABLE'));
+  const mutations = createSupabaseObjectProvider({ ...config, fetch: async () => new Response(JSON.stringify(missing), { status: 400, headers: { 'Content-Type': 'application/json' } }) });
+  await assert.rejects(mutations.upload(object, Buffer.from('x'), { contentType: 'text/plain' }), code('STORAGE_UNAVAILABLE'));
+  await assert.rejects(mutations.copy(object, object), code('STORAGE_UNAVAILABLE'));
+});
+
+test('reading a structured error body retains timeout, cancellation and concurrency cleanup', async () => {
+  let blocking = true;
+  const server = createServer((_request, response) => {
+    if (!blocking) { response.end('ok'); return; }
+    response.writeHead(400, { 'Content-Type': 'application/json' }); response.write('{"statusCode":"404",');
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const provider = createSupabaseObjectProvider({ ...config, apiUrl: 'http://127.0.0.1:' + (server.address() as AddressInfo).port, allowLoopbackHttp: true, timeoutMs: 100, maxConcurrent: 1 });
+    await assert.rejects(provider.read(object, { maxBytes: 8 }), code('STORAGE_TIMEOUT'));
+    const controller = new AbortController(), pending = provider.read(object, { maxBytes: 8, signal: controller.signal });
+    controller.abort(); await assert.rejects(pending, code('STORAGE_ABORTED'));
+    blocking = false; assert.equal((await provider.read(object, { maxBytes: 8 })).toString(), 'ok');
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+});
