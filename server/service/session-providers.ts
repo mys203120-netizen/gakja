@@ -1,3 +1,4 @@
+import { assertScopedServiceAudio } from './service-inputs';
 import { withPinnedProviderModels } from '../providers/provider-model-context';
 import type { AuthenticatedRequestContext } from '../auth/request-identity';
 import { createHash } from 'node:crypto';
@@ -36,12 +37,17 @@ function cancellableWork(work:TurnWorkContext|undefined,signal:AbortSignal):Turn
     const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;
   }});
 }
+/** Raw provider callbacks are excluded from the native options boundary. */
+export function nativeStrategyOptions(options:StrategyCoreOptions&{request?:unknown},signal:AbortSignal):StrategyCoreOptions {
+  const {request:_legacy,requestSingleCore:_a,requestFactReview:_b,requestSurfaceRepair:_c,requestStrategy:_d,requestReview:_e,requestRepair:_f,resolveApprovedRecovery:_g,...base}=options;
+  void _legacy;void _a;void _b;void _c;void _d;void _e;void _f;void _g;
+  return {...base,workContext:cancellableWork(options.workContext,signal)};
+}
 function coreOptions(options:StrategyCoreOptions,signal:AbortSignal,raw?:RehearsalSessionRawIO):StrategyCoreOptions {
-  const {requestSingleCore:_a,requestFactReview:_b,requestSurfaceRepair:_c,requestStrategy:_d,requestReview:_e,requestRepair:_f,resolveApprovedRecovery:_g,...base}=options;
-  void _a;void _b;void _c;void _d;void _e;void _f;void _g;
-  return {...base,workContext:cancellableWork(options.workContext,signal),...(raw?{requestSingleCore:raw.requestSingleCore,requestFactReview:raw.requestFactReview,
+  return {...nativeStrategyOptions(options,signal),...(raw?{requestSingleCore:raw.requestSingleCore,requestFactReview:raw.requestFactReview,
     requestSurfaceRepair:raw.requestSurfaceRepair,requestStrategy:raw.requestStrategy,requestReview:raw.requestReview,requestRepair:raw.requestRepair}:{})};
 }
+
 function assertNativeConfiguration(authority:ScopedServiceAuthority){if(scopedServiceAuthority(authority).mode==='production'&&['OPENAI_API_KEY','CLOVA_VOICE_CLIENT_ID','CLOVA_VOICE_CLIENT_SECRET','CLOVA_SPEECH_SECRET_KEY'].some(key=>!process.env[key]?.trim()))throw new TransitionError(503,'SERVICE_PROVIDER_CONFIGURATION_REQUIRED');}
 async function providerOperation<T>(authority:ScopedServiceAuthority,context:AuthenticatedRequestContext,sessionId:string,operation:(signal:AbortSignal)=>Promise<T>,signal?:AbortSignal){
   const active=scopedOperationContext();
@@ -62,7 +68,7 @@ function nativeCapture(input:Parameters<IsolatedSessionProviders['openCapture']>
 const nativeHandles=new WeakSet<object>(),rehearsalHandles=new WeakSet<object>();
 export function assertSessionProviderHandle(authority:ScopedServiceAuthority,provider:ScopedSessionProviders){assertScopedComponent(authority,provider);const mode=scopedServiceAuthority(authority).mode;if(mode==='production'?!nativeHandles.has(provider):!nativeHandles.has(provider)&&!rehearsalHandles.has(provider))throw new TransitionError(503,'SERVICE_NATIVE_PROVIDER_HANDLE_REQUIRED');}
 function createProviders(authority:ScopedServiceAuthority,audio:ScopedServiceAudio,raw?:RehearsalSessionRawIO):ScopedSessionProviders {
-  assertScopedComponent(authority,audio);scopedServiceAuthority(authority);
+  assertScopedServiceAudio(authority,audio);scopedServiceAuthority(authority);
   const providers:ScopedSessionProviders={kind:raw?'service-rehearsal':'service-native',
     async classify(context,session,candidate,options,pins){const active=scopedOperationContext();return providerOperation(authority,active.context,session.id,signal=>withPinnedProviderModels(pins?.models,()=>classifySingleCoreAnswerCandidate(context,session,candidate,coreOptions(options,signal,raw))));},
     forSession(pins,selected){

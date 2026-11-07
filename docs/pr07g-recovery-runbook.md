@@ -20,6 +20,7 @@
 ## 장애와 재개
 
 - prepare/activate crash: local barrier를 유지하고 같은 key/input receipt를 조회한다. 미확인 process/임시 파일/새 data 경로를 자동 병합·삭제하지 않는다.
+- empty rollback은 `rollback-restoring` journal과 exact checkpoint hash를 남긴다. barrier 제거 전후·directory 복원 전후 중단은 같은 confirmed DB receipt로 재개한다. 참여 writer는 완료까지 닫히며, 미확인 old process가 재생성한 경로는 덮어쓰지 않고 충돌로 보존한다. 중지 inventory와 재시작 통제는 복귀 시에도 필요하다.
 - provider 대기 중 freeze/철회: operation cancellation 및 최종 SQL guard가 publication을 막아야 한다. 모델 재시도로 검수 결함을 보완하지 않는다.
 - commit 응답 유실: 같은 key/hash로 durable receipt를 확인한다. 미확인 상태에서 local writer를 열지 않는다.
 - restore 중단: publication 0/ready false를 확인한 뒤 동일 manifest로 재개한다. 다른 manifest로 덮어쓰지 않는다.

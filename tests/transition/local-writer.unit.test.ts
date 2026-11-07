@@ -71,3 +71,12 @@ test('empty rollback requires confirmed durable proof, preserves checkpoint byte
   assert.equal(await readFile(path.join(f.root,'data/sessions/10000000-0000-4000-8000-000000000001.json'),'utf8'),f.original);
   f.revoke();await assert.rejects(sealLocalSource(f.authority,{generation:'1',stoppedParticipantProofSha256:'b'.repeat(64),async activate(){}}),/OPERATOR_REVOKED/u);
 });
+test('empty rollback interruption before/after directory restore resumes its exact journal and keeps participating writes fenced',async()=>{
+  for(const stop of ['barrier-removed','archive-restored']as const){
+    const f=await fixture();await sealLocalSource(f.authority,{generation:'0',stoppedParticipantProofSha256:'c'.repeat(64),async activate(){}});
+    await assert.rejects(restoreLocalSourceAfterEmptyRollback(f.authority,async()=>{}, {async observe(phase){if(phase===stop)throw new Error('CONTROLLED_ROLLBACK_INTERRUPTION');}}),/CONTROLLED_ROLLBACK_INTERRUPTION/u);
+    await assert.rejects(withLocalWriterFence(f.root,async()=>{}),/LOCAL_WRITER_FENCED/u);
+    await restoreLocalSourceAfterEmptyRollback(f.authority,async()=>{});
+    assert.equal(await readFile(path.join(f.root,'data/sessions/10000000-0000-4000-8000-000000000001.json'),'utf8'),f.original);
+  }
+});

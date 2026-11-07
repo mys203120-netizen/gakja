@@ -76,6 +76,16 @@ export async function seedControlledEndedEvaluation(options: ControlledEndedFixt
 }) {
   if (process.env.PR07F_TEST_DISPOSABLE !== '1' || !process.env.PR07F_TEST_RUN_ID || process.env.NODE_ENV === 'production')
     throw new Error('F_CONTROLLED_OWNED_TEST_DATABASE_REQUIRED');
+  return seedControlledEndedEvaluationCore(options);
+}
+
+export async function seedControlledEndedEvaluationForScopedTransition(options: Parameters<typeof seedControlledEndedEvaluation>[0] & { assertOwnedDatabase(): Promise<void> }) {
+  if(process.env.PR07G_TEST_DISPOSABLE!=='1'||!/^([a-z0-9_]{8,48})$/u.test(process.env.PR07G_TEST_RUN_ID??'')||process.env.NODE_ENV==='production')
+    throw new Error('G_CONTROLLED_OWNED_TEST_DATABASE_REQUIRED');
+  await options.assertOwnedDatabase();return seedControlledEndedEvaluationCore(options);
+}
+
+async function seedControlledEndedEvaluationCore(options: Parameters<typeof seedControlledEndedEvaluation>[0]) {
   if (options.handoffFault !== undefined && !CONTROLLED_HANDOFF_FAULTS.includes(options.handoffFault))
     throw new Error('F_CONTROLLED_HANDOFF_FAULT_INVALID');
   const value = await prepareControlledEvaluationFixture(options), { requestContext: auth, sessions } = options, { session, context, model } = value;

@@ -41,6 +41,7 @@ export interface TransitionOperation extends TransitionAccess { operationId: str
 export interface TransitionRepository {
   readonly kind: 'postgres-scoped-transition-v1';
   read(context: AuthenticatedRequestContext): Promise<TransitionSnapshot | null>;
+  authorizeOperator(context: AuthenticatedRequestContext, action: TransitionOperatorAction, capability: TransitionOperatorCapability): Promise<TransitionSnapshot>;
   access(context: AuthenticatedRequestContext, operation: TransitionAccessOperation, input?: { expectedGeneration?: string; sessionId?: string }): Promise<TransitionAccess>;
   installOperator(context: AuthenticatedRequestContext, input: { key: string; inputSha256: string; grant: TransitionOperatorGrant }, capability: TransitionInstallerCapability): Promise<TransitionSnapshot>;
   command(context: AuthenticatedRequestContext, input: TransitionCommand, capability: TransitionOperatorCapability): Promise<TransitionReceipt>;

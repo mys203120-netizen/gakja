@@ -349,9 +349,10 @@ test('G-OBJECT-09 a missing verified private object fails through actual C/HTTP 
 test('G-FREEZE-10 freeze during independent worker/raw session provider I/O fences every late publication and exact committed receipt remains readable',{timeout:300_000},async()=>{
   const id=await endedHttp('a');await publishA('a',id);assert.equal((await publishB('a',id)).status,200);const consumeKey=randomUUID(),consumed=await consume('a',id,consumeKey);assert.equal(consumed.status,200);const jobId=(await eview('a',id)).projection!.job!.id;
   await worker1.rpc('configure',{holdModel:true});const running=runJob('a',jobId,worker1).then(value=>({value}),error=>({error:(error as Error).message})),model=await worker1.barrier('model');
-  const created=await create(two,'a','g-freeze-provider-'+randomUUID()),capture=await captureAnswer(two,'a',created.id,created.turn);capture.channel.ws.close();
+  const created=await create(two,'a','g-freeze-provider-'+randomUUID()),capture=await captureAnswer(two,'a',created.id,created.turn,true);capture.channel.ws.close();
   await two.rpc('configure',{hooks:[{phase:'raw-model',mode:'hold',once:true}]});
-  const answering=mutate(two,'a',created.id,'answer',{turnId:created.turn.id,answerId:capture.answerId,captureRevision:1,elapsedMs:3500}).then(value=>({value}),error=>({error:(error as Error).message}));
+  const answering=mutate(two,'a',created.id,'answer-candidate',{turnId:created.turn.id,answerId:capture.answerId,captureRevision:1,elapsedMs:3500,
+    submissionAttemptId:capture.finish.value.result.submissionAttemptId,endingObservation:{stopSource:'button',lastSpeechMs:2000,trailingSilenceMs:1000,speechActiveAtEnd:false,vadAvailable:true,microphoneEnabled:true}}).then(value=>({value}),error=>({error:(error as Error).message}));
   const raw=await two.barrier('raw-model'),before=(await sourceTransition.read(sourceContexts.get('a')!))!;assert.ok(before.activeOperations>=2);
   const {command,receipt}=await transition('a','freeze',{},'freeze-a-'+randomUUID());
   const same=await sourceTransition.command(sourceContexts.get('a')!,command,sourceOperators.get('a')!);assert.equal(same.operationId,receipt.operationId);assert.equal(same.replay,true);

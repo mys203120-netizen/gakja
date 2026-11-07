@@ -1,3 +1,6 @@
+import { runProductionScopedOperation } from '../../server/service/production-composition';
+import type { AuthenticatedRequestContext } from '../../server/auth/request-identity';
+import type { ServiceDeploymentConfig } from '../../server/service/preflight';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runServicePreflight } from '../../server/service/preflight';
@@ -6,7 +9,7 @@ import { createTransitionServiceAuthority,type TransitionRepository } from '../.
 import { createRequestIdentityBoundary } from '../../server/auth/request-identity';
 import { createScopedSessionService } from '../../server/session-writer/isolated-session-service';
 import { createScopedServiceRealtimeServer } from '../../server/request-realtime-server';
-import { createRehearsalSessionProviders } from '../../server/service/session-providers';
+import { nativeStrategyOptions,createRehearsalSessionProviders } from '../../server/service/session-providers';
 import { withPinnedProviderModels } from '../../server/providers/provider-model-context';
 import { realtimeCoreModel,runtimeFactReviewModel,questionGenerationModel } from '../../server/providers/realtime-model';
 const deployment={version:'scoped-service-deployment-v1',responsibility:{environmentId:'explicit-stage',startsAt:'2026-01-01T00:00:00.000Z',endsAt:'2027-01-01T00:00:00.000Z',observer:'operator',stopOwner:'operator',recoveryOwner:'operator',storageRetentionOwner:'operator'},bindings:[{ownerId:'owner',studentId:'student',applicationTargetId:'application',supportTargetId:'support',runId:'run_input',plan:{}}]};
@@ -29,6 +32,8 @@ test('opaque service components reject structural synthetic renaming and rehears
  const resources={kind:'operational'}as Parameters<typeof createScopedServiceRealtimeServer>[0]['resources'];
  assert.throws(()=>createScopedServiceRealtimeServer({authority,identity,resources}));
  assert.throws(()=>createScopedSessionService({authority,identity,providers:{kind:'service-native'}}as Parameters<typeof createScopedSessionService>[0]));
+ const renamed=bindScopedComponent(authority,{kind:'service-native'});
+ assert.throws(()=>createScopedSessionService({authority,identity,providers:renamed}as Parameters<typeof createScopedSessionService>[0]),error=>(error as {code?:string}).code==='SERVICE_NATIVE_PROVIDER_HANDLE_REQUIRED');
  const audio=bindScopedComponent(authority,{async read(){return null;},async write(){throw new Error('NOT_EXECUTED');}});
  const original=process.env.NODE_ENV;try{Object.assign(process.env,{NODE_ENV:'production'});assert.throws(()=>createRehearsalSessionProviders({authority,audio,raw:{}}as unknown as Parameters<typeof createRehearsalSessionProviders>[0]));}finally{if(original===undefined)Reflect.deleteProperty(process.env,'NODE_ENV');else Object.assign(process.env,{NODE_ENV:original});}
 });
@@ -37,4 +42,19 @@ test('service model pins remain isolated across concurrent turns and preserve or
  const one={question:'pin-question-a',realtime:'pin-realtime-a',review:'pin-review-a',evaluation:'pin-eval-a'},two={question:'pin-question-b',realtime:'pin-realtime-b',review:'pin-review-b',evaluation:'pin-eval-b'};
  const results=await Promise.all([one,two].map(value=>withPinnedProviderModels(value,async()=>{await Promise.resolve();return [realtimeCoreModel(),runtimeFactReviewModel(),questionGenerationModel()];})));
  assert.deepEqual(results,[[one.realtime,one.review,one.question],[two.realtime,two.review,two.question]]);assert.deepEqual([realtimeCoreModel(),runtimeFactReviewModel(),questionGenerationModel()],before);
+});
+
+test('native provider options cannot forward legacy or synthetic raw callbacks',()=>{
+ let calls=0;const raw=async()=>{calls++;return {};};
+ const native=nativeStrategyOptions({allowFollowUp:false,allowClarification:false,request:raw,requestSingleCore:raw,requestStrategy:raw,resolveApprovedRecovery:async()=>null},new AbortController().signal);
+ assert.equal(Object.hasOwn(native,'request'),false);assert.equal(native.requestSingleCore,undefined);assert.equal(native.requestStrategy,undefined);assert.equal(native.resolveApprovedRecovery,undefined);assert.equal(calls,0);
+});
+
+test('native deployment allowlist and declared period bound work before execution and after awaits',async()=>{
+ const config=structuredClone(deployment) as ServiceDeploymentConfig;
+ const context={mode:'authenticated',account:{ownerId:'owner'},scope:{studentId:'student',applicationTargetId:'application',supportTargetId:'support'}} as AuthenticatedRequestContext;
+ let calls=0;assert.equal(await runProductionScopedOperation(config,context,async()=>{calls++;return 'verified';}),'verified');assert.equal(calls,1);
+ await assert.rejects(()=>runProductionScopedOperation(config,{...context,account:{...context.account,ownerId:'outside'}},async()=>{calls++;return 'unsafe';}));assert.equal(calls,1);
+ await assert.rejects(()=>runProductionScopedOperation(config,{...context,scope:{...context.scope!,sourceRevision:null}},async()=>{calls++;return 'unsafe';}));assert.equal(calls,1);
+ await assert.rejects(()=>runProductionScopedOperation(config,context,async()=>{await Promise.resolve();config.responsibility.endsAt=new Date(Date.now()-1).toISOString();return 'late-private-bytes';}),error=>(error as {code?:string}).code==='SERVICE_SCOPE_PERIOD_ENDED');
 });

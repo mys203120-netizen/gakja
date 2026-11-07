@@ -15,7 +15,7 @@ import { createScopedPostgresEvaluationWriter,createEvaluationTrustAdminCapabili
 import { finiteAuthority } from '../evaluation-writer/evaluation-composition';
 import { composeScopedEvaluation } from './scoped-evaluation-composition';
 import type { EvaluationReviewArtifact,EvaluationPreservationBundle } from '../../server/evaluation-writer/evaluation-writer-ports';
-import {seedControlledEndedEvaluation,type ControlledHandoffFault} from '../evaluation-writer/ended-fixture';
+import {seedControlledEndedEvaluationForScopedTransition,type ControlledHandoffFault} from '../evaluation-writer/ended-fixture';
 import fs from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
@@ -137,7 +137,7 @@ const service=createScopedSessionService({authority,identity:auth.identity,repos
   providers:sessionProviders,models:{question:'synthetic-question-v1',realtime:'synthetic-core-v1',review:'synthetic-review-v1',evaluation:'synthetic-evaluation-pinned-v1'},observe:stage});
 const actualAudio=withPrivateObjectAudio({...service.resources,audioBinding:(context,id)=>auth.authority.discoverAudio(context,id)},storage.objects,auth.identity);
 const resources=bindScopedComponent(authority,actualAudio);
-const controlledBanks=new Map<string,Awaited<ReturnType<typeof seedControlledEndedEvaluation>>['bank']>();
+const controlledBanks=new Map<string,Awaited<ReturnType<typeof seedControlledEndedEvaluationForScopedTransition>>['bank']>();
 const evaluationRepository=createScopedPostgresEvaluationWriter({authority,boundary:auth.identity,requestPool:pools.request,mappingPool:pools.mapping});
 const externallyRevoked=new Set<string>();
 const evaluation=composeScopedEvaluation({authority,identity:auth.identity,repository:evaluationRepository,sessions:repository,observe:stage,
@@ -165,7 +165,7 @@ process.on('message',(message:Control|{type:'object-result';requestId:string;byt
     else if(message.operation==='state')result={pid:process.pid,name:initial.name,database:initial.database,backendPids,counters:{...counters},providers:synthetic.diagnostics(),service:service.diagnostics(),holds:[...holds.keys()],pool:{request:{total:pools.request.totalCount,idle:pools.request.idleCount,waiting:pools.request.waitingCount},mapping:{total:pools.mapping.totalCount,idle:pools.mapping.idleCount,waiting:pools.mapping.waitingCount}}};
     else if(message.operation==='seed-controlled-ended'){
       const context=await contextFor(String(p.who));
-      const value=await seedControlledEndedEvaluation({requestContext:context,sessions:repository,followUps:p.followUps as 0|1|2,...(p.handoffFault?{handoffFault:p.handoffFault as ControlledHandoffFault}:{}),
+      const value=await seedControlledEndedEvaluationForScopedTransition({requestContext:context,sessions:repository,async assertOwnedDatabase(){const actual=(await pools.request.query("SELECT current_database() database,EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='pr07g_control' AND c.relname='marker' AND c.relkind='r') marker")).rows[0];if(!actual?.marker||actual.database!=='pr07g_'+(initial.database==='restore'?'restore_':'')+process.env.PR07G_TEST_RUN_ID)throw new Error('G_CONTROLLED_ACTUAL_DATABASE_MARKER_REQUIRED');},followUps:p.followUps as 0|1|2,...(p.handoffFault?{handoffFault:p.handoffFault as ControlledHandoffFault}:{}),
         mintEnrollment(c,input){return createSessionEnrollmentCapability({...finiteAuthority(c,auth.identity),sessionId:input.sessionId,creationKey:input.creationKey,inputSha256:input.inputSha256});}});
       controlledBanks.set(value.session.id,value.bank);result={sessionId:value.session.id,snapshot:value.snapshot,qualification:value.qualification,testOnlyMalformedHandoff:value.testOnlyMalformedHandoff};
     }

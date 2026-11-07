@@ -7,7 +7,7 @@ import type { PrivateObjectService } from '../storage/private-object-service';
 import { createInternalObjectCapability } from '../storage/private-object-service';
 import type { ShadowRunPlan, ShadowSnapshot } from '../shadow/shadow-ports';
 import { TransitionError } from '../transition/transition-ports';
-import { authorizeScoped, bindScopedComponent, scopedServiceAuthority, type ScopedServiceAuthority } from './scoped-authority';
+import { authorizeScoped, assertScopedComponent, bindScopedComponent, scopedServiceAuthority, type ScopedServiceAuthority } from './scoped-authority';
 import type { ScopedServiceAudio } from './session-providers';
 const sha=(value:Buffer|string)=>createHash('sha256').update(value).digest('hex');
 export interface ServiceInputApproval {
@@ -39,10 +39,12 @@ export function createServiceInputRegistrar(options:{identity:RequestIdentityBou
     async status(context:AuthenticatedRequestContext,runId:string){return options.requestAuthority.withScope(context,async client=>(await client.query('SELECT gakja.service_input_status($1::text) value',[runId])).rows[0]?.value??null);},
   };
 }
+const audioHandles=new WeakSet<object>();
+export function assertScopedServiceAudio(authority:ScopedServiceAuthority,audio:ScopedServiceAudio){assertScopedComponent(authority,audio);if(!audioHandles.has(audio))throw new TransitionError(503,'SERVICE_VERIFIED_AUDIO_HANDLE_REQUIRED');}
 /** Generated audio uses the unchanged v2 audio ID and C's actual byte verifier. */
 export function createScopedServiceAudio(options:{authority:ScopedServiceAuthority;identity:RequestIdentityBoundary;requestAuthority:PostgresRequestAuthority;repository:PostgresObjectRepository;objects:PrivateObjectService}):ScopedServiceAudio {
   scopedServiceAuthority(options.authority);
-  return bindScopedComponent(options.authority,{
+  const audio:ScopedServiceAudio=bindScopedComponent(options.authority,{
     async read(context:AuthenticatedRequestContext,id:string){await authorizeScoped(options.authority,context,'read');return options.objects.readAudio(context,id);},
     async write(context:AuthenticatedRequestContext,input:{audioId:string;bytes:Buffer;sessionId:string;sourceRevision?:string|null}){
       const current=await options.identity.revalidate(context);if(current.mode!=='authenticated'||!current.scope)throw new TransitionError(403,'SERVICE_AUDIO_AUTHORITY_REQUIRED');
@@ -63,5 +65,5 @@ export function createScopedServiceAudio(options:{authority:ScopedServiceAuthori
       const actual=await options.objects.readAudio(current,input.audioId);if(!actual||!actual.equals(input.bytes))throw new TransitionError(409,'SERVICE_AUDIO_BYTES_CHANGED');
       await authorizeScoped(options.authority,current,'session-write',input.sessionId);
     },
-  });
+  });audioHandles.add(audio);return audio;
 }

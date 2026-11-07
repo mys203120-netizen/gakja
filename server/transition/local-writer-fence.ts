@@ -10,7 +10,8 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export class LocalWriterFenceError extends Error {}
 interface Control {
   version: 'scoped-local-writer-v1'; rootHash: string; scope: TransitionScope;
-  state: 'local-primary' | 'blocked' | 'sealed'; generation: string; archive: string | null;
+  state: 'local-primary' | 'blocked' | 'sealed' | 'rollback-restoring'; generation: string; archive: string | null;
+  rollbackCheckpointSha256?: string;
 }
 const paths = (root: string) => {
   const resolved = path.resolve(root), controlRoot = path.join(resolved, '.local/scoped-writer');
@@ -22,7 +23,7 @@ async function readControl(root: string): Promise<Control | null> {
   try { raw = await readFile(p.control, 'utf8'); } catch (error) { if (missing(error)) return null; throw error; }
   const value = JSON.parse(raw) as Control;
   if (value.version !== 'scoped-local-writer-v1' || value.rootHash !== sha(p.root) ||
-      !['local-primary', 'blocked', 'sealed'].includes(value.state)) throw new LocalWriterFenceError('LOCAL_WRITER_CONTROL_INVALID');
+      !['local-primary', 'blocked', 'sealed', 'rollback-restoring'].includes(value.state)) throw new LocalWriterFenceError('LOCAL_WRITER_CONTROL_INVALID');
   return value;
 }
 async function lock<T>(root: string, operation: () => Promise<T>): Promise<T> {
@@ -95,6 +96,7 @@ export async function installLocalWriterFence(authority: LocalSourceAuthority) {
   await mkdir(p.controlRoot, { recursive: true, mode: 0o700 });
   await ordinaryDirectory(p.controlRoot);
   return lock(value.root, async () => {
+    await value.authorize('prepare');
     const existing = await readControl(value.root);
     if (existing) {
       if (JSON.stringify(existing.scope) !== JSON.stringify(value.scope)) throw new LocalWriterFenceError('LOCAL_SOURCE_SCOPE_CHANGED');
@@ -141,6 +143,7 @@ export async function sealLocalSource<T>(authority: LocalSourceAuthority, input:
   const value = source(authority), p = paths(value.root); await value.authorize('activate');
   if (!/^[a-f0-9]{64}$/u.test(input.stoppedParticipantProofSha256) || !/^\d+$/u.test(input.generation)) throw new LocalWriterFenceError('LOCAL_SOURCE_STOP_PROOF_REQUIRED');
   return lock(value.root, async () => {
+    await value.authorize('activate');
     let control = await readControl(value.root);
     if (!control) throw new LocalWriterFenceError('LOCAL_WRITER_NOT_INSTALLED');
     if (control.state === 'local-primary') {
@@ -172,15 +175,37 @@ export async function sealLocalSource<T>(authority: LocalSourceAuthority, input:
     return input.activate({ localEvidenceJson, localEvidenceSha256: sha(localEvidenceJson), checkpointJson, checkpointSha256: sha(checkpointJson) });
   });
 }
-export async function restoreLocalSourceAfterEmptyRollback(authority: LocalSourceAuthority, verifyDurableEmptyReceipt: () => Promise<void>) {
+export async function restoreLocalSourceAfterEmptyRollback(authority: LocalSourceAuthority, verifyDurableEmptyReceipt: () => Promise<void>, options: {
+  observe?: (phase:'rollback-journaled'|'barrier-removed'|'archive-restored')=>Promise<void>;
+} = {}) {
   const value = source(authority), p = paths(value.root); await value.authorize('rollback-empty');
   return lock(value.root, async () => {
+    await value.authorize('rollback-empty');
     await verifyDurableEmptyReceipt();
-    const control = await readControl(value.root);
-    if (!control || control.state !== 'sealed' || !control.archive || await readFile(p.data, 'utf8') !== barrier(control)) throw new LocalWriterFenceError('LOCAL_SOURCE_ROLLBACK_NOT_SAFE');
+    let control = await readControl(value.root);
+    if (!control || !['sealed','rollback-restoring'].includes(control.state) || !control.archive) throw new LocalWriterFenceError('LOCAL_SOURCE_ROLLBACK_NOT_SAFE');
     const archive = path.resolve(p.controlRoot, control.archive);
     if (!archive.startsWith(`${p.controlRoot}${path.sep}snapshots${path.sep}`)) throw new LocalWriterFenceError('LOCAL_SOURCE_ARCHIVE_INVALID');
-    await ordinaryDirectory(archive); await unlink(p.data); await rename(archive, p.data);
+    if(control.state==='sealed') {
+      if(await readFile(p.data,'utf8')!==barrier(control))throw new LocalWriterFenceError('LOCAL_SOURCE_BARRIER_CONFLICT');
+      await ordinaryDirectory(archive);
+      control={...control,state:'rollback-restoring',rollbackCheckpointSha256:sha(JSON.stringify(await inventory(archive)))};
+      await store(value.root,control);await options.observe?.('rollback-journaled');
+    }
+    const dataStat=await lstat(p.data).catch(error=>{if(missing(error))return null;throw error;});
+    const archiveStat=await lstat(archive).catch(error=>{if(missing(error))return null;throw error;});
+    if(dataStat?.isFile()) {
+      if(await readFile(p.data,'utf8')!==barrier(control)||!archiveStat?.isDirectory())throw new LocalWriterFenceError('LOCAL_SOURCE_BARRIER_CONFLICT');
+      await unlink(p.data);await options.observe?.('barrier-removed');
+    } else if(dataStat && (!dataStat.isDirectory()||archiveStat))throw new LocalWriterFenceError('LOCAL_SOURCE_ROLLBACK_CONFLICT');
+    if(archiveStat) {
+      await ordinaryDirectory(archive);
+      // Never overwrite a directory recreated by an unregistered old process.
+      if(await lstat(p.data).then(()=>true).catch(error=>{if(missing(error))return false;throw error;}))throw new LocalWriterFenceError('LOCAL_SOURCE_ROLLBACK_CONFLICT');
+      await rename(archive,p.data);await options.observe?.('archive-restored');
+    }
+    await ordinaryDirectory(p.data);
+    if(!control.rollbackCheckpointSha256||sha(JSON.stringify(await inventory(p.data)))!==control.rollbackCheckpointSha256)throw new LocalWriterFenceError('LOCAL_SOURCE_ROLLBACK_CHECKPOINT_CHANGED');
     await store(value.root, { ...control, state: 'local-primary', archive: null });
   });
 }
@@ -190,6 +215,7 @@ export async function recoverDeadLocalWriterLock(authority: LocalSourceAuthority
   const value = source(authority), p = paths(value.root); await value.authorize('recover');
   const recovery = await open(`${p.lock}.recovery`, 'wx', 0o600);
   try {
+    await value.authorize('recover');
     const raw = await readFile(p.lock, 'utf8'), old = JSON.parse(raw) as { pid: number; host: string; rootHash: string; token: string };
     if (!old.token || !Number.isSafeInteger(old.pid) || old.host !== hostname() || old.rootHash !== sha(p.root)) throw new LocalWriterFenceError('LOCAL_WRITER_RECOVERY_UNCONFIRMED');
     try { process.kill(old.pid, 0); throw new LocalWriterFenceError('LOCAL_WRITER_STILL_ALIVE'); }

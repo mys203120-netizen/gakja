@@ -114,7 +114,7 @@ BEGIN
  IF EXISTS(SELECT 1 FROM gakja.shadow_runs WHERE run_id=p->>'runId') THEN RAISE EXCEPTION 'existing run cannot be promoted' USING ERRCODE='23505';END IF;
  result:=gakja.service_shadow_register_core(p);
  INSERT INTO gakja.service_input_approvals VALUES(p->>'runId',s.transition_id,s.owner_id,s.student_id,s.application_target_id,s.support_target_id,
- p->>'planSha256',p_plan,encode(public.digest(convert_to(p_plan,'UTF8'),'sha256'),'hex'),p_evidence,encode(public.digest(convert_to(p_evidence,'UTF8'),'sha256'),'hex'),
+ p->>'planSha256',p_plan,gakja.session_text_sha(p_plan),p_evidence,gakja.session_text_sha(p_evidence),
  current_setting('gakja.issuer',true),current_setting('gakja.subject',true),clock_timestamp());
  RETURN result;
 END $$;

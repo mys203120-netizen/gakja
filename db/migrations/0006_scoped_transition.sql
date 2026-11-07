@@ -4,7 +4,7 @@ CREATE TABLE gakja.scoped_transitions (
  owner_id text NOT NULL,student_id text NOT NULL,application_target_id text NOT NULL,support_target_id text NOT NULL,
  source_present boolean NOT NULL,source_revision text,
  state text NOT NULL DEFAULT 'unprepared' CHECK(state IN('unprepared','blocking','verified','db-primary','frozen','restoring','read-only-recovery','local-primary')),
- generation bigint NOT NULL DEFAULT 0 CHECK(generation>=0),fence bigint NOT NULL DEFAULT 0 CHECK(fence>=0),expires_at timestamptz,
+ generation bigint NOT NULL DEFAULT 0 CHECK(generation>=0),fence bigint NOT NULL DEFAULT 0 CHECK(fence>=0),expires_at timestamptz CHECK(expires_at IS NULL OR isfinite(expires_at)),
  local_evidence_json text,local_evidence_sha256 text,verification_json text,verification_sha256 text,
  checkpoint_json text,checkpoint_sha256 text,recovery_manifest_sha256 text,primary_generation bigint,
  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
@@ -17,7 +17,7 @@ CREATE TABLE gakja.scoped_transitions (
 );
 CREATE TABLE gakja.transition_operator_grants (
  transition_id uuid NOT NULL REFERENCES gakja.scoped_transitions(transition_id),issuer text NOT NULL,subject text NOT NULL,
- actions text[] NOT NULL,expires_at timestamptz NOT NULL,active boolean NOT NULL DEFAULT true,
+ actions text[] NOT NULL,expires_at timestamptz NOT NULL CHECK(isfinite(expires_at)),active boolean NOT NULL DEFAULT true,
  PRIMARY KEY(transition_id,issuer,subject), FOREIGN KEY(issuer,subject) REFERENCES gakja.principals(issuer,subject),
  CHECK(cardinality(actions)>0 AND actions<@ARRAY['prepare','verify','activate','freeze','rollback-empty','recover','status','export','restore','register-input']::text[])
 );
@@ -38,7 +38,7 @@ CREATE TABLE gakja.transition_history (
 CREATE TABLE gakja.transition_active_operations (
  transition_id uuid NOT NULL REFERENCES gakja.scoped_transitions(transition_id),operation_id text NOT NULL,generation bigint NOT NULL,
  kind text NOT NULL CHECK(kind IN('http','wss','capture','provider','worker','cli')),issuer text NOT NULL,subject text NOT NULL,session_id text,
- expires_at timestamptz NOT NULL,outcome text CHECK(outcome IN('completed','failed','cancelled','fenced')),
+ expires_at timestamptz NOT NULL CHECK(isfinite(expires_at)),outcome text CHECK(outcome IN('completed','failed','cancelled','fenced')),
  started_at timestamptz NOT NULL DEFAULT clock_timestamp(),finished_at timestamptz,PRIMARY KEY(transition_id,operation_id)
 );
 CREATE TABLE gakja.transition_session_bindings (
@@ -83,6 +83,9 @@ BEGIN
   AND active AND expires_at>clock_timestamp() AND p_action=ANY(actions) FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'finite transition operator required' USING ERRCODE='42501';END IF;RETURN s;
 END $$;
+CREATE FUNCTION gakja.transition_authorize_operator(p_action text) RETURNS jsonb LANGUAGE plpgsql
+SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE s gakja.scoped_transitions;BEGIN s:=gakja.transition_require_operator(p_action);RETURN gakja.transition_snapshot(s);END $$;
 CREATE FUNCTION gakja.transition_guard(p_operation text,p_session text DEFAULT NULL,p_replay boolean DEFAULT false) RETURNS gakja.scoped_transitions LANGUAGE plpgsql
 SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE s gakja.scoped_transitions;a gakja.transition_active_operations;
@@ -124,7 +127,7 @@ BEGIN
  s:=gakja.transition_current();SELECT * INTO s FROM gakja.scoped_transitions WHERE transition_id=s.transition_id FOR UPDATE;
  SELECT * INTO prior FROM gakja.transition_operator_installations WHERE transition_id=s.transition_id AND key=p->>'key';
  IF FOUND THEN IF prior.input_sha256 IS DISTINCT FROM p->>'inputSha256' OR prior.grant_json IS DISTINCT FROM v::text THEN RAISE EXCEPTION 'operator installation conflict' USING ERRCODE='P7301';END IF;RETURN gakja.transition_snapshot(s);END IF;
- IF (v->>'expiresAt')::timestamptz<=clock_timestamp() OR NOT EXISTS(SELECT 1 FROM gakja.principals WHERE issuer=v->>'issuer' AND subject=v->>'subject' AND account_id=g.account_id AND active)
+ IF v->>'expiresAt' IS NULL OR NOT isfinite((v->>'expiresAt')::timestamptz) OR (v->>'expiresAt')::timestamptz<=clock_timestamp() OR NOT EXISTS(SELECT 1 FROM gakja.principals WHERE issuer=v->>'issuer' AND subject=v->>'subject' AND account_id=g.account_id AND active)
  THEN RAISE EXCEPTION 'operator binding invalid' USING ERRCODE='42501';END IF;
  INSERT INTO gakja.transition_operator_grants VALUES(s.transition_id,v->>'issuer',v->>'subject',ARRAY(SELECT jsonb_array_elements_text(v->'actions')),(v->>'expiresAt')::timestamptz,(v->>'active')::boolean)
  ON CONFLICT(transition_id,issuer,subject) DO UPDATE SET actions=excluded.actions,expires_at=excluded.expires_at,active=excluded.active;
@@ -145,7 +148,8 @@ BEGIN
  s:=gakja.transition_require_operator(a);
  SELECT * INTO c FROM gakja.transition_commands WHERE transition_id=s.transition_id AND key=p->>'key';
  IF FOUND THEN IF c.input_sha256 IS DISTINCT FROM p->>'inputSha256' OR c.action<>a THEN RAISE EXCEPTION 'transition idempotency conflict' USING ERRCODE='P7301';END IF;RETURN gakja.transition_receipt_json(c,true);END IF;
- IF gakja.session_text_sha(p->>'inputJson') IS DISTINCT FROM p->>'inputSha256' OR (p->>'inputJson')::jsonb IS DISTINCT FROM jsonb_build_object('action',a,'expectedGeneration',p->>'expectedGeneration','payloadJson',p->>'payloadJson')
+ IF p->>'version' IS DISTINCT FROM 'scoped-transition-command-v1' OR coalesce(p->>'key','')!~'^[A-Za-z0-9._:-]{1,160}$' OR coalesce(p->>'inputSha256','')!~'^[a-f0-9]{64}$'
+  OR gakja.session_text_sha(p->>'inputJson') IS DISTINCT FROM p->>'inputSha256' OR (p->>'inputJson')::jsonb IS DISTINCT FROM jsonb_build_object('action',a,'expectedGeneration',p->>'expectedGeneration','payloadJson',p->>'payloadJson')
  THEN RAISE EXCEPTION 'transition command bytes invalid' USING ERRCODE='22023';END IF;
  IF s.generation::text IS DISTINCT FROM p->>'expectedGeneration' THEN RAISE EXCEPTION 'transition stale' USING ERRCODE='P7303';END IF;
  IF a='prepare' THEN
@@ -153,8 +157,9 @@ BEGIN
   e:=(v->>'localEvidenceJson')::jsonb;
   IF e->'scope' IS DISTINCT FROM gakja.transition_scope_json(s) OR e->>'inventoryComplete' IS DISTINCT FROM 'true' OR e->>'activeLegacySessions' IS DISTINCT FROM '0' OR e->>'unparticipatingProcesses' IS DISTINCT FROM '0'
    OR e->>'writeBarrierInstalled' IS DISTINCT FROM 'true' OR coalesce(e->>'stoppedParticipantProofSha256','')!~'^[a-f0-9]{64}$'
-   OR gakja.session_text_sha(v->>'localEvidenceJson') IS DISTINCT FROM v->>'localEvidenceSha256' OR gakja.session_text_sha(v->>'checkpointJson') IS DISTINCT FROM v->>'checkpointSha256'
-   OR (v->>'expiresAt')::timestamptz<=clock_timestamp() THEN RAISE EXCEPTION 'local stop barrier evidence required' USING ERRCODE='P7304';END IF;
+   OR gakja.session_text_sha(v->>'localEvidenceJson') IS DISTINCT FROM v->>'localEvidenceSha256' OR v->>'checkpointJson' IS NULL OR coalesce(v->>'checkpointSha256','')!~'^[a-f0-9]{64}$'
+   OR gakja.session_text_sha(v->>'checkpointJson') IS DISTINCT FROM v->>'checkpointSha256'
+   OR v->>'expiresAt' IS NULL OR NOT isfinite((v->>'expiresAt')::timestamptz) OR (v->>'expiresAt')::timestamptz<=clock_timestamp() THEN RAISE EXCEPTION 'local stop barrier evidence required' USING ERRCODE='P7304';END IF;
   IF EXISTS(SELECT 1 FROM gakja.session_command_sessions x WHERE x.owner_id=s.owner_id AND x.student_id=s.student_id AND x.application_target_id=s.application_target_id AND x.created
     AND NOT EXISTS(SELECT 1 FROM gakja.transition_session_bindings b WHERE b.session_id=x.session_id) AND coalesce(x.session_json::jsonb->>'status','') NOT IN('completed','ended'))
    THEN RAISE EXCEPTION 'active legacy session excluded' USING ERRCODE='P7304';END IF;
@@ -165,7 +170,7 @@ BEGIN
    THEN RAISE EXCEPTION 'transition verification invalid' USING ERRCODE='P7304';END IF;
   UPDATE gakja.scoped_transitions SET state='verified',generation=generation+1,verification_json=v->>'verificationJson',verification_sha256=v->>'verificationSha256' WHERE transition_id=s.transition_id RETURNING * INTO s;
  ELSIF a='activate' THEN
-  IF s.state<>'verified' OR s.expires_at<=clock_timestamp() THEN RAISE EXCEPTION 'activation state invalid' USING ERRCODE='P7302';END IF;
+  IF s.state<>'verified' OR s.expires_at IS NULL OR NOT isfinite(s.expires_at) OR s.expires_at<=clock_timestamp() THEN RAISE EXCEPTION 'activation state invalid' USING ERRCODE='P7302';END IF;
   UPDATE gakja.scoped_transitions SET state='db-primary',generation=generation+1,fence=fence+1,primary_generation=generation+1 WHERE transition_id=s.transition_id RETURNING * INTO s;
  ELSIF a='freeze' THEN
   IF s.state NOT IN('db-primary','verified','blocking') THEN RAISE EXCEPTION 'freeze state invalid' USING ERRCODE='P7302';END IF;
@@ -189,7 +194,7 @@ DECLARE s gakja.scoped_transitions;a gakja.transition_active_operations;v jsonb;
 BEGIN
  v:=gakja.transition_access('admit',p->>'generation',NULL);s:=gakja.transition_current();SELECT * INTO s FROM gakja.scoped_transitions WHERE transition_id=s.transition_id FOR SHARE;
  ends:=least((p->>'expiresAt')::timestamptz,s.expires_at);
- IF ends<=clock_timestamp() OR p->>'expiresAt' IS NULL THEN RAISE EXCEPTION 'operation expiry invalid' USING ERRCODE='P7303';END IF;
+ IF ends<=clock_timestamp() OR p->>'expiresAt' IS NULL OR NOT isfinite((p->>'expiresAt')::timestamptz) THEN RAISE EXCEPTION 'operation expiry invalid' USING ERRCODE='P7303';END IF;
  IF p?'sessionId' AND NOT EXISTS(SELECT 1 FROM gakja.transition_session_bindings WHERE transition_id=s.transition_id AND session_id=p->>'sessionId') THEN RAISE EXCEPTION 'legacy operation excluded' USING ERRCODE='P7304';END IF;
  SELECT * INTO a FROM gakja.transition_active_operations WHERE transition_id=s.transition_id AND operation_id=p->>'operationId';
  IF FOUND THEN RAISE EXCEPTION 'operation id cannot be reused' USING ERRCODE='P7301';END IF;
@@ -298,7 +303,7 @@ DO $secure$ DECLARE n text;f record;BEGIN
  END LOOP;
 END $secure$;
 GRANT EXECUTE ON FUNCTION gakja.transition_read(),gakja.transition_access(text,text,text),gakja.transition_begin_operation(jsonb),gakja.transition_finish_operation(jsonb),gakja.transition_guard(text,text,boolean) TO gakja_request,gakja_mapping,gakja_worker;
-GRANT EXECUTE ON FUNCTION gakja.transition_install_operator(jsonb),gakja.transition_command(jsonb),gakja.transition_receipt(text,text) TO gakja_mapping;
+GRANT EXECUTE ON FUNCTION gakja.transition_install_operator(jsonb),gakja.transition_command(jsonb),gakja.transition_receipt(text,text),gakja.transition_authorize_operator(text) TO gakja_mapping;
 GRANT EXECUTE ON FUNCTION gakja.session_enroll(jsonb),gakja.session_restore(jsonb),gakja.evaluation_install_trust(jsonb),gakja.evaluation_grant_worker(jsonb),gakja.evaluation_restore(jsonb) TO gakja_mapping;
 GRANT EXECUTE ON FUNCTION gakja.session_begin(jsonb),gakja.session_commit(jsonb,jsonb),gakja.session_progress(jsonb,jsonb),gakja.session_fence(jsonb,text),gakja.session_observe_connection_closed(text,bigint,uuid),gakja.evaluation_publish_registry(jsonb),gakja.evaluation_publish_approval(jsonb),gakja.evaluation_withdraw_approval(jsonb),gakja.evaluation_consume(jsonb),gakja.evaluation_retry(jsonb),gakja.evaluation_freeze(text,bigint) TO gakja_request;
 GRANT EXECUTE ON FUNCTION gakja.evaluation_worker(text,text,jsonb) TO gakja_worker;

@@ -36,9 +36,18 @@ function required(env:Readonly<Record<string,string|undefined>>,key:string){cons
 function databaseUrl(env:Readonly<Record<string,string|undefined>>,key:string,role:string){const value=required(env,key);let url:URL;try{url=new URL(value);}catch{throw new TransitionError(503,'SERVICE_DATABASE_CONFIGURATION_INVALID');}
  if(!['postgres:','postgresql:'].includes(url.protocol)||decodeURIComponent(url.username)!==role||!url.password||url.hash)throw new TransitionError(503,'SERVICE_DATABASE_ROLE_REQUIRED');return value;}
 function selectedBinding(config:ServiceDeploymentConfig,context:AuthenticatedRequestContext){
+ const now=Date.now();if(now<Date.parse(config.responsibility.startsAt)||now>=Date.parse(config.responsibility.endsAt))throw new TransitionError(403,'SERVICE_SCOPE_PERIOD_ENDED');
  const rows=config.bindings.filter(value=>value.ownerId===context.account.ownerId&&value.studentId===context.scope?.studentId&&value.applicationTargetId===context.scope.applicationTargetId&&value.supportTargetId===context.scope.supportTargetId&&
  Object.hasOwn(value,'sourceRevision')===Object.hasOwn(context.scope,'sourceRevision')&&value.sourceRevision===context.scope.sourceRevision);
  if(rows.length!==1)throw new TransitionError(403,'SERVICE_SELECTED_SCOPE_REQUIRED');return rows[0];
+}
+/** Apply the declared native deployment allowlist before work and before a
+ * result is published. Actual request identity and G authority remain live DB checks. */
+export async function runProductionScopedOperation<T>(config:ServiceDeploymentConfig,context:AuthenticatedRequestContext,operation:()=>Promise<T>):Promise<T>{
+ const selected=selectedBinding(config,context);
+ const pin=()=>JSON.stringify([context.account.ownerId,context.scope?.studentId,context.scope?.applicationTargetId,context.scope?.supportTargetId,Object.hasOwn(context.scope??{},'sourceRevision'),context.scope?.sourceRevision??null]);
+ const before=pin(),runId=selected.runId,result=await operation();
+ if(selectedBinding(config,context).runId!==runId||pin()!==before)throw new TransitionError(403,'SERVICE_SCOPE_CHANGED');return result;
 }
 /** Freshness is an explicit externally supplied policy. No default age is invented. */
 export async function assertExternalReviewCurrent(config:ServiceDeploymentConfig,trust:EvaluationReviewArtifact,now=Date.now()){
@@ -102,7 +111,7 @@ export async function createProductionServiceComposition(input:{deployment:unkno
    mintReviewer(context,value){return createEvaluationReviewerCapability({...finite(context),issuer:context.principal.issuer,subject:context.principal.subject,actorId:value.actorId,publicKeySha256:value.publicKeySha256,action:value.action,expectedTrustGeneration:value.control.trustGeneration,...(value.sessionId?{sessionId:value.sessionId}:{})});},
    mintAdmission(context,entry){return createEvaluationAdmissionCapability({...finite(context),sessionId:entry.sessionId,inputSha256:entry.inputSha256,handoffIntentId:entry.handoffIntentId,handoffPayloadSha256:entry.handoffPayloadSha256});},
  });
- const resources=bindScopedComponent(authority,withPrivateObjectAudio({...service.resources,audioBinding:(context,id)=>requestAuthority.discoverAudio(context,id)},objects,identity));
+ const resourcesBase=bindScopedComponent(authority,withPrivateObjectAudio({...service.resources,audioBinding:(context,id)=>requestAuthority.discoverAudio(context,id)},objects,identity));
  let readiness:ServicePreflight|undefined;
  async function verifyReadiness(){
    let selected:Promise<AuthenticatedRequestContext[]>|undefined;
@@ -135,14 +144,20 @@ export async function createProductionServiceComposition(input:{deployment:unkno
        if(!response.ok)throw new Error('SERVICE_PRIVATE_BUCKET_UNAVAILABLE');const value=await response.json() as {id?:unknown;public?:unknown};if(value.id!==bucket||value.public!==false)throw new Error('SERVICE_BUCKET_MUST_BE_PRIVATE');return pass('CONFIGURED_PRIVATE_BUCKET_METADATA_VERIFIED_NO_UPLOAD');},
      async 'review-trust'(){if(!env.INTERVIEW_G_PREFLIGHT_TOKENS_FILE)return {status:'blocked',evidence:['EXPLICIT_PREFLIGHT_TOKEN_SUPPLY_REQUIRED']};for(const context of await contexts()){const control=await evaluations.scopeControl(context);if(!control.trust)return {status:'blocked',evidence:['CURRENT_A_B_TRUST_SUPPLY_REQUIRED']};await assertExternalReviewCurrent(config,control.trust);}return pass('CURRENT_TRUST_AND_EXPLICIT_EXTERNAL_SYNCHRONIZATION_VERIFIED');},
      async providers(){return {status:'pass',evidence:['NATIVE_ADAPTERS_AND_EXISTING_MODELS_BOUND','COMMERCIAL_PROVIDER_CALL_NOT_RUN']};},
-     async 'transition-scope'(){if(!env.INTERVIEW_G_PREFLIGHT_TOKENS_FILE)return {status:'blocked',evidence:['EXPLICIT_PREFLIGHT_TOKEN_SUPPLY_REQUIRED']};let writable=true;for(const context of await contexts()){const state=await transitions.read(context);if(!state||!['verified','db-primary','read-only-recovery'].includes(state.state))return {status:'blocked',evidence:['VERIFIED_FINITE_TRANSITION_SCOPE_REQUIRED']};await reader(context,selectedBinding(config,context).runId);writable=writable&&state.state==='db-primary'&&typeof state.scopeExpiresAt==='string'&&Date.parse(state.scopeExpiresAt)>Date.now();}return {status:'pass',evidence:['CURRENT_TRANSITION_AND_NEW_EXPLICIT_SERVICE_INPUT_APPROVAL_VERIFIED',writable?'TRANSITION_DB_PRIMARY_FINITE_WRITE_ENABLED':'TRANSITION_READ_ONLY_OR_NOT_ACTIVATED']};},
+     async 'transition-scope'(){if(!env.INTERVIEW_G_PREFLIGHT_TOKENS_FILE)return {status:'blocked',evidence:['EXPLICIT_PREFLIGHT_TOKEN_SUPPLY_REQUIRED']};let writable=true;for(const context of await contexts()){const state=await transitions.read(context);if(!state||!['verified','db-primary','read-only-recovery'].includes(state.state))return {status:'blocked',evidence:['VERIFIED_FINITE_TRANSITION_SCOPE_REQUIRED']};if(state.scopeExpiresAt&&Date.parse(state.scopeExpiresAt)>Date.parse(config.responsibility.endsAt))return {status:'fail',evidence:['TRANSITION_SCOPE_EXCEEDS_DECLARED_RESPONSIBILITY_PERIOD']};await reader(context,selectedBinding(config,context).runId);writable=writable&&state.state==='db-primary'&&typeof state.scopeExpiresAt==='string'&&Date.parse(state.scopeExpiresAt)>Date.now();}return {status:'pass',evidence:['CURRENT_TRANSITION_AND_NEW_EXPLICIT_SERVICE_INPUT_APPROVAL_VERIFIED',writable?'TRANSITION_DB_PRIMARY_FINITE_WRITE_ENABLED':'TRANSITION_READ_ONLY_OR_NOT_ACTIVATED']};},
    }});return readiness;
  }
  await verifyReadiness();
+ function checked<T extends object>(component:T):T{
+   const wrapped=new Proxy(component,{get(target,key,receiver){const value=Reflect.get(target,key,receiver);if(typeof value!=='function')return value;
+     return (...args:unknown[])=>runProductionScopedOperation(config,args[0] as AuthenticatedRequestContext,()=>Reflect.apply(value,target,args));
+   }});return bindScopedComponent(authority,wrapped);
+ }
+ const resources=checked(resourcesBase),sessionMutations=checked(service.mutations),evaluationMutations=checked(evaluation.mutations);
  const worker=createScopedEvaluationWorker({authority,identity,repository:evaluations,sessions:repository,service:evaluation,provider:createNativeEvaluationProvider(authority)});
- return {identity,authority,transitions,repository,evaluations,objects,shadow,inputs,service,evaluation,worker,resources,
+ return {identity,authority,transitions,repository,evaluations,objects,shadow,inputs,service:{...service,mutations:sessionMutations},evaluation:{...evaluation,mutations:evaluationMutations},worker,resources,
    preflight:verifyReadiness,readiness,
-   createServer:(options:{webPort?:number;allowedHosts?:readonly string[];allowedOrigins?:readonly string[]}={})=>{if(!readiness?.ready)throw new TransitionError(503,'SERVICE_PREFLIGHT_NOT_READY');return createScopedServiceRealtimeServer({...options,authority,identity,resources,sessionMutations:service.mutations,evaluationMutations:evaluation.mutations});},
+   createServer:(options:{webPort?:number;allowedHosts?:readonly string[];allowedOrigins?:readonly string[]}={})=>{if(!readiness?.ready)throw new TransitionError(503,'SERVICE_PREFLIGHT_NOT_READY');return createScopedServiceRealtimeServer({...options,authority,identity,resources,sessionMutations,evaluationMutations});},
    async close(){await service.close();await Promise.all(Object.values(pools).map(pool=>pool.end()));},
  };
 }

@@ -17,7 +17,7 @@ const operators = new WeakMap<TransitionOperatorCapability, Readonly<TransitionO
 const installers = new WeakMap<TransitionInstallerCapability, Readonly<TransitionInstallerAuthority>>();
 function validAuthority(input: FiniteAuthority) {
   if (![input.ownerId,input.studentId,input.applicationTargetId,input.supportTargetId,input.issuer,input.subject].every(text) ||
-    Object.hasOwn(input,'sourceRevision') && input.sourceRevision !== null && !text(input.sourceRevision) || !Number.isFinite(input.expiresAt) || typeof input.checkCurrent !== 'function') throw denied();
+    Object.hasOwn(input,'sourceRevision') && input.sourceRevision !== null && !text(input.sourceRevision) || !Number.isFinite(input.expiresAt) || input.expiresAt <= 0 || typeof input.checkCurrent !== 'function') throw denied();
 }
 export function createTransitionOperatorCapability(input: TransitionOperatorAuthority): TransitionOperatorCapability {
   validAuthority(input);
@@ -106,6 +106,9 @@ export function createPostgresTransitionRepository(options: { identity: RequestI
   const repository: TransitionRepository = {
     kind: 'postgres-scoped-transition-v1' as const,
     read: context => tx(context,'gakja_request','SELECT gakja.transition_read() value',[],snapshot),
+    authorizeOperator: (context,action,capability) => tx(context,'gakja_mapping','SELECT gakja.transition_authorize_operator($1) value',[action],(value,ctx) => {
+      const result=snapshot(value,ctx);if(!result)throw denied();return result;
+    },{capability,action}),
     access: (context,operation,input = {}) => tx(context,'gakja_request','SELECT gakja.transition_access($1,$2,$3) value',[operation,input.expectedGeneration ?? null,input.sessionId ?? null],(value,ctx) => {
       const result = value as TransitionAccess; if (!result || !integer.test(result.generation) || !integer.test(result.fence)) throw invalid(); sameScope(result.scope,ctx); return result;
     }),
@@ -114,7 +117,8 @@ export function createPostgresTransitionRepository(options: { identity: RequestI
       if (!value || now() >= value.expiresAt || value.key !== input.key || value.inputSha256 !== input.inputSha256 || value.issuer !== selected.principal.issuer || value.subject !== selected.principal.subject) throw denied();
       sameScope(value,selected); let allowed = false; try { allowed = await value.checkCurrent(); } catch { /* fail closed */ } if (!allowed || now() >= value.expiresAt) throw denied();
       const grant: TransitionOperatorGrant = input.grant;
-      if (!text(grant.issuer) || !text(grant.subject) || !grant.actions.length || grant.actions.some(action => !actions.includes(action)) || Date.parse(grant.expiresAt) > value.expiresAt || Date.parse(grant.expiresAt) <= now()) throw invalid();
+      const grantExpiresAt=Date.parse(grant.expiresAt);
+      if (!text(grant.issuer) || !text(grant.subject) || !grant.actions.length || grant.actions.some(action => !actions.includes(action)) || !Number.isFinite(grantExpiresAt) || grantExpiresAt <= 0 || grantExpiresAt > value.expiresAt || grantExpiresAt <= now()) throw invalid();
       const result = await tx(selected,'gakja_mapping','SELECT gakja.transition_install_operator($1::jsonb) value',[JSON.stringify({ ...input, sourceProofSha256: value.sourceProofSha256 })],snapshot);
       if (!result) throw invalid(); return result;
     },

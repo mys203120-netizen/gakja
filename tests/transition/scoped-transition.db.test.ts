@@ -69,6 +69,8 @@ test('G-DB-01 finite operator authority is opaque, current, separate from user/r
   for (const source of [undefined,null,'source-g'] as const) {
     const c = await context(source), { snapshot,operator } = await install(c,['status']);
     assert.equal(Object.hasOwn(snapshot.scope,'sourceRevision'),source !== undefined);assert.equal(snapshot.scope.sourceRevision,source);
+    assert.equal((await repository.authorizeOperator(c,'status',operator)).transitionId,snapshot.transitionId);
+    await assert.rejects(repository.authorizeOperator(c,'prepare',operator),/TRANSITION_OPERATOR_REQUIRED/u);
     await assert.rejects(advance(c,operator,'prepare',evidence(c)),error => error instanceof TransitionError && error.code === 'TRANSITION_OPERATOR_REQUIRED');
     await assert.rejects(repository.receipt(c,'x',hash('x'),{ kind:'scoped-transition-operator-v1' }),/TRANSITION_OPERATOR_REQUIRED/u);
     await assert.rejects(sql(c,pools.request,'SELECT gakja.transition_command($1::jsonb) value',[JSON.stringify({ action:'prepare' })]),code('42501'));
@@ -78,8 +80,25 @@ test('G-DB-02 unknown inventory and missing stop barrier cannot prepare; rejecte
   const c = await context(), { operator } = await install(c), proof = evidence(c), body = JSON.parse(proof.localEvidenceJson);body.inventoryComplete=false;
   proof.localEvidenceJson=JSON.stringify(body);proof.localEvidenceSha256=hash(proof.localEvidenceJson);
   await assert.rejects(advance(c,operator,'prepare',proof),/TRANSITION_EVIDENCE_REQUIRED/u);
+  const valid=evidence(c);
+  await assert.rejects(advance(c,operator,'prepare',{...valid,expiresAt:null}),/TRANSITION_EVIDENCE_REQUIRED/u);
+  await assert.rejects(advance(c,operator,'prepare',{...valid,expiresAt:'infinity'}),/TRANSITION_EVIDENCE_REQUIRED/u);
+  await assert.rejects(advance(c,operator,'prepare',{...valid,checkpointJson:null,checkpointSha256:null}),/TRANSITION_EVIDENCE_REQUIRED/u);
   assert.equal((await repository.read(c))!.state,'unprepared');
   assert.equal((await pools.admin.query('SELECT count(*)::int n FROM gakja.transition_commands WHERE transition_id=$1',[(await repository.read(c))!.transitionId])).rows[0].n,0);
+});
+test('G-DB-10 TS and actual SQL reject nonfinite operator grants before installing a scope or authority',async()=>{
+  const c=await context(),base=finite(c);
+  for(const expiresAt of ['infinity','not-a-date','']){
+    const input={key:randomUUID(),inputSha256:hash(randomUUID()),grant:{issuer:base.issuer,subject:base.subject,actions:allActions,expiresAt,active:true}};
+    const capability=createTransitionInstallerCapability({...base,key:input.key,inputSha256:input.inputSha256,sourceProofSha256:hash('explicit public synthetic operator source proof')});
+    await assert.rejects(repository.installOperator(c,input,capability),/TRANSITION_INVALID/u);
+  }
+  const payload={key:randomUUID(),inputSha256:hash('explicit SQL infinity refusal'),sourceProofSha256:hash('proof'),grant:{issuer:base.issuer,subject:base.subject,actions:allActions,expiresAt:'infinity',active:true}};
+  await assert.rejects(sql(c,pools.mapping,'SELECT gakja.transition_install_operator($1::jsonb) value',[JSON.stringify(payload)]),code('42501'));
+  assert.equal(await repository.read(c),null);
+  assert.throws(()=>createTransitionOperatorCapability({...base,actions:allActions,expiresAt:Number.POSITIVE_INFINITY}),/TRANSITION_OPERATOR_REQUIRED/u);
+  assert.throws(()=>createTransitionOperatorCapability({...base,actions:allActions,expiresAt:Number.NaN}),/TRANSITION_OPERATOR_REQUIRED/u);
 });
 test('G-DB-03 prepare/verify/activate/freeze are CAS, exact idempotent receipts survive freeze and changed bytes conflict',async () => {
   const c = await context(), { operator,state } = await activate(c);

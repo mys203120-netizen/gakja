@@ -12,13 +12,17 @@ export function createLocalTransitionCoordinator(input: {
   context: AuthenticatedRequestContext; repository: TransitionRepository; operator: TransitionOperatorCapability;
   verifyStoppedParticipants(): Promise<{ complete: boolean; unparticipatingProcesses: number; proofSha256: string }>;
 }) {
+  if (!input.context.scope || input.scope.ownerId !== input.context.account.ownerId || input.scope.studentId !== input.context.scope.studentId ||
+      input.scope.applicationTargetId !== input.context.scope.applicationTargetId || input.scope.supportTargetId !== input.context.scope.supportTargetId ||
+      Object.hasOwn(input.scope,'sourceRevision') !== Object.hasOwn(input.context.scope,'sourceRevision') || input.scope.sourceRevision !== input.context.scope.sourceRevision)
+    throw new Error('TRANSITION_LOCAL_SOURCE_SCOPE_MISMATCH');
   async function authorize(action: 'prepare'|'activate'|'rollback-empty'|'recover') {
     const fresh = await input.identity.revalidate(input.context);
     if (fresh.mode !== 'authenticated') throw new Error('TRANSITION_OPERATOR_REQUIRED');
     await assertTransitionOperatorCapability(input.operator, fresh, action);
     // Recheck the actual finite DB grant before filesystem mutation. This is
     // read/authorization only; final SQL commands still take their own lock.
-    await input.repository.receipt(fresh, 'local-source-authorization', '0'.repeat(64), input.operator);
+    await input.repository.authorizeOperator(fresh, action, input.operator);
   }
   const source = registerLocalSource({ root: input.root, scope: input.scope, authorize });
   return {
@@ -47,6 +51,8 @@ export function createLocalTransitionCoordinator(input: {
     /** SQL rollback must commit and prove zero durable new writes. A network
      * error leaves the barrier in place until the same receipt is confirmed. */
     async rollbackEmpty(options: { key: string; expectedGeneration: string }) {
+      const stopped=await input.verifyStoppedParticipants();
+      if(!stopped.complete||stopped.unparticipatingProcesses!==0)throw new Error('TRANSITION_UNPARTICIPATING_WRITER_UNCONFIRMED');
       return restoreLocalSourceAfterEmptyRollback(source, async () => {
         const command = createTransitionCommand({ key: options.key, action: 'rollback-empty', expectedGeneration: options.expectedGeneration, payloadJson: '{}' });
         await input.repository.command(input.context, command, input.operator);
